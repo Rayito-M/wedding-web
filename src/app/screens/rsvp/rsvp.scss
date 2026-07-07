@@ -1,0 +1,235 @@
+@use '../../../styles/tokens' as t;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  width: 100%;
+}
+
+header {
+  padding: 8px t.$space-6 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.content {
+  flex: 1;
+  padding: 20px t.$space-6;
+}
+
+.step {
+  animation: step-in 0.18s ease;
+}
+
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+h2 {
+  font-family: t.$font-serif;
+  font-weight: 400;
+  font-size: t.$text-display-md;
+  line-height: 1.05;
+  margin: 0 0 8px;
+}
+
+.table-title {
+  font-size: 28px;
+}
+
+.sub {
+  font-size: t.$text-body;
+  color: var(--sub);
+  line-height: 1.5;
+}
+
+.field {
+  margin-top: 22px;
+}
+
+.name-field {
+  margin-top: 28px;
+}
+
+input[type='text'] {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: t.$radius-input;
+  font-family: t.$font-serif;
+  font-size: t.$text-heading;
+  color: var(--ink);
+  outline: none;
+}
+
+.choices {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.choice {
+  flex: 1;
+  padding: 14px 8px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  border-radius: t.$radius-card;
+  font-family: t.$font-serif;
+  font-size: t.$text-heading;
+  cursor: pointer;
+
+  &.on {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--surface);
+  }
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: t.$radius-md;
+  font-size: t.$text-body;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.switch {
+  width: 36px;
+  height: 20px;
+  border-radius: t.$radius-pill;
+  background: var(--chip);
+  position: relative;
+  transition: background t.$transition-fast;
+
+  .knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: left t.$transition-fast;
+    box-shadow: t.$shadow-knob;
+  }
+
+  &.on {
+    background: var(--accent);
+
+    .knob {
+      left: 18px;
+    }
+  }
+}
+
+.diet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.chip {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  border-radius: t.$radius-pill;
+  font-size: t.$text-caption;
+  cursor: pointer;
+
+  &.on {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--surface);
+  }
+}
+
+.note-field {
+  margin-top: 26px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 90px;
+  margin-top: 6px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: t.$radius-input;
+  font-family: t.$font-sans;
+  font-size: t.$text-body;
+  color: var(--ink);
+  resize: none;
+  outline: none;
+}
+
+.confirmation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: 30px;
+
+  h2 {
+    margin: 24px 0 6px;
+  }
+
+  .outro {
+    line-height: 1.55;
+    max-width: 260px;
+  }
+}
+
+.summary {
+  margin-top: 26px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: t.$radius-md;
+  width: 100%;
+  text-align: left;
+
+  .summary-name {
+    font-family: t.$font-serif;
+    font-size: t.$text-heading;
+    margin-top: 4px;
+  }
+
+  .summary-status {
+    font-size: t.$text-caption;
+    color: var(--sub);
+    margin-top: 2px;
+  }
+}
+
+footer {
+  padding: 12px t.$space-6 20px;
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+}
+
+@media (min-width: 900px) {
+  :host {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+}

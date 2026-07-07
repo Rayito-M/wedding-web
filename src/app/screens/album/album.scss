@@ -1,0 +1,124 @@
+@use '../../../styles/tokens' as t;
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+header {
+  padding: 8px t.$space-6 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.title-block {
+  padding: 14px t.$space-6 8px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  h1 {
+    font-family: t.$font-serif;
+    font-weight: 400;
+    font-size: 34px;
+    line-height: 1;
+  }
+
+  .sub {
+    font-size: t.$text-caption;
+    color: var(--sub);
+    margin-top: 6px;
+  }
+}
+
+.fab {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+.content {
+  padding: 4px t.$space-6 8px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filter {
+  padding: 6px 12px;
+  border: none;
+  background: var(--chip);
+  color: var(--ink);
+  border-radius: t.$radius-pill;
+  font-size: t.$text-micro;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &.on {
+    background: var(--accent);
+    color: var(--surface);
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+
+  app-photo-placeholder {
+    border-radius: t.$radius-input;
+  }
+}
+
+.hint {
+  margin-top: 14px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: t.$radius-md;
+  text-align: center;
+  font-size: t.$text-caption;
+  color: var(--sub);
+
+  strong {
+    color: var(--accent);
+  }
+}
+
+// Album gets a wider column and 3–4 grid columns on desktop.
+@media (min-width: 900px) {
+  :host {
+    max-width: 840px;
+    margin: 0 auto;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

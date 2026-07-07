@@ -1,0 +1,33 @@
+<app-decor-sun class="sun" [size]="desktop() ? 130 : 90" />
+
+<header>
+  <app-pill>Save the date</app-pill>
+  <span class="loc">GRANADA · ES</span>
+</header>
+
+<div class="center">
+  <h1 class="names">
+    <span class="name">Sara</span>
+    <span class="fish">
+      <app-decor-fish-pair [size]="desktop() ? 420 : 200" />
+    </span>
+    <span class="quote">«&nbsp;Como la trucha al trucho&nbsp;»</span>
+    <span class="name">Christophe</span>
+  </h1>
+
+  <div class="date">
+    <span class="rule"></span>
+    <span class="value">5 June 2027</span>
+    <span class="rule"></span>
+  </div>
+</div>
+
+<div class="bottom">
+  <div class="alhambra">
+    <app-decor-alhambra [w]="desktop() ? 900 : 360" />
+  </div>
+  <div class="cta">
+    <button app-btn [full]="!desktop()" (click)="open()">Open invitation</button>
+    <div class="caption">Palacio de los Córdova · Granada</div>
+  </div>
+</div>

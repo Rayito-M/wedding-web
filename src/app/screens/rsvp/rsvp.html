@@ -1,0 +1,106 @@
+<header>
+  <app-monogram [size]="20" />
+  <span class="header-meta">RSVP · STEP {{ step() + 1 }}/3</span>
+</header>
+
+<div class="content" [formGroup]="form">
+  @if (step() === 0) {
+    <div class="step">
+      <h2>Will you join us?</h2>
+      <p class="sub">Please reply by 1 May. We can't wait.</p>
+
+      <div class="field name-field">
+        <div class="label">Your name</div>
+        <input type="text" formControlName="name" />
+      </div>
+
+      <div class="field">
+        <div class="label">Attending?</div>
+        <div class="choices">
+          <button
+            type="button"
+            class="choice"
+            [class.on]="form.controls.attending.value === 'yes'"
+            (click)="setAttending('yes')"
+          >
+            With joy
+          </button>
+          <button
+            type="button"
+            class="choice"
+            [class.on]="form.controls.attending.value === 'no'"
+            (click)="setAttending('no')"
+          >
+            Sadly no
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <button type="button" class="toggle-row" (click)="togglePlusOne()">
+          Bringing a plus-one
+          <span class="switch" [class.on]="form.controls.plusOne.value">
+            <span class="knob"></span>
+          </span>
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (step() === 1) {
+    <div class="step">
+      <h2 class="table-title">At the table</h2>
+      <p class="sub">Any dietary preferences?</p>
+
+      <div class="diet">
+        @for (option of dietOptions; track option) {
+          <button
+            type="button"
+            class="chip"
+            [class.on]="form.controls.diet.value.includes(option)"
+            (click)="toggleDiet(option)"
+          >
+            {{ option }}
+          </button>
+        }
+      </div>
+
+      <div class="note-field">
+        <div class="label">A note for us (optional)</div>
+        <textarea formControlName="note" placeholder="A song to dance to, a memory…"></textarea>
+      </div>
+    </div>
+  }
+
+  @if (step() === 2) {
+    <div class="step confirmation">
+      <app-decor-fish-pair [size]="120" />
+      <h2>{{ form.controls.attending.value === 'yes' ? 'See you in June' : 'You’ll be missed' }}</h2>
+      <p class="sub outro">
+        {{
+          form.controls.attending.value === 'yes'
+            ? 'Your reply is in. We’ll send travel details and the schedule closer to the day.'
+            : 'Thank you for letting us know. We’ll be thinking of you on the day.'
+        }}
+      </p>
+      <div class="summary">
+        <div class="label confirmed">Reply confirmed</div>
+        <div class="summary-name">{{ form.controls.name.value }}</div>
+        <div class="summary-status">{{ statusLine() }}</div>
+      </div>
+    </div>
+  }
+</div>
+
+<footer>
+  @if (step() === 1) {
+    <button app-btn [primary]="false" (click)="back()">Back</button>
+  }
+  @if (step() < 2) {
+    <button app-btn [full]="true" (click)="continue()">
+      {{ step() === 1 ? 'Send reply' : 'Continue' }}
+    </button>
+  } @else {
+    <button app-btn [primary]="false" [full]="true" (click)="edit()">Edit reply</button>
+  }
+</footer>

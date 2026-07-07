@@ -1,0 +1,72 @@
+<header>
+  <app-monogram [size]="18" />
+  <span class="header-meta">ALBAICÍN · GR</span>
+</header>
+
+<div class="title-block">
+  <h1>Getting there</h1>
+  <p class="sub">Fly to Granada (GRX) · 20 min to venue.</p>
+</div>
+
+<!-- Stylized map — Granada: Alhambra hill, Darro river, Albaicín.
+     Production: replace with a real map (Leaflet/Mapbox) styled to theme,
+     or keep the illustration. -->
+<div class="map">
+  <svg width="100%" height="100%" viewBox="0 0 360 140" preserveAspectRatio="none" aria-hidden="true">
+    <!-- Sierra Nevada peaks far back -->
+    <path
+      d="M0 40 L40 16 L80 32 L130 12 L180 28 L230 14 L280 30 L320 20 L360 32 L360 70 L0 70 Z"
+      style="fill: var(--accent-3)"
+      opacity="0.35"
+    />
+    <!-- Alhambra hill silhouette (right) -->
+    <path
+      d="M180 70 Q230 50, 260 60 Q300 50, 360 65 L360 100 L180 100 Z"
+      style="fill: var(--accent-3)"
+      opacity="0.55"
+    />
+    <!-- Albaicín hill (left) -->
+    <path
+      d="M0 80 Q40 60, 90 70 Q130 60, 180 75 L180 100 L0 100 Z"
+      style="fill: var(--accent-3)"
+      opacity="0.5"
+    />
+    <!-- Darro river — wavy line between the two hills -->
+    <path
+      d="M0 96 Q 60 100, 120 96 T 240 100 T 360 96"
+      style="stroke: var(--accent)"
+      stroke-width="1.2"
+      fill="none"
+      opacity="0.7"
+    />
+    <!-- roads -->
+    <path
+      d="M40 110 Q 120 105, 200 100 T 340 95"
+      style="stroke: var(--line)"
+      stroke-width="1"
+      fill="none"
+      stroke-dasharray="3 4"
+    />
+    <!-- pin — Palacio de los Córdova, at foot of the Alhambra -->
+    <circle cx="220" cy="82" r="6" style="fill: var(--accent)" />
+    <circle cx="220" cy="82" r="12" style="fill: var(--accent)" opacity="0.25" />
+  </svg>
+  <div class="map-label">Palacio de los Córdova</div>
+  <div class="river-label">río Darro</div>
+</div>
+
+<div class="stays">
+  <div class="label section-label">Stays nearby</div>
+  @for (s of stays; track s.name; let last = $last) {
+    <div class="stay" [class.last]="last">
+      <app-photo-placeholder class="thumb" [label]="s.tag.slice(0, 4)" />
+      <div class="info">
+        <div class="row">
+          <div class="name">{{ s.name }}</div>
+          <div class="price">{{ s.price }}</div>
+        </div>
+        <div class="meta">{{ s.km }} · <span class="tag">{{ s.tag }}</span></div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,113 @@
+@use '../../../styles/tokens' as t;
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+header {
+  padding: 8px t.$space-6 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.title-block {
+  padding: 14px t.$space-6 6px;
+
+  h1 {
+    font-family: t.$font-serif;
+    font-weight: 400;
+    font-size: t.$text-display-lg;
+    line-height: 1;
+  }
+
+  .sub {
+    font-size: t.$text-caption;
+    color: var(--sub);
+    margin-top: 6px;
+  }
+}
+
+.timeline {
+  padding: 14px t.$space-6 8px;
+}
+
+.item {
+  display: flex;
+  gap: 14px;
+  padding-bottom: 18px;
+  position: relative;
+}
+
+.time {
+  width: 50px;
+  flex-shrink: 0;
+  padding-top: 2px;
+  font-family: t.$font-serif;
+  font-size: t.$text-heading;
+  color: var(--accent);
+}
+
+.rail {
+  position: relative;
+  width: 14px;
+  flex-shrink: 0;
+
+  .dot {
+    position: absolute;
+    top: 6px;
+    left: 5px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .line {
+    position: absolute;
+    top: 12px;
+    left: 6.5px;
+    bottom: -18px;
+    width: 1px;
+    background: var(--line);
+  }
+}
+
+.body {
+  flex: 1;
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .item-title {
+    font-size: t.$text-body-lg;
+    font-weight: 500;
+  }
+
+  .tag {
+    font-size: 9px;
+    padding: 2px 8px;
+    background: var(--chip);
+    color: var(--sub);
+    border-radius: t.$radius-pill;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .item-sub {
+    font-size: t.$text-caption;
+    color: var(--sub);
+    margin-top: 2px;
+  }
+}
+
+@media (min-width: 900px) {
+  :host {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+}

@@ -1,0 +1,81 @@
+<header>
+  <app-monogram [size]="18" />
+  <div class="who">
+    <span class="header-meta">COUPLE</span>
+    <span class="avatar">cs</span>
+  </div>
+</header>
+
+<div class="greeting">
+  <div class="hello">Buenos días, Sara.</div>
+  <h1><span class="accent">{{ dash.daysToGo() }} days</span> to go.</h1>
+</div>
+
+<div class="content">
+  <!-- RSVP stats -->
+  <div class="stats-card">
+    <app-decor-fish class="deco-fish" [w]="60" [flip]="true" />
+    <app-decor-sun class="deco-sun" [size]="60" />
+    <app-decor-wave class="deco-wave" [w]="120" />
+
+    <div class="stats">
+      <div class="stat">
+        <div class="value accent">{{ dash.rsvp().yes }}</div>
+        <div class="label stat-label">Yes</div>
+      </div>
+      <div class="stat">
+        <div class="value">{{ dash.rsvp().pending }}</div>
+        <div class="label stat-label">Pending</div>
+      </div>
+      <div class="stat">
+        <div class="value">{{ dash.rsvp().no }}</div>
+        <div class="label stat-label">No</div>
+      </div>
+    </div>
+    <div class="progress">
+      <div class="fill" [style.width.%]="dash.repliedPct()"></div>
+    </div>
+    <div class="caption">
+      {{ dash.repliedPct() }}% of {{ dash.rsvp().total }} guests have replied
+    </div>
+  </div>
+
+  <!-- quick tiles -->
+  <div class="tiles">
+    <div class="tile">
+      <div class="label">Budget</div>
+      <div class="tile-value">{{ dash.budget().spent }}</div>
+      <div class="tile-sub">{{ dash.budget().total }}</div>
+    </div>
+    <div class="tile">
+      <div class="label">Vendors</div>
+      <div class="tile-value">{{ dash.vendors().value }}</div>
+      <div class="tile-sub">{{ dash.vendors().sub }}</div>
+    </div>
+  </div>
+
+  <!-- tasks -->
+  <div class="tasks">
+    <div class="tasks-header">
+      <div class="label">This week</div>
+      <span class="see-all">See all</span>
+    </div>
+    @for (task of dash.tasks(); track task.t; let i = $index; let last = $last) {
+      <div class="task" [class.last]="last">
+        <button
+          type="button"
+          class="check"
+          [class.done]="task.done"
+          (click)="dash.toggleTask(i)"
+          [attr.aria-label]="task.done ? 'Mark not done' : 'Mark done'"
+        >
+          @if (task.done) {
+            ✓
+          }
+        </button>
+        <div class="task-text" [class.done]="task.done">{{ task.t }}</div>
+        <div class="due">{{ task.due }}</div>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,201 @@
+@use '../../../styles/tokens' as t;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 12px t.$space-7 t.$space-7;
+  position: relative;
+}
+
+.sun {
+  position: absolute;
+  top: 50px;
+  right: 24px;
+  opacity: 0.9;
+  z-index: 0;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.loc {
+  font-size: t.$text-label;
+  color: var(--sub);
+  letter-spacing: 0.12em;
+}
+
+.center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.names {
+  display: block;
+  font-family: t.$font-serif;
+  font-weight: 400;
+  font-size: t.$text-display-xl;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-align: center;
+}
+
+.name {
+  display: block;
+}
+
+.fish {
+  display: flex;
+  justify-content: center;
+  margin: 32px 0 14px;
+}
+
+.quote {
+  display: block;
+  font-family: t.$font-serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--accent);
+  letter-spacing: 0;
+  line-height: 1.35;
+  padding: 0 10px;
+  margin-bottom: 32px;
+}
+
+// Sits in the lower gap, midway between "Christophe" and the Alhambra
+// silhouette, without affecting where the name block is centered.
+.date {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  .rule {
+    height: 1px;
+    flex: 1;
+    background: var(--line);
+  }
+
+  .value {
+    font-family: t.$font-serif;
+    font-size: t.$text-display-sm;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+}
+
+.bottom {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alhambra {
+  margin: 0 (-(t.$space-7)) 4px;
+  padding: 0 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.cta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.caption {
+  text-align: center;
+  font-size: t.$text-micro;
+  color: var(--sub);
+  letter-spacing: 0.08em;
+}
+
+// ── HD landscape (per ScreenWelcomeLandscape, 1280×720 reference) ──
+@media (min-width: 1024px) {
+  :host {
+    max-width: 1280px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px 56px 28px;
+  }
+
+  .sun {
+    top: 80px;
+    right: 80px;
+  }
+
+  .loc {
+    font-size: t.$text-micro;
+    letter-spacing: 0.18em;
+  }
+
+  .names {
+    font-size: clamp(72px, 8.6vw, 110px);
+  }
+
+  .fish {
+    margin: 20px 0 12px;
+  }
+
+  .quote {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .date {
+    position: static;
+    margin: 36px auto 0;
+    width: 460px;
+    gap: 22px;
+
+    .value {
+      font-size: 30px;
+    }
+  }
+
+  .bottom {
+    align-items: center;
+    gap: 16px;
+  }
+
+  .alhambra {
+    margin: 0;
+    padding: 0;
+  }
+
+  .cta {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+
+    button[app-btn] {
+      padding: 14px 36px;
+      font-size: 14px;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  .caption {
+    font-size: t.$text-caption;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+}

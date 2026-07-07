@@ -1,0 +1,89 @@
+<header>
+  <app-monogram [size]="18" />
+  <div class="who">
+    <span class="header-meta">INVITEE</span>
+    <span class="avatar">{{ guests.guest().initial }}</span>
+  </div>
+</header>
+
+<div class="content">
+  <!-- Greeting -->
+  <div class="hello">Hola, {{ guests.guest().name }}.</div>
+  <h1>See you in <span class="accent">{{ guests.daysToGo() }} days</span></h1>
+
+  <!-- Countdown card -->
+  <div class="card countdown">
+    <app-decor-fish class="deco-fish" [w]="48" [flip]="true" />
+    <div class="label">5 June 2027 · Granada</div>
+    <div class="venue">Palacio de los Córdova</div>
+    <div class="progress">
+      <div class="fill" style="width: 76%"></div>
+    </div>
+    <div class="caption">{{ guests.daysToGo() }} days to go</div>
+  </div>
+
+  <!-- RSVP confirmed card -->
+  <div class="card rsvp-card">
+    <div class="tick">✓</div>
+    <div class="rsvp-info">
+      <div class="label">Your RSVP</div>
+      <div class="rsvp-title">Confirmed for {{ guests.guest().partySize }}</div>
+      <div class="rsvp-sub">{{ guests.guest().partyLabel }} · {{ guests.guest().dietLabel }}</div>
+    </div>
+    <a class="edit" routerLink="/rsvp">Edit</a>
+  </div>
+
+  <!-- Quick tiles -->
+  <div class="tiles">
+    <div class="tile">
+      <div class="label tile-label">Your seat</div>
+      <div class="tile-value">{{ guests.guest().seat }}</div>
+    </div>
+    <div class="tile">
+      <div class="label tile-label">Stay</div>
+      <div class="tile-value">{{ guests.guest().stay }}</div>
+    </div>
+  </div>
+
+  <!-- Announcement from the couple -->
+  <div class="announcement">
+    <div class="label from">From S&amp;C</div>
+    <div class="announcement-body">
+      <div class="quote">
+        "Bus from Plaza Nueva at 15:00 — don't be late, we'll be the ones smiling!"
+      </div>
+      <div class="when">3 days ago</div>
+    </div>
+  </div>
+
+  <!-- Today's schedule preview -->
+  <div class="schedule">
+    <div class="schedule-header">
+      <div class="label">The day · highlights</div>
+      <a class="all" routerLink="/schedule">All</a>
+    </div>
+    @for (it of guests.guest().schedule; track it.t; let last = $last) {
+      <div class="item" [class.last]="last">
+        <div class="time">{{ it.t }}</div>
+        <div class="body">
+          <div class="item-title">{{ it.title }}</div>
+          <div class="item-sub">{{ it.sub }}</div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Photos preview -->
+  <a class="card photos" routerLink="/album">
+    <div class="stack">
+      <span class="bubble a"></span>
+      <span class="bubble b"></span>
+      <span class="bubble c"></span>
+    </div>
+    <div class="photos-info">
+      <div class="photos-title">247 photos in the live album</div>
+      <div class="photos-sub">Add yours during the day</div>
+    </div>
+    <span class="arrow">→</span>
+  </a>
+</div>

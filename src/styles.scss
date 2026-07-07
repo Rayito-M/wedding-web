@@ -1,0 +1,51 @@
+// Sara & Christophe · Wedding App — global styles
+@use 'styles/tokens' as t;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: t.$font-sans;
+  font-size: t.$text-body;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button {
+  font-family: t.$font-sans;
+}
+
+// Uppercase micro label — section headers, field labels
+.label {
+  font-size: t.$text-label;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+// Header meta right of the monogram row ("RSVP · STEP 1/3", "SAT · 5 JUN"…)
+.header-meta {
+  font-size: t.$text-label;
+  color: var(--sub);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}

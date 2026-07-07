@@ -1,0 +1,227 @@
+@use '../../../styles/tokens' as t;
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+header {
+  padding: 8px t.$space-6 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: t.$font-serif;
+  font-size: t.$text-micro;
+}
+
+.greeting {
+  padding: 14px t.$space-6 4px;
+
+  .hello {
+    font-size: t.$text-caption;
+    color: var(--sub);
+  }
+
+  h1 {
+    font-family: t.$font-serif;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 1.05;
+    margin-top: 4px;
+  }
+
+  .accent {
+    color: var(--accent);
+  }
+}
+
+.content {
+  padding: 14px t.$space-6 8px;
+}
+
+.stats-card {
+  padding: 16px;
+  background: var(--surface);
+  border-radius: t.$radius-card;
+  border: 1px solid var(--line);
+  position: relative;
+  overflow: hidden;
+}
+
+.deco-fish {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  opacity: 0.85;
+}
+
+.deco-sun {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+}
+
+.deco-wave {
+  position: absolute;
+  bottom: -6px;
+  left: -10px;
+  opacity: 0.6;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+}
+
+.stat {
+  .value {
+    font-family: t.$font-serif;
+    font-size: 30px;
+    line-height: 1;
+    color: var(--ink);
+
+    &.accent {
+      color: var(--accent);
+    }
+  }
+
+  .stat-label {
+    margin-top: 4px;
+  }
+}
+
+.progress {
+  height: 4px;
+  background: var(--chip);
+  border-radius: t.$radius-pill;
+  margin-top: 16px;
+  overflow: hidden;
+
+  .fill {
+    height: 100%;
+    background: var(--accent);
+  }
+}
+
+.caption {
+  font-size: t.$text-label;
+  color: var(--sub);
+  margin-top: 6px;
+  letter-spacing: 0.06em;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tile {
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: t.$radius-md;
+
+  .tile-value {
+    font-family: t.$font-serif;
+    font-size: t.$text-display-sm;
+    margin-top: 2px;
+  }
+
+  .tile-sub {
+    font-size: t.$text-micro;
+    color: var(--sub);
+  }
+}
+
+.tasks {
+  margin-top: 16px;
+}
+
+.tasks-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+
+  .see-all {
+    font-size: t.$text-micro;
+    color: var(--accent);
+  }
+}
+
+.task {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+
+  &.last {
+    border-bottom: none;
+  }
+}
+
+.check {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: transparent;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--surface);
+  font-size: 10px;
+  cursor: pointer;
+
+  &.done {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+}
+
+.task-text {
+  flex: 1;
+  font-size: t.$text-body;
+  color: var(--ink);
+
+  &.done {
+    color: var(--sub);
+    text-decoration: line-through;
+  }
+}
+
+.due {
+  font-size: t.$text-label;
+  color: var(--sub);
+  letter-spacing: 0.06em;
+}
+
+@media (min-width: 900px) {
+  :host {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+}
