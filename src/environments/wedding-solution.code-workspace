@@ -1,0 +1,17 @@
+{
+  "folders": [
+	{
+		"name": "design_handoff_wedding_app",
+		"path": "../../../design_handoff_wedding_app"
+	},
+	{
+		"name": "wedding-backend",
+		"path": "../../../wedding-backend"
+	},
+	{
+		"name": "wedding-app",
+		"path": "../.."
+	}
+],
+  "settings": {}
+}

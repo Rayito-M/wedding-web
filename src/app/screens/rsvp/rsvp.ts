@@ -1,32 +1,49 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import { RsvpReply, RsvpService } from '../../core/rsvp.service';
 import { Btn } from '../../shared/button/button';
 import { DecorFishPair } from '../../shared/decor/fish-pair';
 import { Monogram } from '../../shared/monogram/monogram';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 export const DIET_OPTIONS = [
-  'Vegetarian',
-  'Vegan',
-  'Pescatarian',
-  'Gluten-free',
-  'Nut allergy',
-  'No alcohol',
+  'vegetarian',
+  'vegan',
+  'pescatarian',
+  'glutenFree',
+  'nutAllergy',
+  'noAlcohol',
 ] as const;
 
 @Component({
   selector: 'app-rsvp',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, Monogram, Btn, DecorFishPair],
+  imports: [ReactiveFormsModule, Monogram, Btn, DecorFishPair, TranslatePipe],
   templateUrl: './rsvp.html',
   styleUrl: './rsvp.scss',
 })
 export class Rsvp {
   private readonly rsvpService = inject(RsvpService);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly translateService = inject(TranslateService);
 
   protected readonly dietOptions = DIET_OPTIONS;
   protected readonly step = signal(0);
+
+  protected readonly confirmationTitle = computed(() => {
+    const isAttending = this.form.controls.attending.value === 'yes';
+    return this.translateService.instant(
+      isAttending ? 'rsvp.step3.yesTitle' : 'rsvp.step3.noTitle',
+    );
+  });
+
+  protected readonly confirmationMessage = computed(() => {
+    const isAttending = this.form.controls.attending.value === 'yes';
+    return this.translateService.instant(
+      isAttending ? 'rsvp.step3.yesMessage' : 'rsvp.step3.noMessage',
+    );
+  });
 
   protected readonly form = this.fb.group({
     name: [this.rsvpService.reply()?.name ?? 'Laura Mendoza'],

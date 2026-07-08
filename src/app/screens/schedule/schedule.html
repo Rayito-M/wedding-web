@@ -1,15 +1,15 @@
 <header>
   <app-monogram [size]="18" />
-  <span class="header-meta">SAT · 5 JUN</span>
+  <span class="header-meta">{{ 'schedule.header' | t }}</span>
 </header>
 
 <div class="title-block">
-  <h1>The day</h1>
-  <p class="sub">From afternoon into the small hours.</p>
+  <h1>{{ 'schedule.title' | t }}</h1>
+  <p class="sub">{{ 'schedule.subtitle' | t }}</p>
 </div>
 
 <div class="timeline">
-  @for (it of items; track it.t; let last = $last) {
+  @for (it of items(); track it.t; let last = $last) {
     <div class="item">
       <div class="time">{{ it.t }}</div>
       <div class="rail">

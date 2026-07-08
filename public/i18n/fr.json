@@ -1,0 +1,155 @@
+{
+  "grenade": "grenade",
+  "spain": "espagne",
+  "welcome": {
+    "saveDate": "Reservez la date",
+    "tagline": "Como la trucha al trucho",
+    "cta": "Ouvrir l'invitation",
+    "venue": "Palais des Córdova · Grenade"
+  },
+  "schedule": {
+    "title": "Le jour J",
+    "subtitle": "De l'après-midi jusqu'aux petites heures.",
+    "header": "SAM · 5 JUI",
+    "timeline": [
+      {
+        "time": "15:30",
+        "title": "Bienvenue",
+        "subtitle": "Apéritifs sous les oliviers",
+        "tag": "Arrivée"
+      },
+      {
+        "time": "16:30",
+        "title": "Cérémonie",
+        "subtitle": "Dans la cour",
+        "tag": "Principal"
+      },
+      {
+        "time": "17:30",
+        "title": "Apéritivo",
+        "subtitle": "Vermouth & jamón",
+        "tag": "Bouchées"
+      },
+      {
+        "time": "19:00",
+        "title": "Dîner",
+        "subtitle": "Table longue, à la chandelle",
+        "tag": "Assis"
+      },
+      {
+        "time": "22:00",
+        "title": "Danse",
+        "subtitle": "Jusqu'au matin",
+        "tag": "Libre"
+      },
+      {
+        "time": "03:00",
+        "title": "Petits encas",
+        "subtitle": "Tortilla & café",
+        "tag": "Snack"
+      }
+    ]
+  },
+  "rsvp": {
+    "header": "RSVP",
+    "step": "ÉTAPE {{current}}/3",
+    "step1": {
+      "title": "Nous rejoindrez-vous ?",
+      "subtitle": "Veuillez répondre avant le 1er mai. Nous avons hâte.",
+      "nameLabel": "Votre nom",
+      "attendingLabel": "Allez-vous venir ?",
+      "yesOption": "Avec joie",
+      "noOption": "Malheureusement non",
+      "plusOneLabel": "Apportez un plus-un"
+    },
+    "step2": {
+      "title": "À table",
+      "subtitle": "Avez-vous des préférences alimentaires ?",
+      "noteLabel": "Un message pour nous (optionnel)",
+      "notePlaceholder": "Une chanson à danser, un souvenir…"
+    },
+    "step3": {
+      "yesTitle": "À bientôt en juin",
+      "noTitle": "Vous nous manquerez",
+      "yesMessage": "Votre réponse est enregistrée. Nous vous enverrons les détails de voyage et le programme plus tard.",
+      "noMessage": "Merci de nous le faire savoir. Nous penserons à vous ce jour-là.",
+      "replyConfirmed": "Réponse confirmée",
+      "back": "Retour",
+      "continue": "Continuer",
+      "send": "Envoyer la réponse",
+      "edit": "Modifier la réponse"
+    },
+    "diet": {
+      "vegetarian": "Végétarien",
+      "vegan": "Vegan",
+      "pescatarian": "Pescétarien",
+      "glutenFree": "Sans gluten",
+      "nutAllergy": "Allergie aux fruits secs",
+      "noAlcohol": "Sans alcool"
+    }
+  },
+  "dashboard": {
+    "greeting": "Buenos días, {{name}}.",
+    "daysToGo": "{{count}} jours avant le grand jour.",
+    "rsvp": {
+      "yes": "Oui",
+      "pending": "En attente",
+      "no": "Non",
+      "progress": "{{percent}}% de {{total}} invités ont répondu"
+    },
+    "budget": "Budget",
+    "vendors": "Prestataires",
+    "thisWeek": "Cette semaine",
+    "seeAll": "Voir tout"
+  },
+  "invitee": {
+    "greeting": "Hola, {{name}}.",
+    "daysToGo": "À bientôt dans {{count}} jours",
+    "countdown": {
+      "date": "5 juin 2027 · Grenade",
+      "venue": "Palais des Córdova",
+      "daysToGo": "{{count}} jours à attendre"
+    },
+    "rsvp": {
+      "label": "Votre RSVP",
+      "confirmedFor": "Confirmé pour {{partySize}}",
+      "edit": "Modifier"
+    },
+    "yourSeat": "Votre place",
+    "stay": "Logement",
+    "from": "De S&C",
+    "busNote": "Bus de Plaza Nueva à 15:00 — ne soyez pas en retard, ce seront nous qui sourirons !",
+    "busNoteDate": "il y a 3 jours",
+    "schedule": {
+      "title": "Le jour J · moments clés",
+      "all": "Tout"
+    },
+    "photos": {
+      "title": "{{count}} photos dans l'album en direct",
+      "subtitle": "Ajoutez les vôtres pendant la journée"
+    }
+  },
+  "travel": {
+    "header": "ALBAICÍN · GR",
+    "title": "Comment venir",
+    "subtitle": "Vol vers Grenade (GRX) · 20 min de la venue.",
+    "venue": "Palais des Córdova",
+    "river": "río Darro",
+    "staysNearby": "Où rester à proximité"
+  },
+  "album": {
+    "title": "Notre album",
+    "subtitle": "Partagé par vous tous.",
+    "addPhoto": "Ajouter une photo",
+    "photoCount": "EN DIRECT · {{count}} PHOTOS",
+    "hint": "Tapez <strong>+</strong> pour ajouter une photo du jour."
+  },
+  "shared": {
+    "couple": "COUPLE",
+    "invitee": "INVITÉ",
+    "back": "Retour",
+    "continue": "Continuer",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
+  }
+}

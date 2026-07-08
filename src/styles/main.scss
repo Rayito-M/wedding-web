@@ -1,5 +1,5 @@
 // Sara & Christophe · Wedding App — global styles
-@use 'styles/tokens' as t;
+@use 'tokens' as t;
 
 *,
 *::before,
@@ -49,3 +49,8 @@ button {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+
+.capitalize {
+  text-transform: capitalize;
+}
+

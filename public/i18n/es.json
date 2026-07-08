@@ -1,0 +1,155 @@
+{
+  "grenade": "granada",
+  "spain": "españa",
+  "welcome": {
+    "saveDate": "Marca el calendario",
+    "tagline": "Como la trucha al trucho",
+    "cta": "Abrir invitación",
+    "venue": "Palacio de los Córdova · Granada"
+  },
+  "schedule": {
+    "title": "El día",
+    "subtitle": "De la tarde hasta la madrugada.",
+    "header": "SÁB · 5 JUN",
+    "timeline": [
+      {
+        "time": "15:30",
+        "title": "Bienvenida",
+        "subtitle": "Bebidas bajo los olivos",
+        "tag": "Llegada"
+      },
+      {
+        "time": "16:30",
+        "title": "Ceremonia",
+        "subtitle": "En el patio",
+        "tag": "Principal"
+      },
+      {
+        "time": "17:30",
+        "title": "Aperitivo",
+        "subtitle": "Vermouth & jamón",
+        "tag": "Picoteo"
+      },
+      {
+        "time": "19:00",
+        "title": "Cena",
+        "subtitle": "Mesa larga, a la luz de las velas",
+        "tag": "Sentados"
+      },
+      {
+        "time": "22:00",
+        "title": "Baile",
+        "subtitle": "Hasta la madrugada",
+        "tag": "Libre"
+      },
+      {
+        "time": "03:00",
+        "title": "Picoteo nocturno",
+        "subtitle": "Tortilla & café",
+        "tag": "Snack"
+      }
+    ]
+  },
+  "rsvp": {
+    "header": "RSVP",
+    "step": "PASO {{current}}/3",
+    "step1": {
+      "title": "¿Nos acompañarás?",
+      "subtitle": "Por favor, responde antes del 1 de mayo. No podemos esperar.",
+      "nameLabel": "Tu nombre",
+      "attendingLabel": "¿Asistirás?",
+      "yesOption": "Con gusto",
+      "noOption": "Lamentablemente no",
+      "plusOneLabel": "Traer acompañante"
+    },
+    "step2": {
+      "title": "En la mesa",
+      "subtitle": "¿Tienes preferencias alimentarias?",
+      "noteLabel": "Un mensaje para nosotros (opcional)",
+      "notePlaceholder": "Una canción para bailar, un recuerdo…"
+    },
+    "step3": {
+      "yesTitle": "Hasta junio",
+      "noTitle": "Te echaremos de menos",
+      "yesMessage": "Tu respuesta está registrada. Te enviaremos los detalles del viaje y el programa más adelante.",
+      "noMessage": "Gracias por comunicárnoslo. Estaremos pensando en ti ese día.",
+      "replyConfirmed": "Respuesta confirmada",
+      "back": "Atrás",
+      "continue": "Continuar",
+      "send": "Enviar respuesta",
+      "edit": "Editar respuesta"
+    },
+    "diet": {
+      "vegetarian": "Vegetariano",
+      "vegan": "Vegano",
+      "pescatarian": "Pescetariano",
+      "glutenFree": "Sin gluten",
+      "nutAllergy": "Alergia a frutos secos",
+      "noAlcohol": "Sin alcohol"
+    }
+  },
+  "dashboard": {
+    "greeting": "Buenos días, {{name}}.",
+    "daysToGo": "{{count}} días para el gran día.",
+    "rsvp": {
+      "yes": "Sí",
+      "pending": "Pendiente",
+      "no": "No",
+      "progress": "{{percent}}% de {{total}} invitados han respondido"
+    },
+    "budget": "Presupuesto",
+    "vendors": "Proveedores",
+    "thisWeek": "Esta semana",
+    "seeAll": "Ver todo"
+  },
+  "invitee": {
+    "greeting": "Hola, {{name}}.",
+    "daysToGo": "Nos vemos en {{count}} días",
+    "countdown": {
+      "date": "5 de junio de 2027 · Granada",
+      "venue": "Palacio de los Córdova",
+      "daysToGo": "{{count}} días falta"
+    },
+    "rsvp": {
+      "label": "Tu RSVP",
+      "confirmedFor": "Confirmado para {{partySize}}",
+      "edit": "Editar"
+    },
+    "yourSeat": "Tu asiento",
+    "stay": "Alojamiento",
+    "from": "De S&C",
+    "busNote": "Autobús desde Plaza Nueva a las 15:00 — ¡no llegues tarde, seremos nosotros los que sonreímos!",
+    "busNoteDate": "hace 3 días",
+    "schedule": {
+      "title": "El día · momentos clave",
+      "all": "Todo"
+    },
+    "photos": {
+      "title": "{{count}} fotos en el álbum en vivo",
+      "subtitle": "Añade las tuyas durante el día"
+    }
+  },
+  "travel": {
+    "header": "ALBAICÍN · GR",
+    "title": "Cómo llegar",
+    "subtitle": "Vuelo a Granada (GRX) · 20 min hasta la venue.",
+    "venue": "Palacio de los Córdova",
+    "river": "río Darro",
+    "staysNearby": "Dónde alojarse cerca"
+  },
+  "album": {
+    "title": "Nuestro álbum",
+    "subtitle": "Compartido por todos vosotros.",
+    "addPhoto": "Añadir una foto",
+    "photoCount": "EN DIRECTO · {{count}} FOTOS",
+    "hint": "Toca <strong>+</strong> para añadir una foto del día."
+  },
+  "shared": {
+    "couple": "PAREJA",
+    "invitee": "INVITADO",
+    "back": "Atrás",
+    "continue": "Continuar",
+    "cancel": "Cancelar",
+    "save": "Guardar"
+  }
+}

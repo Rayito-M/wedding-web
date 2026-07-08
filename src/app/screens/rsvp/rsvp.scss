@@ -15,7 +15,6 @@ header {
 }
 
 .content {
-  flex: 1;
   padding: 20px t.$space-6;
 }
 
@@ -28,6 +27,7 @@ header {
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: none;

@@ -10,14 +10,19 @@ main {
   display: flex;
   flex-direction: column;
 
-  > * {
-    flex: 1 0 auto;
-  }
+  // >* {
+  //   flex: 1 0 auto;
+  // }
 }
 
 // Mobile-first: bottom tab bar; ≥900px it swaps for the top nav.
 .top-nav {
   display: none;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
 }
 
 @media (min-width: 900px) {

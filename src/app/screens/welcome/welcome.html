@@ -1,23 +1,29 @@
 <app-decor-sun class="sun" [size]="desktop() ? 130 : 90" />
 
 <header>
-  <app-pill>Save the date</app-pill>
-  <span class="loc">GRANADA · ES</span>
+  <app-pill>{{ 'welcome.saveDate' | translate }}</app-pill>
+  <div class="selectors">
+    <app-theme-selector></app-theme-selector>
+    <app-language-selector></app-language-selector>
+  </div>
 </header>
 
 <div class="center">
   <h1 class="names">
-    <span class="name">Sara</span>
+    <span class="name">{{ brideName }}</span>
     <span class="fish">
       <app-decor-fish-pair [size]="desktop() ? 420 : 200" />
     </span>
-    <span class="quote">«&nbsp;Como la trucha al trucho&nbsp;»</span>
-    <span class="name">Christophe</span>
+    <span class="quote">{{ tagline }}</span>
+    <span class="name">{{ groomName }}</span>
   </h1>
 
   <div class="date">
     <span class="rule"></span>
-    <span class="value">5 June 2027</span>
+    <div class="date-content">
+      <span class="value first-letter">{{ date | date: 'fullDate' : '' : language }}</span>
+      <span class="location">{{ city | translate }} - {{ country | translate }}</span>
+    </div>
     <span class="rule"></span>
   </div>
 </div>
@@ -26,8 +32,9 @@
   <div class="alhambra">
     <app-decor-alhambra [w]="desktop() ? 900 : 360" />
   </div>
-  <div class="cta">
-    <button app-btn [full]="!desktop()" (click)="open()">Open invitation</button>
-    <div class="caption">Palacio de los Córdova · Granada</div>
-  </div>
+  <!-- <div class="cta">
+    <button app-btn [full]="!desktop()" (click)="open()">{{ 'welcome.cta' | translate }}</button>
+    <div class="caption">{{ 'welcome.venue' | t }}</div>
+  </div> -->
+  <div></div>
 </div>

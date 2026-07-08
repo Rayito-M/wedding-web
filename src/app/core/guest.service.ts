@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { WEDDING_DATE, daysUntilWedding } from './wedding-date';
+import { WEDDING_DATE, daysUntilWedding } from './helper';
 
 export interface PersonalScheduleItem {
   t: string;

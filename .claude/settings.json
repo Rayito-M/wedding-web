@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(timeout 30 npm start)",
+      "Bash(pkill -9 -f \"ng serve\")",
+      "Bash(pkill -9 -f \"node\")",
+      "Bash(npm start > /tmp/ng-serve.log 2>&1 & *)",
+      "Bash(kill -9 34569)",
+      "Bash(npm start *)",
+      "Bash(curl -s http://localhost:4200/assets/i18n/en.json)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  }
+}

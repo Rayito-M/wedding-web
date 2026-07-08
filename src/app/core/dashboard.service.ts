@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { daysUntilWedding } from './wedding-date';
+import { daysUntilWedding } from './helper';
 
 export interface DashboardTask {
   t: string;

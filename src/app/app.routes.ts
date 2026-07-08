@@ -6,9 +6,8 @@ import { coupleGuard } from './core/couple.guard';
 //   tabBar — bottom tab bar on mobile (<900px)
 //   topNav — top nav on desktop (≥900px)
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'welcome' },
   {
-    path: 'welcome',
+    path: '',
     loadComponent: () => import('./screens/welcome/welcome').then((m) => m.Welcome),
     title: 'Sara & Christophe · Save the date',
   },

@@ -1,0 +1,25 @@
+<div class="language-selector">
+  <button
+    type="button"
+    class="dropdown-toggle"
+    (click)="toggleDropdown()"
+    [attr.aria-expanded]="isOpen()"
+  >
+    {{ currentLanguage.toUpperCase() }}
+    <span class="icon">▼</span>
+  </button>
+  @if (isOpen()) {
+    <div class="dropdown-menu">
+      @for (lang of languages; track lang) {
+        <button
+          type="button"
+          class="dropdown-item"
+          [class.active]="currentLanguage === lang"
+          (click)="selectLanguage(lang); $event.stopPropagation()"
+        >
+          {{ lang.toUpperCase() }}
+        </button>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,27 @@
+<div class="theme-selector">
+  <button
+    type="button"
+    class="dropdown-toggle"
+    (click)="toggleDropdown()"
+    [attr.aria-expanded]="isOpen()"
+  >
+    <span class="swatch" [style.background]="currentTheme.accent"></span>
+    {{ currentTheme.label }}
+    <span class="icon">▼</span>
+  </button>
+  @if (isOpen()) {
+    <div class="dropdown-menu">
+      @for (theme of themes; track theme.id) {
+        <button
+          type="button"
+          class="dropdown-item"
+          [class.active]="currentTheme.id === theme.id"
+          (click)="selectTheme(theme.id); $event.stopPropagation()"
+        >
+          <span class="swatch" [style.background]="theme.accent"></span>
+          {{ theme.label }}
+        </button>
+      }
+    </div>
+  }
+</div>

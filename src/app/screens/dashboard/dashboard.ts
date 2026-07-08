@@ -4,11 +4,12 @@ import { DecorFish } from '../../shared/decor/fish';
 import { DecorSun } from '../../shared/decor/sun';
 import { DecorWave } from '../../shared/decor/wave';
 import { Monogram } from '../../shared/monogram/monogram';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Monogram, DecorFish, DecorSun, DecorWave],
+  imports: [Monogram, DecorFish, DecorSun, DecorWave, TranslatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })

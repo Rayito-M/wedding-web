@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { Monogram } from '../monogram/monogram';
 import { NAV_TABS } from '../nav-tabs';
 
@@ -19,6 +20,19 @@ import { NAV_TABS } from '../nav-tabs';
         </a>
       }
     </nav>
+    <div class="language-selector">
+      @for (lang of languages; track lang) {
+        <button
+          type="button"
+          [class.active]="currentLanguage() === lang"
+          (click)="setLanguage(lang)"
+          [attr.aria-label]="'Switch to ' + lang"
+          class="lang-btn"
+        >
+          {{ lang.toUpperCase() }}
+        </button>
+      }
+    </div>
   `,
   styles: `
     :host {
@@ -66,9 +80,43 @@ import { NAV_TABS } from '../nav-tabs';
       background: var(--accent);
       border: none;
     }
+    .language-selector {
+      display: flex;
+      gap: 0.4rem;
+      margin-left: 28px;
+    }
+    .lang-btn {
+      padding: 0.3rem 0.7rem;
+      border: 1px solid var(--line);
+      background: transparent;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--sub);
+      transition: all 0.2s ease;
+    }
+    .lang-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .lang-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--surface);
+    }
   `,
 })
 export class TopNav {
+  private readonly translateService = inject(TranslateService);
+
   readonly active = input('');
   protected readonly tabs = NAV_TABS;
+  protected readonly languages = ['en', 'fr', 'es'];
+  protected currentLanguage = this.translateService.currentLang;
+
+  setLanguage(lang: string): void {
+    this.translateService.use(lang);
+  }
 }

@@ -1,14 +1,14 @@
 <header>
   <app-monogram [size]="18" />
   <div class="who">
-    <span class="header-meta">COUPLE</span>
+    <span class="header-meta">{{ 'shared.couple' | t }}</span>
     <span class="avatar">cs</span>
   </div>
 </header>
 
 <div class="greeting">
-  <div class="hello">Buenos días, Sara.</div>
-  <h1><span class="accent">{{ dash.daysToGo() }} days</span> to go.</h1>
+  <div class="hello">{{ 'dashboard.greeting' | t: { name: 'Sara' } }}</div>
+  <h1><span class="accent">{{ dash.daysToGo() }}</span> {{ 'dashboard.daysToGo' | t }}</h1>
 </div>
 
 <div class="content">
@@ -21,34 +21,34 @@
     <div class="stats">
       <div class="stat">
         <div class="value accent">{{ dash.rsvp().yes }}</div>
-        <div class="label stat-label">Yes</div>
+        <div class="label stat-label">{{ 'dashboard.rsvp.yes' | t }}</div>
       </div>
       <div class="stat">
         <div class="value">{{ dash.rsvp().pending }}</div>
-        <div class="label stat-label">Pending</div>
+        <div class="label stat-label">{{ 'dashboard.rsvp.pending' | t }}</div>
       </div>
       <div class="stat">
         <div class="value">{{ dash.rsvp().no }}</div>
-        <div class="label stat-label">No</div>
+        <div class="label stat-label">{{ 'dashboard.rsvp.no' | t }}</div>
       </div>
     </div>
     <div class="progress">
       <div class="fill" [style.width.%]="dash.repliedPct()"></div>
     </div>
     <div class="caption">
-      {{ dash.repliedPct() }}% of {{ dash.rsvp().total }} guests have replied
+      {{ 'dashboard.rsvp.progress' | t: { percent: dash.repliedPct(), total: dash.rsvp().total } }}
     </div>
   </div>
 
   <!-- quick tiles -->
   <div class="tiles">
     <div class="tile">
-      <div class="label">Budget</div>
+      <div class="label">{{ 'dashboard.budget' | t }}</div>
       <div class="tile-value">{{ dash.budget().spent }}</div>
       <div class="tile-sub">{{ dash.budget().total }}</div>
     </div>
     <div class="tile">
-      <div class="label">Vendors</div>
+      <div class="label">{{ 'dashboard.vendors' | t }}</div>
       <div class="tile-value">{{ dash.vendors().value }}</div>
       <div class="tile-sub">{{ dash.vendors().sub }}</div>
     </div>
@@ -57,8 +57,8 @@
   <!-- tasks -->
   <div class="tasks">
     <div class="tasks-header">
-      <div class="label">This week</div>
-      <span class="see-all">See all</span>
+      <div class="label">{{ 'dashboard.thisWeek' | t }}</div>
+      <span class="see-all">{{ 'dashboard.seeAll' | t }}</span>
     </div>
     @for (task of dash.tasks(); track task.t; let i = $index; let last = $last) {
       <div class="task" [class.last]="last">

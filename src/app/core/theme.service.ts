@@ -38,6 +38,6 @@ export class ThemeService {
     } catch {
       // ignore
     }
-    return 'd';
+    return 'e';
   }
 }

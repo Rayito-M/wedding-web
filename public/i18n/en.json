@@ -1,0 +1,159 @@
+{
+  "welcome": {
+    "saveDate": "Save the date",
+    "location": "GRANADA · ES",
+    "couple": {
+      "bride": "Sara",
+      "groom": "Christophe",
+      "quote": "« Como la trucha al trucho »"
+    },
+    "date": "5 June 2027",
+    "cta": "Open invitation",
+    "venue": "Palacio de los Córdova · Granada"
+  },
+  "schedule": {
+    "title": "The day",
+    "subtitle": "From afternoon into the small hours.",
+    "header": "SAT · 5 JUN",
+    "timeline": [
+      {
+        "time": "15:30",
+        "title": "Welcome",
+        "subtitle": "Drinks under the olive trees",
+        "tag": "Arrival"
+      },
+      {
+        "time": "16:30",
+        "title": "Ceremony",
+        "subtitle": "In the courtyard",
+        "tag": "Main"
+      },
+      {
+        "time": "17:30",
+        "title": "Aperitivo",
+        "subtitle": "Vermouth & jamón",
+        "tag": "Bites"
+      },
+      {
+        "time": "19:00",
+        "title": "Dinner",
+        "subtitle": "Long table, candlelit",
+        "tag": "Seated"
+      },
+      {
+        "time": "22:00",
+        "title": "Dancing",
+        "subtitle": "Until the morning",
+        "tag": "Open"
+      },
+      {
+        "time": "03:00",
+        "title": "Late bites",
+        "subtitle": "Tortilla & coffee",
+        "tag": "Snack"
+      }
+    ]
+  },
+  "rsvp": {
+    "header": "RSVP",
+    "step": "STEP {{current}}/3",
+    "step1": {
+      "title": "Will you join us?",
+      "subtitle": "Please reply by 1 May. We can't wait.",
+      "nameLabel": "Your name",
+      "attendingLabel": "Attending?",
+      "yesOption": "With joy",
+      "noOption": "Sadly no",
+      "plusOneLabel": "Bringing a plus-one"
+    },
+    "step2": {
+      "title": "At the table",
+      "subtitle": "Any dietary preferences?",
+      "noteLabel": "A note for us (optional)",
+      "notePlaceholder": "A song to dance to, a memory…"
+    },
+    "step3": {
+      "yesTitle": "See you in June",
+      "noTitle": "You'll be missed",
+      "yesMessage": "Your reply is in. We'll send travel details and the schedule closer to the day.",
+      "noMessage": "Thank you for letting us know. We'll be thinking of you on the day.",
+      "replyConfirmed": "Reply confirmed",
+      "back": "Back",
+      "continue": "Continue",
+      "send": "Send reply",
+      "edit": "Edit reply"
+    },
+    "diet": {
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan",
+      "pescatarian": "Pescatarian",
+      "glutenFree": "Gluten-free",
+      "nutAllergy": "Nut allergy",
+      "noAlcohol": "No alcohol"
+    }
+  },
+  "dashboard": {
+    "greeting": "Buenos días, {{name}}.",
+    "daysToGo": "days to go.",
+    "rsvp": {
+      "yes": "Yes",
+      "pending": "Pending",
+      "no": "No",
+      "progress": "{{percent}}% of {{total}} guests have replied"
+    },
+    "budget": "Budget",
+    "vendors": "Vendors",
+    "thisWeek": "This week",
+    "seeAll": "See all"
+  },
+  "invitee": {
+    "greeting": "Hola, {{name}}.",
+    "daysToGo": "See you in {{count}} days",
+    "countdown": {
+      "date": "5 June 2027 · Granada",
+      "venue": "Palacio de los Córdova",
+      "daysToGo": "{{count}} days to go"
+    },
+    "rsvp": {
+      "label": "Your RSVP",
+      "confirmedFor": "Confirmed for {{partySize}}",
+      "edit": "Edit"
+    },
+    "yourSeat": "Your seat",
+    "stay": "Stay",
+    "from": "From S&C",
+    "busNote": "Bus from Plaza Nueva at 15:00 — don't be late, we'll be the ones smiling!",
+    "busNoteDate": "3 days ago",
+    "schedule": {
+      "title": "The day · highlights",
+      "all": "All"
+    },
+    "photos": {
+      "title": "{{count}} photos in the live album",
+      "subtitle": "Add yours during the day"
+    }
+  },
+  "travel": {
+    "header": "ALBAICÍN · GR",
+    "title": "Getting there",
+    "subtitle": "Fly to Granada (GRX) · 20 min to venue.",
+    "venue": "Palacio de los Córdova",
+    "river": "río Darro",
+    "staysNearby": "Stays nearby"
+  },
+  "album": {
+    "title": "Our album",
+    "subtitle": "Shared by all of you.",
+    "addPhoto": "Add a photo",
+    "photoCount": "LIVE · {{count}} PHOTOS",
+    "hint": "Tap <strong>+</strong> to add a photo from the day."
+  },
+  "shared": {
+    "couple": "COUPLE",
+    "invitee": "INVITEE",
+    "back": "Back",
+    "continue": "Continue",
+    "cancel": "Cancel",
+    "save": "Save"
+  }
+}
