@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 
 import { Environment, Language, environment } from '../../../environments';
+import { ThemeId } from '../../model';
 
 @Injectable({
   providedIn: 'root',
@@ -42,6 +43,10 @@ export class ConfigurationService {
 
   getLanguages(): Language[] {
     return this.config.language;
+  }
+
+  getThemeId(): ThemeId {
+    return this.config.themeId;
   }
 
   get weddingConfiguration() {

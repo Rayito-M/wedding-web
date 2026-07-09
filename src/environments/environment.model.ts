@@ -1,3 +1,5 @@
+import { ThemeId } from '../app/model';
+
 export type Language = 'en' | 'fr' | 'es';
 
 export interface Location {
@@ -23,7 +25,9 @@ export interface Environment {
   apiTimeout: number;
   enableLogging: boolean;
   enableAnalytics: boolean;
+
   language: Language[];
+  themeId: ThemeId;
 
   weddingConfiguration: WeddingConfiguration;
 

@@ -1,7 +1,9 @@
 import { Component, inject, signal, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { ThemeService, ThemeId } from '../../core/theme.service';
+import { ThemeId } from '../../model';
+
+import { ThemeService } from '../../core/theme.service';
 
 interface ThemeOption {
   id: ThemeId;
@@ -23,9 +25,9 @@ export class ThemeSelector {
   private readonly elementRef = inject(ElementRef);
 
   readonly themes: ThemeOption[] = [
-    { id: 'd', label: 'Mauve', accent: '#b08a92' },
-    { id: 'e', label: 'Terracotta', accent: '#c97155' },
-    { id: 'f', label: 'Verde Agua', accent: '#7aaea2' },
+    { id: 'mauve', label: 'Mauve', accent: '#b08a92' },
+    { id: 'terracotta', label: 'Terracotta', accent: '#c97155' },
+    { id: 'verdeagua', label: 'Verde Agua', accent: '#7aaea2' },
   ];
   readonly isOpen = signal(false);
 

@@ -7,64 +7,64 @@
 
 // ── Typography (all Google Fonts, OFL license) ──
 $font-serif: "DM Serif Display", "Cormorant Garamond", serif; // display/headlines only, ≥28px equivalent
-$font-book: "Cormorant Garamond", serif;                      // pull quotes, italic supporting lines
-$font-sans: "DM Sans", system-ui, sans-serif;                 // body, UI, forms, everything else
+$font-book: "Cormorant Garamond", serif; // pull quotes, italic supporting lines
+$font-sans: "DM Sans", system-ui, sans-serif; // body, UI, forms, everything else
 
 // Type scale (mobile-first, px)
-$text-display-xl: 54px;  // hero names        · serif · lh 0.95 · ls -0.02em
-$text-display-lg: 36px;  // page titles       · serif · lh 1.0
-$text-display-md: 32px;  // section titles    · serif · lh 1.05
-$text-display-sm: 22px;  // card values/times · serif · lh 1.1
-$text-heading:    18px;  // list item names   · serif
-$text-body-lg:    15px;  // list titles       · sans 500
-$text-body:       13px;  // body copy, buttons· sans 400/500 · lh 1.5
-$text-caption:    12px;  // secondary text    · sans 400
-$text-micro:      11px;  // metadata          · sans · ls 0.08em
-$text-label:      10px;  // uppercase labels  · sans 500 · ls 0.14em · uppercase
+$text-display-xl: 54px; // hero names        · serif · lh 0.95 · ls -0.02em
+$text-display-lg: 36px; // page titles       · serif · lh 1.0
+$text-display-md: 32px; // section titles    · serif · lh 1.05
+$text-display-sm: 22px; // card values/times · serif · lh 1.1
+$text-heading: 18px; // list item names   · serif
+$text-body-lg: 15px; // list titles       · sans 500
+$text-body: 13px; // body copy, buttons· sans 400/500 · lh 1.5
+$text-caption: 12px; // secondary text    · sans 400
+$text-micro: 11px; // metadata          · sans · ls 0.08em
+$text-label: 10px; // uppercase labels  · sans 500 · ls 0.14em · uppercase
 
 // ── Color themes ──
 :root,
-[data-theme="d"] {
+[data-theme="mauve"] {
   --bg: #f8f6f2;
   --surface: #ffffff;
   --ink: #1a1a1a;
   --sub: #7a7670;
   --line: rgba(26, 26, 26, 0.10);
-  --accent: #b08a92;   // dusty mauve
+  --accent: #b08a92; // dusty mauve
   --accent-2: #d6c5c8; // pale mauve
   --accent-3: #c9c4bb; // warm gray
   --chip: #f0ede7;
 }
 
-[data-theme="e"] {
+[data-theme="terracotta"] {
   --bg: #f8f6f2;
   --surface: #ffffff;
   --ink: #3a2a1f;
   --sub: #8a6b54;
   --line: rgba(58, 42, 31, 0.12);
-  --accent: #c97155;   // terracotta
+  --accent: #c97155; // terracotta
   --accent-2: #e6c779; // butter
   --accent-3: #c2a48a; // warm tan
   --chip: #f4ead8;
 }
 
-[data-theme="f"] {
+[data-theme="verdeagua"] {
   --bg: #f5f7f4;
   --surface: #ffffff;
   --ink: #1f3a35;
   --sub: #5b7a73;
   --line: rgba(31, 58, 53, 0.12);
-  --accent: #7aaea2;   // verde agua
+  --accent: #7aaea2; // verde agua
   --accent-2: #cfe3da; // pale aqua
   --accent-3: #b9c8b0; // sage green
   --chip: #e6efe8;
 }
 
 // ── Radii ──
-$radius-pill: 999px;  // buttons, pills, chips, progress bars
-$radius-card: 14px;   // large cards (map, countdown, progress)
-$radius-md: 12px;     // medium cards, toggles
-$radius-input: 10px;  // inputs, textareas, photo tiles
+$radius-pill: 999px; // buttons, pills, chips, progress bars
+$radius-card: 14px; // large cards (map, countdown, progress)
+$radius-md: 12px; // medium cards, toggles
+$radius-input: 10px; // inputs, textareas, photo tiles
 
 // ── Spacing (4px base) ──
 $space-1: 4px;
@@ -72,8 +72,8 @@ $space-2: 8px;
 $space-3: 12px;
 $space-4: 16px;
 $space-5: 20px;
-$space-6: 24px;   // standard screen gutter
-$space-7: 28px;   // welcome screen gutter
+$space-6: 24px; // standard screen gutter
+$space-7: 28px; // welcome screen gutter
 
 // ── Elevation ──
 // The design is deliberately flat: separation via 1px --line borders

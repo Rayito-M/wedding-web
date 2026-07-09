@@ -24,7 +24,6 @@ import { ThemeSelector } from '../../shared/theme-selector/theme-selector';
     TranslatePipe,
     DatePipe,
     LanguageSelector,
-    ThemeSelector,
   ],
   templateUrl: './welcome.html',
   styleUrl: './welcome.scss',

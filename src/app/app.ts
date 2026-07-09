@@ -4,7 +4,7 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 
 import { filter, map } from 'rxjs';
 
-import { TranslateLanguageService } from './core';
+import { ConfigurationService, TranslateLanguageService } from './core';
 
 import { ThemeService } from './core/theme.service';
 import { TabBar } from './shared/tab-bar/tab-bar';
@@ -24,6 +24,8 @@ interface RouteChrome {
 })
 export class App {
   private readonly router = inject(Router);
+  private readonly configurationService = inject(ConfigurationService);
+
   // Instantiated here so the data-theme attribute is applied on startup.
   protected readonly theme = inject(ThemeService);
   // Instantiated here to initialize translations on startup
@@ -34,6 +36,7 @@ export class App {
     // `lang` and `fallbackLang` from provideTranslateService() are already applied;
     // call addLangs() to register additional languages the user can switch to.
     this.translate.init();
+    this.theme.set(this.configurationService.getThemeId());
   }
 
   protected readonly chrome = toSignal(

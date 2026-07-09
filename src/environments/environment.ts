@@ -7,6 +7,7 @@ export const environment: Environment = {
   enableLogging: true,
   enableAnalytics: false,
   language: ['en', 'es', 'fr'],
+  themeId: 'terracotta',
   appName: 'Wedding App',
   appVersion: '1.0.0',
   weddingConfiguration: {

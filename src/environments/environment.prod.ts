@@ -9,6 +9,7 @@ export const environment: Environment = {
   appName: 'Wedding App',
   appVersion: '1.0.0',
   language: ['en', 'es', 'fr'],
+  themeId: 'terracotta',
   weddingConfiguration: {
     brideName: 'Sara',
     groomName: 'Christophe',
