@@ -32,9 +32,7 @@
         <div class="label stat-label">{{ 'dashboard.rsvp.no' | t }}</div>
       </div>
     </div>
-    <div class="progress">
-      <div class="fill" [style.width.%]="dash.repliedPct()"></div>
-    </div>
+    <app-progress-bar class="progress" [percent]="dash.repliedPct()" />
     <div class="caption">
       {{ 'dashboard.rsvp.progress' | t: { percent: dash.repliedPct(), total: dash.rsvp().total } }}
     </div>
@@ -42,16 +40,16 @@
 
   <!-- quick tiles -->
   <div class="tiles">
-    <div class="tile">
-      <div class="label">{{ 'dashboard.budget' | t }}</div>
-      <div class="tile-value">{{ dash.budget().spent }}</div>
-      <div class="tile-sub">{{ dash.budget().total }}</div>
-    </div>
-    <div class="tile">
-      <div class="label">{{ 'dashboard.vendors' | t }}</div>
-      <div class="tile-value">{{ dash.vendors().value }}</div>
-      <div class="tile-sub">{{ dash.vendors().sub }}</div>
-    </div>
+    <app-stat-tile
+      [label]="'dashboard.budget' | t"
+      [value]="dash.budget().spent"
+      [sub]="dash.budget().total"
+    />
+    <app-stat-tile
+      [label]="'dashboard.vendors' | t"
+      [value]="dash.vendors().value"
+      [sub]="dash.vendors().sub"
+    />
   </div>
 
   <!-- tasks -->
@@ -61,21 +59,13 @@
       <span class="see-all">{{ 'dashboard.seeAll' | t }}</span>
     </div>
     @for (task of dash.tasks(); track task.t; let i = $index; let last = $last) {
-      <div class="task" [class.last]="last">
-        <button
-          type="button"
-          class="check"
-          [class.done]="task.done"
-          (click)="dash.toggleTask(i)"
-          [attr.aria-label]="task.done ? 'Mark not done' : 'Mark done'"
-        >
-          @if (task.done) {
-            ✓
-          }
-        </button>
-        <div class="task-text" [class.done]="task.done">{{ task.t }}</div>
-        <div class="due">{{ task.due }}</div>
-      </div>
+      <app-task-row
+        [label]="task.t"
+        [due]="task.due"
+        [done]="task.done"
+        [last]="last"
+        (toggled)="dash.toggleTask(i)"
+      />
     }
   </div>
 </div>

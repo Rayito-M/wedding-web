@@ -77,17 +77,10 @@ h1 {
     margin-top: 4px;
   }
 
+  // Shared app-progress-bar component (design system).
   .progress {
-    height: 3px;
-    background: var(--chip);
-    border-radius: t.$radius-pill;
     margin-top: 12px;
-    overflow: hidden;
-
-    .fill {
-      height: 100%;
-      background: var(--accent);
-    }
+    position: relative;
   }
 
   .caption {
@@ -149,23 +142,7 @@ h1 {
   margin-top: 12px;
 }
 
-.tile {
-  padding: 12px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: t.$radius-md;
-
-  .tile-label {
-    font-size: 9px;
-  }
-
-  .tile-value {
-    font-family: t.$font-serif;
-    font-size: 14px;
-    margin-top: 4px;
-    line-height: 1.25;
-  }
-}
+// Quick tiles are the shared app-stat-tile component (design system).
 
 .announcement {
   margin-top: 14px;

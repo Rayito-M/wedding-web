@@ -3,9 +3,13 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { TranslateService } from '@ngx-translate/core';
 import { RsvpReply, RsvpService } from '../../core/rsvp.service';
 import { Btn } from '../../shared/button/button';
+import { ChoiceCard } from '../../shared/choice-card/choice-card';
 import { DecorFishPair } from '../../shared/decor/fish-pair';
+import { TextInput } from '../../shared/input/input';
 import { Monogram } from '../../shared/monogram/monogram';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { TextareaInput } from '../../shared/textarea/textarea';
+import { Toggle } from '../../shared/toggle/toggle';
 
 export const DIET_OPTIONS = [
   'vegetarian',
@@ -19,7 +23,17 @@ export const DIET_OPTIONS = [
 @Component({
   selector: 'app-rsvp',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, Monogram, Btn, DecorFishPair, TranslatePipe],
+  imports: [
+    ReactiveFormsModule,
+    Monogram,
+    Btn,
+    ChoiceCard,
+    TextInput,
+    TextareaInput,
+    Toggle,
+    DecorFishPair,
+    TranslatePipe,
+  ],
   templateUrl: './rsvp.html',
   styleUrl: './rsvp.scss',
 })

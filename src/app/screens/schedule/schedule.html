@@ -10,21 +10,12 @@
 
 <div class="timeline">
   @for (it of items(); track it.t; let last = $last) {
-    <div class="item">
-      <div class="time">{{ it.t }}</div>
-      <div class="rail">
-        <span class="dot"></span>
-        @if (!last) {
-          <span class="line"></span>
-        }
-      </div>
-      <div class="body">
-        <div class="row">
-          <div class="item-title">{{ it.title }}</div>
-          <span class="tag">{{ it.tag }}</span>
-        </div>
-        <div class="item-sub">{{ it.sub }}</div>
-      </div>
-    </div>
+    <app-timeline-item
+      [time]="it.t"
+      [heading]="it.title"
+      [tag]="it.tag"
+      [sub]="it.sub"
+      [last]="last"
+    />
   }
 </div>

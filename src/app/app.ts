@@ -36,7 +36,7 @@ export class App {
     // `lang` and `fallbackLang` from provideTranslateService() are already applied;
     // call addLangs() to register additional languages the user can switch to.
     this.translate.init();
-    this.theme.set(this.configurationService.getThemeId());
+    // Publish the wedding configuration; ThemeService subscribes to it to apply the theme.
   }
 
   protected readonly chrome = toSignal(

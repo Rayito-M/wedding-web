@@ -1,54 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-/** Photo placeholder with subtle diagonal stripes + optional caption.
- *  Size/radius are set by the parent on the host element. */
+/** Photo placeholder (DS data-display/PhotoPlaceholder) — chip tile with
+ *  subtle diagonal stripes + optional mono caption. Size/radius set by parent. */
 @Component({
   selector: 'app-photo-placeholder',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <svg [attr.viewBox]="viewBox()" preserveAspectRatio="none" aria-hidden="true">
-      @for (s of stripes(); track $index) {
-        <line
-          [attr.x1]="s.x1"
-          [attr.y1]="s.y1"
-          [attr.x2]="s.x2"
-          [attr.y2]="s.y2"
-          style="stroke: var(--line)"
-          stroke-width="0.3"
-        />
-      }
-    </svg>
-    @if (label()) {
-      <div class="caption">{{ label() }}</div>
-    }
-  `,
-  styles: `
-    :host {
-      display: block;
-      position: relative;
-      background: var(--chip);
-      overflow: hidden;
-      color: var(--sub);
-    }
-    svg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-    .caption {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-      font-size: 9px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      opacity: 0.7;
-    }
-  `,
+  templateUrl: './photo-placeholder.html',
+  styleUrl: './photo-placeholder.scss',
 })
 export class PhotoPlaceholder {
   readonly label = input('');

@@ -72,52 +72,13 @@ header {
   margin-bottom: 10px;
 }
 
-.stay {
-  display: flex;
-  gap: 12px;
-  padding: 12px 0;
+// Stay rows are the shared app-stay-card component (design system);
+// the divider between rows is screen-level layout.
+app-stay-card {
   border-bottom: 1px solid var(--line);
-  align-items: center;
 
   &.last {
     border-bottom: none;
-  }
-}
-
-.thumb {
-  width: 54px;
-  height: 54px;
-  border-radius: t.$radius-input;
-  flex-shrink: 0;
-}
-
-.info {
-  flex: 1;
-
-  .row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-
-  .name {
-    font-family: t.$font-serif;
-    font-size: 17px;
-  }
-
-  .price {
-    font-size: t.$text-caption;
-    color: var(--accent);
-  }
-
-  .meta {
-    font-size: t.$text-micro;
-    color: var(--sub);
-    margin-top: 2px;
-
-    .tag {
-      color: var(--accent);
-    }
   }
 }
 

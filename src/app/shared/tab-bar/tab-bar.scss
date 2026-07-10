@@ -1,0 +1,42 @@
+// Per design system components/navigation/TabBar.jsx
+:host {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+  display: flex;
+  padding: 10px 6px 14px;
+  gap: 2px;
+}
+
+.tab {
+  flex: 1;
+  padding: 6px 0 2px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: var(--text-label);
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--border-hairline);
+}
+
+.tab.on {
+  color: var(--brand-accent);
+  font-weight: 600;
+}
+
+.tab.on .dot {
+  background: var(--brand-accent);
+  border: none;
+}

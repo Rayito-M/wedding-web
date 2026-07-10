@@ -1,0 +1,13 @@
+<button
+  type="button"
+  class="check"
+  [class.done]="done()"
+  (click)="toggled.emit(!done())"
+  [attr.aria-label]="done() ? 'Mark not done' : 'Mark done'"
+>
+  @if (done()) {
+    ✓
+  }
+</button>
+<div class="text" [class.done]="done()">{{ label() }}</div>
+<div class="due">{{ due() }}</div>

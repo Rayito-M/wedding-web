@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Monogram } from '../../shared/monogram/monogram';
-import { PhotoPlaceholder } from '../../shared/photo-placeholder/photo-placeholder';
+import { StayCard } from '../../shared/stay-card/stay-card';
 
 interface Stay {
   name: string;
@@ -12,7 +12,7 @@ interface Stay {
 @Component({
   selector: 'app-travel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Monogram, PhotoPlaceholder],
+  imports: [Monogram, StayCard],
   templateUrl: './travel.html',
   styleUrl: './travel.scss',
 })

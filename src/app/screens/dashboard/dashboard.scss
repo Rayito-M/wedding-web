@@ -108,17 +108,11 @@ header {
   }
 }
 
+// Progress bar, quick tiles, and task rows are shared components
+// (app-progress-bar, app-stat-tile, app-task-row) — design system.
 .progress {
-  height: 4px;
-  background: var(--chip);
-  border-radius: t.$radius-pill;
   margin-top: 16px;
-  overflow: hidden;
-
-  .fill {
-    height: 100%;
-    background: var(--accent);
-  }
+  position: relative;
 }
 
 .caption {
@@ -135,24 +129,6 @@ header {
   margin-top: 12px;
 }
 
-.tile {
-  padding: 12px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: t.$radius-md;
-
-  .tile-value {
-    font-family: t.$font-serif;
-    font-size: t.$text-display-sm;
-    margin-top: 2px;
-  }
-
-  .tile-sub {
-    font-size: t.$text-micro;
-    color: var(--sub);
-  }
-}
-
 .tasks {
   margin-top: 16px;
 }
@@ -167,56 +143,6 @@ header {
     font-size: t.$text-micro;
     color: var(--accent);
   }
-}
-
-.task {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line);
-
-  &.last {
-    border-bottom: none;
-  }
-}
-
-.check {
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border-radius: 50%;
-  border: 1.5px solid var(--line);
-  background: transparent;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--surface);
-  font-size: 10px;
-  cursor: pointer;
-
-  &.done {
-    border-color: var(--accent);
-    background: var(--accent);
-  }
-}
-
-.task-text {
-  flex: 1;
-  font-size: t.$text-body;
-  color: var(--ink);
-
-  &.done {
-    color: var(--sub);
-    text-decoration: line-through;
-  }
-}
-
-.due {
-  font-size: t.$text-label;
-  color: var(--sub);
-  letter-spacing: 0.06em;
 }
 
 @media (min-width: 900px) {

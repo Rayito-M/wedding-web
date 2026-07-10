@@ -1,25 +1,28 @@
 <div class="language-selector">
-  <button
-    type="button"
-    class="dropdown-toggle"
-    (click)="toggleDropdown()"
-    [attr.aria-expanded]="isOpen()"
-  >
-    {{ currentLanguage.toUpperCase() }}
-    <span class="icon">▼</span>
-  </button>
-  @if (isOpen()) {
-    <div class="dropdown-menu">
-      @for (lang of languages; track lang) {
-        <button
-          type="button"
-          class="dropdown-item"
-          [class.active]="currentLanguage === lang"
-          (click)="selectLanguage(lang); $event.stopPropagation()"
-        >
-          {{ lang.toUpperCase() }}
-        </button>
-      }
-    </div>
+  @if (languages().length > 1) {
+    <button
+      type="button"
+      class="dropdown-toggle"
+      (click)="toggleDropdown()"
+      [attr.aria-expanded]="isOpen()"
+    >
+      {{ currentLanguage.toUpperCase() }}
+      <span class="icon">▼</span>
+    </button>
+    @if (isOpen() && languages().length >= 2) {
+      <div class="dropdown-menu">
+        @for (lang of languages(); track lang) {
+          <button
+            type="button"
+            class="dropdown-item"
+            [class.active]="currentLanguage === lang"
+            (click)="selectLanguage(lang); $event.stopPropagation()"
+          >
+            <span>{{ getLanguageDescription(lang) }}</span>
+            <span class="lang-code">{{ lang.toUpperCase() }}</span>
+          </button>
+        }
+      </div>
+    }
   }
 </div>

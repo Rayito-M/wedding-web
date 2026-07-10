@@ -1,0 +1,28 @@
+// Per design system components/data-display/StatTile.jsx
+:host {
+  display: block;
+  padding: var(--space-3);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+}
+
+.label {
+  font-size: var(--text-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.value {
+  font-family: var(--font-serif);
+  font-size: var(--text-display-sm);
+  margin-top: 2px;
+  color: var(--text-body-color);
+}
+
+.sub {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}

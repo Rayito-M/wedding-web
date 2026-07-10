@@ -9,21 +9,27 @@
 
 <div class="center">
   <h1 class="names">
-    <span class="name">{{ brideName }}</span>
+    <span class="name">{{ weddingConfig()?.brideName }}</span>
     <span class="fish">
       <app-decor-fish-pair [size]="desktop() ? 420 : 200" />
     </span>
-    <span class="quote">{{ tagline }}</span>
-    <span class="name">{{ groomName }}</span>
+    <span class="quote">«{{ weddingConfig()?.tagline }}»</span>
+    <span class="name">{{ weddingConfig()?.groomName }}</span>
   </h1>
 
   <div class="date">
     <span class="rule"></span>
     <div class="date-content">
-      <span class="value first-letter">{{ date | date: 'fullDate' : '' : language }}</span>
-      <span class="location">{{ city | translate }} - {{ country | translate }}</span>
+      <span class="value first-letter">{{
+        weddingConfig()?.date | date: 'fullDate' : '' : currentLang
+      }}</span>
     </div>
     <span class="rule"></span>
+  </div>
+
+  <div class="location">
+    {{ weddingConfig()?.location?.reception?.city | translate }} -
+    {{ weddingConfig()?.location?.reception?.country | translate }}
   </div>
 </div>
 

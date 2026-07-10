@@ -1,0 +1,74 @@
+// Per design system components/data-display/TimelineItem.jsx
+:host {
+  display: flex;
+  gap: 14px;
+  padding-bottom: 18px;
+  position: relative;
+  font-family: var(--font-sans);
+}
+
+.time {
+  width: 50px;
+  flex-shrink: 0;
+  padding-top: 2px;
+  font-family: var(--font-serif);
+  font-size: var(--text-heading);
+  color: var(--brand-accent);
+}
+
+.rail {
+  position: relative;
+  width: 14px;
+  flex-shrink: 0;
+
+  .dot {
+    position: absolute;
+    top: 6px;
+    left: 5px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--brand-accent);
+  }
+
+  .line {
+    position: absolute;
+    top: 12px;
+    left: 6.5px;
+    bottom: -18px;
+    width: 1px;
+    background: var(--border-hairline);
+  }
+}
+
+.body {
+  flex: 1;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.item-title {
+  font-size: var(--text-body-lg);
+  font-weight: 500;
+  color: var(--text-body-color);
+}
+
+.tag {
+  font-size: 9px;
+  padding: 2px var(--space-2);
+  background: var(--surface-chip);
+  color: var(--text-muted);
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.item-sub {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin-top: 2px;
+}

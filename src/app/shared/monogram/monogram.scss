@@ -1,0 +1,11 @@
+// Per design system components/core/Monogram.jsx
+:host {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--text-body-color);
+}
+
+.amp {
+  color: var(--brand-accent);
+}

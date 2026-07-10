@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { TranslateService } from '@ngx-translate/core';
 import { Monogram } from '../../shared/monogram/monogram';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { TimelineItem } from '../../shared/timeline-item/timeline-item';
 
 interface ScheduleItem {
   t: string;
@@ -13,7 +14,7 @@ interface ScheduleItem {
 @Component({
   selector: 'app-schedule',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Monogram, TranslatePipe],
+  imports: [Monogram, TimelineItem, TranslatePipe],
   templateUrl: './schedule.html',
   styleUrl: './schedule.scss',
 })

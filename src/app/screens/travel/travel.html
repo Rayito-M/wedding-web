@@ -58,15 +58,13 @@
 <div class="stays">
   <div class="label section-label">Stays nearby</div>
   @for (s of stays; track s.name; let last = $last) {
-    <div class="stay" [class.last]="last">
-      <app-photo-placeholder class="thumb" [label]="s.tag.slice(0, 4)" />
-      <div class="info">
-        <div class="row">
-          <div class="name">{{ s.name }}</div>
-          <div class="price">{{ s.price }}</div>
-        </div>
-        <div class="meta">{{ s.km }} · <span class="tag">{{ s.tag }}</span></div>
-      </div>
-    </div>
+    <app-stay-card
+      [class.last]="last"
+      [name]="s.name"
+      [meta]="s.km"
+      [tag]="s.tag"
+      [price]="s.price"
+      [thumbLabel]="s.tag.slice(0, 4)"
+    />
   }
 </div>

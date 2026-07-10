@@ -1,0 +1,19 @@
+// Per design system components/core/ChoiceCard.jsx
+:host {
+  flex: 1;
+  padding: 14px var(--space-2);
+  border: 1px solid var(--border-hairline);
+  background: transparent;
+  color: var(--text-body-color);
+  border-radius: var(--radius-card);
+  font-family: var(--font-serif);
+  font-size: var(--text-heading);
+  cursor: pointer;
+  appearance: none;
+}
+
+:host(.on) {
+  border-color: var(--brand-accent);
+  background: var(--brand-accent);
+  color: var(--on-accent);
+}

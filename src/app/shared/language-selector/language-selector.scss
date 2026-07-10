@@ -1,76 +1,77 @@
+// Per design system components/navigation/LanguageDropdown.jsx
 .language-selector {
   position: relative;
   display: inline-block;
+  font-family: var(--font-sans);
 }
 
 .dropdown-toggle {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--line);
-  background: transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 6px;
+  border: 1px solid var(--border-hairline);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-chip);
+  color: var(--text-body-color);
+  transition: opacity var(--transition-fast);
 }
 
 .dropdown-toggle:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  opacity: 0.85;
 }
 
 .icon {
-  font-size: 0.65rem;
-  transition: transform 0.2s ease;
+  font-size: 9px;
+  transition: transform var(--transition-fast);
+  display: flex;
+  align-items: center;
 }
 
-.dropdown-toggle[aria-expanded="true"] .icon {
+.dropdown-toggle[aria-expanded='true'] .icon {
   transform: rotate(180deg);
 }
 
 .dropdown-menu {
   position: absolute;
-  top: 100%;
-  left: 0;
+  top: calc(100% + 6px);
   right: 0;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  margin-top: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 120px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-input);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   overflow: hidden;
-  z-index: 1000;
+  z-index: 10;
 }
 
 .dropdown-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 9px 12px;
   border: none;
   background: transparent;
-  text-align: left;
   cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  color: inherit;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-body-color);
+  transition: opacity var(--transition-fast);
 }
 
 .dropdown-item:hover {
-  background: var(--line);
-  color: var(--accent);
+  opacity: 0.85;
 }
 
 .dropdown-item.active {
-  background: var(--accent);
-  color: var(--surface);
-}
-
-@media (prefers-color-scheme: dark) {
-  .dropdown-item.active {
-    color: var(--text);
-  }
+  background: var(--surface-chip);
+  color: var(--brand-accent);
+  font-weight: 600;
 }

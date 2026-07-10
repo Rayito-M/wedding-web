@@ -1,0 +1,6 @@
+@for (tab of tabs; track tab.id) {
+  <a class="tab" [class.on]="tab.id === active()" [routerLink]="tab.link">
+    <span class="dot"></span>
+    {{ tab.label }}
+  </a>
+}

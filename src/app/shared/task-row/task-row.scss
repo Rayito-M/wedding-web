@@ -1,0 +1,51 @@
+// Per design system components/data-display/TaskRow.jsx
+:host {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-hairline);
+  font-family: var(--font-sans);
+}
+
+:host(.last) {
+  border-bottom: none;
+}
+
+.check {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-hairline);
+  background: transparent;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-accent);
+  font-size: var(--text-label);
+  cursor: pointer;
+  padding: 0;
+
+  &.done {
+    border-color: var(--brand-accent);
+    background: var(--brand-accent);
+  }
+}
+
+.text {
+  flex: 1;
+  font-size: var(--text-body);
+  color: var(--text-body-color);
+
+  &.done {
+    color: var(--text-muted);
+    text-decoration: line-through;
+  }
+}
+
+.due {
+  font-size: var(--text-label);
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}

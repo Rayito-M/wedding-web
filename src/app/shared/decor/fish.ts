@@ -1,63 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-/** Single trout — line-art silhouette pointing right by default. */
+/** Single trout (DS illustrations/FishIllustration) — line-art, points right by default. */
 @Component({
   selector: 'app-decor-fish',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <svg
-      [attr.width]="w()"
-      [attr.height]="h()"
-      viewBox="0 0 120 60"
-      [style.transform]="flip() ? 'scaleX(-1)' : null"
-      aria-hidden="true"
-    >
-      <!-- body: lens curve, mouth on the right -->
-      <path
-        d="M 18 30 C 36 8, 86 8, 104 30 C 86 52, 36 52, 18 30 Z"
-        [style.fill]="filled() ? color() : 'none'"
-        [style.stroke]="color()"
-        [attr.stroke-width]="strokeWidth()"
-        stroke-linejoin="round"
-      />
-      <!-- forked tail -->
-      <path
-        d="M 18 30 L 4 18 L 10 30 L 4 42 Z"
-        [style.fill]="filled() ? color() : 'none'"
-        [style.stroke]="color()"
-        [attr.stroke-width]="strokeWidth()"
-        stroke-linejoin="round"
-      />
-      <!-- dorsal fin -->
-      <path
-        d="M 50 16 Q 60 6, 72 16"
-        fill="none"
-        [style.stroke]="color()"
-        [attr.stroke-width]="strokeWidth()"
-        stroke-linecap="round"
-      />
-      <!-- belly fin -->
-      <path
-        d="M 56 46 Q 62 52, 68 46"
-        fill="none"
-        [style.stroke]="color()"
-        [attr.stroke-width]="strokeWidth()"
-        stroke-linecap="round"
-      />
-      <!-- gill curve -->
-      <path
-        d="M 86 22 Q 82 30, 86 38"
-        fill="none"
-        [style.stroke]="color()"
-        [attr.stroke-width]="strokeWidth() * 0.7"
-        stroke-linecap="round"
-        opacity="0.7"
-      />
-      <!-- eye -->
-      <circle cx="96" cy="28" r="1.6" [style.fill]="color()" />
-    </svg>
-  `,
-  styles: `:host { display: inline-flex; line-height: 0; }`,
+  templateUrl: './fish.html',
+  styleUrl: './decor.scss',
 })
 export class DecorFish {
   readonly color = input('var(--accent)');

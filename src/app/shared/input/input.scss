@@ -1,0 +1,13 @@
+// Per design system components/core/Input.jsx
+:host {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-input);
+  font-family: var(--font-serif);
+  font-size: var(--text-heading);
+  color: var(--text-body-color);
+  outline: none;
+  box-sizing: border-box;
+}

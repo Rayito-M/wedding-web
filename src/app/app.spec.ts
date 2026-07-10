@@ -1,5 +1,7 @@
+import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
+import { provideTranslateService } from '@ngx-translate/core';
 import { App } from './app';
 import { routes } from './app.routes';
 
@@ -7,7 +9,11 @@ describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter(routes)],
+      providers: [
+        provideRouter(routes),
+        provideHttpClient(),
+        provideTranslateService({ lang: 'en', fallbackLang: 'en' }),
+      ],
     }).compileComponents();
   });
 
@@ -20,6 +26,6 @@ describe('App', () => {
   it('should apply the active theme to <html>', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
-    expect(document.documentElement.getAttribute('data-theme')).toMatch(/^[def]$/);
+    expect(document.documentElement.getAttribute('data-theme')).toMatch(/^(mauve|terracotta|verdeagua)$/);
   });
 });

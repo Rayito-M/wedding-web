@@ -1,0 +1,18 @@
+<div class="time">{{ time() }}</div>
+<div class="rail">
+  <span class="dot"></span>
+  @if (!last()) {
+    <span class="line"></span>
+  }
+</div>
+<div class="body">
+  <div class="row">
+    <div class="item-title">{{ heading() }}</div>
+    @if (tag()) {
+      <span class="tag">{{ tag() }}</span>
+    }
+  </div>
+  @if (sub()) {
+    <div class="item-sub">{{ sub() }}</div>
+  }
+</div>

@@ -1,0 +1,46 @@
+// Per design system components/data-display/StayCard.jsx
+:host {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  align-items: center;
+  font-family: var(--font-sans);
+}
+
+.thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius-input);
+  flex-shrink: 0;
+}
+
+.info {
+  flex: 1;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.name {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  color: var(--text-body-color);
+}
+
+.price {
+  font-size: var(--text-caption);
+  color: var(--brand-accent);
+}
+
+.meta {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  margin-top: 2px;
+
+  .tag {
+    color: var(--brand-accent);
+  }
+}

@@ -1,0 +1,15 @@
+// Per design system components/core/Textarea.jsx
+:host {
+  width: 100%;
+  min-height: 90px;
+  padding: var(--space-3);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-input);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  color: var(--text-body-color);
+  resize: none;
+  outline: none;
+  box-sizing: border-box;
+}

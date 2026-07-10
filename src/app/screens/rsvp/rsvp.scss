@@ -60,83 +60,13 @@ h2 {
   margin-top: 28px;
 }
 
-input[type='text'] {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: t.$radius-input;
-  font-family: t.$font-serif;
-  font-size: t.$text-heading;
-  color: var(--ink);
-  outline: none;
-}
+// Input, choice cards, and the plus-one toggle are shared components
+// (app-input, app-choice-card, app-toggle) — styled per the design system.
 
 .choices {
   display: flex;
   gap: 10px;
   margin-top: 8px;
-}
-
-.choice {
-  flex: 1;
-  padding: 14px 8px;
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--ink);
-  border-radius: t.$radius-card;
-  font-family: t.$font-serif;
-  font-size: t.$text-heading;
-  cursor: pointer;
-
-  &.on {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: var(--surface);
-  }
-}
-
-.toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 14px 16px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: t.$radius-md;
-  font-size: t.$text-body;
-  color: var(--ink);
-  cursor: pointer;
-}
-
-.switch {
-  width: 36px;
-  height: 20px;
-  border-radius: t.$radius-pill;
-  background: var(--chip);
-  position: relative;
-  transition: background t.$transition-fast;
-
-  .knob {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 16px;
-    height: 16px;
-    background: #fff;
-    border-radius: 50%;
-    transition: left t.$transition-fast;
-    box-shadow: t.$shadow-knob;
-  }
-
-  &.on {
-    background: var(--accent);
-
-    .knob {
-      left: 18px;
-    }
-  }
 }
 
 .diet {
@@ -166,19 +96,8 @@ input[type='text'] {
   margin-top: 26px;
 }
 
-textarea {
-  width: 100%;
-  min-height: 90px;
+textarea[app-textarea] {
   margin-top: 6px;
-  padding: 12px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: t.$radius-input;
-  font-family: t.$font-sans;
-  font-size: t.$text-body;
-  color: var(--ink);
-  resize: none;
-  outline: none;
 }
 
 .confirmation {

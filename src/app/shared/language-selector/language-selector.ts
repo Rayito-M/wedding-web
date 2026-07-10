@@ -1,8 +1,8 @@
-import { Component, inject, signal, HostListener, ElementRef } from '@angular/core';
+import { Component, inject, signal, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { TranslateLanguageService } from '../../core';
-import { Language } from '../../../environments';
+import { ConfigurationService, TranslateLanguageService } from '../../core';
+import { LangCode, langDescription } from '../../model';
 
 @Component({
   selector: 'app-language-selector',
@@ -12,21 +12,28 @@ import { Language } from '../../../environments';
   styleUrl: './language-selector.scss',
 })
 export class LanguageSelector {
+  private readonly configService = inject(ConfigurationService);
   private readonly translateService = inject(TranslateLanguageService);
   private readonly elementRef = inject(ElementRef);
 
-  readonly languages: Language[] = ['es', 'fr', 'en'];
+  readonly languages = computed(
+    () => (this.configService.weddingConfiguration()?.language as LangCode[]) ?? [],
+  );
   readonly isOpen = signal(false);
 
-  get currentLanguage(): Language {
-    return this.translateService.getLanguage();
+  get currentLanguage(): LangCode {
+    return this.translateService.currentLang;
   }
 
   toggleDropdown(): void {
     this.isOpen.update((open) => !open);
   }
 
-  selectLanguage(lang: Language): void {
+  getLanguageDescription(lang: LangCode): string {
+    return langDescription[lang];
+  }
+
+  selectLanguage(lang: LangCode): void {
     this.translateService.setLanguage(lang);
     this.isOpen.set(false);
   }

@@ -11,7 +11,7 @@
 
       <div class="field name-field">
         <div class="label">{{ 'rsvp.step1.nameLabel' | t }}</div>
-        <input type="text" formControlName="name" />
+        <input app-input type="text" formControlName="name" />
       </div>
 
       <div class="field">
@@ -19,16 +19,16 @@
         <div class="choices">
           <button
             type="button"
-            class="choice"
-            [class.on]="form.controls.attending.value === 'yes'"
+            app-choice-card
+            [selected]="form.controls.attending.value === 'yes'"
             (click)="setAttending('yes')"
           >
             {{ 'rsvp.step1.yesOption' | t }}
           </button>
           <button
             type="button"
-            class="choice"
-            [class.on]="form.controls.attending.value === 'no'"
+            app-choice-card
+            [selected]="form.controls.attending.value === 'no'"
             (click)="setAttending('no')"
           >
             {{ 'rsvp.step1.noOption' | t }}
@@ -37,11 +37,13 @@
       </div>
 
       <div class="field">
-        <button type="button" class="toggle-row" (click)="togglePlusOne()">
+        <button
+          type="button"
+          app-toggle
+          [checked]="form.controls.plusOne.value"
+          (toggled)="togglePlusOne()"
+        >
           {{ 'rsvp.step1.plusOneLabel' | t }}
-          <span class="switch" [class.on]="form.controls.plusOne.value">
-            <span class="knob"></span>
-          </span>
         </button>
       </div>
     </div>
@@ -67,7 +69,11 @@
 
       <div class="note-field">
         <div class="label">{{ 'rsvp.step2.noteLabel' | t }}</div>
-        <textarea formControlName="note" [placeholder]="'rsvp.step2.notePlaceholder' | t"></textarea>
+        <textarea
+          app-textarea
+          formControlName="note"
+          [placeholder]="'rsvp.step2.notePlaceholder' | t"
+        ></textarea>
       </div>
     </div>
   }

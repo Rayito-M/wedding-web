@@ -84,14 +84,26 @@ header {
 
 // Sits in the lower gap, midway between "Christophe" and the Alhambra
 // silhouette, without affecting where the name block is centered.
-.date {
-  position: absolute;
+
+.location {
+  position: relative;
   left: 0;
   right: 0;
-  bottom: 24px;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.date {
+  position: relative;
+  margin: 18px;
   display: flex;
   align-items: center;
   gap: 14px;
+  justify-content: center;
+  padding-bottom: 12px;
 
   .rule {
     height: 1px;
@@ -112,13 +124,6 @@ header {
     letter-spacing: 0.06em;
     color: var(--ink);
     white-space: nowrap;
-  }
-
-  .location {
-    font-size: t.$text-body;
-    color: var(--sub);
-    letter-spacing: 0.12em;
-    text-transform: capitalize;
   }
 }
 

@@ -1,0 +1,34 @@
+// Per design system components/core/Button.jsx
+:host {
+  appearance: none;
+  border: none;
+  background: var(--brand-accent);
+  color: var(--on-accent);
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+:host(:hover:not(:disabled)) {
+  opacity: 0.85;
+}
+
+:host(:disabled) {
+  opacity: 0.45;
+  cursor: default;
+}
+
+:host(.ghost) {
+  border: 1px solid var(--border-hairline);
+  background: transparent;
+  color: var(--text-body-color);
+}
+
+:host(.full) {
+  width: 100%;
+}

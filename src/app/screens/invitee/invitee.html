@@ -16,9 +16,7 @@
     <app-decor-fish class="deco-fish" [w]="48" [flip]="true" />
     <div class="label">5 June 2027 · Granada</div>
     <div class="venue">Palacio de los Córdova</div>
-    <div class="progress">
-      <div class="fill" style="width: 76%"></div>
-    </div>
+    <app-progress-bar class="progress" [percent]="76" [height]="3" />
     <div class="caption">{{ guests.daysToGo() }} days to go</div>
   </div>
 
@@ -35,14 +33,8 @@
 
   <!-- Quick tiles -->
   <div class="tiles">
-    <div class="tile">
-      <div class="label tile-label">Your seat</div>
-      <div class="tile-value">{{ guests.guest().seat }}</div>
-    </div>
-    <div class="tile">
-      <div class="label tile-label">Stay</div>
-      <div class="tile-value">{{ guests.guest().stay }}</div>
-    </div>
+    <app-stat-tile label="Your seat" [value]="guests.guest().seat" />
+    <app-stat-tile label="Stay" [value]="guests.guest().stay" />
   </div>
 
   <!-- Announcement from the couple -->

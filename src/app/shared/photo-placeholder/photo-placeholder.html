@@ -1,0 +1,15 @@
+<svg [attr.viewBox]="viewBox()" preserveAspectRatio="none" aria-hidden="true">
+  @for (s of stripes(); track $index) {
+    <line
+      [attr.x1]="s.x1"
+      [attr.y1]="s.y1"
+      [attr.x2]="s.x2"
+      [attr.y2]="s.y2"
+      class="stripe"
+      stroke-width="0.3"
+    />
+  }
+</svg>
+@if (label()) {
+  <div class="caption">{{ label() }}</div>
+}
