@@ -13,6 +13,8 @@ export interface WeddingConfiguration extends BaseDocument {
   groomName: string;
   tagline: string;
   location: WeddingLocation;
+  city: string; // Optional property to hold the city name
+  country: string; // Optional property to hold the country name
   date: string; // Optional property to hold the formatted date
   language: LangCode[];
   themeId: ThemeId;
