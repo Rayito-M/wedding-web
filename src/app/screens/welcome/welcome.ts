@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { TranslatePipe } from '@ngx-translate/core';
@@ -31,7 +31,7 @@ export class Welcome {
   private readonly configuration = inject(ConfigurationService);
   private readonly translate = inject(TranslateLanguageService);
 
-  protected readonly weddingConfig = this.configuration.weddingConfiguration;
+  protected readonly weddingConfig = computed(() => this.configuration.weddingConfigPublic());
   protected readonly desktop = mediaSignal('(min-width: 1024px)');
 
   open(): void {

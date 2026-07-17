@@ -1,10 +1,17 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { provideHttpClient } from '@angular/common/http';
+import { provideStore } from '@ngrx/store';
+import { provideEffects } from '@ngrx/effects';
+import { provideEntityData, withEffects } from '@ngrx/data';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
 
+import { environment } from '../environments';
 import { routes } from './app.routes';
+import { provideApi } from './core/api';
+import { entityConfig, provideEntityDataServices } from './core/data';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -19,5 +26,16 @@ export const appConfig: ApplicationConfig = {
       prefix: '/i18n/',
       suffix: '.json',
     }),
+    // Generated API client base path (bootstrap config, not a feature flag).
+    provideApi(environment.apiBaseUrl),
+    provideStore(),
+    provideEffects(),
+    // Entity metadata (ADR W-0001 decision 3); currently the WeddingConfigPublic
+    // slice only — the remaining entities land with T210/T211.
+    provideEntityData(entityConfig, withEffects()),
+    provideEntityDataServices(),
+    // Devtools only outside production builds — gated on isDevMode(), not an
+    // environment.ts flag (Hard Rule #7).
+    ...(isDevMode() ? [provideStoreDevtools()] : []),
   ],
 };

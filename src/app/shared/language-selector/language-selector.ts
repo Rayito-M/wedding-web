@@ -12,13 +12,13 @@ import { LangCode, langDescription } from '../../model';
   styleUrl: './language-selector.scss',
 })
 export class LanguageSelector {
+  protected readonly Object = Object;
   private readonly configService = inject(ConfigurationService);
   private readonly translateService = inject(TranslateLanguageService);
   private readonly elementRef = inject(ElementRef);
 
-  readonly languages = computed(
-    () => (this.configService.weddingConfiguration()?.language as LangCode[]) ?? [],
-  );
+  readonly languages = computed(() => this.configService.weddingConfigPublic()?.language);
+
   readonly isOpen = signal(false);
 
   get currentLanguage(): LangCode {
@@ -33,8 +33,8 @@ export class LanguageSelector {
     return langDescription[lang];
   }
 
-  selectLanguage(lang: LangCode): void {
-    this.translateService.setLanguage(lang);
+  selectLanguage(lang: string): void {
+    this.translateService.setLanguage(lang as LangCode);
     this.isOpen.set(false);
   }
 

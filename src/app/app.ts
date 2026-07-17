@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 
@@ -9,6 +9,7 @@ import { ConfigurationService, TranslateLanguageService } from './core';
 import { ThemeService } from './core/theme.service';
 import { TabBar } from './shared/tab-bar/tab-bar';
 import { TopNav } from './shared/top-nav/top-nav';
+import { AppLoadingComponent, AppErrorComponent } from './shared';
 
 interface RouteChrome {
   tab?: string;
@@ -18,7 +19,7 @@ interface RouteChrome {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, TabBar, TopNav],
+  imports: [RouterOutlet, TabBar, TopNav, AppLoadingComponent, AppErrorComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -31,6 +32,18 @@ export class App {
   // Instantiated here to initialize translations on startup
   // private readonly i18n = inject(I18nService);
   private translate = inject(TranslateLanguageService);
+
+  protected readonly weddingConfigPublicLoading = computed(() =>
+    this.configurationService.weddingConfigPublicLoading(),
+  );
+
+  protected readonly weddingConfigPublicError = computed(() =>
+    this.configurationService.weddingConfigPublicError(),
+  );
+
+  protected retryLoadConfig(): void {
+    this.configurationService.loadWeddingConfigPublic();
+  }
 
   constructor() {
     // `lang` and `fallbackLang` from provideTranslateService() are already applied;

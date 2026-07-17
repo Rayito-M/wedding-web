@@ -1,5 +1,5 @@
 <div class="language-selector">
-  @if (languages().length > 1) {
+  @if (languages()) {
     <button
       type="button"
       class="dropdown-toggle"
@@ -9,17 +9,17 @@
       {{ currentLanguage.toUpperCase() }}
       <span class="icon">▼</span>
     </button>
-    @if (isOpen() && languages().length >= 2) {
+    @if (isOpen() && Object.keys(languages() || {}).length >= 2) {
       <div class="dropdown-menu">
-        @for (lang of languages(); track lang) {
+        @for (entry of languages() | keyvalue; track entry.key) {
           <button
             type="button"
             class="dropdown-item"
-            [class.active]="currentLanguage === lang"
-            (click)="selectLanguage(lang); $event.stopPropagation()"
+            [class.active]="currentLanguage === entry.key"
+            (click)="selectLanguage(entry.key); $event.stopPropagation()"
           >
-            <span>{{ getLanguageDescription(lang) }}</span>
-            <span class="lang-code">{{ lang.toUpperCase() }}</span>
+            <span>{{ entry.value }}</span>
+            <span class="lang-code">{{ entry.key.toUpperCase() }} </span>
           </button>
         }
       </div>

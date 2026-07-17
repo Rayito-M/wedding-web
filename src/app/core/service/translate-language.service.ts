@@ -16,8 +16,10 @@ export class TranslateLanguageService {
     // React to the wedding configuration (loaded asynchronously): register the
     // available languages and apply the current one once it arrives.
     effect(() => {
-      const config = this.configService.weddingConfiguration();
-      this.translateService.addLangs(config?.language ?? ['en']);
+      const config = this.configService.weddingConfigPublic();
+
+      if (!config) return;
+      this.translateService.addLangs(Object.keys(config.language) ?? ['en']);
       this.translateService.use(this.currentLang);
     });
   }

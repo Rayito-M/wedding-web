@@ -82,6 +82,13 @@ minimumReleaseAgeExclude:
   - aria-query@5.3.2
   - axobject-query@4.1.0
   - eslint@10.7.0
+  # @ngrx tree (T209): same registry fetch-time-as-publish-time false positives;
+  # all 21.1.1 published 2026-06-08 on registry.npmjs.org
+  - '@ngrx/store@21.1.1'
+  - '@ngrx/effects@21.1.1'
+  - '@ngrx/entity@21.1.1'
+  - '@ngrx/data@21.1.1'
+  - '@ngrx/store-devtools@21.1.1'
   - 'ignore@7.0.5 || 7.0.6'
   - typescript-eslint@8.64.0
   - '@eslint/config-array@0.23.5'

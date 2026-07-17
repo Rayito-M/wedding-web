@@ -25,7 +25,7 @@ export class ThemeService {
     // Apply the theme published by the wedding configuration, unless the
     // user has already chosen one (stored preference wins).
     effect(() => {
-      const config = this.configService.weddingConfiguration();
+      const config = this.configService.weddingConfigPublic();
       if (config?.themeId && !this.getStored()) {
         this.theme.set(config.themeId);
       }

@@ -117,7 +117,7 @@
 - **Resolution (2026-07-17):** client generated (5 services — auth, guests, config, rsvp, health — + 27 typed models); marked generated via `.prettierignore`, `.gitattributes` (`linguist-generated`), and an `ignores` block in `eslint.config.js`; `pnpm typecheck` script added (was documented in CLAUDE.md but missing from `package.json`); `typecheck`/`lint`/`build`/`gen:api:check` green. Regenerated same-day against the updated hub contract (typed `GET /v1/config/public` → `WeddingConfigPublicResponseDto` gains brideName/groomName/tagline/date/themeId/mainVenue…); no new services/models. Two things to flag: (1) the contract's `priceTier` enum values (`€€`, `€€€`) sanitize to invalid TS identifiers — fixed via `enumNameMappings` in `openapitools.json` (forwarded by `gen-api.mjs` as `--enum-name-mappings`), never by editing output; still needed after the contract update, as is `skipValidateSpec` (re-verified: 8 OpenAPI-3.1-keyword validation errors); (2) **contract gap vs ADR-0015/ADR-0013 (deferred):** the hub contract has no standalone `/v1/agenda-items`, `/v1/venues`, `/v1/hotels` collections (they exist only as models embedded in the WeddingConfig DTOs) and no `POST /v1/auth/social` — those services will appear on regen once wedding-api publishes the paths; T210/T211 (Agenda/Venue/Hotel repositories) and T200 (social sign-in) are blocked on that backfill. Generated bearer-header code (`addCredentialToHeaders`) is a no-op unless a credential is configured in `Configuration` — we don't configure one, so the interceptor stays the sole auth-header source (Hard Rule #6). ESLint landed as a follow-up: `ng add angular-eslint` (flat `eslint.config.js`, recommended presets; `component-selector` extended to allow the CLAUDE.md attribute-selector-on-native convention); Bytesafe-registry fetch-time-as-publish-time false positives added to `minimumReleaseAgeExclude` (each spot-checked against registry.npmjs.org, same pattern as T207).
 
 ### T209 — Bootstrap @ngrx/store + effects + entity + data
-- **Status:** todo
+- **Status:** ✅ done (2026-07-17)
 - **Owner:** agent (implementer)
 - **Depends on:** T208
 - **Acceptance:**
@@ -126,6 +126,7 @@
   - Store devtools enabled only under `isDevMode()` — no `environment.ts` feature flag (Hard Rule #7)
   - App still builds and runs with no entities behaviourally wired yet
 - **Refs:** in-repo ADR W-0001 (decision 3); files: `package.json`, `src/app/app.config.ts`
+- **Resolution (2026-07-17):** `@ngrx/{store,effects,entity,data,store-devtools}@^21.1.1` added — **no NgRx release targets Angular 22 yet** (21.1.1 is latest, peers pin `@angular/*@^21`; verified compiling/building/serving cleanly on Angular 22 — watch for an NgRx 22 release and bump then). `app.config.ts` provides `provideStore()`, `provideEffects()`, `provideEntityData({}, withEffects())` (metadata comes in T210), and `provideStoreDevtools()` behind an `isDevMode()` spread (Hard Rule #7). NgRx tree added to `minimumReleaseAgeExclude` (Bytesafe false positives, spot-checked: all published 2026-06-08). `typecheck`/`lint`/`build` green; dev server boots and serves the wired bundle.
 
 ### T210 — Entity metadata + repository-vs-direct boundary
 - **Status:** todo
@@ -135,6 +136,7 @@
   - `EntityMetadataMap` defines exactly `Guest`, `WeddingConfig`, `WeddingConfigPublic` (the ADR-0015 CRUD collections), with pluralization and `selectId`
   - A short doc comment (or `core/data/README`) records that RSVP (sub-resource/report), `config` (singleton), and auth (RPC) are deliberately excluded from repositories
   - No entity is added for any endpoint outside the four collections
+- **Note (2026-07-17):** partial slice delivered ahead of schedule (user request): `src/app/core/data/entity-metadata.ts` exists with the `WeddingConfigPublic` entity only (`selectId` = server-issued `id`; invariant plural — singleton resource). T210 proper adds the remaining entities to this map.
 - **Refs:** in-repo ADR W-0001 (decision 3), hub ADR-0015; files: `src/app/core/data/`
 
 ### T211 — Custom entity data services delegating to the generated client
@@ -145,6 +147,7 @@
   - For each of the four entities, a custom `EntityCollectionDataService<T>` delegates `getAll/getById/add/update/delete` to the corresponding generated Angular service (no hand-written URLs)
   - Services registered via `EntityDataService.registerServices(...)`; the `me` id path is handled inside the Guest data service
   - The generated client remains the single source of endpoint URLs and request typing
+- **Note (2026-07-17):** partial slice delivered ahead of schedule (user request): `WeddingConfigPublicDataService` (`src/app/core/data/wedding-config-public-data.service.ts`) delegates reads to the generated `ConfigService` (mutations rejected — read-only singleton), registered via `provideEntityDataServices()` (`core/data/index.ts`, `provideEnvironmentInitializer` + `EntityDataService.registerService`). `app.config.ts` now also wires `provideApi(environment.apiBaseUrl)` and `provideEntityData(entityConfig, withEffects())`. `ConfigurationService` exposes the collection as signals (`weddingConfigPublic`, `weddingConfigPublicLoading`) + `loadWeddingConfigPublic()`, called from its constructor (mock fetch disabled; full mock retirement stays in T214). T211 proper adds the remaining entity data services.
 - **Refs:** in-repo ADR W-0001 (decision 3); files: `src/app/core/data/`
 
 ### T212 — Signals-first entity facades

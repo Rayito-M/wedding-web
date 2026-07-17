@@ -1,61 +1,64 @@
-import { Injectable, Signal, signal } from '@angular/core';
+import { Injectable, Signal, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { EntityCollectionService, EntityServices } from '@ngrx/data';
+import { Subject, map, merge } from 'rxjs';
 
 import { Environment, environment } from '../../../environments';
-import { WeddingConfiguration } from '../../model';
+import { WeddingConfigPublicResponseDto } from '../api';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ConfigurationService {
   private readonly config: Environment = environment;
-  private readonly _weddingConfiguration = signal<WeddingConfiguration | undefined>(undefined);
+  /**
+   * `WeddingConfigPublic` @ngrx/data collection (ADR W-0001 decisions 3–4):
+   * store → custom data service → generated API client. RxJS stays inside
+   * this service (Hard Rule #5); consumers only see signals.
+   */
+  private readonly weddingConfigPublicCollection: EntityCollectionService<WeddingConfigPublicResponseDto> =
+    inject(EntityServices).getEntityCollectionService<WeddingConfigPublicResponseDto>(
+      'WeddingConfigPublic',
+    );
 
-  private constructor() {
-    this.fetchWeddingConfiguration();
+  /** Singleton resource: the collection holds at most one document. */
+  readonly weddingConfigPublic: Signal<WeddingConfigPublicResponseDto | undefined> = toSignal(
+    this.weddingConfigPublicCollection.entities$.pipe(map((configs) => configs[0])),
+    { initialValue: undefined },
+  );
+
+  readonly weddingConfigPublicLoading: Signal<boolean> = toSignal(
+    this.weddingConfigPublicCollection.loading$,
+    { initialValue: true },
+  );
+
+  /** Reset the error flag whenever a fresh load is triggered. */
+  private readonly clearError$ = new Subject<void>();
+
+  /**
+   * `true` when the last load of the public config failed (e.g. the backend is
+   * unreachable). Reset to `false` on every new `loadWeddingConfigPublic()`.
+   */
+  readonly weddingConfigPublicError: Signal<boolean> = toSignal(
+    merge(
+      this.weddingConfigPublicCollection.errors$.pipe(map(() => true)),
+      this.clearError$.pipe(map(() => false)),
+    ),
+    { initialValue: false },
+  );
+
+  constructor() {
+    this.loadWeddingConfigPublic();
   }
 
-  private fetchWeddingConfiguration() {
-    // Simulate an async backend call; replace the setTimeout with a real
-    // httpResource()/HttpClient request once the endpoint exists.
-    setTimeout(() => {
-      this._weddingConfiguration.set({
-        id: 'wedding-configuration',
-        version: 0,
-        createdAt: '2026-07-10T09:39:53Z',
-        updatedAt: '2026-07-10T09:39:53Z',
-        namespace: 'wedding-configuration',
-        brideName: 'Sara',
-        groomName: 'Christophe',
-        tagline: 'como la trucha al trucho',
-        date: '2027-06-05T10:00:00Z',
-        language: ['es', 'fr', 'en'],
-        themeId: 'terracotta',
-        city: 'Granada',
-        country: 'Spain',
-        location: {
-          church: {
-            name: 'Iglesia Parroquial de Nuestro Salvador',
-            city: 'grenade',
-            country: 'spain',
-            postalCode: '18010',
-            address: 'Pl. del Salvador, Albaicín',
-            mapUrl: 'https://maps.app.goo.gl/SAZnqWGWWMrkRakQ7',
-          },
-          reception: {
-            name: 'Palacio de los Córdova',
-            city: 'grenade',
-            country: 'spain',
-            postalCode: '18010',
-            address: 'cta. del chapiz, 2-4, albaicín',
-            mapUrl: 'https://maps.app.goo.gl/vCX7vDpyNmVaRjfEA',
-          },
-        },
-      });
-    }, 300);
-  }
-
-  get weddingConfiguration(): Signal<WeddingConfiguration | undefined> {
-    return this._weddingConfiguration.asReadonly();
+  /**
+   * Loads the public wedding config from `GET /v1/config/public` into the
+   * store. Imperative command per the facade pattern (ADR W-0001 decision 4);
+   * consumers migrate off the mock `weddingConfiguration` signal in T214.
+   */
+  loadWeddingConfigPublic(): void {
+    this.clearError$.next();
+    this.weddingConfigPublicCollection.load();
   }
 
   isProduction(): boolean {
