@@ -1,0 +1,11 @@
+export * from './auth.service';
+import { AuthService } from './auth.service';
+export * from './config.service';
+import { ConfigService } from './config.service';
+export * from './guests.service';
+import { GuestsService } from './guests.service';
+export * from './health.service';
+import { HealthService } from './health.service';
+export * from './rsvp.service';
+import { RSVPService } from './rsvp.service';
+export const APIS = [AuthService, ConfigService, GuestsService, HealthService, RSVPService];

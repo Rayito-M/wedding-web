@@ -93,7 +93,7 @@
 - **Resolution (2026-07-16):** hub ADR-0016 created; ADR-0005 header + §Decision.3 carry an amendment pointer; `contracts/README.md` and CHANGELOG updated. T207 is now unblocked.
 
 ### T207 — Add openapi-generator tooling + `gen:api` / `gen:api:check` scripts
-- **Status:** ready (T206 resolved by hub ADR-0016, 2026-07-16)
+- **Status:** ✅ done (2026-07-17)
 - **Owner:** agent (implementer)
 - **Depends on:** T206
 - **Acceptance:**
@@ -102,9 +102,10 @@
   - The JVM/Java prerequisite is documented in `README.md`, along with the regen steps; any prior `openapi-typescript-codegen` reference is removed
   - Open question resolved in-PR: confirm npm-vs-pnpm runner and align `CLAUDE.md`/`README.md` accordingly (see ADR W-0001 "Open questions")
 - **Refs:** in-repo ADR W-0001 (decisions 1–2), hub ADR-0005, `contracts/README.md`; files: `package.json`, `openapitools.json`, `README.md`
+- **Resolution (2026-07-17):** `@openapitools/openapi-generator-cli` added; `openapitools.json` pins generator 7.23.0 + `typescript-angular` options (`skipValidateSpec` needed — the hub spec declares 3.0 but uses 3.1 keywords, flagged for wedding-api); `scripts/gen-api.mjs` drives `gen:api`/`gen:api:check` (honors `OPENAPI_SOURCE`); runner confirmed **pnpm** (ADR W-0001 open question resolved in place); `README.md` documents the JVM prerequisite + regen steps. Smoke-tested end-to-end; generated output deliberately not committed (T208).
 
 ### T208 — Generate the initial API client into `src/app/core/api/`
-- **Status:** blocked (on T207)
+- **Status:** ✅ done (2026-07-17)
 - **Owner:** agent (implementer)
 - **Depends on:** T207
 - **Acceptance:**
@@ -113,6 +114,7 @@
   - Generated dir is committed and marked generated (lint/format ignore); it is never hand-edited
   - `pnpm typecheck`/build green; supersedes the `openapi-typescript-codegen` mechanics of T205 (cross-referenced)
 - **Refs:** in-repo ADR W-0001, hub ADR-0015; files: `src/app/core/api/**`
+- **Resolution (2026-07-17):** client generated (5 services — auth, guests, config, rsvp, health — + 27 typed models); marked generated via `.prettierignore`, `.gitattributes` (`linguist-generated`), and an `ignores` block in `eslint.config.js`; `pnpm typecheck` script added (was documented in CLAUDE.md but missing from `package.json`); `typecheck`/`lint`/`build`/`gen:api:check` green. Regenerated same-day against the updated hub contract (typed `GET /v1/config/public` → `WeddingConfigPublicResponseDto` gains brideName/groomName/tagline/date/themeId/mainVenue…); no new services/models. Two things to flag: (1) the contract's `priceTier` enum values (`€€`, `€€€`) sanitize to invalid TS identifiers — fixed via `enumNameMappings` in `openapitools.json` (forwarded by `gen-api.mjs` as `--enum-name-mappings`), never by editing output; still needed after the contract update, as is `skipValidateSpec` (re-verified: 8 OpenAPI-3.1-keyword validation errors); (2) **contract gap vs ADR-0015/ADR-0013 (deferred):** the hub contract has no standalone `/v1/agenda-items`, `/v1/venues`, `/v1/hotels` collections (they exist only as models embedded in the WeddingConfig DTOs) and no `POST /v1/auth/social` — those services will appear on regen once wedding-api publishes the paths; T210/T211 (Agenda/Venue/Hotel repositories) and T200 (social sign-in) are blocked on that backfill. Generated bearer-header code (`addCredentialToHeaders`) is a no-op unless a credential is configured in `Configuration` — we don't configure one, so the interceptor stays the sole auth-header source (Hard Rule #6). ESLint landed as a follow-up: `ng add angular-eslint` (flat `eslint.config.js`, recommended presets; `component-selector` extended to allow the CLAUDE.md attribute-selector-on-native convention); Bytesafe-registry fetch-time-as-publish-time false positives added to `minimumReleaseAgeExclude` (each spot-checked against registry.npmjs.org, same pattern as T207).
 
 ### T209 — Bootstrap @ngrx/store + effects + entity + data
 - **Status:** todo
@@ -130,7 +132,7 @@
 - **Owner:** agent (implementer)
 - **Depends on:** T209
 - **Acceptance:**
-  - `EntityMetadataMap` defines exactly `Guest`, `AgendaItem`, `Venue`, `Hotel` (the ADR-0015 CRUD collections), with pluralization and `selectId`
+  - `EntityMetadataMap` defines exactly `Guest`, `WeddingConfig`, `WeddingConfigPublic` (the ADR-0015 CRUD collections), with pluralization and `selectId`
   - A short doc comment (or `core/data/README`) records that RSVP (sub-resource/report), `config` (singleton), and auth (RPC) are deliberately excluded from repositories
   - No entity is added for any endpoint outside the four collections
 - **Refs:** in-repo ADR W-0001 (decision 3), hub ADR-0015; files: `src/app/core/data/`

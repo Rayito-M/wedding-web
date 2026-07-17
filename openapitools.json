@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/@openapitools/openapi-generator-cli/config.schema.json",
+  "spaces": 2,
+  "generator-cli": {
+    "version": "7.23.0",
+    "generators": {
+      "wedding-api": {
+        "generatorName": "typescript-angular",
+        "inputSpec": "../wedding-architecture/contracts/openapi.json",
+        "output": "src/app/core/api",
+        "skipValidateSpec": true,
+        "additionalProperties": {
+          "ngVersion": "22.0.0",
+          "providedIn": "root",
+          "fileNaming": "kebab-case",
+          "useSingleRequestParameter": true,
+          "supportsES6": true,
+          "enumPropertyNaming": "UPPERCASE"
+        },
+        "enumNameMappings": {
+          "€": "EURO",
+          "€€": "EURO_EURO",
+          "€€€": "EURO_EURO_EURO"
+        }
+      }
+    }
+  }
+}

@@ -4,13 +4,6 @@ import { Monogram } from '../../shared/monogram/monogram';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TimelineItem } from '../../shared/timeline-item/timeline-item';
 
-interface ScheduleItem {
-  t: string;
-  title: string;
-  sub: string;
-  tag: string;
-}
-
 @Component({
   selector: 'app-schedule',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,12 +15,12 @@ export class Schedule {
   private readonly translateService = inject(TranslateService);
 
   protected readonly items = computed(() => {
-    const schedule = this.translateService.instant('schedule.timeline') as Array<{
+    const schedule = this.translateService.instant('schedule.timeline') as {
       time: string;
       title: string;
       subtitle: string;
       tag: string;
-    }>;
+    }[];
     return schedule.map((item) => ({
       t: item.time,
       title: item.title,

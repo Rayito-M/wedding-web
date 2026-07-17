@@ -41,7 +41,8 @@ Angular 22 single-page app. Standalone components, signals-first, zoneless (no c
 - Test (unit): `pnpm test`
 - Test (e2e): `pnpm test:e2e`
 - Build: `pnpm build` (production static build → `dist/`)
-- **Regenerate API client** → `pnpm gen:api` (from `../wedding-architecture/contracts/openapi.json`; committed, never hand-edited)
+- **Regenerate API client** → `pnpm gen:api` (from `../wedding-architecture/contracts/openapi.json`, override via `OPENAPI_SOURCE`; committed, never hand-edited; requires a JVM — see README)
+- **API client drift check** → `pnpm gen:api:check` (regenerates to a temp dir, diffs against `src/app/core/api/`)
 
 ## Folder ownership rules
 

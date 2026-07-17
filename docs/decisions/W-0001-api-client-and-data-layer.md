@@ -174,6 +174,10 @@ in-repo design so the implementer can move the instant the hub gate opens.
   `package.json` currently declares `"packageManager": "npm@11.17.0"` and Angular 22 (not
   21). Tasks below use the `gen:api` **script name** and stay runner-agnostic; the
   implementer should confirm npm-vs-pnpm and align CLAUDE.md in the same PR (or raise it).
+  - **Resolved (T207, 2026-07-17): pnpm.** The repo had already migrated
+    (`"packageManager": "pnpm@11.3.0"`, `pnpm-lock.yaml`/`pnpm-workspace.yaml` committed,
+    `package-lock.json` removed); CLAUDE.md's pnpm commands were already correct, and
+    `README.md` now documents pnpm + the JVM prerequisite for `gen:api`.
 
 ## References
 
