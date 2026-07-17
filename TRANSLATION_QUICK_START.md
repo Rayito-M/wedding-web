@@ -7,7 +7,7 @@ Your wedding app now has **full internationalization (i18n) support** for Englis
 ## 🚀 Running the App
 
 ```bash
-npm start
+pnpm start
 ```
 
 Visit `http://localhost:4200` in your browser. The app will:
@@ -144,7 +144,7 @@ App config is in `src/app/app.config.ts`:
 
 ## 🎬 Next Steps
 
-1. Start the app: `npm start`
+1. Start the app: `pnpm start`
 2. Click language buttons in top navigation to switch languages
 3. Update remaining screen templates (invitee, travel, album)
 4. Add new features with translation keys from the start

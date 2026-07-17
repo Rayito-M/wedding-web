@@ -151,7 +151,7 @@ User clicks language button → Language switches → UI updates
 
 ## ✅ Verification Checklist
 
-- [x] npm packages installed
+- [x] pnpm packages installed
 - [x] Translation files created
 - [x] App configuration updated
 - [x] Translation pipe created
@@ -166,7 +166,7 @@ User clicks language button → Language switches → UI updates
 
 ## 🚀 Ready to Go!
 
-Run `npm start` and visit `http://localhost:4200` to see the translation system in action!
+Run `pnpm start` and visit `http://localhost:4200` to see the translation system in action!
 
 Switch languages using the EN, FR, ES buttons in the top navigation.
 

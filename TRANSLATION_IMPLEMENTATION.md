@@ -75,12 +75,12 @@ wedding-app/
 ### Install Dependencies
 Translation library is already installed:
 ```bash
-npm install @ngx-translate/core @ngx-translate/http-loader
+pnpm install @ngx-translate/core @ngx-translate/http-loader
 ```
 
 ### Run the App
 ```bash
-npm start
+pnpm start
 ```
 
 The app will:
@@ -163,7 +163,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 ## Testing Language Switching
 
-1. Start the app: `npm start`
+1. Start the app: `pnpm start`
 2. Open browser DevTools and check Console
 3. Click EN, FR, or ES buttons in top navigation
 4. All text updates instantly to selected language

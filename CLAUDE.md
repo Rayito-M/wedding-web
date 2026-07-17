@@ -10,18 +10,18 @@
 - **`../wedding-architecture`** — system-wide decisions, glossary, API contract. **Read for any cross-cutting context.**
 - **`../wedding-ui-design`** — design system: tokens, components, guidelines. **Read before implementing any component.**
 - **`../wedding-api`** — NestJS backend; exposes the API this SPA consumes.
-- **`.` (this repo)** — Angular 21 SPA implementation.
+- **`.` (this repo)** — Angular 22 SPA implementation.
 
 The architecture hub may edit this file, `TASKS.md`, `.agent/skills/`, and cross-refs as part of a coordinated change. See `../wedding-architecture/.agent/authority.md`. **Never** application code.
 
 ## Project
 
-Angular 21 single-page app. Standalone components, signals-first, zoneless (no change detection zones). Guests and admins sign in via Twilio SMS OTP or Google/Apple (hub ADR-0013); the API is at `../wedding-api`. The design system (`../wedding-ui-design/`) is the source of truth for all styling and component behavior — this repo consumes design tokens and implements components per the spec.
+Angular 22 single-page app. Standalone components, signals-first, zoneless (no change detection zones). Guests and admins sign in via Twilio SMS OTP or Google/Apple (hub ADR-0013); the API is at `../wedding-api`. The design system (`../wedding-ui-design/`) is the source of truth for all styling and component behavior — this repo consumes design tokens and implements components per the spec.
 
 ## Tech stack (do not change without an ADR — hub if cross-cutting, in-repo if tactical)
 
 - **Runtime:** Node.js 20 LTS, pnpm
-- **Framework:** Angular 21 (standalone components, no NgModules)
+- **Framework:** Angular 22 (standalone components, no NgModules)
 - **Language:** TypeScript 5 strict, no `any` without `// reason:`
 - **Styling:** CSS custom properties only — all values from `../wedding-ui-design/tokens/`; no hardcoded colors, spacing, or radii
 - **Signals:** `input()`, `output()`, `effect()`, `computed()` — modern reactive API
@@ -52,12 +52,11 @@ Angular 21 single-page app. Standalone components, signals-first, zoneless (no c
 | `src/app/shared/components/` | Reusable component library | Yes, per design spec |
 | `src/app/shared/pipes/` | Custom pipes (translate, number format, etc.) | Yes |
 | `src/app/features/` | Feature modules (invitation, RSVP, admin, etc.); each folder is a bounded context | Yes, within one feature |
-| `src/assets/` | Static images, i18n JSON files | When needed |
-| `public/` | HTML, redirects, favicon | With caution |
+| `public/` | HTML, redirects, favicon,Static images, i18n JSON files | With caution |
 
 ## Hard rules (do not violate)
 
-1. **Component files are always separate: `<name>.ts`, `<name>.html`, `<name>.scss`** (Angular 21 style — no `.component` suffix). Never use `template:` or `styles:` inline. Rationale: readability, testability, clarity of concerns.
+1. **Component files are always separate: `<name>.ts`, `<name>.html`, `<name>.scss`** (Angular 22 style — no `.component` suffix). Never use `template:` or `styles:` inline. Rationale: readability, testability, clarity of concerns.
 2. **No inline styles or `style` attributes.** All CSS goes in the `.scss` file; use class selectors or `[class.<name>]="condition"` in the template.
 3. **All styling comes from the design system.** Read `../wedding-ui-design/readme.md`, `tokens/`, and the component `*.prompt.md` before writing CSS. Never invent colors, spacing, or radii — use the CSS custom properties from `src/styles/_tokens.scss` (mirrors the DS tokens; theme keys `d|e|f`). Prefer the semantic aliases (`--surface-card`, `--text-muted`, `--brand-accent`, `--border-hairline`, `--on-accent`…) over raw roles (`--surface`, `--sub`, `--accent`, `--line`).
 4. **No hardcoded responsive breakpoints.** The design is mobile-first; desktop is a natural progression. Test on iOS Safari (iPhone SE, 12, 14) and Chrome Android (current major).

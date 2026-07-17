@@ -1,0 +1,8 @@
+allowBuilds:
+  '@parcel/watcher': false
+  esbuild: false
+  lmdb: false
+  msgpackr-extract: false
+minimumReleaseAgeExclude:
+  - postcss@8.5.19
+  - picomatch@4.0.4
