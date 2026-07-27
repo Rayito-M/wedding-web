@@ -1,6 +1,6 @@
 import { EntityDataModuleConfig, EntityMetadataMap } from '@ngrx/data';
 
-import { WeddingConfigPublicResponseDto } from '../api';
+import { WeddingConfigPublicResponseDto, RsvpDto } from '../api';
 
 /**
  * Entity metadata for the @ngrx/data collections (ADR W-0001 decision 3).
@@ -20,6 +20,9 @@ export const entityMetadata: EntityMetadataMap = {
     // most one entry, keyed by the server-issued id).
     selectId: (config: WeddingConfigPublicResponseDto) => config.id,
   },
+  Rsvp: {
+    selectId: (rsvp: RsvpDto) => rsvp.id,
+  },
 };
 
 /**
@@ -29,6 +32,7 @@ export const entityMetadata: EntityMetadataMap = {
  */
 export const pluralNames = {
   WeddingConfigPublic: 'WeddingConfigPublic',
+  Rsvp: 'Rsvp',
 };
 
 export const entityConfig: EntityDataModuleConfig = {

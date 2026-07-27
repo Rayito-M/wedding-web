@@ -1,14 +1,8 @@
-<header>
-  <app-monogram [size]="18" />
-  <div class="who">
-    <span class="header-meta">{{ 'shared.couple' | t }}</span>
-    <span class="avatar">cs</span>
-  </div>
-</header>
-
 <div class="greeting">
-  <div class="hello">{{ 'dashboard.greeting' | t: { name: 'Sara' } }}</div>
-  <h1><span class="accent">{{ dash.daysToGo() }}</span> {{ 'dashboard.daysToGo' | t }}</h1>
+  <div class="hello">{{ 'dashboard.greeting' | translate: { name: 'Sara' } }}</div>
+  <h1>
+    <span class="accent">{{ dash.daysToGo() }}</span> {{ 'dashboard.daysToGo' | translate }}
+  </h1>
 </div>
 
 <div class="content">
@@ -21,32 +15,35 @@
     <div class="stats">
       <div class="stat">
         <div class="value accent">{{ dash.rsvp().yes }}</div>
-        <div class="label stat-label">{{ 'dashboard.rsvp.yes' | t }}</div>
+        <div class="label stat-label">{{ 'dashboard.rsvp.yes' | translate }}</div>
       </div>
       <div class="stat">
         <div class="value">{{ dash.rsvp().pending }}</div>
-        <div class="label stat-label">{{ 'dashboard.rsvp.pending' | t }}</div>
+        <div class="label stat-label">{{ 'dashboard.rsvp.pending' | translate }}</div>
       </div>
       <div class="stat">
         <div class="value">{{ dash.rsvp().no }}</div>
-        <div class="label stat-label">{{ 'dashboard.rsvp.no' | t }}</div>
+        <div class="label stat-label">{{ 'dashboard.rsvp.no' | translate }}</div>
       </div>
     </div>
     <app-progress-bar class="progress" [percent]="dash.repliedPct()" />
     <div class="caption">
-      {{ 'dashboard.rsvp.progress' | t: { percent: dash.repliedPct(), total: dash.rsvp().total } }}
+      {{
+        'dashboard.rsvp.progress'
+          | translate: { percent: dash.repliedPct(), total: dash.rsvp().total }
+      }}
     </div>
   </div>
 
   <!-- quick tiles -->
   <div class="tiles">
     <app-stat-tile
-      [label]="'dashboard.budget' | t"
+      [label]="'dashboard.budget' | translate"
       [value]="dash.budget().spent"
       [sub]="dash.budget().total"
     />
     <app-stat-tile
-      [label]="'dashboard.vendors' | t"
+      [label]="'dashboard.vendors' | translate"
       [value]="dash.vendors().value"
       [sub]="dash.vendors().sub"
     />
@@ -55,8 +52,8 @@
   <!-- tasks -->
   <div class="tasks">
     <div class="tasks-header">
-      <div class="label">{{ 'dashboard.thisWeek' | t }}</div>
-      <span class="see-all">{{ 'dashboard.seeAll' | t }}</span>
+      <div class="label">{{ 'dashboard.thisWeek' | translate }}</div>
+      <span class="see-all">{{ 'dashboard.seeAll' | translate }}</span>
     </div>
     @for (task of dash.tasks(); track task.t; let i = $index; let last = $last) {
       <app-task-row

@@ -1,0 +1,149 @@
+@use '../../../styles/tokens' as t;
+
+:host {
+  display: block;
+}
+
+header {
+  // Mobile: the bottom tab-bar carries navigation, so the header stays
+  // chrome-less (transparent). The card surface + hairline underline only
+  // apply on desktop (≥900px) where the top-nav lives inside the header.
+  padding: var(--space-4) 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+// Primary nav — desktop only; same active-accent treatment as the TabBar.
+.nav {
+  display: none;
+  gap: var(--space-7);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: var(--text-body);
+  letter-spacing: 0.04em;
+  font-weight: 500;
+  transition: opacity var(--transition-fast);
+}
+
+.link:hover {
+  opacity: 0.85;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--border-hairline);
+}
+
+.link.on {
+  color: var(--brand-accent);
+  font-weight: 600;
+}
+
+.link.on .dot {
+  background: var(--brand-accent);
+  border: none;
+}
+
+.end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+// Account menu — avatar button (always visible) + dropdown.
+.account {
+  position: relative;
+  display: flex;
+}
+
+.avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  color: var(--ink);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: t.$font-serif;
+  font-size: t.$text-caption;
+  transition: opacity var(--transition-fast);
+}
+
+.avatar:hover {
+  opacity: 0.85;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 160px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-input);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 10;
+}
+
+.menu-section+.menu-section {
+  border-top: 1px solid var(--border-hairline);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: 400;
+  color: var(--text-body-color);
+  text-align: left;
+  transition: opacity var(--transition-fast);
+}
+
+.menu-item:hover {
+  opacity: 0.85;
+}
+
+.menu-item.active {
+  background: var(--surface-chip);
+  color: var(--brand-accent);
+  font-weight: 600;
+}
+
+.lang-code {
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+@media (min-width: 900px) {
+  header {
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--border-hairline);
+  }
+
+  .nav {
+    display: flex;
+  }
+}

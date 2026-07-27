@@ -1,0 +1,21 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+main {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+// Mobile-first: bottom tab bar; ≥900px navigation moves into the screen header.
+@media (min-width: 900px) {
+  .tab-bar {
+    display: none;
+  }
+}

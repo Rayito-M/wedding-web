@@ -1,0 +1,151 @@
+<header>
+  <app-monogram [size]="28" />
+  <app-language-selector></app-language-selector>
+</header>
+
+<div class="content">
+  <div class="intro">
+    <h1 class="title">{{ 'login.title' | translate }}</h1>
+    <p class="subtitle">{{ 'login.subtitle' | translate }}</p>
+  </div>
+
+  @if (step() === 'request') {
+    <div class="auth-tabs">
+      <button
+        [class.active]="authMethod() === 'phone'"
+        (click)="switchAuthMethod('phone')"
+        type="button"
+      >
+        {{ 'login.tabs.phone' | translate }}
+      </button>
+      <button
+        [class.active]="authMethod() === 'email'"
+        (click)="switchAuthMethod('email')"
+        type="button"
+      >
+        {{ 'login.tabs.email' | translate }}
+      </button>
+    </div>
+
+    @if (authMethod() === 'phone') {
+      <form class="form" [formGroup]="phoneForm" (ngSubmit)="requestCode()">
+        <div class="field">
+          <span class="label">{{ 'login.phone.label' | translate }}</span>
+          <div class="phone-row">
+            <app-country-code-select [(country)]="country" />
+            <input
+              app-input
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel-national"
+              formControlName="phoneNumber"
+              [placeholder]="'login.phone.placeholder' | translate"
+            />
+          </div>
+        </div>
+
+        <button app-btn [full]="true" type="submit" [disabled]="pending()">
+          {{ (pending() ? 'login.phone.sending' : 'login.phone.cta') | translate }}
+        </button>
+      </form>
+    } @else {
+      <form class="form" [formGroup]="emailForm" (ngSubmit)="requestCode()">
+        <label class="field">
+          <span class="label">{{ 'login.email.label' | translate }}</span>
+          <input
+            app-input
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            formControlName="email"
+            [placeholder]="'login.email.placeholder' | translate"
+          />
+        </label>
+
+        <button app-btn [full]="true" type="submit" [disabled]="pending()">
+          {{ (pending() ? 'login.email.sending' : 'login.email.cta') | translate }}
+        </button>
+      </form>
+    }
+  } @else {
+    @if (authMethod() === 'phone') {
+      <form class="form" [formGroup]="codeForm" (ngSubmit)="verifyCode()">
+        <p class="sent-to">
+          {{ 'login.code.sentTo' | translate }} <strong>{{ submittedPhone() }}</strong>
+        </p>
+
+        <label class="field">
+          <span class="label">{{ 'login.code.label' | translate }}</span>
+          <input
+            app-input
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            formControlName="code"
+            [placeholder]="'login.code.placeholder' | translate"
+          />
+        </label>
+
+        <button app-btn [full]="true" type="submit" [disabled]="pending()">
+          {{ (pending() ? 'login.code.verifying' : 'login.code.cta') | translate }}
+        </button>
+
+        <button app-btn [primary]="false" [full]="true" type="button" (click)="editPhone()">
+          {{ 'login.code.changeNumber' | translate }}
+        </button>
+      </form>
+    } @else {
+      <div class="form">
+        <p class="sent-to">
+          {{ 'login.magicLink.sentTo' | translate }} <strong>{{ submittedEmail() }}</strong>
+        </p>
+
+        <p class="info">{{ 'login.magicLink.info' | translate }}</p>
+
+        <button app-btn [primary]="false" [full]="true" type="button" (click)="editEmail()">
+          {{ 'login.magicLink.changeEmail' | translate }}
+        </button>
+      </div>
+    }
+  }
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error()! | translate }}</p>
+  }
+
+  <div class="divider">
+    <span>{{ 'login.or' | translate }}</span>
+  </div>
+
+  @if (providers() !== undefined) {
+    <div class="social">
+      @if (providers()?.google) {
+        <button app-btn [primary]="false" [full]="true" type="button" (click)="social('google')">
+          <span class="social-btn">
+            <app-google-icon [size]="18" />
+            {{ 'login.social.google' | translate }}
+          </span>
+        </button>
+      }
+      @if (providers()?.apple) {
+        <button app-btn [primary]="false" [full]="true" type="button" (click)="social('apple')">
+          <span class="social-btn">
+            <app-apple-icon [size]="18" />
+            {{ 'login.social.apple' | translate }}
+          </span>
+        </button>
+      }
+    </div>
+  }
+</div>
+
+<app-modal
+  [open]="showCallbackError()"
+  [title]="'login.callback.errorTitle' | translate"
+  (close)="dismissCallbackError()"
+>
+  <p>{{ 'login.callback.errorBody' | translate }}</p>
+  <button app-btn modal-actions type="button" (click)="dismissCallbackError()">
+    {{ 'shared.ok' | translate }}
+  </button>
+</app-modal>

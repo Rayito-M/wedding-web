@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { EntityCollectionDataService } from '@ngrx/data';
 import { Observable, map, throwError } from 'rxjs';
 
-import { ConfigService, WeddingConfigPublicResponseDto } from '../api';
+import { WeddingConfigurationService, WeddingConfigPublicResponseDto } from '../api';
 
 /**
  * Custom @ngrx/data data service for the `WeddingConfigPublic` entity
@@ -15,12 +15,10 @@ import { ConfigService, WeddingConfigPublicResponseDto } from '../api';
  * interceptor's job (Hard Rule #6) — and this endpoint needs none.
  */
 @Injectable({ providedIn: 'root' })
-export class WeddingConfigPublicDataService
-  implements EntityCollectionDataService<WeddingConfigPublicResponseDto>
-{
+export class WeddingConfigPublicDataService implements EntityCollectionDataService<WeddingConfigPublicResponseDto> {
   readonly name = 'WeddingConfigPublic';
 
-  private readonly configApi = inject(ConfigService);
+  private readonly configApi = inject(WeddingConfigurationService);
 
   getAll(): Observable<WeddingConfigPublicResponseDto[]> {
     return this.configApi.weddingConfigControllerGetPublicV1().pipe(map((config) => [config]));

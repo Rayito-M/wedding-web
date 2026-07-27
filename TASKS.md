@@ -134,7 +134,7 @@
 - **Depends on:** T209
 - **Acceptance:**
   - `EntityMetadataMap` defines exactly `Guest`, `WeddingConfig`, `WeddingConfigPublic` (the ADR-0015 CRUD collections), with pluralization and `selectId`
-  - A short doc comment (or `core/data/README`) records that RSVP (sub-resource/report), `config` (singleton), and auth (RPC) are deliberately excluded from repositories
+  - A short doc comment (or `core/data/README`) records that RSVP (single mutable resource, ADR-0022), `config` (singleton), and auth (RPC) are deliberately excluded from repositories
   - No entity is added for any endpoint outside the four collections
 - **Note (2026-07-17):** partial slice delivered ahead of schedule (user request): `src/app/core/data/entity-metadata.ts` exists with the `WeddingConfigPublic` entity only (`selectId` = server-issued `id`; invariant plural — singleton resource). T210 proper adds the remaining entities to this map.
 - **Refs:** in-repo ADR W-0001 (decision 3), hub ADR-0015; files: `src/app/core/data/`
@@ -169,7 +169,14 @@
   - Reads are exposed as signals (`toSignal`); imperative actions return `Promise` via `firstValueFrom` — no raw `Observable` reaches a component
   - These are explicitly NOT @ngrx/data repositories; a doc comment states why (append-only sub-resource, report, singleton, RPC)
   - Auth service aligns with T200's signals-based auth store (no duplication of token handling)
-- **Refs:** in-repo ADR W-0001 (decisions 3–4), hub ADR-0013, hub ADR-0015; files: `src/app/core/`
+- **Note (2026-07-25 — hub ADR-0022):** the RSVP portion of this task is superseded. RSVP is no
+  longer an append-only sub-resource at `/v1/guests/:id/rsvp`; it is a single mutable resource at
+  `/v1/rsvp/:id` (`:id` = guest ULID or `me`) with `GET` (204 when absent) / `POST` (create,
+  409 if exists) / `PATCH` (edit in place, `version` optimistic-lock → 409 re-read/retry). Build the
+  RSVP thin service against that shape (see **T215**), not "GET latest + POST append". The
+  auth/config/report parts of this task stand. The RSVP report (`/v1/rsvps`) is currently absent
+  from the API contract (per T208 note); wire it only once it reappears on regen.
+- **Refs:** in-repo ADR W-0001 (decisions 3–4), hub ADR-0013, hub ADR-0015, hub ADR-0022; files: `src/app/core/`
 
 ### T214 — Retire mock services; migrate screens to the data layer
 - **Status:** todo
@@ -181,6 +188,73 @@
   - `album.service` is left untouched and out of scope (gallery cut by hub ADR-0014)
   - `pnpm typecheck && pnpm lint && pnpm test` green
 - **Refs:** in-repo ADR W-0001, hub ADR-0014; files: `src/app/core/*.service.ts`, `src/app/screens/**`
+
+## Phase E — RSVP CRUD migration (hub ADR-0022)
+
+> Hub ADR-0022 makes RSVP a **single mutable resource per guest** at `/v1/rsvp/:id`
+> (`:id` = guest ULID or `me`), replacing ADR-0015's append-only `/v1/guests/:id/rsvp`
+> sub-resource. Depends on the API landing the new routes and the hub `contracts/openapi.json`
+> being regenerated (wedding-api T190). The generated client picks up the shape on `pnpm gen:api`.
+
+### T215 — Migrate RSVP flows to the single-mutable CRUD resource
+- **Status:** blocked (on wedding-api T190 contract regen + hub `openapi.json` update)
+- **Owner:** agent (implementer)
+- **Depends on:** T213 (RSVP thin-service seam), wedding-api T190
+- **Acceptance:**
+  - After the hub contract carries `/v1/rsvp/:id` (POST/GET/PATCH), run `pnpm gen:api`; the RSVP
+    service/model reflect the new resource (no `/v1/guests/:id/rsvp` path remains)
+  - The RSVP thin service (T213) exposes: read (`GET /v1/rsvp/:id` → treat 204 as "no RSVP yet");
+    create (`POST /v1/rsvp/:id`, surface 409 "already exists" as an edit path); edit
+    (`PATCH /v1/rsvp/:id`, send the current `version`, and on 409 re-read + retry per the
+    optimistic-lock contract). `410` after the RSVP deadline stays handled as today
+  - Self uses `me`; delegation uses the delegated guest's ULID (no separate delegation route,
+    ADR-0015). The guest edit flow shows only the **current** answer — no version list
+  - Screens: the RSVP form submits once then switches to edit-in-place; re-visiting shows the
+    current answer; `pnpm typecheck && pnpm lint && pnpm test` green
+- **Refs:** hub ADR-0022, hub ADR-0015 (`me` + policy), hub ADR-0013, in-repo ADR W-0001; wedding-api T190
+
+## Phase F — Diet & menu (hub ADR-0024)
+
+> Hub ADR-0024 turns the RSVP into a **party of named participants** (main + optional partner +
+> children), each with their own dietary preferences, allergies, and a menu choice, backed by
+> couple-managed CONFIG catalogs. Depends on the API landing the new RSVP/CONFIG shapes and the
+> hub `contracts/openapi.json` regen (wedding-api T191); the client picks them up on `pnpm gen:api`.
+
+### T216 — RSVP party editor + per-participant diet/allergy pickers
+- **Status:** blocked (on wedding-api T191 contract regen + hub `openapi.json`)
+- **Owner:** agent (implementer)
+- **Depends on:** T215, wedding-api T191
+- **Acceptance:**
+  - After `pnpm gen:api`, the RSVP form builds a party: the main participant (name from the Guest
+    record), an optional partner, and add/remove children — each named.
+  - Per participant, dietary-preference and allergy **tag pickers** populated from CONFIG, each
+    with a free-form "add your own" (maps to the `custom*` arrays). No `bringingPartner` /
+    `childrenCount` / `dietaryNotes` fields remain.
+  - Submits via the ADR-0022 CRUD resource (`POST` create / `PATCH` edit with `version`); labels
+    localized (es/en/fr). `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** hub ADR-0024, ADR-0022, ADR-0009; `src/app/screens/rsvp/`
+
+### T217 — Per-participant menu-selection view (Phase 2)
+- **Status:** blocked (on wedding-api T191/T192)
+- **Owner:** agent (implementer)
+- **Depends on:** T216, wedding-api T192
+- **Acceptance:**
+  - A menu-selection view (reachable from the reminder deep link) lets the guest pick a `menuId`
+    for each participant from CONFIG `menus`; menus suiting a participant's declared diet are
+    flagged via `suitable*Ids`. Saves via `PATCH /v1/rsvp/:id`; revisitable until the window closes.
+  - Shown only while the window is open; localized. `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** hub ADR-0024, ADR-0020; `src/app/screens/rsvp/` (or a dedicated menu screen)
+
+### T218 — Admin diet & menu catalog management
+- **Status:** blocked (on wedding-api T191)
+- **Owner:** agent (implementer)
+- **Depends on:** T216, wedding-api T191
+- **Acceptance:**
+  - An admin UI to CRUD the three CONFIG catalogs (dietary-preference tags, allergy tags, menus),
+    each localized, with active/inactive; saved via `PATCH /v1/config`.
+  - The admin RSVP view / CSV surfaces per-participant diet, allergies, and menu (from T191's report).
+  - Couple-only (admin guard); `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** hub ADR-0024, ADR-0015; `src/app/screens/dashboard/` (admin area)
 
 ## Scope cuts (hub ADR-0014) — do not build
 

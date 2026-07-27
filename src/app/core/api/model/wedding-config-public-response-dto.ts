@@ -7,6 +7,8 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { WeddingConfigPublicResponseDtoSocialProviders } from './wedding-config-public-response-dto-social-providers';
+import { WeddingConfigPublicResponseDtoLanguage } from './wedding-config-public-response-dto-language';
 import { WeddingConfigPublicResponseDtoMainVenue } from './wedding-config-public-response-dto-main-venue';
 
 
@@ -16,12 +18,13 @@ export interface WeddingConfigPublicResponseDto {
     groomName: string;
     tagline: string;
     date: string;
-    language: { [key: string]: string; };
+    language: WeddingConfigPublicResponseDtoLanguage;
     themeId: WeddingConfigPublicResponseDto.ThemeIdEnum;
     city: string;
     country: string;
     rsvpDeadline: string;
     mainVenue: WeddingConfigPublicResponseDtoMainVenue;
+    socialProviders?: WeddingConfigPublicResponseDtoSocialProviders;
 }
 export namespace WeddingConfigPublicResponseDto {
     export const ThemeIdEnum = {

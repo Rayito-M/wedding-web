@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Monogram } from '../../shared/monogram/monogram';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { HeaderService } from '../../core';
 import { StayCard } from '../../shared/stay-card/stay-card';
 
 interface Stay {
@@ -12,11 +12,15 @@ interface Stay {
 @Component({
   selector: 'app-travel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Monogram, StayCard],
+  imports: [StayCard],
   templateUrl: './travel.html',
   styleUrl: './travel.scss',
 })
 export class Travel {
+  constructor() {
+    inject(HeaderService).set('ALBAICÍN · GR');
+  }
+
   protected readonly stays: Stay[] = [
     { name: 'Palacio de los Córdova', km: '0 km · the venue', tag: 'Venue', price: '—' },
     { name: 'Hotel Casa 1800', km: '0.6 km · 16th-c. carmen', tag: 'Recommended', price: '€190' },

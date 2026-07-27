@@ -7,6 +7,58 @@
     "cta": "Abrir invitación",
     "venue": "Palacio de los Córdova · Granada"
   },
+  "login": {
+    "title": "Bienvenido",
+    "subtitle": "Inicia sesión para ver tu invitación y confirmar asistencia.",
+    "or": "o",
+    "tabs": {
+      "phone": "Teléfono",
+      "email": "Correo"
+    },
+    "phone": {
+      "label": "Número de teléfono",
+      "placeholder": "600 000 000",
+      "cta": "Enviar código",
+      "sending": "Enviando…"
+    },
+    "code": {
+      "label": "Código de verificación",
+      "placeholder": "123456",
+      "sentTo": "Enviamos un código a",
+      "cta": "Verificar",
+      "verifying": "Verificando…",
+      "changeNumber": "Usar otro número"
+    },
+    "email": {
+      "label": "Correo electrónico",
+      "placeholder": "tu@ejemplo.com",
+      "cta": "Enviar enlace mágico",
+      "sending": "Enviando…"
+    },
+    "magicLink": {
+      "sentTo": "Enviamos un enlace a",
+      "info": "Revisa tu bandeja de entrada para un enlace de acceso. Expira en 15 minutos.",
+      "changeEmail": "Usar otro correo"
+    },
+    "social": {
+      "google": "Continuar con Google",
+      "apple": "Continuar con Apple",
+      "errorTitle": "Error al iniciar sesión",
+      "errorBody": "No pudimos iniciar sesión con esa cuenta. Inténtalo de nuevo."
+    },
+    "callback": {
+      "errorTitle": "Error al iniciar sesión",
+      "errorBody": "No pudimos iniciar sesión. Inténtalo de nuevo."
+    },
+    "errors": {
+      "otpRequestFailed": "No se pudo enviar el código. Comprueba el número e inténtalo de nuevo.",
+      "otpVerifyFailed": "El código no coincide. Inténtalo de nuevo.",
+      "magicLinkRequestFailed": "No se pudo enviar el enlace. Comprueba el correo e inténtalo de nuevo.",
+      "magicLinkVerifyFailed": "Ese enlace es inválido o ha expirado. Solicita uno nuevo.",
+      "socialUnavailable": "El inicio de sesión social aún no está disponible.",
+      "socialFailed": "Error al iniciar sesión con Google. Inténtalo de nuevo."
+    }
+  },
   "schedule": {
     "title": "El día",
     "subtitle": "De la tarde hasta la madrugada.",
@@ -150,6 +202,17 @@
     "back": "Atrás",
     "continue": "Continuar",
     "cancel": "Cancelar",
-    "save": "Guardar"
+    "save": "Guardar",
+    "ok": "Aceptar"
+  },
+  "titles": {
+    "welcome": "Sara & Christophe · Reserva la fecha",
+    "login": "Iniciar sesión · Sara & Christophe",
+    "signingIn": "Iniciando sesión · Sara & Christophe",
+    "rsvp": "RSVP · Sara & Christophe",
+    "schedule": "El gran día · Sara & Christophe",
+    "travel": "Cómo llegar · Sara & Christophe",
+    "dashboard": "Panel · Sara & Christophe",
+    "invitee": "Tu día · Sara & Christophe"
   }
 }

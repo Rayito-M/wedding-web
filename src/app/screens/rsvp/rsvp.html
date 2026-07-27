@@ -1,21 +1,16 @@
-<header>
-  <app-monogram [size]="20" />
-  <span class="header-meta">{{ 'rsvp.header' | t }} · {{ 'rsvp.step' | t: { current: step() + 1 } }}</span>
-</header>
-
 <div class="content" [formGroup]="form">
   @if (step() === 0) {
     <div class="step">
-      <h2>{{ 'rsvp.step1.title' | t }}</h2>
-      <p class="sub">{{ 'rsvp.step1.subtitle' | t }}</p>
+      <h2>{{ 'rsvp.step1.title' | translate }}</h2>
+      <p class="sub">{{ 'rsvp.step1.subtitle' | translate }}</p>
 
       <div class="field name-field">
-        <div class="label">{{ 'rsvp.step1.nameLabel' | t }}</div>
+        <div class="label">{{ 'rsvp.step1.nameLabel' | translate }}</div>
         <input app-input type="text" formControlName="name" />
       </div>
 
       <div class="field">
-        <div class="label">{{ 'rsvp.step1.attendingLabel' | t }}</div>
+        <div class="label">{{ 'rsvp.step1.attendingLabel' | translate }}</div>
         <div class="choices">
           <button
             type="button"
@@ -23,7 +18,7 @@
             [selected]="form.controls.attending.value === 'yes'"
             (click)="setAttending('yes')"
           >
-            {{ 'rsvp.step1.yesOption' | t }}
+            {{ 'rsvp.step1.yesOption' | translate }}
           </button>
           <button
             type="button"
@@ -31,7 +26,7 @@
             [selected]="form.controls.attending.value === 'no'"
             (click)="setAttending('no')"
           >
-            {{ 'rsvp.step1.noOption' | t }}
+            {{ 'rsvp.step1.noOption' | translate }}
           </button>
         </div>
       </div>
@@ -43,7 +38,7 @@
           [checked]="form.controls.plusOne.value"
           (toggled)="togglePlusOne()"
         >
-          {{ 'rsvp.step1.plusOneLabel' | t }}
+          {{ 'rsvp.step1.plusOneLabel' | translate }}
         </button>
       </div>
     </div>
@@ -51,8 +46,8 @@
 
   @if (step() === 1) {
     <div class="step">
-      <h2 class="table-title">{{ 'rsvp.step2.title' | t }}</h2>
-      <p class="sub">{{ 'rsvp.step2.subtitle' | t }}</p>
+      <h2 class="table-title">{{ 'rsvp.step2.title' | translate }}</h2>
+      <p class="sub">{{ 'rsvp.step2.subtitle' | translate }}</p>
 
       <div class="diet">
         @for (option of dietOptions; track option) {
@@ -62,17 +57,17 @@
             [class.on]="form.controls.diet.value.includes(option)"
             (click)="toggleDiet(option)"
           >
-            {{ 'rsvp.diet.' + option | t }}
+            {{ 'rsvp.diet.' + option | translate }}
           </button>
         }
       </div>
 
       <div class="note-field">
-        <div class="label">{{ 'rsvp.step2.noteLabel' | t }}</div>
+        <div class="label">{{ 'rsvp.step2.noteLabel' | translate }}</div>
         <textarea
           app-textarea
           formControlName="note"
-          [placeholder]="'rsvp.step2.notePlaceholder' | t"
+          [placeholder]="'rsvp.step2.notePlaceholder' | translate"
         ></textarea>
       </div>
     </div>
@@ -86,7 +81,7 @@
         {{ confirmationMessage() }}
       </p>
       <div class="summary">
-        <div class="label confirmed">{{ "rsvp.step3.replyConfirmed" | t }}</div>
+        <div class="label confirmed">{{ 'rsvp.step3.replyConfirmed' | translate }}</div>
         <div class="summary-name">{{ form.controls.name.value }}</div>
         <div class="summary-status">{{ statusLine() }}</div>
       </div>
@@ -96,13 +91,15 @@
 
 <footer>
   @if (step() === 1) {
-    <button app-btn [primary]="false" (click)="back()">{{ 'rsvp.step3.back' | t }}</button>
+    <button app-btn [primary]="false" (click)="back()">{{ 'rsvp.step3.back' | translate }}</button>
   }
   @if (step() < 2) {
     <button app-btn [full]="true" (click)="continue()">
-      {{ (step() === 1 ? 'rsvp.step3.send' : 'rsvp.step3.continue') | t }}
+      {{ (step() === 1 ? 'rsvp.step3.send' : 'rsvp.step3.continue') | translate }}
     </button>
   } @else {
-    <button app-btn [primary]="false" [full]="true" (click)="edit()">{{ 'rsvp.step3.edit' | t }}</button>
+    <button app-btn [primary]="false" [full]="true" (click)="edit()">
+      {{ 'rsvp.step3.edit' | translate }}
+    </button>
   }
 </footer>

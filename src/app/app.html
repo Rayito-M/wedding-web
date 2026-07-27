@@ -3,14 +3,5 @@
 } @else if (weddingConfigPublicLoading()) {
   <app-loading></app-loading>
 } @else {
-  @if (chrome().topNav) {
-    <app-top-nav class="top-nav" [active]="chrome().tab ?? ''" />
-  }
-
-  <main>
-    <router-outlet />
-  </main>
-  @if (chrome().tabBar) {
-    <app-tab-bar class="tab-bar" [active]="chrome().tab ?? ''" />
-  }
+  <router-outlet />
 }

@@ -1,0 +1,12 @@
+<main>
+  <app-screen-header
+    [meta]="header.meta()"
+    [active]="chrome().tab ?? ''"
+    [showNav]="chrome().topNav ?? false"
+  />
+  <router-outlet />
+</main>
+
+@if (chrome().tabBar) {
+  <app-tab-bar class="tab-bar" [active]="chrome().tab ?? ''" />
+}

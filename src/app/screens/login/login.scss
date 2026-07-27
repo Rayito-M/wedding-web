@@ -1,0 +1,180 @@
+@use '../../../styles/tokens' as t;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 12px t.$space-6 t.$space-7;
+  position: relative;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: t.$space-5;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.intro {
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-family: t.$font-serif;
+  font-weight: 400;
+  font-size: t.$text-display-md;
+  line-height: 1.05;
+  color: var(--ink);
+}
+
+.subtitle {
+  margin: t.$space-2 0 0;
+  font-family: t.$font-sans;
+  font-size: t.$text-body;
+  color: var(--sub);
+}
+
+.auth-tabs {
+  display: flex;
+  gap: t.$space-2;
+  margin-bottom: t.$space-3;
+  border-bottom: 1px solid var(--border-hairline);
+
+  button {
+    flex: 1;
+    padding: t.$space-3 t.$space-2;
+    background: none;
+    border: none;
+    font-family: t.$font-sans;
+    font-size: t.$text-label;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sub);
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s ease-in-out;
+
+    &.active {
+      color: var(--ink);
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--ink);
+      }
+    }
+
+    &:hover:not(.active) {
+      color: var(--ink);
+    }
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.phone-row {
+  display: flex;
+  align-items: stretch;
+  gap: t.$space-2;
+
+  input {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.social-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: t.$space-2;
+}
+
+.label {
+  font-family: t.$font-sans;
+  font-size: t.$text-label;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.sent-to {
+  margin: 0;
+  text-align: center;
+  font-family: t.$font-sans;
+  font-size: t.$text-body;
+  color: var(--sub);
+
+  strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+}
+
+.info {
+  margin: 0;
+  text-align: center;
+  font-family: t.$font-sans;
+  font-size: t.$text-body;
+  color: var(--sub);
+}
+
+.error {
+  margin: 0;
+  text-align: center;
+  font-family: t.$font-sans;
+  font-size: t.$text-caption;
+  color: var(--accent);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  color: var(--sub);
+  font-family: t.$font-sans;
+  font-size: t.$text-label;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-hairline);
+  }
+}
+
+.social {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}

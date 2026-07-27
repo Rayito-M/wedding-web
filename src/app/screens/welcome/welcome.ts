@@ -5,6 +5,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import { ConfigurationService, mediaSignal, TranslateLanguageService } from '../../core';
 
+import { Btn } from '../../shared/button/button';
 import { DecorAlhambra } from '../../shared/decor/alhambra';
 import { DecorFishPair } from '../../shared/decor/fish-pair';
 import { DecorSun } from '../../shared/decor/sun';
@@ -15,6 +16,7 @@ import { LanguageSelector } from '../../shared/language-selector/language-select
 @Component({
   selector: 'app-welcome',
   imports: [
+    Btn,
     Pill,
     DecorSun,
     DecorFishPair,

@@ -7,6 +7,58 @@
     "cta": "Ouvrir l'invitation",
     "venue": "Palais des Córdova · Grenade"
   },
+  "login": {
+    "title": "Bienvenue",
+    "subtitle": "Connectez-vous pour voir votre invitation et confirmer votre présence.",
+    "or": "ou",
+    "tabs": {
+      "phone": "Téléphone",
+      "email": "Email"
+    },
+    "phone": {
+      "label": "Numéro de téléphone",
+      "placeholder": "600 000 000",
+      "cta": "Envoyer le code",
+      "sending": "Envoi…"
+    },
+    "code": {
+      "label": "Code de vérification",
+      "placeholder": "123456",
+      "sentTo": "Nous avons envoyé un code au",
+      "cta": "Vérifier",
+      "verifying": "Vérification…",
+      "changeNumber": "Utiliser un autre numéro"
+    },
+    "email": {
+      "label": "Adresse e-mail",
+      "placeholder": "vous@exemple.com",
+      "cta": "Envoyer le lien magique",
+      "sending": "Envoi…"
+    },
+    "magicLink": {
+      "sentTo": "Nous avons envoyé un lien à",
+      "info": "Vérifiez votre boîte de réception pour un lien de connexion. Il expire dans 15 minutes.",
+      "changeEmail": "Utiliser une autre adresse e-mail"
+    },
+    "social": {
+      "google": "Continuer avec Google",
+      "apple": "Continuer avec Apple",
+      "errorTitle": "Échec de la connexion",
+      "errorBody": "Impossible de vous connecter avec ce compte. Veuillez réessayer."
+    },
+    "callback": {
+      "errorTitle": "Échec de la connexion",
+      "errorBody": "Impossible de vous connecter. Veuillez réessayer."
+    },
+    "errors": {
+      "otpRequestFailed": "Impossible d'envoyer le code. Vérifiez le numéro et réessayez.",
+      "otpVerifyFailed": "Ce code ne correspond pas. Veuillez réessayer.",
+      "magicLinkRequestFailed": "Impossible d'envoyer le lien. Vérifiez l'e-mail et réessayez.",
+      "magicLinkVerifyFailed": "Ce lien est invalide ou a expiré. Demandez-en un nouveau.",
+      "socialUnavailable": "La connexion via les réseaux sociaux n'est pas encore disponible.",
+      "socialFailed": "Échec de la connexion Google. Veuillez réessayer."
+    }
+  },
   "schedule": {
     "title": "Le jour J",
     "subtitle": "De l'après-midi jusqu'aux petites heures.",
@@ -150,6 +202,17 @@
     "back": "Retour",
     "continue": "Continuer",
     "cancel": "Annuler",
-    "save": "Enregistrer"
+    "save": "Enregistrer",
+    "ok": "OK"
+  },
+  "titles": {
+    "welcome": "Sara & Christophe · Réservez la date",
+    "login": "Connexion · Sara & Christophe",
+    "signingIn": "Connexion en cours · Sara & Christophe",
+    "rsvp": "RSVP · Sara & Christophe",
+    "schedule": "Le jour J · Sara & Christophe",
+    "travel": "S'y rendre · Sara & Christophe",
+    "dashboard": "Tableau de bord · Sara & Christophe",
+    "invitee": "Votre journée · Sara & Christophe"
   }
 }

@@ -7,9 +7,60 @@
       "groom": "Christophe",
       "quote": "« Como la trucha al trucho »"
     },
-    "date": "5 June 2027",
-    "cta": "Open invitation",
+    "cta": "empezamos",
     "venue": "Palacio de los Córdova · Granada"
+  },
+  "login": {
+    "title": "Welcome",
+    "subtitle": "Sign in to view your invitation and RSVP.",
+    "or": "or",
+    "tabs": {
+      "phone": "Phone",
+      "email": "Email"
+    },
+    "phone": {
+      "label": "Phone number",
+      "placeholder": "600 000 000",
+      "cta": "Send code",
+      "sending": "Sending…"
+    },
+    "code": {
+      "label": "Verification code",
+      "placeholder": "123456",
+      "sentTo": "We sent a code to",
+      "cta": "Verify",
+      "verifying": "Verifying…",
+      "changeNumber": "Use a different number"
+    },
+    "email": {
+      "label": "Email address",
+      "placeholder": "you@example.com",
+      "cta": "Send magic link",
+      "sending": "Sending…"
+    },
+    "magicLink": {
+      "sentTo": "We sent a link to",
+      "info": "Check your inbox for a sign-in link. It expires in 15 minutes.",
+      "changeEmail": "Use a different email"
+    },
+    "social": {
+      "google": "Continue with Google",
+      "apple": "Continue with Apple",
+      "errorTitle": "Sign-in failed",
+      "errorBody": "We couldn't sign you in with that account. Please try again."
+    },
+    "callback": {
+      "errorTitle": "Sign-in failed",
+      "errorBody": "We couldn't sign you in. Please try again."
+    },
+    "errors": {
+      "otpRequestFailed": "Couldn't send the code. Check the number and try again.",
+      "otpVerifyFailed": "That code didn't match. Please try again.",
+      "magicLinkRequestFailed": "Couldn't send the link. Check the email and try again.",
+      "magicLinkVerifyFailed": "That link is invalid or expired. Please request a new one.",
+      "socialUnavailable": "Social sign-in isn't available yet.",
+      "socialFailed": "Google sign-in failed. Please try again."
+    }
   },
   "schedule": {
     "title": "The day",
@@ -154,6 +205,17 @@
     "back": "Back",
     "continue": "Continue",
     "cancel": "Cancel",
-    "save": "Save"
+    "save": "Save",
+    "ok": "OK"
+  },
+  "titles": {
+    "welcome": "Sara & Christophe · Save the date",
+    "login": "Sign in · Sara & Christophe",
+    "signingIn": "Signing in · Sara & Christophe",
+    "rsvp": "RSVP · Sara & Christophe",
+    "schedule": "The day · Sara & Christophe",
+    "travel": "Getting there · Sara & Christophe",
+    "dashboard": "Dashboard · Sara & Christophe",
+    "invitee": "Your day · Sara & Christophe"
   }
 }

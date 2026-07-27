@@ -37,9 +37,9 @@
   <div class="alhambra">
     <app-decor-alhambra [w]="desktop() ? 900 : 360" />
   </div>
-  <!-- <div class="cta">
-    <button app-btn [full]="!desktop()" (click)="open()">{{ 'welcome.cta' | translate }}</button>
-    <div class="caption">{{ 'welcome.venue' | t }}</div>
-  </div> -->
+  <div class="cta">
+    <button app-btn [full]="true" (click)="open()">{{ 'welcome.cta' | translate }}</button>
+    <div class="caption">{{ 'welcome.venue' | translate }}</div>
+  </div>
   <div></div>
 </div>

@@ -1,0 +1,29 @@
+<button
+  type="button"
+  class="dropdown-toggle"
+  (click)="toggleDropdown()"
+  [attr.aria-expanded]="isOpen()"
+>
+  <span class="flag">{{ country().flag }}</span>
+  <span class="dial">{{ country().dialCode }}</span>
+  <span class="icon">▼</span>
+</button>
+
+@if (isOpen()) {
+  <div class="dropdown-menu" role="listbox">
+    @for (item of countries; track item.iso) {
+      <button
+        type="button"
+        role="option"
+        class="dropdown-item"
+        [class.active]="country().iso === item.iso"
+        [attr.aria-selected]="country().iso === item.iso"
+        (click)="select(item); $event.stopPropagation()"
+      >
+        <span class="flag">{{ item.flag }}</span>
+        <span class="name">{{ item.name }}</span>
+        <span class="dial">{{ item.dialCode }}</span>
+      </button>
+    }
+  </div>
+}

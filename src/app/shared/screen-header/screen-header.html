@@ -1,0 +1,55 @@
+<header>
+  <app-monogram [size]="18" />
+
+  @if (showNav()) {
+    <nav class="nav">
+      @for (tab of tabs(); track tab.id) {
+        <a class="link" [class.on]="tab.id === active()" [routerLink]="tab.link">
+          <span class="dot"></span>
+          {{ tab.label }}
+        </a>
+      }
+    </nav>
+  }
+
+  <div class="end">
+    <span class="header-meta">{{ meta() }}</span>
+
+    <div class="account">
+      <button
+        type="button"
+        class="avatar"
+        (click)="toggleMenu($event)"
+        [attr.aria-expanded]="menuOpen()"
+        aria-label="Account menu"
+      >
+        {{ initial() }}
+      </button>
+
+      @if (menuOpen()) {
+        <div class="menu">
+          @if (languages(); as langs) {
+            <div class="menu-section">
+              @for (entry of langs | keyvalue; track entry.key) {
+                <button
+                  type="button"
+                  class="menu-item"
+                  [class.active]="currentLang === entry.key"
+                  (click)="selectLanguage(entry.key); $event.stopPropagation()"
+                >
+                  <span>{{ entry.value }}</span>
+                  <span class="lang-code">{{ entry.key.toUpperCase() }}</span>
+                </button>
+              }
+            </div>
+          }
+          <div class="menu-section">
+            <button type="button" class="menu-item" (click)="logout(); $event.stopPropagation()">
+              Logout
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</header>

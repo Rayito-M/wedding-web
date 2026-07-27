@@ -1,18 +1,21 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { Monogram } from '../../shared/monogram/monogram';
-import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { HeaderService } from '../../core';
 import { TimelineItem } from '../../shared/timeline-item/timeline-item';
 
 @Component({
   selector: 'app-schedule',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Monogram, TimelineItem, TranslatePipe],
+  imports: [TimelineItem, TranslatePipe],
   templateUrl: './schedule.html',
   styleUrl: './schedule.scss',
 })
 export class Schedule {
   private readonly translateService = inject(TranslateService);
+
+  constructor() {
+    inject(HeaderService).set(this.translateService.instant('schedule.header'));
+  }
 
   protected readonly items = computed(() => {
     const schedule = this.translateService.instant('schedule.timeline') as {

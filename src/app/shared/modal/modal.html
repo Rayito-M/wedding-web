@@ -1,0 +1,28 @@
+@if (open()) {
+  <div class="modal-backdrop" (click)="onBackdrop()">
+    <div
+      class="modal-card"
+      role="dialog"
+      aria-modal="true"
+      (click)="$event.stopPropagation()"
+    >
+      @if (dismissable()) {
+        <button type="button" class="modal-close" aria-label="Close" (click)="close.emit()">
+          ×
+        </button>
+      }
+
+      @if (title()) {
+        <h2 class="modal-title">{{ title() }}</h2>
+      }
+
+      <div class="modal-body">
+        <ng-content />
+      </div>
+
+      <div class="modal-actions">
+        <ng-content select="[modal-actions]" />
+      </div>
+    </div>
+  </div>
+}

@@ -1,5 +1,5 @@
 import { ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, TitleStrategy } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { provideHttpClient } from '@angular/common/http';
@@ -10,6 +10,7 @@ import { provideStoreDevtools } from '@ngrx/store-devtools';
 
 import { environment } from '../environments';
 import { routes } from './app.routes';
+import { TranslatedTitleStrategy } from './core';
 import { provideApi } from './core/api';
 import { entityConfig, provideEntityDataServices } from './core/data';
 
@@ -17,6 +18,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
+    { provide: TitleStrategy, useClass: TranslatedTitleStrategy },
     provideHttpClient(),
     provideTranslateService({
       lang: 'en',

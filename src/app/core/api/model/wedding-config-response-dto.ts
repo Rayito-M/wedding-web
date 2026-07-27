@@ -8,6 +8,9 @@
  * Do not edit the class manually.
  */
 import { CreateWeddingConfigDtoVenuesInner } from './create-wedding-config-dto-venues-inner';
+import { CreateWeddingConfigDtoLanguage } from './create-wedding-config-dto-language';
+import { CreateWeddingConfigDtoDietaryPreferencesInner } from './create-wedding-config-dto-dietary-preferences-inner';
+import { CreateWeddingConfigDtoMenusInner } from './create-wedding-config-dto-menus-inner';
 import { CreateWeddingConfigDtoAgendaInner } from './create-wedding-config-dto-agenda-inner';
 import { CreateWeddingConfigDtoHotelsInner } from './create-wedding-config-dto-hotels-inner';
 
@@ -18,7 +21,7 @@ export interface WeddingConfigResponseDto {
     groomName: string;
     tagline: string;
     date: string;
-    language: { [key: string]: string; };
+    language: CreateWeddingConfigDtoLanguage;
     themeId: WeddingConfigResponseDto.ThemeIdEnum;
     city: string;
     country: string;
@@ -26,6 +29,9 @@ export interface WeddingConfigResponseDto {
     venues: Array<CreateWeddingConfigDtoVenuesInner>;
     agenda: Array<CreateWeddingConfigDtoAgendaInner>;
     hotels: Array<CreateWeddingConfigDtoHotelsInner>;
+    dietaryPreferences: Array<CreateWeddingConfigDtoDietaryPreferencesInner>;
+    allergies: Array<CreateWeddingConfigDtoDietaryPreferencesInner>;
+    menus: Array<CreateWeddingConfigDtoMenusInner>;
 }
 export namespace WeddingConfigResponseDto {
     export const ThemeIdEnum = {

@@ -15,6 +15,10 @@
     "module": "preserve",
     "moduleResolution": "bundler",
     "rootDir": "./src",
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/app/*"]
+    },
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

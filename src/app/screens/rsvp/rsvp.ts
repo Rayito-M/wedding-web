@@ -1,13 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { HeaderService } from '../../core';
 import { RsvpReply, RsvpService } from '../../core/rsvp.service';
 import { Btn } from '../../shared/button/button';
 import { ChoiceCard } from '../../shared/choice-card/choice-card';
 import { DecorFishPair } from '../../shared/decor/fish-pair';
 import { TextInput } from '../../shared/input/input';
-import { Monogram } from '../../shared/monogram/monogram';
-import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { TextareaInput } from '../../shared/textarea/textarea';
 import { Toggle } from '../../shared/toggle/toggle';
 
@@ -25,7 +24,6 @@ export const DIET_OPTIONS = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    Monogram,
     Btn,
     ChoiceCard,
     TextInput,
@@ -41,9 +39,18 @@ export class Rsvp {
   private readonly rsvpService = inject(RsvpService);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly translateService = inject(TranslateService);
+  private readonly header = inject(HeaderService);
 
   protected readonly dietOptions = DIET_OPTIONS;
   protected readonly step = signal(0);
+
+  constructor() {
+    effect(() => {
+      const header = this.translateService.instant('rsvp.header');
+      const step = this.translateService.instant('rsvp.step', { current: this.step() + 1 });
+      this.header.set(`${header} · ${step}`);
+    });
+  }
 
   protected readonly confirmationTitle = computed(() => {
     const isAttending = this.form.controls.attending.value === 'yes';
