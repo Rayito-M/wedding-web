@@ -1,4 +1,10 @@
 {
+  "roles": {
+    "bride": "Novia",
+    "groom": "Novio",
+    "guest": "Invitado",
+    "provider": "Proveedor"
+  },
   "grenade": "granada",
   "spain": "españa",
   "welcome": {
@@ -142,7 +148,8 @@
   },
   "dashboard": {
     "greeting": "Buenos días, {{name}}.",
-    "daysToGo": "{{count}} días para el gran día.",
+    "daysToGo_singular": "día para el gran día.",
+    "daysToGo_plural": "días para el gran día.",
     "rsvp": {
       "yes": "Sí",
       "pending": "Pendiente",
@@ -301,6 +308,14 @@
     "add": "Añadir",
     "cancel": "Cancelar",
     "close": "Cerrar"
+  },
+  "nav": {
+    "home": "Inicio",
+    "dashboard": "Panel",
+    "config": "Configuración",
+    "rsvp": "Gestión de asistencia",
+    "schedule": "Agenda",
+    "travel": "Cómo llegar"
   },
   "titles": {
     "welcome": "Sara & Christophe · Reserva la fecha",

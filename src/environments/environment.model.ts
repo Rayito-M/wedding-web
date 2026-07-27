@@ -7,4 +7,6 @@ export interface Environment {
 
   appName: string;
   appVersion: string;
+
+  enabledRoutes: string[];
 }

@@ -10,8 +10,14 @@
 
 
 export interface AuthTokenDto { 
+    /**
+     * JWT access token. Payload contains AppJwtClaims (sub, role). See AppJwtClaimsDto schema for token structure.
+     */
     accessToken: string;
     tokenType: string;
+    /**
+     * Lifetime of the access token in seconds
+     */
     expiresIn: number;
 }
 

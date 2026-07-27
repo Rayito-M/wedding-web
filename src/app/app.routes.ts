@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard, authGuard, publicOnlyGuard } from './core';
+import { adminGuard, authGuard, publicOnlyGuard, routeEnabledGuard } from './core';
 
 // Two zones:
 //   Public       — welcome + login, reachable only when signed out (publicOnlyGuard).
@@ -49,25 +49,28 @@ export const routes: Routes = [
         path: 'rsvp',
         loadComponent: () => import('./screens/rsvp/rsvp').then((m) => m.Rsvp),
         title: 'titles.rsvp',
-        data: { tab: 'rsvp', topNav: true },
+        canActivate: [routeEnabledGuard],
+        data: { tab: 'rsvp', tabBar: true, topNav: true },
       },
       {
         path: 'schedule',
         loadComponent: () => import('./screens/schedule/schedule').then((m) => m.Schedule),
         title: 'titles.schedule',
+        canActivate: [routeEnabledGuard],
         data: { tab: 'schedule', tabBar: true, topNav: true },
       },
       {
         path: 'travel',
         loadComponent: () => import('./screens/travel/travel').then((m) => m.Travel),
         title: 'titles.travel',
+        canActivate: [routeEnabledGuard],
         data: { tab: 'travel', tabBar: true, topNav: true },
       },
       {
         path: 'dashboard',
         loadComponent: () => import('./screens/dashboard/dashboard').then((m) => m.Dashboard),
         title: 'titles.dashboard',
-        canActivate: [adminGuard],
+        canActivate: [adminGuard, routeEnabledGuard],
         data: { tab: 'dashboard', tabBar: true, topNav: true },
       },
       {
@@ -75,13 +78,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./screens/config-manager/config-manager').then((m) => m.ConfigManager),
         title: 'titles.config',
-        canActivate: [adminGuard],
+        canActivate: [adminGuard, routeEnabledGuard],
         data: { tab: 'config', tabBar: true, topNav: true },
       },
       {
         path: 'me',
         loadComponent: () => import('./screens/invitee/invitee').then((m) => m.Invitee),
         title: 'titles.invitee',
+        canActivate: [routeEnabledGuard],
         data: { tab: 'home', tabBar: true, topNav: true },
       },
     ],

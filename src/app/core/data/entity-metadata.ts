@@ -1,11 +1,17 @@
 import { EntityDataModuleConfig, EntityMetadataMap } from '@ngrx/data';
 
-import { WeddingConfigResponseDto, WeddingConfigPublicResponseDto, RsvpDto } from '../api';
+import {
+  WeddingConfigResponseDto,
+  WeddingConfigPublicResponseDto,
+  RsvpDto,
+  UserProfileDto,
+} from '../api';
 
 export enum EntityNamesEnum {
   WEDDING_CONFIG = 'WeddingConfig',
   WEDDING_CONFIG_PUBLIC = 'WeddingConfigPublic',
   RSVP = 'Rsvp',
+  USER_PROFILE = 'UserProfile',
 }
 
 /**
@@ -35,6 +41,9 @@ export const entityMetadata: EntityMetadataMap = {
   [EntityNamesEnum.RSVP]: {
     selectId: (rsvp: RsvpDto) => rsvp.id,
   },
+  [EntityNamesEnum.USER_PROFILE]: {
+    selectId: (profile: UserProfileDto) => profile.id,
+  },
 };
 
 /**
@@ -46,6 +55,7 @@ export const pluralNames = {
   [EntityNamesEnum.WEDDING_CONFIG]: 'WeddingConfig',
   [EntityNamesEnum.WEDDING_CONFIG_PUBLIC]: 'WeddingConfigPublic',
   [EntityNamesEnum.RSVP]: 'Rsvp',
+  [EntityNamesEnum.USER_PROFILE]: 'UserProfile',
 };
 
 export const entityConfig: EntityDataModuleConfig = {

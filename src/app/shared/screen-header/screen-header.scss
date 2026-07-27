@@ -4,6 +4,11 @@
   display: block;
 }
 
+:host.scrolled header {
+  background: var(--surface-card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
 header {
   // Mobile: the bottom tab-bar carries navigation, so the header stays
   // chrome-less (transparent). The card surface + hairline underline only
@@ -13,6 +18,7 @@ header {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 // Primary nav — desktop only; same active-accent treatment as the TabBar.

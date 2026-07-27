@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -31,6 +31,9 @@ export class PrivateLayout {
   private readonly router = inject(Router);
   protected readonly header = inject(HeaderService);
 
+  @ViewChild('mainContent') private mainContent?: ElementRef<HTMLElement>;
+  protected readonly isScrolled = signal(false);
+
   // Seed from the current route: this layout mounts *after* the NavigationEnd
   // that activated it, so the stream alone would miss the first value.
   protected readonly chrome = toSignal(
@@ -45,5 +48,11 @@ export class PrivateLayout {
     let route = this.router.routerState.snapshot.root;
     while (route.firstChild) route = route.firstChild;
     return route.data;
+  }
+
+  protected onMainScroll(): void {
+    if (this.mainContent) {
+      this.isScrolled.set((this.mainContent.nativeElement.scrollTop ?? 0) > 0);
+    }
   }
 }

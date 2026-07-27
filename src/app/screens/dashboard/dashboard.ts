@@ -18,8 +18,13 @@ import { TaskRow } from '../../shared/task-row/task-row';
 })
 export class Dashboard {
   protected readonly dash = inject(DashboardService);
+  protected readonly translate = inject(TranslateService);
 
   constructor() {
     inject(HeaderService).set(inject(TranslateService).instant('shared.couple'));
+  }
+
+  daysTranslationKey() {
+    return this.dash.daysToGo() === 1 ? 'dashboard.daysToGo_singular' : 'dashboard.daysToGo_plural';
   }
 }

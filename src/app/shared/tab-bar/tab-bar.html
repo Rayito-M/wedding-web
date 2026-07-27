@@ -1,6 +1,8 @@
 @for (tab of tabs(); track tab.id) {
-  <a class="tab" [class.on]="tab.id === active()" [routerLink]="tab.link">
-    <span class="dot"></span>
-    {{ tab.label }}
-  </a>
+  @if (isRouteEnabled(tab.link)) {
+    <a class="tab" [class.on]="tab.id === active()" [routerLink]="tab.link">
+      <span class="dot"></span>
+      {{ tab.labelKey | translate }}
+    </a>
+  }
 }

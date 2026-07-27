@@ -1,10 +1,16 @@
 import { EnvironmentProviders, inject, provideEnvironmentInitializer } from '@angular/core';
 import { EntityDataService } from '@ngrx/data';
 
+import { UserProfileDataService } from './user-profile-data.service';
+import { RsvpDataService } from './rsvp-data.service';
 import { WeddingConfigDataService } from './wedding-config-data.service';
 import { WeddingConfigPublicDataService } from './wedding-config-public-data.service';
 
+import { EntityNamesEnum } from './entity-metadata';
+
 export * from './entity-metadata';
+export * from './user-profile-data.service';
+export * from './rsvp-data.service';
 export * from './wedding-config-data.service';
 export * from './wedding-config-public-data.service';
 
@@ -16,9 +22,17 @@ export * from './wedding-config-public-data.service';
 export function provideEntityDataServices(): EnvironmentProviders {
   return provideEnvironmentInitializer(() => {
     inject(EntityDataService).registerService(
-      'WeddingConfigPublic',
+      EntityNamesEnum.WEDDING_CONFIG_PUBLIC,
       inject(WeddingConfigPublicDataService),
     );
-    inject(EntityDataService).registerService('WeddingConfig', inject(WeddingConfigDataService));
+    inject(EntityDataService).registerService(EntityNamesEnum.RSVP, inject(RsvpDataService));
+    inject(EntityDataService).registerService(
+      EntityNamesEnum.WEDDING_CONFIG,
+      inject(WeddingConfigDataService),
+    );
+    inject(EntityDataService).registerService(
+      EntityNamesEnum.USER_PROFILE,
+      inject(UserProfileDataService),
+    );
   });
 }

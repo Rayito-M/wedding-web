@@ -4,16 +4,18 @@
   @if (showNav()) {
     <nav class="nav">
       @for (tab of tabs(); track tab.id) {
-        <a class="link" [class.on]="tab.id === active()" [routerLink]="tab.link">
-          <span class="dot"></span>
-          {{ tab.label }}
-        </a>
+        @if (isRouteEnabled(tab.link)) {
+          <a class="link" [class.on]="tab.id === active()" [routerLink]="tab.link">
+            <span class="dot"></span>
+            {{ tab.labelKey | translate }}
+          </a>
+        }
       }
     </nav>
   }
 
   <div class="end">
-    <span class="header-meta">{{ meta() }}</span>
+    <span class="header-meta">{{ roleKey() | translate }}</span>
 
     <div class="account">
       <button

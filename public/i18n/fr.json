@@ -1,4 +1,10 @@
 {
+  "roles": {
+    "bride": "Mariée",
+    "groom": "Marié",
+    "guest": "Invité",
+    "provider": "Prestataire"
+  },
   "grenade": "grenade",
   "spain": "espagne",
   "welcome": {
@@ -142,7 +148,8 @@
   },
   "dashboard": {
     "greeting": "Buenos días, {{name}}.",
-    "daysToGo": "{{count}} jours avant le grand jour.",
+    "daysToGo_singular": "jour avant le grand jour.",
+    "daysToGo_plural": "jours avant le grand jour.",
     "rsvp": {
       "yes": "Oui",
       "pending": "En attente",
@@ -301,6 +308,14 @@
     "add": "Ajouter",
     "cancel": "Annuler",
     "close": "Fermer"
+  },
+  "nav": {
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "config": "Configuration",
+    "rsvp": "RSVP",
+    "schedule": "Agenda",
+    "travel": "S'y rendre"
   },
   "titles": {
     "welcome": "Sara & Christophe · Réservez la date",

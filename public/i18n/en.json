@@ -1,4 +1,10 @@
 {
+  "roles": {
+    "bride": "Bride",
+    "groom": "Groom",
+    "guest": "Guest",
+    "provider": "Provider"
+  },
   "welcome": {
     "saveDate": "Save the date",
     "location": "GRANADA · ES",
@@ -145,7 +151,8 @@
   },
   "dashboard": {
     "greeting": "Buenos días, {{name}}.",
-    "daysToGo": "days to go.",
+    "daysToGo_singular": "day before the special day.",
+    "daysToGo_plural": "days before the special day.",
     "rsvp": {
       "yes": "Yes",
       "pending": "Pending",
@@ -304,6 +311,14 @@
     "add": "Add",
     "cancel": "Cancel",
     "close": "Close"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "config": "Config",
+    "rsvp": "RSVP",
+    "schedule": "Schedule",
+    "travel": "Travel"
   },
   "titles": {
     "welcome": "Sara & Christophe · Save the date",

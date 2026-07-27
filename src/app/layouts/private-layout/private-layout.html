@@ -1,9 +1,11 @@
-<main>
-  <app-screen-header
-    [meta]="header.meta()"
-    [active]="chrome().tab ?? ''"
-    [showNav]="chrome().topNav ?? false"
-  />
+<app-screen-header
+  [active]="chrome().tab ?? ''"
+  [showNav]="chrome().topNav ?? false"
+  class="header"
+  [class.scrolled]="isScrolled()"
+/>
+
+<main #mainContent (scroll)="onMainScroll()">
   <router-outlet />
 </main>
 

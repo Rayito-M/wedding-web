@@ -7,20 +7,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { CreateGuestDtoGuestProfile } from './create-guest-dto-guest-profile';
 
 
-export interface CreateGuestDto { 
-    firstName: string;
-    lastName: string;
-    email?: string;
-    googleSub?: string;
-    appleSub?: string;
-    phoneNumber: string;
-    preferredLang?: CreateGuestDto.PreferredLangEnum;
-    guestProfile?: CreateGuestDtoGuestProfile;
+export interface UpdateUserProfileDto { 
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    preferredLang?: UpdateUserProfileDto.PreferredLangEnum;
 }
-export namespace CreateGuestDto {
+export namespace UpdateUserProfileDto {
     export const PreferredLangEnum = {
         ES: 'es',
         EN: 'en',

@@ -8,4 +8,5 @@ export const environment: Environment = {
   enableAnalytics: true,
   appName: 'Wedding App',
   appVersion: '1.0.0',
+  enabledRoutes: ['rsvp', 'dashboard', 'config', 'me'],
 };

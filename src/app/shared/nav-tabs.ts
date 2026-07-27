@@ -1,18 +1,18 @@
-import { UserRole } from '../core';
+import type { UserRole } from '@app/model';
 
 export interface NavTab {
   id: string;
-  label: string;
+  labelKey: string;
   link: string;
   /** Roles this tab is shown to. Absent means every authenticated user. */
   roles?: UserRole[];
 }
 
 export const NAV_TABS: NavTab[] = [
-  { id: 'home', label: 'Home', link: '/me', roles: ['guest'] },
-  { id: 'dashboard', label: 'Dashboard', link: '/dashboard', roles: ['admin'] },
-  { id: 'config', label: 'Config', link: '/config', roles: ['admin'] },
-  { id: 'rsvp', label: 'RSVP', link: '/rsvp', roles: ['guest'] },
-  { id: 'schedule', label: 'Schedule', link: '/schedule' },
-  { id: 'travel', label: 'Travel', link: '/travel' },
+  { id: 'home', labelKey: 'nav.home', link: '/me', roles: ['guest'] },
+  { id: 'dashboard', labelKey: 'nav.dashboard', link: '/dashboard', roles: ['groom', 'bride'] },
+  { id: 'config', labelKey: 'nav.config', link: '/config', roles: ['groom', 'bride'] },
+  { id: 'rsvp', labelKey: 'nav.rsvp', link: '/rsvp', roles: ['guest'] },
+  { id: 'schedule', labelKey: 'nav.schedule', link: '/schedule' },
+  { id: 'travel', labelKey: 'nav.travel', link: '/travel' },
 ];

@@ -4,6 +4,8 @@ import { Observable, map, throwError } from 'rxjs';
 
 import { WeddingRsvpService, RsvpListResponseDto, RsvpDto } from '../api';
 
+import { EntityNamesEnum } from './entity-metadata';
+
 /**
  * Custom @ngrx/data data service for the `Rsvp` entity
  * (ADR W-0001 decision 3): delegates every read to the generated API client —
@@ -16,7 +18,7 @@ import { WeddingRsvpService, RsvpListResponseDto, RsvpDto } from '../api';
  */
 @Injectable({ providedIn: 'root' })
 export class RsvpDataService implements EntityCollectionDataService<RsvpDto> {
-  readonly name = 'Rsvp';
+  readonly name = EntityNamesEnum.RSVP;
 
   private readonly configApi = inject(WeddingRsvpService);
 

@@ -4,6 +4,7 @@ import { Observable, map, throwError } from 'rxjs';
 
 import { WeddingConfigurationService, WeddingConfigPublicResponseDto } from '../api';
 
+import { EntityNamesEnum } from './entity-metadata';
 /**
  * Custom @ngrx/data data service for the `WeddingConfigPublic` entity
  * (ADR W-0001 decision 3): delegates every read to the generated API client —
@@ -16,7 +17,7 @@ import { WeddingConfigurationService, WeddingConfigPublicResponseDto } from '../
  */
 @Injectable({ providedIn: 'root' })
 export class WeddingConfigPublicDataService implements EntityCollectionDataService<WeddingConfigPublicResponseDto> {
-  readonly name = 'WeddingConfigPublic';
+  readonly name = EntityNamesEnum.WEDDING_CONFIG_PUBLIC;
 
   private readonly configApi = inject(WeddingConfigurationService);
 

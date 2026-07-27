@@ -32,5 +32,5 @@ export const adminGuard: CanActivateFn = () => {
   const login = inject(LoginService);
   const router = inject(Router);
   if (!login.isAuthenticated()) return router.parseUrl('/login');
-  return login.role() === 'admin' || router.parseUrl('/me');
+  return login.role() === 'groom' || login.role() === 'bride' || router.parseUrl('/me');
 };

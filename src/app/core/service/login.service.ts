@@ -1,7 +1,12 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { WeddingAuthenticationService, AuthTokenDto, SocialLoginDto } from '../api';
+import {
+  WeddingAuthenticationService,
+  AuthTokenDto,
+  SocialLoginDto,
+  AppJwtClaimsDto,
+} from '@app/core/api';
 import { ConfigurationService } from './configuration.service';
 import { TokenStorageService } from './token-storage.service';
 
@@ -12,14 +17,17 @@ const OAUTH_STATE_KEY = 'sc-oauth-state';
 const GOOGLE_SCOPES = 'openid email profile';
 const GOOGLE_AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth';
 
+type UserRole = AppJwtClaimsDto.RoleEnum;
+
 // Landing pages by role after successful authentication
 const LANDING_BY_ROLE: Record<UserRole, string> = {
-  guest: '/me',
-  admin: '/dashboard',
+  [AppJwtClaimsDto.RoleEnum.BRIDE]: '/dashboard',
+  [AppJwtClaimsDto.RoleEnum.GROOM]: '/dashboard',
+  [AppJwtClaimsDto.RoleEnum.GUEST]: '/me',
+  [AppJwtClaimsDto.RoleEnum.PROVIDER]: '/provider',
 };
 
 /** ADR-0013: admins are guests carrying `role: admin`; everyone else is a guest. */
-export type UserRole = 'guest' | 'admin';
 
 /**
  * Login facade (ADR-0013 app-managed auth): wraps the generated auth client
@@ -218,7 +226,7 @@ export class LoginService {
 
   logout(): void {
     this.tokenStorage.clear();
-    this.role.set('guest');
+    this.role.set(AppJwtClaimsDto.RoleEnum.GUEST);
   }
 
   private persistToken(auth: AuthTokenDto): void {
@@ -227,19 +235,54 @@ export class LoginService {
   }
 
   /**
+   * Decode the JWT payload and return the app claims (sub and role).
+   * Returns { sub: undefined, role: guest } for any missing or malformed token.
+   */
+  currentUserClaims(): AppJwtClaimsDto {
+    const token = this.token();
+    if (!token) {
+      return { sub: undefined as unknown as string, role: AppJwtClaimsDto.RoleEnum.GUEST };
+    }
+
+    try {
+      const payload = token.split('.')[1];
+      if (!payload) {
+        return { sub: undefined as unknown as string, role: AppJwtClaimsDto.RoleEnum.GUEST };
+      }
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const json = JSON.parse(atob(base64)) as Partial<AppJwtClaimsDto>;
+
+      const validRoles = Object.values(AppJwtClaimsDto.RoleEnum);
+      const role = validRoles.includes(json.role as UserRole)
+        ? (json.role as UserRole)
+        : AppJwtClaimsDto.RoleEnum.GUEST;
+
+      return {
+        sub: json.sub || (undefined as unknown as string),
+        role,
+      };
+    } catch {
+      return { sub: undefined as unknown as string, role: AppJwtClaimsDto.RoleEnum.GUEST };
+    }
+  }
+
+  /**
    * Read the `role` claim from a JWT payload. Returns `guest` for any missing
    * token, malformed token, or unrecognised role — never throws.
    */
   private decodeRole(token: string | undefined): UserRole {
-    if (!token) return 'guest';
+    if (!token) return AppJwtClaimsDto.RoleEnum.GUEST;
     try {
       const payload = token.split('.')[1];
-      if (!payload) return 'guest';
+      if (!payload) return AppJwtClaimsDto.RoleEnum.GUEST;
       const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
       const json = JSON.parse(atob(base64)) as { role?: string };
-      return json.role === 'admin' ? 'admin' : 'guest';
+      const validRoles = Object.values(AppJwtClaimsDto.RoleEnum);
+      return validRoles.includes(json.role as UserRole)
+        ? (json.role as UserRole)
+        : AppJwtClaimsDto.RoleEnum.GUEST;
     } catch {
-      return 'guest';
+      return AppJwtClaimsDto.RoleEnum.GUEST;
     }
   }
 
