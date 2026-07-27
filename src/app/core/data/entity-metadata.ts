@@ -1,6 +1,12 @@
 import { EntityDataModuleConfig, EntityMetadataMap } from '@ngrx/data';
 
-import { WeddingConfigPublicResponseDto, RsvpDto } from '../api';
+import { WeddingConfigResponseDto, WeddingConfigPublicResponseDto, RsvpDto } from '../api';
+
+export enum EntityNamesEnum {
+  WEDDING_CONFIG = 'WeddingConfig',
+  WEDDING_CONFIG_PUBLIC = 'WeddingConfigPublic',
+  RSVP = 'Rsvp',
+}
 
 /**
  * Entity metadata for the @ngrx/data collections (ADR W-0001 decision 3).
@@ -14,13 +20,19 @@ import { WeddingConfigPublicResponseDto, RsvpDto } from '../api';
  * added when T210/T211 land.
  */
 export const entityMetadata: EntityMetadataMap = {
-  WeddingConfigPublic: {
+  [EntityNamesEnum.WEDDING_CONFIG]: {
+    // `GET /v1/config/public` is a singleton resource, but the API document
+    // carries its own stable `id`; using it keeps the collection honest (at
+    // most one entry, keyed by the server-issued id).
+    selectId: (config: WeddingConfigResponseDto) => config.id,
+  },
+  [EntityNamesEnum.WEDDING_CONFIG_PUBLIC]: {
     // `GET /v1/config/public` is a singleton resource, but the API document
     // carries its own stable `id`; using it keeps the collection honest (at
     // most one entry, keyed by the server-issued id).
     selectId: (config: WeddingConfigPublicResponseDto) => config.id,
   },
-  Rsvp: {
+  [EntityNamesEnum.RSVP]: {
     selectId: (rsvp: RsvpDto) => rsvp.id,
   },
 };
@@ -31,8 +43,9 @@ export const entityMetadata: EntityMetadataMap = {
  * a custom data service). The invariant plural documents the singleton nature.
  */
 export const pluralNames = {
-  WeddingConfigPublic: 'WeddingConfigPublic',
-  Rsvp: 'Rsvp',
+  [EntityNamesEnum.WEDDING_CONFIG]: 'WeddingConfig',
+  [EntityNamesEnum.WEDDING_CONFIG_PUBLIC]: 'WeddingConfigPublic',
+  [EntityNamesEnum.RSVP]: 'Rsvp',
 };
 
 export const entityConfig: EntityDataModuleConfig = {

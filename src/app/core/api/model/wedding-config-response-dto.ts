@@ -17,6 +17,7 @@ import { CreateWeddingConfigDtoHotelsInner } from './create-wedding-config-dto-h
 
 export interface WeddingConfigResponseDto { 
     id: string;
+    version: number;
     brideName: string;
     groomName: string;
     tagline: string;

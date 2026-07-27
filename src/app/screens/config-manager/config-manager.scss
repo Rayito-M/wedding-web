@@ -1,0 +1,668 @@
+// Per design reference ScreenConfigManager.jsx / ScreenConfigManagerMobile.jsx.
+// The reference's own header (Monogram + title + Save) is replaced by this
+// app's shared app-screen-header (HeaderService); this component only owns
+// the section rail/pills, content pane, and the save/status row.
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+// ── Save/status row — top of content pane (desktop) ──
+.toolbar {
+  display: none;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: var(--text-display-md);
+  line-height: 1;
+  margin: 0;
+}
+
+.status {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin: 6px 0 0;
+}
+
+.status.saved {
+  color: var(--brand-accent);
+}
+
+// ── Sticky save bar — mobile only ──
+.mobile-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+}
+
+.mobile-bar .status {
+  margin: 0;
+}
+
+// ── Layout: section nav + content ──
+.layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+// Desktop vertical rail
+.rail {
+  display: none;
+}
+
+.rail-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: left;
+  padding: 11px 14px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.rail-item .number {
+  font-size: var(--text-label);
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.rail-item.on {
+  background: var(--surface-chip);
+  color: var(--text-body-color);
+}
+
+.rail-item.on .number {
+  color: var(--brand-accent);
+}
+
+.rail-decor {
+  margin-top: auto;
+  position: relative;
+  height: 72px;
+  overflow: hidden;
+  opacity: 0.7;
+  display: flex;
+  align-items: flex-end;
+  padding-left: var(--space-2);
+}
+
+// Mobile horizontal pill row
+.pills {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+}
+
+.pill {
+  flex: 0 0 auto;
+  padding: 7px 15px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-hairline);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity var(--transition-fast);
+}
+
+.pill:hover {
+  opacity: 0.85;
+}
+
+.pill.on {
+  background: var(--brand-accent);
+  color: var(--on-accent);
+  border-color: transparent;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+// ── Section header (title + note [+ lang tabs]) ──
+.section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.section-header h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: var(--text-display-sm);
+  line-height: 1;
+  margin: 0;
+}
+
+.note {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin: 6px 0 0;
+}
+
+// ── Language edit tabs (Agenda, Dietary) ──
+.lang-tabs {
+  display: inline-flex;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--surface-card);
+  align-self: flex-start;
+}
+
+.lang-tab {
+  border: none;
+  padding: 6px 15px;
+  font-size: var(--text-micro);
+  letter-spacing: 0.1em;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.lang-tab.on {
+  background: var(--brand-accent);
+  color: var(--on-accent);
+}
+
+// ── Fields ──
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 620px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.grid-2fr-1fr {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-label {
+  font-size: var(--text-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.field-time {
+  width: 92px;
+  flex: 0 0 auto;
+}
+
+.field-grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.cap {
+  text-transform: capitalize;
+}
+
+// ── Repeatable item cards (venues, agenda, hotels) ──
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 660px;
+}
+
+.card {
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.meta {
+  margin-left: auto;
+  font-size: var(--text-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.row-top {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.remove-btn {
+  width: 30px;
+  height: 30px;
+  margin-top: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.remove-btn:hover {
+  opacity: 0.85;
+}
+
+.add-btn {
+  align-self: flex-start;
+  font-size: var(--text-caption);
+  color: var(--brand-accent);
+  background: transparent;
+  border: 1px dashed var(--border-hairline);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  padding: 9px 16px;
+  font-family: var(--font-sans);
+  transition: opacity var(--transition-fast);
+}
+
+.add-btn:hover {
+  opacity: 0.85;
+}
+
+// Hand-built native select — no Select component exists in the design system
+// yet (checked); styled to match app-input's hairline/radius/token language.
+.select-native {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-input);
+  font-family: var(--font-sans);
+  font-size: var(--text-body-lg);
+  color: var(--text-body-color);
+  appearance: none;
+  cursor: pointer;
+}
+
+// Hand-built segmented control (hotel price tier) — no equivalent DS component.
+.segmented {
+  display: flex;
+  gap: 6px;
+}
+
+.segment {
+  flex: 1;
+  padding: 9px 0;
+  border: 1px solid var(--border-hairline);
+  background: transparent;
+  color: var(--text-body-color);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.segment.on {
+  border-color: var(--brand-accent);
+  background: var(--brand-accent);
+  color: var(--on-accent);
+}
+
+// ── Dietary / allergy tag editors ──
+.tag-editors {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  max-width: 720px;
+}
+
+.tag-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tag-title {
+  font-size: var(--text-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+// Tags render as inline, wrapping pills — each an editable label + remove
+// glyph — with a trailing dashed "+ Add tag" pill that commits on Enter/blur.
+// No DS component covers this (Pill is a static label, not an editable
+// dismissible chip), so it's hand-built here from the same tokens.
+.tag-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  color: var(--text-body-color);
+}
+
+.tag-pill-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  min-width: 56px;
+  padding: 0;
+}
+
+.tag-pill-remove {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.tag-pill-remove:hover {
+  opacity: 0.85;
+}
+
+.tag-draft-input {
+  width: 96px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px dashed var(--border-hairline);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  color: var(--text-body-color);
+  outline: none;
+}
+
+// ── Appearance: theme swatch cards + language labels ──
+.appearance-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: 620px;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.theme-card {
+  text-align: left;
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+.theme-card.on {
+  border-color: var(--brand-accent);
+}
+
+.swatches {
+  display: flex;
+  gap: 6px;
+  margin-bottom: var(--space-3);
+}
+
+.swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+
+.swatch-bg {
+  border: 1px solid var(--border-hairline);
+}
+
+.theme-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.theme-name {
+  font-size: var(--text-body);
+  color: var(--text-body-color);
+}
+
+.theme-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border-hairline);
+  color: var(--on-accent);
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-check.on {
+  border-color: var(--brand-accent);
+  background: var(--brand-accent);
+}
+
+.lang-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.hint {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  margin: var(--space-2) 0 0;
+}
+
+// ── Modal for multi-language tag entry ──
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-dialog {
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.modal-title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: var(--text-display-sm);
+  line-height: 1;
+  margin: 0;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--transition-fast);
+}
+
+.modal-close:hover {
+  opacity: 0.85;
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-5);
+}
+
+.modal-footer {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+  justify-content: flex-end;
+}
+
+.tag-add-btn {
+  align-self: flex-start;
+  font-size: var(--text-caption);
+  color: var(--brand-accent);
+  background: transparent;
+  border: 1px dashed var(--border-hairline);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  padding: 9px 16px;
+  font-family: var(--font-sans);
+  transition: opacity var(--transition-fast);
+}
+
+.tag-add-btn:hover {
+  opacity: 0.85;
+}
+
+@media (min-width: 900px) {
+  .toolbar {
+    display: flex;
+  }
+
+  .layout {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .rail {
+    display: flex;
+    flex: 0 0 208px;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-4) var(--space-3);
+    border-right: 1px solid var(--border-hairline);
+    background: var(--surface-card);
+    overflow-y: auto;
+  }
+
+  .pills {
+    display: none;
+  }
+
+  .mobile-bar {
+    display: none;
+  }
+}

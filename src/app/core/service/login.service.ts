@@ -3,8 +3,8 @@ import { firstValueFrom } from 'rxjs';
 
 import { WeddingAuthenticationService, AuthTokenDto, SocialLoginDto } from '../api';
 import { ConfigurationService } from './configuration.service';
+import { TokenStorageService } from './token-storage.service';
 
-const TOKEN_KEY = 'sc-auth-token';
 const OAUTH_STATE_KEY = 'sc-oauth-state';
 
 // Google OpenID Connect implicit flow: redirect the browser to the auth page,
@@ -31,15 +31,16 @@ export type UserRole = 'guest' | 'admin';
 export class LoginService {
   private readonly authApi = inject(WeddingAuthenticationService);
   private readonly config = inject(ConfigurationService);
+  private readonly tokenStorage = inject(TokenStorageService);
 
   /** In-flight state for the OTP steps and the social token exchange. */
   readonly pending = signal(false);
   /** Last error message key, or `undefined` when the last action succeeded. */
   readonly error = signal<string | undefined>(undefined);
   /** The app-issued bearer token once verified, else `undefined`. */
-  readonly token = signal<string | undefined>(this.restoreToken());
+  readonly token = this.tokenStorage.token;
 
-  readonly isAuthenticated = signal(this.token() !== undefined);
+  readonly isAuthenticated = computed(() => this.token() !== undefined);
 
   /**
    * Role of the signed-in user, read from the JWT's `role` claim (ADR-0013).
@@ -216,33 +217,13 @@ export class LoginService {
   }
 
   logout(): void {
-    this.token.set(undefined);
-    this.isAuthenticated.set(false);
+    this.tokenStorage.clear();
     this.role.set('guest');
-    try {
-      localStorage.removeItem(TOKEN_KEY);
-    } catch {
-      // storage unavailable — nothing persisted to clear
-    }
   }
 
   private persistToken(auth: AuthTokenDto): void {
-    this.token.set(auth.accessToken);
-    this.isAuthenticated.set(true);
+    this.tokenStorage.set(auth.accessToken);
     this.role.set(this.decodeRole(auth.accessToken));
-    try {
-      localStorage.setItem(TOKEN_KEY, auth.accessToken);
-    } catch {
-      // storage unavailable — auth lasts for the session only
-    }
-  }
-
-  private restoreToken(): string | undefined {
-    try {
-      return localStorage.getItem(TOKEN_KEY) ?? undefined;
-    } catch {
-      return undefined;
-    }
   }
 
   /**

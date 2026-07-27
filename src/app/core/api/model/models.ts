@@ -38,7 +38,6 @@ export * from './update-rsvp-dto';
 export * from './update-wedding-config-dto';
 export * from './update-wedding-config-dto-language';
 export * from './wedding-config-public-response-dto';
-export * from './wedding-config-public-response-dto-language';
 export * from './wedding-config-public-response-dto-main-venue';
 export * from './wedding-config-public-response-dto-social-providers';
 export * from './wedding-config-response-dto';

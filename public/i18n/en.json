@@ -157,6 +157,96 @@
     "thisWeek": "This week",
     "seeAll": "See all"
   },
+  "configManager": {
+    "headerMeta": "Couple · Settings",
+    "title": "General configuration",
+    "status": {
+      "dirty": "Unsaved changes",
+      "upToDate": "Up to date",
+      "saved": "All changes saved ✓"
+    },
+    "actions": {
+      "save": "Save changes",
+      "saved": "All changes saved"
+    },
+    "nav": {
+      "ariaLabel": "Configuration sections",
+      "langAriaLabel": "Editing language"
+    },
+    "section": {
+      "basics": "Basics",
+      "venues": "Venues",
+      "agenda": "Agenda",
+      "hotels": "Stays",
+      "dietary": "Dietary",
+      "appearance": "Appearance"
+    },
+    "note": {
+      "basics": "The names, saying and key dates that anchor every screen.",
+      "venues": "Where the day unfolds. Each venue can be linked from an agenda moment.",
+      "agenda": "The order of the day. Titles and descriptions are per-language.",
+      "hotels": "Recommended hotels near the venues, shown on the Travel screen.",
+      "dietary": "Options guests choose from when they RSVP. Labels shown per-language.",
+      "appearance": "The palette and language labels guests experience."
+    },
+    "field": {
+      "brideName": "Bride",
+      "groomName": "Groom",
+      "tagline": "Tagline · saying",
+      "weddingDate": "Wedding date",
+      "rsvpDeadline": "RSVP deadline",
+      "country": "Country",
+      "city": "City",
+      "venueName": "Name",
+      "address": "Address",
+      "postalCode": "Postal code",
+      "mapUrl": "Map link",
+      "time": "Time",
+      "venue": "Venue",
+      "title": "Title",
+      "description": "Description",
+      "hotelName": "Hotel name",
+      "priceTier": "Price tier",
+      "distanceKm": "Distance (km)",
+      "bookingUrl": "Booking link"
+    },
+    "venueType": {
+      "ceremony": "Ceremony",
+      "reception": "Reception",
+      "other": "Other"
+    },
+    "priceTier": {
+      "aria": "Price tier {{tier}}"
+    },
+    "agenda": {
+      "add": "+ Add moment",
+      "remove": "Remove moment"
+    },
+    "hotels": {
+      "add": "+ Add hotel",
+      "remove": "Remove hotel"
+    },
+    "dietary": {
+      "preferencesTitle": "Dietary preferences",
+      "allergiesTitle": "Allergies & intolerances",
+      "add": "+ Add tag",
+      "addAria": "Add a new tag",
+      "addDietaryPreference": "Add dietary preference",
+      "addAllergy": "Add allergy",
+      "remove": "Remove tag",
+      "placeholder": "Label · {{lang}}"
+    },
+    "appearance": {
+      "themeTitle": "Theme",
+      "languagesTitle": "Language labels",
+      "languagesHint": "All three languages stay available to guests (es/en/fr); this only edits how each is labeled in the language switcher."
+    },
+    "themeName": {
+      "mauve": "Mauve",
+      "terracotta": "Terracotta",
+      "verdeagua": "Verde Agua"
+    }
+  },
   "invitee": {
     "greeting": "Hola, {{name}}.",
     "daysToGo": "See you in {{count}} days",
@@ -206,7 +296,14 @@
     "continue": "Continue",
     "cancel": "Cancel",
     "save": "Save",
-    "ok": "OK"
+    "ok": "OK",
+    "add": "Add",
+    "close": "Close"
+  },
+  "common": {
+    "add": "Add",
+    "cancel": "Cancel",
+    "close": "Close"
   },
   "titles": {
     "welcome": "Sara & Christophe · Save the date",
@@ -216,6 +313,7 @@
     "schedule": "The day · Sara & Christophe",
     "travel": "Getting there · Sara & Christophe",
     "dashboard": "Dashboard · Sara & Christophe",
+    "config": "Configuration · Sara & Christophe",
     "invitee": "Your day · Sara & Christophe"
   }
 }

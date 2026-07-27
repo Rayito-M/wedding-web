@@ -154,6 +154,96 @@
     "thisWeek": "Cette semaine",
     "seeAll": "Voir tout"
   },
+  "configManager": {
+    "headerMeta": "Couple · Réglages",
+    "title": "Configuration générale",
+    "status": {
+      "dirty": "Modifications non enregistrées",
+      "upToDate": "À jour",
+      "saved": "Modifications enregistrées ✓"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "saved": "Modifications enregistrées"
+    },
+    "nav": {
+      "ariaLabel": "Sections de configuration",
+      "langAriaLabel": "Langue d'édition"
+    },
+    "section": {
+      "basics": "Informations",
+      "venues": "Lieux",
+      "agenda": "Agenda",
+      "hotels": "Hébergements",
+      "dietary": "Régimes",
+      "appearance": "Apparence"
+    },
+    "note": {
+      "basics": "Les prénoms, la formule et les dates clés qui structurent chaque écran.",
+      "venues": "Où se déroule la journée. Chaque lieu peut être lié à un moment de l'agenda.",
+      "agenda": "Le déroulé de la journée. Titres et descriptions sont par langue.",
+      "hotels": "Hôtels recommandés près des lieux, affichés sur l'écran S'y rendre.",
+      "dietary": "Options proposées aux invités lors de leur réponse. Libellés affichés par langue.",
+      "appearance": "La palette et les libellés de langue vus par les invités."
+    },
+    "field": {
+      "brideName": "Mariée",
+      "groomName": "Marié",
+      "tagline": "Formule · dicton",
+      "weddingDate": "Date du mariage",
+      "rsvpDeadline": "Date limite de réponse",
+      "country": "Pays",
+      "city": "Ville",
+      "venueName": "Nom",
+      "address": "Adresse",
+      "postalCode": "Code postal",
+      "mapUrl": "Lien vers la carte",
+      "time": "Heure",
+      "venue": "Lieu",
+      "title": "Titre",
+      "description": "Description",
+      "hotelName": "Nom de l'hôtel",
+      "priceTier": "Gamme de prix",
+      "distanceKm": "Distance (km)",
+      "bookingUrl": "Lien de réservation"
+    },
+    "venueType": {
+      "ceremony": "Cérémonie",
+      "reception": "Réception",
+      "other": "Autre"
+    },
+    "priceTier": {
+      "aria": "Gamme de prix {{tier}}"
+    },
+    "agenda": {
+      "add": "+ Ajouter un moment",
+      "remove": "Supprimer le moment"
+    },
+    "hotels": {
+      "add": "+ Ajouter un hôtel",
+      "remove": "Supprimer l'hôtel"
+    },
+    "dietary": {
+      "preferencesTitle": "Préférences alimentaires",
+      "allergiesTitle": "Allergies et intolérances",
+      "add": "+ Ajouter une étiquette",
+      "addAria": "Ajouter une nouvelle étiquette",
+      "addDietaryPreference": "Ajouter une préférence alimentaire",
+      "addAllergy": "Ajouter une allergie",
+      "remove": "Supprimer l'étiquette",
+      "placeholder": "Libellé · {{lang}}"
+    },
+    "appearance": {
+      "themeTitle": "Thème",
+      "languagesTitle": "Libellés de langue",
+      "languagesHint": "Les trois langues (es/en/fr) restent disponibles pour les invités ; ceci ne modifie que leur libellé dans le sélecteur."
+    },
+    "themeName": {
+      "mauve": "Mauve",
+      "terracotta": "Terracotta",
+      "verdeagua": "Verde Agua"
+    }
+  },
   "invitee": {
     "greeting": "Hola, {{name}}.",
     "daysToGo": "À bientôt dans {{count}} jours",
@@ -203,7 +293,14 @@
     "continue": "Continuer",
     "cancel": "Annuler",
     "save": "Enregistrer",
-    "ok": "OK"
+    "ok": "OK",
+    "add": "Ajouter",
+    "close": "Fermer"
+  },
+  "common": {
+    "add": "Ajouter",
+    "cancel": "Annuler",
+    "close": "Fermer"
   },
   "titles": {
     "welcome": "Sara & Christophe · Réservez la date",
@@ -213,6 +310,7 @@
     "schedule": "Le jour J · Sara & Christophe",
     "travel": "S'y rendre · Sara & Christophe",
     "dashboard": "Tableau de bord · Sara & Christophe",
+    "config": "Configuration · Sara & Christophe",
     "invitee": "Votre journée · Sara & Christophe"
   }
 }

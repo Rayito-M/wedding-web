@@ -15,9 +15,9 @@
     "module": "preserve",
     "moduleResolution": "bundler",
     "rootDir": "./src",
-    "baseUrl": "./",
     "paths": {
-      "@/*": ["src/app/*"]
+      "@app/*": ["./src/app/*"],
+      "@env/*": ["./src/environments/*"],
     },
   },
   "angularCompilerOptions": {

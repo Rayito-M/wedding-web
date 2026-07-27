@@ -71,6 +71,14 @@ export const routes: Routes = [
         data: { tab: 'dashboard', tabBar: true, topNav: true },
       },
       {
+        path: 'config',
+        loadComponent: () =>
+          import('./screens/config-manager/config-manager').then((m) => m.ConfigManager),
+        title: 'titles.config',
+        canActivate: [adminGuard],
+        data: { tab: 'config', tabBar: true, topNav: true },
+      },
+      {
         path: 'me',
         loadComponent: () => import('./screens/invitee/invitee').then((m) => m.Invitee),
         title: 'titles.invitee',

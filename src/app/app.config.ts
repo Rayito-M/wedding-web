@@ -1,4 +1,4 @@
-import { ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners, inject, FactoryProvider } from '@angular/core';
 import { provideRouter, TitleStrategy } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -13,6 +13,8 @@ import { routes } from './app.routes';
 import { TranslatedTitleStrategy } from './core';
 import { provideApi } from './core/api';
 import { entityConfig, provideEntityDataServices } from './core/data';
+import { TokenStorageService } from './core/service/token-storage.service';
+import { Configuration } from './core/api/configuration';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -28,8 +30,17 @@ export const appConfig: ApplicationConfig = {
       prefix: '/i18n/',
       suffix: '.json',
     }),
-    // Generated API client base path (bootstrap config, not a feature flag).
-    provideApi(environment.apiBaseUrl),
+    // Generated API client with bearer token from TokenStorageService.
+    {
+      provide: Configuration,
+      useFactory: (tokenStorage: TokenStorageService) => new Configuration({
+        basePath: environment.apiBaseUrl,
+        credentials: {
+          bearer: () => tokenStorage.token(),
+        },
+      }),
+      deps: [TokenStorageService],
+    } as FactoryProvider,
     provideStore(),
     provideEffects(),
     // Entity metadata (ADR W-0001 decision 3); currently the WeddingConfigPublic

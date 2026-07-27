@@ -1,9 +1,11 @@
 import { EnvironmentProviders, inject, provideEnvironmentInitializer } from '@angular/core';
 import { EntityDataService } from '@ngrx/data';
 
+import { WeddingConfigDataService } from './wedding-config-data.service';
 import { WeddingConfigPublicDataService } from './wedding-config-public-data.service';
 
 export * from './entity-metadata';
+export * from './wedding-config-data.service';
 export * from './wedding-config-public-data.service';
 
 /**
@@ -17,5 +19,6 @@ export function provideEntityDataServices(): EnvironmentProviders {
       'WeddingConfigPublic',
       inject(WeddingConfigPublicDataService),
     );
+    inject(EntityDataService).registerService('WeddingConfig', inject(WeddingConfigDataService));
   });
 }

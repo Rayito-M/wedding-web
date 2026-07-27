@@ -1,0 +1,621 @@
+<div class="toolbar">
+  <div class="toolbar-titles">
+    <h1 class="title">{{ 'configManager.title' | translate }}</h1>
+    <p class="status" [class.dirty]="dirty()" [class.saved]="savedFlash()">
+      {{ statusKey() | translate }}
+    </p>
+  </div>
+  <button app-btn type="button" [disabled]="!dirty()" (click)="save()">
+    {{ 'configManager.actions.save' | translate }}
+  </button>
+</div>
+
+<div class="layout">
+  <nav class="rail" role="tablist" [attr.aria-label]="'configManager.nav.ariaLabel' | translate">
+    @for (item of sections; track item.id) {
+      <button
+        type="button"
+        role="tab"
+        class="rail-item"
+        [class.on]="section() === item.id"
+        [attr.aria-selected]="section() === item.id"
+        (click)="selectSection(item.id)"
+      >
+        <span class="number">{{ item.number }}</span>
+        {{ item.labelKey | translate }}
+      </button>
+    }
+    <div class="rail-decor" aria-hidden="true">
+      <app-decor-fish [w]="70" color="var(--brand-accent)" />
+    </div>
+  </nav>
+
+  <div class="pills" role="tablist" [attr.aria-label]="'configManager.nav.ariaLabel' | translate">
+    @for (item of sections; track item.id) {
+      <button
+        type="button"
+        role="tab"
+        class="pill"
+        [class.on]="section() === item.id"
+        [attr.aria-selected]="section() === item.id"
+        (click)="selectSection(item.id)"
+      >
+        {{ item.labelKey | translate }}
+      </button>
+    }
+  </div>
+
+  <div class="content">
+    @switch (section()) {
+      @case ('basics') {
+        <section>
+          <div class="section-header">
+            <div>
+              <h2>{{ 'configManager.section.basics' | translate }}</h2>
+              <p class="note">{{ 'configManager.note.basics' | translate }}</p>
+            </div>
+          </div>
+          <div class="fields">
+            <div class="grid-2">
+              <label class="field">
+                <span class="field-label">{{ 'configManager.field.brideName' | translate }}</span>
+                <input
+                  app-input
+                  type="text"
+                  [value]="cfg().brideName"
+                  (input)="setBasics({ brideName: inputValue($event) })"
+                />
+              </label>
+              <label class="field">
+                <span class="field-label">{{ 'configManager.field.groomName' | translate }}</span>
+                <input
+                  app-input
+                  type="text"
+                  [value]="cfg().groomName"
+                  (input)="setBasics({ groomName: inputValue($event) })"
+                />
+              </label>
+            </div>
+            <label class="field">
+              <span class="field-label">{{ 'configManager.field.tagline' | translate }}</span>
+              <input
+                app-input
+                type="text"
+                [value]="cfg().tagline"
+                (input)="setBasics({ tagline: inputValue($event) })"
+              />
+            </label>
+            <div class="grid-2">
+              <label class="field">
+                <span class="field-label">{{ 'configManager.field.weddingDate' | translate }}</span>
+                <input
+                  app-input
+                  type="date"
+                  [value]="dateInputValue(cfg().date)"
+                  (input)="setBasics({ date: inputValue($event) })"
+                />
+              </label>
+              <label class="field">
+                <span class="field-label">{{
+                  'configManager.field.rsvpDeadline' | translate
+                }}</span>
+                <input
+                  app-input
+                  type="date"
+                  [value]="dateInputValue(cfg().rsvpDeadline)"
+                  (input)="setBasics({ rsvpDeadline: inputValue($event) })"
+                />
+              </label>
+            </div>
+            <div class="grid-2">
+              <label class="field">
+                <span class="field-label">{{ 'configManager.field.country' | translate }}</span>
+                <input
+                  app-input
+                  type="text"
+                  [value]="cfg().country"
+                  (input)="setBasics({ country: inputValue($event) })"
+                  class="cap"
+                />
+              </label>
+              <label class="field">
+                <span class="field-label">{{ 'configManager.field.city' | translate }}</span>
+                <input
+                  app-input
+                  type="text"
+                  [value]="cfg().city"
+                  (input)="setBasics({ city: inputValue($event) })"
+                  class="cap"
+                />
+              </label>
+            </div>
+          </div>
+        </section>
+      }
+
+      @case ('venues') {
+        <section>
+          <div class="section-header">
+            <div>
+              <h2>{{ 'configManager.section.venues' | translate }}</h2>
+              <p class="note">{{ 'configManager.note.venues' | translate }}</p>
+            </div>
+          </div>
+          <div class="card-list">
+            @for (venue of cfg().venues; track venue.id) {
+              <div class="card">
+                <div class="card-top">
+                  <app-pill tone="accent">{{
+                    'configManager.venueType.' + venue.type | translate
+                  }}</app-pill>
+                  <span class="meta">{{ venue.city }} · {{ venue.postalCode }}</span>
+                </div>
+                <label class="field">
+                  <span class="field-label">{{ 'configManager.field.venueName' | translate }}</span>
+                  <input
+                    app-input
+                    type="text"
+                    [value]="venue.name"
+                    (input)="setVenue(venue.id, { name: inputValue($event) })"
+                  />
+                </label>
+                <div class="grid-2fr-1fr">
+                  <label class="field">
+                    <span class="field-label">{{ 'configManager.field.address' | translate }}</span>
+                    <input
+                      app-input
+                      type="text"
+                      [value]="venue.address"
+                      (input)="setVenue(venue.id, { address: inputValue($event) })"
+                    />
+                  </label>
+                  <label class="field">
+                    <span class="field-label">{{
+                      'configManager.field.postalCode' | translate
+                    }}</span>
+                    <input
+                      app-input
+                      type="text"
+                      [value]="venue.postalCode"
+                      (input)="setVenue(venue.id, { postalCode: inputValue($event) })"
+                    />
+                  </label>
+                </div>
+                <label class="field">
+                  <span class="field-label">{{ 'configManager.field.mapUrl' | translate }}</span>
+                  <input
+                    app-input
+                    type="url"
+                    [value]="venue.mapUrl"
+                    (input)="setVenue(venue.id, { mapUrl: inputValue($event) })"
+                  />
+                </label>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      @case ('agenda') {
+        <section>
+          <div class="section-header">
+            <div>
+              <h2>{{ 'configManager.section.agenda' | translate }}</h2>
+              <p class="note">{{ 'configManager.note.agenda' | translate }}</p>
+            </div>
+            <div
+              class="lang-tabs"
+              role="tablist"
+              [attr.aria-label]="'configManager.nav.langAriaLabel' | translate"
+            >
+              @for (code of editLangs; track code) {
+                <button
+                  type="button"
+                  role="tab"
+                  class="lang-tab"
+                  [class.on]="lang() === code"
+                  [attr.aria-selected]="lang() === code"
+                  (click)="selectLang(code)"
+                >
+                  {{ code.toUpperCase() }}
+                </button>
+              }
+            </div>
+          </div>
+          <div class="card-list">
+            @for (item of cfg().agenda; track item.id) {
+              <div class="card">
+                <div class="row-top">
+                  <label class="field field-time">
+                    <span class="field-label">{{ 'configManager.field.time' | translate }}</span>
+                    <input
+                      app-input
+                      type="text"
+                      placeholder="15:00"
+                      [value]="item.time"
+                      (input)="setAgendaTime(item.id, inputValue($event))"
+                    />
+                  </label>
+                  <label class="field field-grow">
+                    <span class="field-label">{{ 'configManager.field.venue' | translate }}</span>
+                    <select
+                      class="select-native"
+                      [value]="item.venueId"
+                      (change)="setAgendaVenue(item.id, selectValue($event))"
+                    >
+                      @for (venue of cfg().venues; track venue.id) {
+                        <option [value]="venue.id">{{ venue.name }}</option>
+                      }
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    class="remove-btn"
+                    [attr.aria-label]="'configManager.agenda.remove' | translate"
+                    (click)="removeAgenda(item.id)"
+                  >
+                    ×
+                  </button>
+                </div>
+                <label class="field">
+                  <span class="field-label"
+                    >{{ 'configManager.field.title' | translate }} ·
+                    {{ lang().toUpperCase() }}</span
+                  >
+                  <input
+                    app-input
+                    type="text"
+                    [value]="item.title[lang()]"
+                    (input)="setAgendaText(item.id, 'title', inputValue($event))"
+                  />
+                </label>
+                <label class="field">
+                  <span class="field-label"
+                    >{{ 'configManager.field.description' | translate }} ·
+                    {{ lang().toUpperCase() }}</span
+                  >
+                  <textarea
+                    app-textarea
+                    rows="2"
+                    [value]="item.desc[lang()]"
+                    (input)="setAgendaText(item.id, 'desc', inputValue($event))"
+                  ></textarea>
+                </label>
+              </div>
+            }
+            <button type="button" class="add-btn" (click)="addAgenda()">
+              {{ 'configManager.agenda.add' | translate }}
+            </button>
+          </div>
+        </section>
+      }
+
+      @case ('hotels') {
+        <section>
+          <div class="section-header">
+            <div>
+              <h2>{{ 'configManager.section.hotels' | translate }}</h2>
+              <p class="note">{{ 'configManager.note.hotels' | translate }}</p>
+            </div>
+          </div>
+          <div class="card-list">
+            @for (hotel of cfg().hotels; track hotel.id) {
+              <div class="card">
+                <div class="row-top">
+                  <label class="field field-grow">
+                    <span class="field-label">{{
+                      'configManager.field.hotelName' | translate
+                    }}</span>
+                    <input
+                      app-input
+                      type="text"
+                      [value]="hotel.name"
+                      (input)="setHotel(hotel.id, { name: inputValue($event) })"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    class="remove-btn"
+                    [attr.aria-label]="'configManager.hotels.remove' | translate"
+                    (click)="removeHotel(hotel.id)"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div class="grid-2">
+                  <div class="field">
+                    <span class="field-label">{{
+                      'configManager.field.priceTier' | translate
+                    }}</span>
+                    <div
+                      class="segmented"
+                      role="radiogroup"
+                      [attr.aria-label]="'configManager.field.priceTier' | translate"
+                    >
+                      @for (tier of priceTiers; track tier) {
+                        <button
+                          type="button"
+                          role="radio"
+                          class="segment"
+                          [class.on]="hotel.priceTier === tier"
+                          [attr.aria-checked]="hotel.priceTier === tier"
+                          [attr.aria-label]="
+                            'configManager.priceTier.aria' | translate: { tier: tier }
+                          "
+                          (click)="setHotel(hotel.id, { priceTier: tier })"
+                        >
+                          {{ tier }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+                  <label class="field">
+                    <span class="field-label">{{
+                      'configManager.field.distanceKm' | translate
+                    }}</span>
+                    <input
+                      app-input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      [value]="hotel.distanceKm"
+                      (input)="setHotel(hotel.id, { distanceKm: inputNumber($event) })"
+                    />
+                  </label>
+                </div>
+                <label class="field">
+                  <span class="field-label">{{
+                    'configManager.field.bookingUrl' | translate
+                  }}</span>
+                  <input
+                    app-input
+                    type="url"
+                    [value]="hotel.bookingUrl"
+                    (input)="setHotel(hotel.id, { bookingUrl: inputValue($event) })"
+                  />
+                </label>
+              </div>
+            }
+            <button type="button" class="add-btn" (click)="addHotel()">
+              {{ 'configManager.hotels.add' | translate }}
+            </button>
+          </div>
+        </section>
+      }
+
+      @case ('dietary') {
+        <section>
+          <div class="section-header">
+            <div>
+              <h2>{{ 'configManager.section.dietary' | translate }}</h2>
+              <p class="note">{{ 'configManager.note.dietary' | translate }}</p>
+            </div>
+            <div
+              class="lang-tabs"
+              role="tablist"
+              [attr.aria-label]="'configManager.nav.langAriaLabel' | translate"
+            >
+              @for (code of editLangs; track code) {
+                <button
+                  type="button"
+                  role="tab"
+                  class="lang-tab"
+                  [class.on]="lang() === code"
+                  [attr.aria-selected]="lang() === code"
+                  (click)="selectLang(code)"
+                >
+                  {{ code.toUpperCase() }}
+                </button>
+              }
+            </div>
+          </div>
+          <div class="tag-editors">
+            <div class="tag-editor">
+              <div class="tag-title">
+                {{ 'configManager.dietary.preferencesTitle' | translate }}
+              </div>
+              <div class="tag-pills">
+                @for (tag of cfg().dietaryPreferences; track tag.id) {
+                  <span class="tag-pill">
+                    <input
+                      type="text"
+                      class="tag-pill-input"
+                      [value]="tag.label[lang()]"
+                      [style.width.px]="tagInputWidth(tag.label[lang()])"
+                      [placeholder]="
+                        'configManager.dietary.placeholder'
+                          | translate: { lang: lang().toUpperCase() }
+                      "
+                      (input)="setTagLabel('dietaryPreferences', tag.id, inputValue($event))"
+                    />
+                    <button
+                      type="button"
+                      class="tag-pill-remove"
+                      [attr.aria-label]="'configManager.dietary.remove' | translate"
+                      (click)="removeTag('dietaryPreferences', tag.id)"
+                    >
+                      ×
+                    </button>
+                  </span>
+                }
+                <button
+                  class="tag-add-btn"
+                  (click)="openTagModal('dietaryPreferences')"
+                  [attr.aria-label]="'configManager.dietary.addAria' | translate"
+                >
+                  {{ 'configManager.dietary.add' | translate }}
+                </button>
+              </div>
+            </div>
+            <div class="tag-editor">
+              <div class="tag-title">{{ 'configManager.dietary.allergiesTitle' | translate }}</div>
+              <div class="tag-pills">
+                @for (tag of cfg().allergies; track tag.id) {
+                  <span class="tag-pill">
+                    <input
+                      type="text"
+                      class="tag-pill-input"
+                      [value]="tag.label[lang()]"
+                      [style.width.px]="tagInputWidth(tag.label[lang()])"
+                      [placeholder]="
+                        'configManager.dietary.placeholder'
+                          | translate: { lang: lang().toUpperCase() }
+                      "
+                      (input)="setTagLabel('allergies', tag.id, inputValue($event))"
+                    />
+                    <button
+                      type="button"
+                      class="tag-pill-remove"
+                      [attr.aria-label]="'configManager.dietary.remove' | translate"
+                      (click)="removeTag('allergies', tag.id)"
+                    >
+                      ×
+                    </button>
+                  </span>
+                }
+                <button
+                  class="tag-add-btn"
+                  (click)="openTagModal('allergies')"
+                  [attr.aria-label]="'configManager.dietary.addAria' | translate"
+                >
+                  {{ 'configManager.dietary.add' | translate }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      }
+
+      @case ('appearance') {
+        <section>
+          <div class="section-header">
+            <div>
+              <h2>{{ 'configManager.section.appearance' | translate }}</h2>
+              <p class="note">{{ 'configManager.note.appearance' | translate }}</p>
+            </div>
+          </div>
+          <div class="appearance-body">
+            <div>
+              <div class="field-label">{{ 'configManager.appearance.themeTitle' | translate }}</div>
+              <div
+                class="theme-grid"
+                role="radiogroup"
+                [attr.aria-label]="'configManager.appearance.themeTitle' | translate"
+              >
+                @for (theme of themeSwatches; track theme.id) {
+                  <button
+                    type="button"
+                    role="radio"
+                    class="theme-card"
+                    [class.on]="cfg().themeId === theme.id"
+                    [attr.aria-checked]="cfg().themeId === theme.id"
+                    (click)="setTheme(theme.id)"
+                  >
+                    <span class="swatches">
+                      <span class="swatch" [style.background]="theme.accent"></span>
+                      <span class="swatch" [style.background]="theme.soft"></span>
+                      <span class="swatch swatch-bg" [style.background]="theme.bg"></span>
+                    </span>
+                    <span class="theme-row">
+                      <span class="theme-name">{{ theme.labelKey | translate }}</span>
+                      <span class="theme-check" [class.on]="cfg().themeId === theme.id">
+                        @if (cfg().themeId === theme.id) {
+                          ✓
+                        }
+                      </span>
+                    </span>
+                  </button>
+                }
+              </div>
+            </div>
+            <div>
+              <div class="field-label">
+                {{ 'configManager.appearance.languagesTitle' | translate }}
+              </div>
+              <div class="lang-fields">
+                @for (code of appLanguages; track code) {
+                  <label class="field">
+                    <span class="field-label">{{ code.toUpperCase() }}</span>
+                    <input
+                      app-input
+                      type="text"
+                      [value]="cfg().language[code]"
+                      (input)="setLanguageLabel(code, inputValue($event))"
+                    />
+                  </label>
+                }
+              </div>
+              <p class="hint">{{ 'configManager.appearance.languagesHint' | translate }}</p>
+            </div>
+          </div>
+        </section>
+      }
+    }
+  </div>
+</div>
+
+<div class="mobile-bar">
+  <span class="status" [class.dirty]="dirty()" [class.saved]="savedFlash()">
+    {{ statusKey() | translate }}
+  </span>
+  <button app-btn [full]="true" type="button" [disabled]="!dirty()" (click)="save()">
+    {{ saveLabelKey() | translate }}
+  </button>
+</div>
+
+@if (tagModalOpen()) {
+  <div
+    class="modal-overlay"
+    role="presentation"
+    (click)="closeTagModal()"
+    (keydown.escape)="closeTagModal()"
+  >
+    <div
+      class="modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="'tagModalTitle'"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <h2 class="modal-title" id="tagModalTitle">
+          {{ getTagModalTitle() | translate }}
+        </h2>
+        <button
+          type="button"
+          class="modal-close"
+          (click)="closeTagModal()"
+          [attr.aria-label]="'common.close' | translate"
+        >
+          ×
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="lang-fields">
+          @for (lang of editLangs; track lang) {
+            <label class="field">
+              <span class="field-label">{{ lang.toUpperCase() }}</span>
+              <input
+                app-input
+                type="text"
+                [value]="tagModalLabel()[lang]"
+                [placeholder]="
+                  'configManager.dietary.placeholder' | translate: { lang: lang.toUpperCase() }
+                "
+                (input)="setTagModalLabel(lang, inputValue($event))"
+              />
+            </label>
+          }
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button app-btn type="button" (click)="closeTagModal()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button app-btn type="button" variant="primary" (click)="submitTagModal()">
+          {{ 'common.add' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
