@@ -2,14 +2,13 @@ import {
   ApplicationConfig,
   isDevMode,
   provideBrowserGlobalErrorListeners,
-  inject,
   FactoryProvider,
   APP_INITIALIZER,
 } from '@angular/core';
 import { provideRouter, TitleStrategy } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideStore } from '@ngrx/store';
 import { provideEffects } from '@ngrx/effects';
 import { provideEntityData, withEffects } from '@ngrx/data';
@@ -17,11 +16,16 @@ import { provideStoreDevtools } from '@ngrx/store-devtools';
 
 import { environment } from '../environments';
 import { routes } from './app.routes';
-import { TranslatedTitleStrategy } from './core';
-import { entityConfig, provideEntityDataServices } from './core/data';
-import { TokenStorageService } from './core/service/token-storage.service';
-import { Configuration } from '@app/core';
-import { RouteConfigService } from './core/service/route-config.service';
+
+import {
+  TranslatedTitleStrategy,
+  entityConfig,
+  provideEntityDataServices,
+  TokenStorageService,
+  Configuration,
+  RouteConfigService,
+  unauthorizedInterceptor,
+} from '@app/core';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -36,7 +40,7 @@ export const appConfig: ApplicationConfig = {
       deps: [RouteConfigService],
       multi: true,
     },
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([unauthorizedInterceptor])),
     provideTranslateService({
       lang: 'en',
       fallbackLang: 'en',

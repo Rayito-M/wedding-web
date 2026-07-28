@@ -17,17 +17,17 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
-import { CreateGuestDto } from '../model/create-guest-dto';
+import { CreateUserDto } from '../model/create-user-dto';
 // @ts-ignore
-import { GuestListResponseDto } from '../model/guest-list-response-dto';
+import { ImportUserDto } from '../model/import-user-dto';
 // @ts-ignore
-import { GuestResponseDto } from '../model/guest-response-dto';
+import { ImportUserResultDto } from '../model/import-user-result-dto';
 // @ts-ignore
-import { ImportGuestDto } from '../model/import-guest-dto';
+import { UpdateUserDto } from '../model/update-user-dto';
 // @ts-ignore
-import { ImportGuestResultDto } from '../model/import-guest-result-dto';
+import { UserListResponseDto } from '../model/user-list-response-dto';
 // @ts-ignore
-import { UpdateGuestDto } from '../model/update-guest-dto';
+import { UserResponseDto } from '../model/user-response-dto';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -35,59 +35,59 @@ import { Configuration }                                     from '../configurat
 import { BaseService } from '../api.base.service';
 
 
-export interface GuestsControllerCreateV1RequestParams {
-    createGuestDto: CreateGuestDto;
+export interface UsersControllerCreateV1RequestParams {
+    createUserDto: CreateUserDto;
 }
 
-export interface GuestsControllerGetV1RequestParams {
-    /** Guest ULID, or the literal &#x60;me&#x60; for the authenticated guest */
+export interface UsersControllerGetV1RequestParams {
+    /** User ULID, or the literal &#x60;me&#x60; for the authenticated user */
     id: string;
 }
 
-export interface GuestsControllerImportCsvV1RequestParams {
+export interface UsersControllerImportCsvV1RequestParams {
     body: string;
 }
 
-export interface GuestsControllerImportJsonV1RequestParams {
-    importGuestDto: ImportGuestDto;
+export interface UsersControllerImportJsonV1RequestParams {
+    importUserDto: ImportUserDto;
 }
 
-export interface GuestsControllerRemoveV1RequestParams {
-    /** Guest ULID, or the literal &#x60;me&#x60; for the authenticated guest */
+export interface UsersControllerRemoveV1RequestParams {
+    /** User ULID, or the literal &#x60;me&#x60; for the authenticated user */
     id: string;
 }
 
-export interface GuestsControllerUpdateV1RequestParams {
-    /** Guest ULID, or the literal &#x60;me&#x60; for the authenticated guest */
+export interface UsersControllerUpdateV1RequestParams {
+    /** User ULID, or the literal &#x60;me&#x60; for the authenticated user */
     id: string;
-    updateGuestDto: UpdateGuestDto;
+    updateUserDto: UpdateUserDto;
 }
 
 
 @Injectable({
   providedIn: 'root'
 })
-export class WeddingGuestsService extends BaseService {
+export class WeddingUsersService extends BaseService {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
     }
 
     /**
-     * Create a guest (admin)
-     * @endpoint post /v1/guests
+     * Create a user (admin)
+     * @endpoint post /v1/users
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public guestsControllerCreateV1(requestParameters: GuestsControllerCreateV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GuestResponseDto>;
-    public guestsControllerCreateV1(requestParameters: GuestsControllerCreateV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GuestResponseDto>>;
-    public guestsControllerCreateV1(requestParameters: GuestsControllerCreateV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GuestResponseDto>>;
-    public guestsControllerCreateV1(requestParameters: GuestsControllerCreateV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        const createGuestDto = requestParameters?.createGuestDto;
-        if (createGuestDto === null || createGuestDto === undefined) {
-            throw new Error('Required parameter createGuestDto was null or undefined when calling guestsControllerCreateV1.');
+    public usersControllerCreateV1(requestParameters: UsersControllerCreateV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserResponseDto>;
+    public usersControllerCreateV1(requestParameters: UsersControllerCreateV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserResponseDto>>;
+    public usersControllerCreateV1(requestParameters: UsersControllerCreateV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserResponseDto>>;
+    public usersControllerCreateV1(requestParameters: UsersControllerCreateV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        const createUserDto = requestParameters?.createUserDto;
+        if (createUserDto === null || createUserDto === undefined) {
+            throw new Error('Required parameter createUserDto was null or undefined when calling usersControllerCreateV1.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -127,12 +127,12 @@ export class WeddingGuestsService extends BaseService {
             }
         }
 
-        let localVarPath = `/v1/guests`;
+        let localVarPath = `/v1/users`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<GuestResponseDto>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<UserResponseDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: createGuestDto,
+                body: createUserDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -144,21 +144,21 @@ export class WeddingGuestsService extends BaseService {
     }
 
     /**
-     * Get a guest and their delegated guests
+     * Get a user and their delegated guests
      * Allowed for admins, the guest themselves, and delegates.
-     * @endpoint get /v1/guests/{id}
+     * @endpoint get /v1/users/{id}
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public guestsControllerGetV1(requestParameters: GuestsControllerGetV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GuestResponseDto>;
-    public guestsControllerGetV1(requestParameters: GuestsControllerGetV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GuestResponseDto>>;
-    public guestsControllerGetV1(requestParameters: GuestsControllerGetV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GuestResponseDto>>;
-    public guestsControllerGetV1(requestParameters: GuestsControllerGetV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public usersControllerGetV1(requestParameters: UsersControllerGetV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserResponseDto>;
+    public usersControllerGetV1(requestParameters: UsersControllerGetV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserResponseDto>>;
+    public usersControllerGetV1(requestParameters: UsersControllerGetV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserResponseDto>>;
+    public usersControllerGetV1(requestParameters: UsersControllerGetV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         const id = requestParameters?.id;
         if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling guestsControllerGetV1.');
+            throw new Error('Required parameter id was null or undefined when calling usersControllerGetV1.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -189,9 +189,9 @@ export class WeddingGuestsService extends BaseService {
             }
         }
 
-        let localVarPath = `/v1/guests/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        let localVarPath = `/v1/users/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<GuestResponseDto>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<UserResponseDto>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -205,21 +205,21 @@ export class WeddingGuestsService extends BaseService {
     }
 
     /**
-     * Bulk import guests
-     * Import multiple guests at once. Accepts CSV array of guest objects. Required fields: firstName, lastName, phoneNumber. Optional: email. Skips duplicates by phone; returns created + failed with errors.
-     * @endpoint post /v1/guests/import/csv
+     * Bulk import users
+     * Import multiple users at once. Accepts CSV array of user objects. Required fields: firstName, lastName, phoneNumber. Optional: email. Skips duplicates by phone; returns created + failed with errors.
+     * @endpoint post /v1/users/import/csv
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public guestsControllerImportCsvV1(requestParameters: GuestsControllerImportCsvV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ImportGuestResultDto>;
-    public guestsControllerImportCsvV1(requestParameters: GuestsControllerImportCsvV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ImportGuestResultDto>>;
-    public guestsControllerImportCsvV1(requestParameters: GuestsControllerImportCsvV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ImportGuestResultDto>>;
-    public guestsControllerImportCsvV1(requestParameters: GuestsControllerImportCsvV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public usersControllerImportCsvV1(requestParameters: UsersControllerImportCsvV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ImportUserResultDto>;
+    public usersControllerImportCsvV1(requestParameters: UsersControllerImportCsvV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ImportUserResultDto>>;
+    public usersControllerImportCsvV1(requestParameters: UsersControllerImportCsvV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ImportUserResultDto>>;
+    public usersControllerImportCsvV1(requestParameters: UsersControllerImportCsvV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         const body = requestParameters?.body;
         if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling guestsControllerImportCsvV1.');
+            throw new Error('Required parameter body was null or undefined when calling usersControllerImportCsvV1.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -259,9 +259,9 @@ export class WeddingGuestsService extends BaseService {
             }
         }
 
-        let localVarPath = `/v1/guests/import/csv`;
+        let localVarPath = `/v1/users/import/csv`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<ImportGuestResultDto>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<ImportUserResultDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 body: body,
@@ -276,21 +276,21 @@ export class WeddingGuestsService extends BaseService {
     }
 
     /**
-     * Bulk import guests
-     * Import multiple guests at once. Accepts JSON array of guest objects. Required fields: firstName, lastName, phoneNumber. Optional: email. Skips duplicates by phone; returns created + failed with errors.
-     * @endpoint post /v1/guests/import/json
+     * Bulk import users
+     * Import multiple users at once. Accepts JSON array of user objects. Required fields: firstName, lastName, phoneNumber. Optional: email. Skips duplicates by phone; returns created + failed with errors.
+     * @endpoint post /v1/users/import/json
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public guestsControllerImportJsonV1(requestParameters: GuestsControllerImportJsonV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ImportGuestResultDto>;
-    public guestsControllerImportJsonV1(requestParameters: GuestsControllerImportJsonV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ImportGuestResultDto>>;
-    public guestsControllerImportJsonV1(requestParameters: GuestsControllerImportJsonV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ImportGuestResultDto>>;
-    public guestsControllerImportJsonV1(requestParameters: GuestsControllerImportJsonV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        const importGuestDto = requestParameters?.importGuestDto;
-        if (importGuestDto === null || importGuestDto === undefined) {
-            throw new Error('Required parameter importGuestDto was null or undefined when calling guestsControllerImportJsonV1.');
+    public usersControllerImportJsonV1(requestParameters: UsersControllerImportJsonV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ImportUserResultDto>;
+    public usersControllerImportJsonV1(requestParameters: UsersControllerImportJsonV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ImportUserResultDto>>;
+    public usersControllerImportJsonV1(requestParameters: UsersControllerImportJsonV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ImportUserResultDto>>;
+    public usersControllerImportJsonV1(requestParameters: UsersControllerImportJsonV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        const importUserDto = requestParameters?.importUserDto;
+        if (importUserDto === null || importUserDto === undefined) {
+            throw new Error('Required parameter importUserDto was null or undefined when calling usersControllerImportJsonV1.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -330,12 +330,12 @@ export class WeddingGuestsService extends BaseService {
             }
         }
 
-        let localVarPath = `/v1/guests/import/json`;
+        let localVarPath = `/v1/users/import/json`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<ImportGuestResultDto>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<ImportUserResultDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: importGuestDto,
+                body: importUserDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -347,16 +347,16 @@ export class WeddingGuestsService extends BaseService {
     }
 
     /**
-     * List all guests (admin)
-     * @endpoint get /v1/guests
+     * List all users (admin)
+     * @endpoint get /v1/users
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public guestsControllerListV1(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GuestListResponseDto>;
-    public guestsControllerListV1(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GuestListResponseDto>>;
-    public guestsControllerListV1(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GuestListResponseDto>>;
-    public guestsControllerListV1(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public usersControllerListV1(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserListResponseDto>;
+    public usersControllerListV1(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserListResponseDto>>;
+    public usersControllerListV1(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserListResponseDto>>;
+    public usersControllerListV1(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -386,9 +386,9 @@ export class WeddingGuestsService extends BaseService {
             }
         }
 
-        let localVarPath = `/v1/guests`;
+        let localVarPath = `/v1/users`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<GuestListResponseDto>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<UserListResponseDto>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -402,20 +402,20 @@ export class WeddingGuestsService extends BaseService {
     }
 
     /**
-     * Delete a guest (admin)
-     * @endpoint delete /v1/guests/{id}
+     * Delete a user (admin)
+     * @endpoint delete /v1/users/{id}
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public guestsControllerRemoveV1(requestParameters: GuestsControllerRemoveV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public guestsControllerRemoveV1(requestParameters: GuestsControllerRemoveV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public guestsControllerRemoveV1(requestParameters: GuestsControllerRemoveV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public guestsControllerRemoveV1(requestParameters: GuestsControllerRemoveV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public usersControllerRemoveV1(requestParameters: UsersControllerRemoveV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public usersControllerRemoveV1(requestParameters: UsersControllerRemoveV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public usersControllerRemoveV1(requestParameters: UsersControllerRemoveV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public usersControllerRemoveV1(requestParameters: UsersControllerRemoveV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         const id = requestParameters?.id;
         if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling guestsControllerRemoveV1.');
+            throw new Error('Required parameter id was null or undefined when calling usersControllerRemoveV1.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -445,7 +445,7 @@ export class WeddingGuestsService extends BaseService {
             }
         }
 
-        let localVarPath = `/v1/guests/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        let localVarPath = `/v1/users/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
             {
@@ -461,25 +461,25 @@ export class WeddingGuestsService extends BaseService {
     }
 
     /**
-     * Update a guest
-     * Admins may patch any field; a guest may patch only their own preferredLang.
-     * @endpoint patch /v1/guests/{id}
+     * Update a user
+     * Admins may patch any field; a user may patch only their own preferredLang.
+     * @endpoint patch /v1/users/{id}
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public guestsControllerUpdateV1(requestParameters: GuestsControllerUpdateV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<GuestResponseDto>;
-    public guestsControllerUpdateV1(requestParameters: GuestsControllerUpdateV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<GuestResponseDto>>;
-    public guestsControllerUpdateV1(requestParameters: GuestsControllerUpdateV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<GuestResponseDto>>;
-    public guestsControllerUpdateV1(requestParameters: GuestsControllerUpdateV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public usersControllerUpdateV1(requestParameters: UsersControllerUpdateV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserResponseDto>;
+    public usersControllerUpdateV1(requestParameters: UsersControllerUpdateV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserResponseDto>>;
+    public usersControllerUpdateV1(requestParameters: UsersControllerUpdateV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserResponseDto>>;
+    public usersControllerUpdateV1(requestParameters: UsersControllerUpdateV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         const id = requestParameters?.id;
         if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling guestsControllerUpdateV1.');
+            throw new Error('Required parameter id was null or undefined when calling usersControllerUpdateV1.');
         }
-        const updateGuestDto = requestParameters?.updateGuestDto;
-        if (updateGuestDto === null || updateGuestDto === undefined) {
-            throw new Error('Required parameter updateGuestDto was null or undefined when calling guestsControllerUpdateV1.');
+        const updateUserDto = requestParameters?.updateUserDto;
+        if (updateUserDto === null || updateUserDto === undefined) {
+            throw new Error('Required parameter updateUserDto was null or undefined when calling usersControllerUpdateV1.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -519,12 +519,12 @@ export class WeddingGuestsService extends BaseService {
             }
         }
 
-        let localVarPath = `/v1/guests/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
+        let localVarPath = `/v1/users/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<GuestResponseDto>('patch', `${basePath}${localVarPath}`,
+        return this.httpClient.request<UserResponseDto>('patch', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: updateGuestDto,
+                body: updateUserDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

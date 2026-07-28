@@ -7,16 +7,17 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { CreateRsvpDtoParticipantsInner } from './create-rsvp-dto-participants-inner';
+import { RsvpDtoChildrenInner } from './rsvp-dto-children-inner';
+import { UpdateRsvpDtoAdults } from './update-rsvp-dto-adults';
 
 
 export interface UpdateRsvpDto { 
     id: string;
     version: number;
     status?: UpdateRsvpDto.StatusEnum;
-    participants?: Array<CreateRsvpDtoParticipantsInner>;
-    songRequest?: string | null;
-    comments?: string | null;
+    adults?: UpdateRsvpDtoAdults;
+    children?: Array<RsvpDtoChildrenInner>;
+    delegatedTo?: string;
 }
 export namespace UpdateRsvpDto {
     export const StatusEnum = {

@@ -7,22 +7,19 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { GuestListResponseDtoItemsInnerGuestProfile } from './guest-list-response-dto-items-inner-guest-profile';
 
 
-export interface GuestListResponseDtoItemsInner { 
+export interface UpdateUserDto { 
     id: string;
     version: number;
-    firstName: string;
-    lastName: string;
-    email?: string;
+    firstName?: string;
+    lastName?: string;
     googleSub?: string;
     appleSub?: string;
-    phoneNumber: string;
-    preferredLang?: GuestListResponseDtoItemsInner.PreferredLangEnum;
-    guestProfile?: GuestListResponseDtoItemsInnerGuestProfile;
+    preferredLang?: UpdateUserDto.PreferredLangEnum;
+    delegateTo?: Array<string>;
 }
-export namespace GuestListResponseDtoItemsInner {
+export namespace UpdateUserDto {
     export const PreferredLangEnum = {
         ES: 'es',
         EN: 'en',

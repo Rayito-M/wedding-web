@@ -9,9 +9,9 @@
  */
 
 
-export interface GuestListResponseDtoItemsInnerGuestProfileConversationState { 
-    step: string;
-    partialRsvp: { [key: string]: any; };
-    expiresAt: string;
+export interface ImportUserResultDtoSummary { 
+    total: number;
+    created: number;
+    failed: number;
 }
 

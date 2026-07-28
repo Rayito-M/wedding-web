@@ -9,9 +9,7 @@
  */
 
 
-export interface ImportGuestResultDtoSummary { 
-    total: number;
-    created: number;
-    failed: number;
+export interface GetProfilesListDto { 
+    ids: Array<string>;
 }
 

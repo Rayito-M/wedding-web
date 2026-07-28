@@ -17,8 +17,6 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
-import { CreateRsvpDto } from '../model/create-rsvp-dto';
-// @ts-ignore
 import { RsvpDto } from '../model/rsvp-dto';
 // @ts-ignore
 import { RsvpListResponseDto } from '../model/rsvp-list-response-dto';
@@ -32,18 +30,17 @@ import { BaseService } from '../api.base.service';
 
 
 export interface RsvpControllerCreateV1RequestParams {
-    /** Guest ULID, or the literal &#x60;me&#x60; for the authenticated guest */
+    /** User ULID, or the literal &#x60;me&#x60; for the authenticated user */
     id: any;
-    createRsvpDto: CreateRsvpDto;
 }
 
 export interface RsvpControllerGetV1RequestParams {
-    /** Guest ULID, or the literal &#x60;me&#x60; for the authenticated guest */
+    /** User ULID, or the literal &#x60;me&#x60; for the authenticated user */
     id: any;
 }
 
 export interface RsvpControllerUpdateV1RequestParams {
-    /** Guest ULID, or the literal &#x60;me&#x60; for the authenticated guest */
+    /** User ULID, or the literal &#x60;me&#x60; for the authenticated user */
     id: any;
     updateRsvpDto: UpdateRsvpDto;
 }
@@ -75,10 +72,6 @@ export class WeddingRsvpService extends BaseService {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling rsvpControllerCreateV1.');
         }
-        const createRsvpDto = requestParameters?.createRsvpDto;
-        if (createRsvpDto === null || createRsvpDto === undefined) {
-            throw new Error('Required parameter createRsvpDto was null or undefined when calling rsvpControllerCreateV1.');
-        }
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -97,15 +90,6 @@ export class WeddingRsvpService extends BaseService {
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
 
-        // to determine the Content-Type header
-        const consumes: string[] = [
-            'application/json'
-        ];
-        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
-        if (httpContentTypeSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
-        }
-
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
             if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
@@ -122,7 +106,6 @@ export class WeddingRsvpService extends BaseService {
         return this.httpClient.request<RsvpDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: createRsvpDto,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -134,8 +117,8 @@ export class WeddingRsvpService extends BaseService {
     }
 
     /**
-     * Get all RSVPs (admin)
-     * Retrieve all guest RSVPs with pagination. Useful for dashboards, reports, and analytics.
+     * Get all RSVPs
+     * Retrieve all guest RSVPs with pagination. Admin gets all, guest gets their delegates, reports, and analytics.
      * @endpoint get /v1/rsvp
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.

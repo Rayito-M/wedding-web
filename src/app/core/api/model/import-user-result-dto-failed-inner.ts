@@ -9,10 +9,11 @@
  */
 
 
-export interface ImportGuestDtoGuestsInner { 
+export interface ImportUserResultDtoFailedInner { 
+    row: number;
     firstName: string;
     lastName: string;
-    phoneNumber: string;
-    email?: string;
+    error: string;
+    delegateTo?: Array<string>;
 }
 

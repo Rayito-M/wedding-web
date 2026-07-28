@@ -7,12 +7,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { RsvpDtoAdultsGuestOptions } from './rsvp-dto-adults-guest-options';
 
 
-export interface ImportGuestResultDtoFailedInner { 
-    row: number;
+export interface RsvpDtoAdultsGuest { 
+    id: string;
     firstName: string;
     lastName: string;
-    error: string;
+    options?: RsvpDtoAdultsGuestOptions;
 }
 

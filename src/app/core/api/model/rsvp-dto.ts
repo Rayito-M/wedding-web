@@ -7,7 +7,8 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { CreateRsvpDtoParticipantsInner } from './create-rsvp-dto-participants-inner';
+import { RsvpDtoAdults } from './rsvp-dto-adults';
+import { RsvpDtoChildrenInner } from './rsvp-dto-children-inner';
 
 
 export interface RsvpDto { 
@@ -16,9 +17,8 @@ export interface RsvpDto {
     createdAt: string;
     updatedAt: string;
     status: RsvpDto.StatusEnum;
-    participants: Array<CreateRsvpDtoParticipantsInner>;
-    songRequest?: string | null;
-    comments?: string | null;
+    adults: RsvpDtoAdults;
+    children?: Array<RsvpDtoChildrenInner>;
     submittedBy: string;
 }
 export namespace RsvpDto {

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { EntityCollectionDataService } from '@ngrx/data';
-import { Observable, map, throwError } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 
 import { UserProfileDto, WeddingUserProfileService } from '../api';
 
@@ -20,15 +20,14 @@ import { EntityNamesEnum } from './entity-metadata';
 export class UserProfileDataService implements EntityCollectionDataService<UserProfileDto> {
   readonly name = EntityNamesEnum.USER_PROFILE;
 
-  private readonly configApi = inject(WeddingUserProfileService);
+  private readonly serviceApi = inject(WeddingUserProfileService);
 
   getAll(): Observable<UserProfileDto[]> {
     return throwError(() => new Error('Not implemented'));
   }
 
-  getById(): Observable<UserProfileDto> {
-    // Singleton: the id is irrelevant, the endpoint always returns the one document.
-    return this.configApi.profileControllerGetProfileV1();
+  getById(id: string): Observable<UserProfileDto> {
+    return this.serviceApi.profileControllerGetV1({ id });
   }
 
   getWithQuery(): Observable<UserProfileDto[]> {

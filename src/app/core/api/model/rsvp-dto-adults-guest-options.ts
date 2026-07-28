@@ -9,23 +9,13 @@
  */
 
 
-export interface CreateRsvpDtoParticipantsInner { 
-    id: string;
-    type: CreateRsvpDtoParticipantsInner.TypeEnum;
-    name: string;
+export interface RsvpDtoAdultsGuestOptions { 
     dietaryPreferenceIds?: Array<string>;
     customDietaryPreferences?: Array<string>;
     allergyIds?: Array<string>;
     customAllergies?: Array<string>;
     menuId?: string | null;
+    songRequest?: string | null;
+    comments?: string | null;
 }
-export namespace CreateRsvpDtoParticipantsInner {
-    export const TypeEnum = {
-        MAIN: 'main',
-        PARTNER: 'partner',
-        CHILD: 'child'
-    } as const;
-    export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
-}
-
 

@@ -7,11 +7,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { GuestListResponseDtoItemsInner } from './guest-list-response-dto-items-inner';
+import { UserListResponseDtoItemsInner } from './user-list-response-dto-items-inner';
 
 
-export interface GuestListResponseDto { 
-    items: Array<GuestListResponseDtoItemsInner>;
+export interface UserListResponseDto { 
+    items: Array<UserListResponseDtoItemsInner>;
     nextCursor: string | null;
     count: number;
 }

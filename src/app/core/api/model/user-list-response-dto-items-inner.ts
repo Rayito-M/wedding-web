@@ -7,10 +7,9 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { CreateGuestDtoGuestProfile } from './create-guest-dto-guest-profile';
 
 
-export interface GuestResponseDto { 
+export interface UserListResponseDtoItemsInner { 
     id: string;
     version: number;
     firstName: string;
@@ -19,10 +18,10 @@ export interface GuestResponseDto {
     googleSub?: string;
     appleSub?: string;
     phoneNumber: string;
-    preferredLang?: GuestResponseDto.PreferredLangEnum;
-    guestProfile?: CreateGuestDtoGuestProfile;
+    preferredLang?: UserListResponseDtoItemsInner.PreferredLangEnum;
+    delegateTo?: Array<string>;
 }
-export namespace GuestResponseDto {
+export namespace UserListResponseDtoItemsInner {
     export const PreferredLangEnum = {
         ES: 'es',
         EN: 'en',

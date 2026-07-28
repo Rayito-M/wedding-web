@@ -7,10 +7,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { ImportGuestDtoGuestsInner } from './import-guest-dto-guests-inner';
 
 
-export interface ImportGuestDto { 
-    guests: Array<ImportGuestDtoGuestsInner>;
+export interface ImportUserDtoGuestsInnerAnyOf { 
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    email?: string;
+    role: string;
+    delegateTo?: Array<string>;
 }
 
