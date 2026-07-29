@@ -147,13 +147,13 @@
     }
   },
   "dashboard": {
-    "greeting": "Buenos días, {{name}}.",
+    "greeting": "Bonjour, {{name}}.",
     "daysToGo_singular": "jour avant le grand jour.",
     "daysToGo_plural": "jours avant le grand jour.",
     "rsvp": {
-      "yes": "Oui",
+      "attending": "Présents",
       "pending": "En attente",
-      "no": "Non",
+      "declined": "Refusés",
       "progress": "{{percent}}% de {{total}} invités ont répondu"
     },
     "budget": "Budget",
@@ -223,17 +223,17 @@
       "aria": "Gamme de prix {{tier}}"
     },
     "agenda": {
-      "add": "+ Ajouter un moment",
+      "add": "Ajouter un moment",
       "remove": "Supprimer le moment"
     },
     "hotels": {
-      "add": "+ Ajouter un hôtel",
+      "add": "Ajouter un hôtel",
       "remove": "Supprimer l'hôtel"
     },
     "dietary": {
       "preferencesTitle": "Préférences alimentaires",
       "allergiesTitle": "Allergies et intolérances",
-      "add": "+ Ajouter une étiquette",
+      "add": "Ajouter une étiquette",
       "addAria": "Ajouter une nouvelle étiquette",
       "addDietaryPreference": "Ajouter une préférence alimentaire",
       "addAllergy": "Ajouter une allergie",
@@ -312,6 +312,7 @@
   "nav": {
     "home": "Accueil",
     "dashboard": "Tableau de bord",
+    "guests": "Invités",
     "config": "Configuration",
     "rsvp": "RSVP",
     "schedule": "Agenda",
@@ -326,6 +327,96 @@
     "travel": "S'y rendre · Sara & Christophe",
     "dashboard": "Tableau de bord · Sara & Christophe",
     "config": "Configuration · Sara & Christophe",
+    "guestManager": "Gestionnaire d'invités · Sara & Christophe",
     "invitee": "Votre journée · Sara & Christophe"
+  },
+  "guest_manager": {
+    "header": {
+      "meta": "Couple · Liste d'invités",
+      "title": "Gestionnaire d'invités",
+      "headCount": "Nombre total"
+    },
+    "status": {
+      "attending": "Confirmés",
+      "pending": "En attente",
+      "declined": "Refusés"
+    },
+    "filter": {
+      "all": "Tous",
+      "attending": "Présents",
+      "pending": "En attente",
+      "declined": "Refusés"
+    },
+    "search": {
+      "placeholder": "Chercher par nom ou groupe…"
+    },
+    "action": {
+      "addGuest": "Ajouter un invité",
+      "editProfile": "Modifier le profil",
+      "manageRsvp": "Gérer le RSVP",
+      "close": "Fermer",
+      "cancel": "Annuler",
+      "addPartner": "Ajouter un partenaire",
+      "addChild": "Ajouter un enfant",
+      "back": "Retour",
+      "saveProfile": "Enregistrer le profil",
+      "saveChanges": "Enregistrer les modifications"
+    },
+    "table": {
+      "guest": "Invité",
+      "status": "Statut",
+      "adults": "Adultes",
+      "children": "Enfants",
+      "dietary": "Régime",
+      "table": "Table"
+    },
+    "pagination": {
+      "noResults": "Aucun résultat",
+      "prev": "← Précédent",
+      "next": "Suivant →",
+      "of": "sur"
+    },
+    "modal": {
+      "viewProfile": "Profil d'invité",
+      "editProfile": "Modifier le profil",
+      "manageRsvp": "Gérer le RSVP",
+      "guestInfo": "Informations sur l'invité",
+      "status": "Statut",
+      "adults": "Adultes",
+      "children": "Enfants",
+      "party": "Détails du groupe",
+      "comments": "Commentaires",
+      "commentsPlaceholder": "Ajoutez vos notes ou demandes spéciales…",
+      "cancel": "Annuler",
+      "save": "Enregistrer les modifications"
+    },
+    "profile": {
+      "sideGroup": "Côté · Groupe",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "table": "Table"
+    },
+    "rsvp": {
+      "summary": "Résumé du RSVP",
+      "manage": "Gérer →",
+      "participants": "Participants",
+      "children": "Enfants",
+      "dietary": "Régime",
+      "attending": "Assistera?",
+      "you": "Vous",
+      "partner": "Partenaire",
+      "children": "Enfants"
+    },
+    "form": {
+      "name": "Nom complet",
+      "side": "Côté",
+      "group": "Groupe",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "dietary": "Préférences alimentaires",
+      "allergies": "Allergies et intolérances",
+      "notes": "Note de l'invité"
+    },
+    "empty": "Aucun invité. Ajoutez votre premier invité pour commencer."
   }
 }

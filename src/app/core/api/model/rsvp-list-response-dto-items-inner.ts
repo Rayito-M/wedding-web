@@ -24,8 +24,8 @@ export interface RsvpListResponseDtoItemsInner {
 }
 export namespace RsvpListResponseDtoItemsInner {
     export const StatusEnum = {
-        YES: 'yes',
-        NO: 'no',
+        ATTENDING: 'attending',
+        DECLINED: 'declined',
         PENDING: 'pending'
     } as const;
     export type StatusEnum = typeof StatusEnum[keyof typeof StatusEnum];

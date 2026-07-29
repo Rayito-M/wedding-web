@@ -17,13 +17,21 @@ export class TranslatedTitleStrategy extends TitleStrategy {
 
   /** i18n key of the active route's title, kept so we can re-translate on lang change. */
   private currentKey?: string;
+  private subscribed = false;
 
   constructor() {
     super();
-    this.translate.onLangChange.subscribe(() => this.applyTitle());
+  }
+
+  private ensureSubscribed(): void {
+    if (!this.subscribed) {
+      this.subscribed = true;
+      this.translate.onLangChange.subscribe(() => this.applyTitle());
+    }
   }
 
   override updateTitle(snapshot: RouterStateSnapshot): void {
+    this.ensureSubscribed();
     this.currentKey = this.buildTitle(snapshot);
     this.applyTitle();
   }

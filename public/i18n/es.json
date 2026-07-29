@@ -151,9 +151,9 @@
     "daysToGo_singular": "día para el gran día.",
     "daysToGo_plural": "días para el gran día.",
     "rsvp": {
-      "yes": "Sí",
+      "attending": "Confirmados",
       "pending": "Pendiente",
-      "no": "No",
+      "declined": "Rechazados",
       "progress": "{{percent}}% de {{total}} invitados han respondido"
     },
     "budget": "Presupuesto",
@@ -223,17 +223,17 @@
       "aria": "Rango de precio {{tier}}"
     },
     "agenda": {
-      "add": "+ Añadir momento",
+      "add": "Añadir momento",
       "remove": "Eliminar momento"
     },
     "hotels": {
-      "add": "+ Añadir hotel",
+      "add": "Añadir hotel",
       "remove": "Eliminar hotel"
     },
     "dietary": {
       "preferencesTitle": "Preferencias dietéticas",
       "allergiesTitle": "Alergias e intolerancias",
-      "add": "+ Añadir etiqueta",
+      "add": "Añadir etiqueta",
       "addAria": "Añadir una etiqueta nueva",
       "addDietaryPreference": "Añadir preferencia dietética",
       "addAllergy": "Añadir alergia",
@@ -312,6 +312,7 @@
   "nav": {
     "home": "Inicio",
     "dashboard": "Panel",
+    "guests": "Invitados",
     "config": "Configuración",
     "rsvp": "Gestión de asistencia",
     "schedule": "Agenda",
@@ -326,6 +327,96 @@
     "travel": "Cómo llegar · Sara & Christophe",
     "dashboard": "Panel · Sara & Christophe",
     "config": "Configuración · Sara & Christophe",
+    "guestManager": "Gestor de invitados · Sara & Christophe",
     "invitee": "Tu día · Sara & Christophe"
+  },
+  "guest_manager": {
+    "header": {
+      "meta": "Pareja · Lista de invitados",
+      "title": "Gestor de invitados",
+      "headCount": "Total de asistentes"
+    },
+    "status": {
+      "attending": "Confirmados",
+      "pending": "Pendiente",
+      "declined": "Rechazados"
+    },
+    "filter": {
+      "all": "Todos",
+      "attending": "Confirmados",
+      "pending": "Pendiente",
+      "declined": "Rechazados"
+    },
+    "search": {
+      "placeholder": "Buscar por nombre o grupo…"
+    },
+    "action": {
+      "addGuest": "Añadir invitado",
+      "editProfile": "Editar perfil",
+      "manageRsvp": "Gestionar RSVP",
+      "close": "Cerrar",
+      "cancel": "Cancelar",
+      "addPartner": "Añadir pareja",
+      "addChild": "Añadir niño/a",
+      "back": "Atrás",
+      "saveProfile": "Guardar perfil",
+      "saveChanges": "Guardar cambios"
+    },
+    "table": {
+      "guest": "Invitado",
+      "status": "Estado",
+      "adults": "Adultos",
+      "children": "Niños",
+      "dietary": "Dieta",
+      "table": "Mesa"
+    },
+    "pagination": {
+      "noResults": "Sin resultados",
+      "prev": "← Anterior",
+      "next": "Siguiente →",
+      "of": "de"
+    },
+    "modal": {
+      "viewProfile": "Perfil de invitado",
+      "editProfile": "Editar perfil",
+      "manageRsvp": "Gestionar RSVP",
+      "guestInfo": "Información del invitado",
+      "status": "Estado",
+      "adults": "Adultos",
+      "children": "Niños",
+      "party": "Detalles del grupo",
+      "comments": "Comentarios",
+      "commentsPlaceholder": "Añade tus notas o solicitudes especiales…",
+      "cancel": "Cancelar",
+      "save": "Guardar cambios"
+    },
+    "profile": {
+      "sideGroup": "Lado · Grupo",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "table": "Mesa"
+    },
+    "rsvp": {
+      "summary": "Resumen de RSVP",
+      "manage": "Gestionar →",
+      "participants": "Participantes",
+      "children": "Niños",
+      "dietary": "Dieta",
+      "attending": "¿Asistirá?",
+      "you": "Tú",
+      "partner": "Pareja",
+      "children": "Niños"
+    },
+    "form": {
+      "name": "Nombre completo",
+      "side": "Lado",
+      "group": "Grupo",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "dietary": "Preferencias dietéticas",
+      "allergies": "Alergias e intolerancias",
+      "notes": "Nota del invitado"
+    },
+    "empty": "Sin invitados. Añade el primer invitado para comenzar."
   }
 }

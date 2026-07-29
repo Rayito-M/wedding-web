@@ -154,9 +154,9 @@
     "daysToGo_singular": "day before the special day.",
     "daysToGo_plural": "days before the special day.",
     "rsvp": {
-      "yes": "Yes",
+      "attending": "Attending",
       "pending": "Pending",
-      "no": "No",
+      "declined": "Declined",
       "progress": "{{percent}}% of {{total}} guests have replied"
     },
     "budget": "Budget",
@@ -226,17 +226,17 @@
       "aria": "Price tier {{tier}}"
     },
     "agenda": {
-      "add": "+ Add moment",
+      "add": "Add moment",
       "remove": "Remove moment"
     },
     "hotels": {
-      "add": "+ Add hotel",
+      "add": "Add hotel",
       "remove": "Remove hotel"
     },
     "dietary": {
       "preferencesTitle": "Dietary preferences",
       "allergiesTitle": "Allergies & intolerances",
-      "add": "+ Add tag",
+      "add": "Add tag",
       "addAria": "Add a new tag",
       "addDietaryPreference": "Add dietary preference",
       "addAllergy": "Add allergy",
@@ -315,6 +315,7 @@
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
+    "guests": "Guests",
     "config": "Config",
     "rsvp": "RSVP",
     "schedule": "Schedule",
@@ -329,6 +330,96 @@
     "travel": "Getting there · Sara & Christophe",
     "dashboard": "Dashboard · Sara & Christophe",
     "config": "Configuration · Sara & Christophe",
+    "guestManager": "Guest manager · Sara & Christophe",
     "invitee": "Your day · Sara & Christophe"
+  },
+  "guest_manager": {
+    "header": {
+      "meta": "Couple · Guest list",
+      "title": "Guest manager",
+      "headCount": "Head count"
+    },
+    "status": {
+      "attending": "Attending",
+      "pending": "Pending",
+      "declined": "Declined"
+    },
+    "filter": {
+      "all": "All",
+      "attending": "Attending",
+      "pending": "Pending",
+      "declined": "Declined"
+    },
+    "search": {
+      "placeholder": "Search name or party…"
+    },
+    "action": {
+      "addGuest": "Add guest",
+      "editProfile": "Edit profile",
+      "manageRsvp": "Manage RSVP",
+      "close": "Close",
+      "cancel": "Cancel",
+      "addPartner": "Add partner",
+      "addChild": "Add child",
+      "back": "Back",
+      "saveProfile": "Save profile",
+      "saveChanges": "Save changes"
+    },
+    "table": {
+      "guest": "Guest",
+      "status": "Status",
+      "adults": "Adults",
+      "children": "Children",
+      "dietary": "Dietary",
+      "table": "Table"
+    },
+    "pagination": {
+      "noResults": "No results",
+      "prev": "← Prev",
+      "next": "Next →",
+      "of": "of"
+    },
+    "modal": {
+      "viewProfile": "Guest profile",
+      "editProfile": "Edit profile",
+      "manageRsvp": "Manage RSVP",
+      "guestInfo": "Guest information",
+      "status": "Status",
+      "adults": "Adults",
+      "children": "Children",
+      "party": "Party details",
+      "comments": "Comments",
+      "commentsPlaceholder": "Add any notes or special requests…",
+      "cancel": "Cancel",
+      "save": "Save changes"
+    },
+    "profile": {
+      "sideGroup": "Side · Group",
+      "email": "Email",
+      "phone": "Phone",
+      "table": "Table"
+    },
+    "rsvp": {
+      "summary": "RSVP summary",
+      "manage": "Manage →",
+      "participants": "Participants",
+      "children": "Children",
+      "dietary": "Dietary",
+      "attending": "Attending?",
+      "you": "You",
+      "partner": "Partner",
+      "children": "Children"
+    },
+    "form": {
+      "name": "Full name",
+      "side": "Side",
+      "group": "Group",
+      "email": "Email",
+      "phone": "Phone",
+      "dietary": "Dietary",
+      "allergies": "Allergies & intolerances",
+      "notes": "Note from guest"
+    },
+    "empty": "No guests to display. Add your first guest to get started."
   }
 }

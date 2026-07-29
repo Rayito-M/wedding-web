@@ -37,6 +37,9 @@ model/health-check-response-dto-info-value.ts
 model/health-check-response-dto.ts
 model/health-controller-check503-response-info-value.ts
 model/health-controller-check503-response.ts
+model/import-user-dto-guests-inner-any-of-relation-one-of.ts
+model/import-user-dto-guests-inner-any-of-relation-one-of1.ts
+model/import-user-dto-guests-inner-any-of-relation.ts
 model/import-user-dto-guests-inner-any-of.ts
 model/import-user-dto-guests-inner-any-of1.ts
 model/import-user-dto-guests-inner.ts
@@ -52,13 +55,11 @@ model/models.ts
 model/otp-request-dto.ts
 model/otp-requested-dto.ts
 model/otp-verify-dto.ts
-model/rsvp-dto-adults-guest-options.ts
-model/rsvp-dto-adults-guest.ts
-model/rsvp-dto-adults-partner-any-of.ts
-model/rsvp-dto-adults-partner-any-of1.ts
-model/rsvp-dto-adults-partner.ts
+model/rsvp-dto-adults-partner1-options.ts
+model/rsvp-dto-adults-partner1.ts
+model/rsvp-dto-adults-partner2-any-of.ts
+model/rsvp-dto-adults-partner2.ts
 model/rsvp-dto-adults.ts
-model/rsvp-dto-children-inner.ts
 model/rsvp-dto.ts
 model/rsvp-list-response-dto-items-inner-adults.ts
 model/rsvp-list-response-dto-items-inner.ts
@@ -74,6 +75,7 @@ model/update-wedding-config-dto-language.ts
 model/update-wedding-config-dto.ts
 model/user-list-response-dto-items-inner.ts
 model/user-list-response-dto.ts
+model/user-profile-dto-relation.ts
 model/user-profile-dto.ts
 model/user-profile-list-response-dto-profiles-inner.ts
 model/user-profile-list-response-dto.ts

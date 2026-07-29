@@ -82,6 +82,14 @@ export const routes: Routes = [
         data: { tab: 'config', tabBar: true, topNav: true },
       },
       {
+        path: 'guests',
+        loadComponent: () =>
+          import('./screens/guest-manager/guest-manager').then((m) => m.GuestManager),
+        title: 'titles.guestManager',
+        canActivate: [adminGuard, routeEnabledGuard],
+        data: { tab: 'guests', tabBar: true, topNav: true },
+      },
+      {
         path: 'me',
         loadComponent: () => import('./screens/invitee/invitee').then((m) => m.Invitee),
         title: 'titles.invitee',

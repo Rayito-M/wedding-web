@@ -5,6 +5,11 @@ import { catchError } from 'rxjs';
 import { TokenStorageService } from '../service/token-storage.service';
 
 export const unauthorizedInterceptor: HttpInterceptorFn = (req, next) => {
+  // Skip interceptor for translation files to avoid circular dependency during init
+  if (req.url.includes('/i18n/')) {
+    return next(req);
+  }
+
   const tokenStorage = inject(TokenStorageService);
   const router = inject(Router);
 

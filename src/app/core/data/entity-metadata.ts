@@ -5,12 +5,14 @@ import {
   WeddingConfigPublicResponseDto,
   RsvpDto,
   UserProfileDto,
+  UserResponseDto,
 } from '../api';
 
 export enum EntityNamesEnum {
   WEDDING_CONFIG = 'WeddingConfig',
   WEDDING_CONFIG_PUBLIC = 'WeddingConfigPublic',
   RSVP = 'Rsvp',
+  USER = 'User',
   USER_PROFILE = 'UserProfile',
 }
 
@@ -41,6 +43,9 @@ export const entityMetadata: EntityMetadataMap = {
   [EntityNamesEnum.RSVP]: {
     selectId: (rsvp: RsvpDto) => rsvp.id,
   },
+  [EntityNamesEnum.USER]: {
+    selectId: (user: UserResponseDto) => user.id,
+  },
   [EntityNamesEnum.USER_PROFILE]: {
     selectId: (profile: UserProfileDto) => profile.id,
   },
@@ -51,10 +56,11 @@ export const entityMetadata: EntityMetadataMap = {
  * this app never uses (every entity delegates to the generated API client via
  * a custom data service). The invariant plural documents the singleton nature.
  */
-export const pluralNames = {
+export const pluralNames: Record<EntityNamesEnum, string> = {
   [EntityNamesEnum.WEDDING_CONFIG]: 'WeddingConfig',
   [EntityNamesEnum.WEDDING_CONFIG_PUBLIC]: 'WeddingConfigPublic',
   [EntityNamesEnum.RSVP]: 'Rsvp',
+  [EntityNamesEnum.USER]: 'User',
   [EntityNamesEnum.USER_PROFILE]: 'UserProfile',
 };
 

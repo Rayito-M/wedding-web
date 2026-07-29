@@ -1,0 +1,231 @@
+<div class="guest-manager">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="header-title">
+        <div class="header-meta">
+          {{ 'guest_manager.header.meta' | translate }}
+        </div>
+        <h1 class="header-text">
+          {{ 'guest_manager.header.title' | translate }}
+        </h1>
+      </div>
+    </div>
+
+    <div class="header-stats">
+      <div class="stat-group">
+        <div class="stat-value accent">{{ count().attending }}</div>
+        <div class="stat-label">
+          {{ 'guest_manager.status.attending' | translate }}
+        </div>
+      </div>
+      <div class="stat-group">
+        <div class="stat-value">{{ count().pending }}</div>
+        <div class="stat-label">
+          {{ 'guest_manager.status.pending' | translate }}
+        </div>
+      </div>
+      <div class="stat-group">
+        <div class="stat-value">{{ count().declined }}</div>
+        <div class="stat-label">
+          {{ 'guest_manager.status.declined' | translate }}
+        </div>
+      </div>
+      <div class="stat-group divider">
+        <div class="stat-value">{{ count().total }}</div>
+        <div class="stat-label">
+          {{ 'guest_manager.header.headCount' | translate }}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="filters">
+      <button
+        type="button"
+        class="filter-btn"
+        [class.active]="getFilter() === 'all'"
+        (click)="setFilter('all')"
+        (keydown.enter)="setFilter('all')"
+        (keydown.space)="setFilter('all')"
+      >
+        {{ 'guest_manager.filter.all' | translate }}
+        <span class="count">· {{ count().total }}</span>
+      </button>
+      <button
+        type="button"
+        class="filter-btn"
+        [class.active]="getFilter() === 'attending'"
+        (click)="setFilter('attending')"
+        (keydown.enter)="setFilter('attending')"
+        (keydown.space)="setFilter('attending')"
+      >
+        {{ 'guest_manager.filter.attending' | translate }}
+        <span class="count">· {{ count().attending }}</span>
+      </button>
+      <button
+        type="button"
+        class="filter-btn"
+        [class.active]="getFilter() === 'pending'"
+        (click)="setFilter('pending')"
+        (keydown.enter)="setFilter('pending')"
+        (keydown.space)="setFilter('pending')"
+      >
+        {{ 'guest_manager.filter.pending' | translate }}
+        <span class="count">· {{ count().pending }}</span>
+      </button>
+      <button
+        type="button"
+        class="filter-btn"
+        [class.active]="getFilter() === 'declined'"
+        (click)="setFilter('declined')"
+        (keydown.enter)="setFilter('declined')"
+        (keydown.space)="setFilter('declined')"
+      >
+        {{ 'guest_manager.filter.declined' | translate }}
+        <span class="count">· {{ count().declined }}</span>
+      </button>
+    </div>
+
+    <div class="toolbar-right">
+      <div class="search-box">
+        <input
+          type="text"
+          class="search-input"
+          [value]="getSearchQuery()"
+          (change)="updateSearch($event.target.value)"
+          [attr.placeholder]="'guest_manager.search.placeholder' | translate"
+          aria-label="Search guests by name or party"
+        />
+      </div>
+      <button
+        type="button"
+        class="add-btn"
+        app-btn
+        (click)="addNewGuest()"
+        (keydown.enter)="addNewGuest()"
+        (keydown.space)="addNewGuest()"
+      >
+        + {{ 'guest_manager.action.addGuest' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+    <!-- Table header -->
+    <div class="table-header">
+      <div class="col-guest">{{ 'guest_manager.table.guest' | translate }}</div>
+      <div class="col-status">{{ 'guest_manager.table.status' | translate }}</div>
+      <div class="col-adults">{{ 'guest_manager.table.adults' | translate }}</div>
+      <div class="col-children">
+        {{ 'guest_manager.table.children' | translate }}
+      </div>
+      <div class="col-dietary">
+        {{ 'guest_manager.table.dietary' | translate }}
+      </div>
+      <div class="col-table">{{ 'guest_manager.table.table' | translate }}</div>
+    </div>
+
+    <!-- Table body -->
+    <div class="table-body">
+      @if (paginatedRsvps().length > 0) {
+        @for (rsvp of paginatedRsvps(); track rsvp.id) {
+          <div
+            class="table-row"
+            role="button"
+            tabindex="0"
+            (click)="openRsvpModal(rsvp)"
+            (keydown.enter)="openRsvpModal(rsvp)"
+            (keydown.space)="openRsvpModal(rsvp)"
+          >
+            <div class="col-guest">
+              <div class="guest-name">
+                {{ rsvp.adults.partner1.firstName }} {{ rsvp.adults.partner1.lastName }}
+              </div>
+              @if (rsvp.adults.partner2) {
+                <div class="guest-secondary">
+                  {{ rsvp.adults.partner2.firstName }} {{ rsvp.adults.partner2.lastName }}
+                </div>
+              }
+            </div>
+            <div class="col-status" [attr.data-label]="'guest_manager.table.status' | translate">
+              <span class="status-badge" [class]="'status-' + rsvp.status">
+                {{ 'guest_manager.status.' + rsvp.status | translate }}
+              </span>
+            </div>
+            <div class="col-adults" [attr.data-label]="'guest_manager.table.adults' | translate">
+              {{ rsvp.adults.partner2 ? 2 : 1 }}
+            </div>
+            <div
+              class="col-children"
+              [attr.data-label]="'guest_manager.table.children' | translate"
+            >
+              {{ rsvp.children?.length || 0 }}
+            </div>
+            <div class="col-dietary" [attr.data-label]="'guest_manager.table.dietary' | translate">
+              <span class="dietary-badge">
+                @if (
+                  rsvp.adults.partner1.options?.dietaryPreferenceIds?.length ||
+                  rsvp.adults.partner1.options?.customDietaryPreferences?.length
+                ) {
+                  ✓
+                } @else {
+                  —
+                }
+              </span>
+            </div>
+            <div class="col-table" [attr.data-label]="'guest_manager.table.table' | translate">
+              <span class="table-assignment">—</span>
+            </div>
+          </div>
+        }
+      } @else {
+        <div class="empty-state">
+          {{ 'guest_manager.empty' | translate }}
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination">
+    <div class="pagination-info">
+      @if (filteredRsvps().length > 0) {
+        {{ getCurrentPage() * 10 + 1 }} -
+        {{ Math.min((getCurrentPage() + 1) * 10, filteredRsvps().length) }}
+        {{ 'guest_manager.pagination.of' | translate }}
+        {{ filteredRsvps().length }}
+      } @else {
+        {{ 'guest_manager.pagination.noResults' | translate }}
+      }
+    </div>
+    <div class="pagination-controls">
+      <button
+        type="button"
+        class="pagination-btn"
+        (click)="previousPage()"
+        (keydown.enter)="previousPage()"
+        (keydown.space)="previousPage()"
+        [disabled]="getCurrentPage() === 0"
+      >
+        ← {{ 'guest_manager.pagination.prev' | translate }}
+      </button>
+      <button
+        type="button"
+        class="pagination-btn"
+        (click)="nextPage(totalPages() - 1)"
+        (keydown.enter)="nextPage(totalPages() - 1)"
+        (keydown.space)="nextPage(totalPages() - 1)"
+        [disabled]="getCurrentPage() >= totalPages() - 1"
+      >
+        {{ 'guest_manager.pagination.next' | translate }} →
+      </button>
+    </div>
+  </div>
+
+  <!-- RSVP Details Modal -->
+  <app-rsvp-details-modal (saveComments)="onSaveComments($event)" />
+</div>
