@@ -36,7 +36,7 @@
                 <button
                   type="button"
                   class="menu-item"
-                  [class.active]="currentLang === entry.key"
+                  [class.active]="currentLang() === entry.key"
                   (click)="selectLanguage(entry.key); $event.stopPropagation()"
                 >
                   <span>{{ entry.value }}</span>

@@ -35,7 +35,7 @@ import { NAV_TABS } from '../nav-tabs';
  * (same role-filtered entries as the bottom TabBar); the TabBar covers
  * navigation on small screens. The avatar is always present (every screen and
  * size) and opens a menu to switch language or sign out. Rendered once by
- * {@link PrivateLayout}; the meta label comes from {@link HeaderService}.
+ * {@link PrivateLayout}
  */
 @Component({
   selector: 'app-screen-header',
@@ -58,8 +58,8 @@ export class ScreenHeader implements OnInit {
   private readonly userProfile: Signal<UserProfileDto | undefined> = toSignal(
     this.userProfileCollection.entities$.pipe(
       map((profiles) => {
-        const { sub } = this.login.currentUserClaims();
-        return sub ? profiles.find((p) => p.id === sub) : undefined;
+        const currentUser = this.login.currentUserClaims();
+        return currentUser?.sub ? profiles.find((p) => p.id === currentUser.sub) : undefined;
       }),
     ),
     { initialValue: undefined },
@@ -72,7 +72,7 @@ export class ScreenHeader implements OnInit {
 
   /** Translation key for the user role from JWT claims. */
   protected readonly roleKey = computed(() => {
-    const role = this.login.currentUserClaims().role;
+    const role = this.login.currentUserClaims()?.role;
     return `roles.${role}`;
   });
 
@@ -94,12 +94,13 @@ export class ScreenHeader implements OnInit {
 
   protected readonly menuOpen = signal(false);
 
-  protected get currentLang(): LangCode {
-    return this.lang.currentLang;
-  }
+  protected readonly currentLang = this.lang.currentLang;
 
   ngOnInit(): void {
-    this.userProfileCollection.getByKey(this.login.currentUserClaims().sub);
+    const currentUser = this.login.currentUserClaims();
+    if (currentUser?.sub) {
+      this.userProfileCollection.getByKey(currentUser.sub);
+    }
   }
 
   isRouteEnabled(path: string) {

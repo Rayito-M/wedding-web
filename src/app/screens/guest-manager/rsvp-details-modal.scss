@@ -1,132 +1,16 @@
 @use '../../../styles/tokens' as t;
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(26, 26, 26, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-
-  [data-theme='terracotta'] & {
-    background-color: rgba(58, 42, 31, 0.4);
-  }
-
-  [data-theme='verdeagua'] & {
-    background-color: rgba(31, 58, 53, 0.4);
-  }
-
-  @media (max-width: 640px) {
-    align-items: flex-end;
-    background-color: rgba(26, 26, 26, 0.5);
-
-    [data-theme='terracotta'] & {
-      background-color: rgba(58, 42, 31, 0.5);
-    }
-
-    [data-theme='verdeagua'] & {
-      background-color: rgba(31, 58, 53, 0.5);
-    }
-  }
-}
-
-.modal-content {
-  background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-card);
-  max-width: 520px;
-  width: 90%;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-
-  @media (max-width: 640px) {
-    width: 100%;
-    max-width: none;
-    max-height: 100vh;
-    border-radius: var(--radius-card) var(--radius-card) 0 0;
-    margin-bottom: 0;
-  }
-}
-
-.modal-drag-handle {
-  display: none;
-
-  @media (max-width: 640px) {
-    display: block;
-    width: 40px;
-    height: 4px;
-    background-color: var(--border-hairline);
-    border-radius: 2px;
-    margin: t.$space-2 auto;
-  }
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: t.$space-5;
-  border-bottom: 1px solid var(--border-hairline);
-  flex-shrink: 0;
-
-  @media (max-width: 640px) {
-    padding: t.$space-4 t.$space-6;
-  }
-}
-
-.modal-title {
-  font-family: t.$font-serif;
-  font-size: 22px;
-  line-height: 1;
-  font-weight: 400;
-  margin: 0;
-  color: var(--ink);
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 24px;
-  line-height: 1;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity var(--transition-fast);
-
-  &:hover {
-    opacity: 0.85;
-  }
-}
-
-.modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: t.$space-5;
-
-  @media (max-width: 640px) {
-    padding: t.$space-4 t.$space-6;
-  }
-}
+// Dialog chrome (overlay, card, header, footer, buttons) is owned by the
+// shared `app-modal` (size="lg") + `app-btn` components — this file only
+// styles the content projected into the modal body. Form controls reuse the
+// shared `app-input`/`app-textarea`/`app-choice-card` components for their
+// own chrome (border, radius, focus state); only layout lives here.
 
 .info-section {
   margin-bottom: t.$space-6;
 
   &:last-child {
     margin-bottom: 0;
-  }
-
-  @media (max-width: 640px) {
-    margin-bottom: t.$space-5;
   }
 }
 
@@ -141,16 +25,23 @@
 
 .info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: t.$space-3;
 
   @media (max-width: 640px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
+.readonly-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-3;
+  margin-top: t.$space-2;
+}
+
 .info-item {
-  label {
+  .info-label {
     display: block;
     font-size: t.$text-label;
     color: var(--text-muted);
@@ -160,134 +51,130 @@
   }
 }
 
-.status-value {
-  font-size: t.$text-label;
-  font-weight: 500;
-  padding: t.$space-1 t.$space-2;
-  border-radius: var(--radius-pill);
-  display: inline-block;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-
-  &.status-attending {
-    background-color: var(--surface-chip);
-    color: var(--brand-accent);
-  }
-
-  &.status-pending {
-    background-color: var(--surface-chip);
-    color: var(--text-muted);
-  }
+// Status shown as a colored dot + label (DS "StatusCell" pattern), matching
+// the guest-list table — tokens only, no solid-fill badge.
+.status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: t.$text-body;
+  color: var(--ink);
 
   &.status-declined {
-    background-color: var(--surface-chip);
     color: var(--text-muted);
-    opacity: 0.7;
   }
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: var(--brand-accent-tertiary);
+}
+
+.status-attending .status-dot {
+  background-color: var(--brand-accent);
+}
+
+.status-declined .status-dot {
+  background-color: var(--text-muted);
 }
 
 .value {
   font-size: t.$text-body;
   color: var(--ink);
   font-weight: 500;
+
+  &.muted {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
 }
 
-.party-list {
+// RSVP summary — mockup's clickable "resume card", rendered here as a static
+// summary (no per-person RSVP editor exists yet, see task scope note).
+.summary-card {
   display: flex;
   flex-direction: column;
   gap: t.$space-3;
-}
-
-.party-member {
-  padding: t.$space-3;
-  background-color: var(--surface-chip);
-  border-radius: var(--radius-md);
+  padding: t.$space-4;
   border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-chip);
 }
 
-.member-name {
-  font-size: t.$text-body;
-  font-weight: 500;
+.mini-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: t.$space-3;
+}
+
+.mini-stat-value {
+  font-family: t.$font-serif;
+  font-size: t.$text-display-sm;
+  line-height: 1;
   color: var(--ink);
-  margin-bottom: t.$space-1;
 }
 
-.member-dietary {
-  font-size: t.$text-caption;
-  color: var(--brand-accent);
+.mini-stat-label {
+  font-size: t.$text-label;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
   margin-top: t.$space-1;
 }
 
-.comments-input {
-  width: 100%;
-  padding: t.$space-3;
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-input);
-  background-color: var(--surface-card);
-  color: var(--ink);
-  font-family: t.$font-sans;
-  font-size: t.$text-body;
-  resize: vertical;
-  box-sizing: border-box;
-  transition: border-color var(--transition-fast);
-
-  &:focus {
-    outline: none;
-    border-color: var(--brand-accent);
-  }
-
-  &::placeholder {
-    color: var(--text-muted);
-  }
+.summary-line {
+  font-size: t.$text-caption;
+  color: var(--text-muted);
 }
 
-.modal-footer {
+// Footer for the profile view: "Edit profile" on the left, Cancel/Save on
+// the right — projected as a single [modal-actions] element so it can use
+// its own internal layout inside the shared Modal's actions slot.
+.actions-row {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   gap: t.$space-3;
-  padding: t.$space-5;
-  border-top: 1px solid var(--border-hairline);
-  flex-shrink: 0;
-  justify-content: flex-end;
 
   @media (max-width: 640px) {
     flex-direction: column-reverse;
-    padding: t.$space-4 t.$space-6;
-    gap: t.$space-2;
+    align-items: stretch;
   }
 }
 
-.btn-primary,
-.btn-secondary {
-  padding: t.$space-2 t.$space-4;
-  border-radius: var(--radius-pill);
-  font-size: t.$text-body;
-  font-weight: 500;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: opacity var(--transition-fast);
-  font-family: t.$font-sans;
+.actions-group {
+  display: flex;
+  gap: t.$space-3;
 
   @media (max-width: 640px) {
-    width: 100%;
-    padding: t.$space-3 t.$space-4;
+    flex-direction: column-reverse;
   }
 }
 
-.btn-primary {
-  background-color: var(--brand-accent);
-  color: var(--on-accent);
+// Edit-profile form
+.field {
+  margin-bottom: t.$space-5;
 
-  &:hover {
-    opacity: 0.85;
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .info-label {
+    display: block;
+    font-size: t.$text-label;
+    color: var(--text-muted);
+    margin-bottom: t.$space-2;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
   }
 }
 
-.btn-secondary {
-  background-color: transparent;
-  color: var(--ink);
-  border-color: var(--border-hairline);
-
-  &:hover {
-    opacity: 0.85;
-  }
+.choice-row {
+  display: flex;
+  gap: t.$space-2;
+  flex-wrap: wrap;
 }

@@ -109,6 +109,11 @@
     ]
   },
   "rsvp": {
+    "status": {
+      "attending": "Confirmados",
+      "pending": "Pendiente",
+      "declined": "Rechazados"
+    },
     "header": "RSVP",
     "step": "PASO {{current}}/3",
     "step1": {
@@ -252,16 +257,29 @@
     }
   },
   "invitee": {
-    "greeting": "Hola, {{name}}.",
-    "daysToGo": "Nos vemos en {{count}} días",
+    "greeting": "Hola",
+    "seeYouIn": "Nos vemos en",
     "countdown": {
       "date": "5 de junio de 2027 · Granada",
       "venue": "Palacio de los Córdova",
-      "daysToGo": "{{count}} días falta"
+      "daysToGo": "días falta"
     },
     "rsvp": {
-      "label": "Tu RSVP",
-      "confirmedFor": "Confirmado para {{partySize}}",
+      "label": "Tu Respuesta",
+      "status": {
+        "confirmed": {
+          "adults": {
+            "plural": "Confirmado por {{count}} adultos",
+            "singular": "Confirmado {{count}} adulto"
+          },
+          "children": {
+            "plural": "- {{count}} niños",
+            "singular": "- {{count}} niño"
+          }
+        },
+        "pending": "Esperando con ganas",
+        "declined": "Qué triste que no puedes asistir, te echaremos de menos"
+      },
       "edit": "Editar"
     },
     "yourSeat": "Tu asiento",
@@ -271,7 +289,8 @@
     "busNoteDate": "hace 3 días",
     "schedule": {
       "title": "El día · momentos clave",
-      "all": "Todo"
+      "all": "Todo",
+      "noEvents": "Los eventos del día aparecerán aquí una vez que la agenda esté lista"
     },
     "photos": {
       "title": "{{count}} fotos en el álbum en vivo",
@@ -302,12 +321,21 @@
     "save": "Guardar",
     "ok": "Aceptar",
     "add": "Añadir",
-    "close": "Cerrar"
-  },
-  "common": {
-    "add": "Añadir",
-    "cancel": "Cancelar",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "edit": "Modificar",
+    "remove": "Eliminar",
+    "yes": "Sí",
+    "no": "No",
+    "confirm": "Confirmar",
+    "you": "Tú",
+    "seat": {
+      "your": "Tu asiento",
+      "notAssigned": "Processando..."
+    },
+    "menu": {
+      "your": "Tu menú",
+      "notAssigned": "Processando..."
+    }
   },
   "nav": {
     "home": "Inicio",
@@ -385,6 +413,9 @@
       "adults": "Adultos",
       "children": "Niños",
       "party": "Detalles del grupo",
+      "childrenSummary": "Niños: {{names}}",
+      "dietarySummary": "Dieta: {{items}}",
+      "allergySummary": "Alergias: {{items}}",
       "comments": "Comentarios",
       "commentsPlaceholder": "Añade tus notas o solicitudes especiales…",
       "cancel": "Cancelar",
@@ -396,6 +427,18 @@
       "phone": "Teléfono",
       "table": "Mesa"
     },
+    "relation": {
+      "side": {
+        "bride": "Novia",
+        "groom": "Novio"
+      },
+      "kind": {
+        "family": "Familia",
+        "friends": "Amigos",
+        "colleagues": "Compañeros",
+        "other": "Otro"
+      }
+    },
     "rsvp": {
       "summary": "Resumen de RSVP",
       "manage": "Gestionar →",
@@ -404,11 +447,12 @@
       "dietary": "Dieta",
       "attending": "¿Asistirá?",
       "you": "Tú",
-      "partner": "Pareja",
-      "children": "Niños"
+      "partner": "Pareja"
     },
     "form": {
       "name": "Nombre completo",
+      "firstName": "Nombre",
+      "lastName": "Apellidos",
       "side": "Lado",
       "group": "Grupo",
       "email": "Correo electrónico",

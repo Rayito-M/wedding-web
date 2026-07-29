@@ -68,7 +68,7 @@ export class Login {
 
   /** Country dial code, preselected from the current UI language. */
   protected readonly country = signal<PhoneCountry>(
-    defaultCountryForLang(this.langService.currentLang),
+    defaultCountryForLang(this.langService.currentLang()),
   );
 
   protected readonly phoneForm = this.fb.group({

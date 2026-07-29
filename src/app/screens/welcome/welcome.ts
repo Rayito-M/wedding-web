@@ -1,4 +1,5 @@
 import { Component, inject, computed } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 
 import { TranslatePipe } from '@ngx-translate/core';
@@ -10,7 +11,6 @@ import { DecorAlhambra } from '../../shared/decor/alhambra';
 import { DecorFishPair } from '../../shared/decor/fish-pair';
 import { DecorSun } from '../../shared/decor/sun';
 import { Pill } from '../../shared/pill/pill';
-import { DatePipe } from '@angular/common';
 import { LanguageSelector } from '../../shared/language-selector/language-selector';
 
 @Component({
@@ -40,7 +40,5 @@ export class Welcome {
     this.router.navigateByUrl('/schedule');
   }
 
-  get currentLang(): string {
-    return this.translate.currentLang;
-  }
+  protected readonly currentLang = this.translate.currentLang;
 }

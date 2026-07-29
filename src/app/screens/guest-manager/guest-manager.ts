@@ -3,10 +3,8 @@ import {
   Component,
   signal,
   computed,
-  effect,
   inject,
   type Signal,
-  OnInit,
   ViewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -27,7 +25,7 @@ import { RsvpDetailsModal } from './rsvp-details-modal';
   templateUrl: './guest-manager.html',
   styleUrl: './guest-manager.scss',
 })
-export class GuestManager implements OnInit {
+export class GuestManager {
   protected readonly Math = Math;
 
   @ViewChild(RsvpDetailsModal) rsvpModal!: RsvpDetailsModal;
@@ -35,6 +33,12 @@ export class GuestManager implements OnInit {
   private readonly userProfileCollection: EntityCollectionService<UserProfileDto> = inject(
     EntityServices,
   ).getEntityCollectionService<UserProfileDto>(EntityNamesEnum.USER_PROFILE);
+  private readonly userProfileList: Signal<UserProfileDto[]> = toSignal(
+    this.userProfileCollection.entities$,
+    {
+      initialValue: [],
+    },
+  );
 
   private readonly rsvpCollection: EntityCollectionService<RsvpDto> = inject(
     EntityServices,
@@ -42,6 +46,10 @@ export class GuestManager implements OnInit {
 
   private readonly rsvpList: Signal<RsvpDto[]> = toSignal(this.rsvpCollection.entities$, {
     initialValue: [],
+  });
+
+  protected readonly userProfilesLoaded = computed(() => {
+    return this.userProfileList().map((profile) => profile.id);
   });
 
   protected readonly count = computed(() => {
@@ -103,19 +111,11 @@ export class GuestManager implements OnInit {
   });
 
   constructor() {
-    effect(() => {
-      const rsvps = this.rsvpList();
-      for (const rsvp of rsvps) {
-        this.userProfileCollection.getByKey(rsvp.adults.partner1.id);
-        if (rsvp.adults.partner2?.id) {
-          this.userProfileCollection.getByKey(rsvp.adults.partner2.id);
-        }
+    this.rsvpCollection.loaded$.subscribe((loaded) => {
+      if (!loaded) {
+        this.rsvpCollection.getAll(); // Only fetches if cache is empty
       }
     });
-  }
-
-  ngOnInit(): void {
-    this.rsvpCollection.getAll();
   }
 
   /** Set the active filter and reset pagination */
@@ -163,6 +163,13 @@ export class GuestManager implements OnInit {
 
   /** Open RSVP details modal */
   openRsvpModal(rsvp: RsvpDto): void {
+    if (!this.userProfilesLoaded().includes(rsvp.adults.partner1.id)) {
+      this.userProfileCollection.getByKey(rsvp.adults.partner1.id);
+    }
+
+    if (rsvp.adults.partner2?.id && !this.userProfilesLoaded().includes(rsvp.adults.partner2.id)) {
+      this.userProfileCollection.getByKey(rsvp.adults.partner2.id);
+    }
     this.rsvpModal.open(rsvp);
   }
 

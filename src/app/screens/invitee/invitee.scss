@@ -72,20 +72,6 @@ h1 {
   align-items: flex-start;
   gap: 12px;
 
-  .tick {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: var(--surface);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 600;
-    flex-shrink: 0;
-  }
-
   .rsvp-info {
     flex: 1;
   }

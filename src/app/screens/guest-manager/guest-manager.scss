@@ -249,40 +249,35 @@
   margin-top: 4px;
 }
 
-.status-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+// Status shown as a colored dot + label (DS "StatusCell" pattern) rather than
+// a solid-fill badge — tokens only, no per-theme color overrides needed.
+.status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: t.$text-caption;
+  color: var(--ink);
   white-space: nowrap;
 
-  &.status-attending {
-    background-color: rgba(122, 174, 162, 0.15);
-    color: #5b7a73;
-
-    [data-theme='terracotta'] & {
-      background-color: rgba(201, 113, 85, 0.15);
-      color: #8a6b54;
-    }
-
-    [data-theme='mauve'] & {
-      background-color: rgba(176, 138, 146, 0.15);
-      color: #7a7670;
-    }
-  }
-
-  &.status-pending {
-    background-color: rgba(214, 197, 200, 0.3);
+  &.status-declined {
     color: var(--text-muted);
   }
+}
 
-  &.status-declined {
-    background-color: rgba(200, 100, 100, 0.15);
-    color: #8a5a5a;
-  }
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: var(--brand-accent-tertiary);
+}
+
+.status-attending .status-dot {
+  background-color: var(--brand-accent);
+}
+
+.status-declined .status-dot {
+  background-color: var(--text-muted);
 }
 
 .dietary-badge {
@@ -362,10 +357,6 @@
 // ─────────────────────────────────────────────────────────────
 
 @media (max-width: 900px) {
-  .modal-content {
-    width: 95vw;
-  }
-
   .table-header,
   .table-row {
     grid-template-columns: 1.5fr 0.8fr 0.6fr 0.6fr 1.2fr 0.7fr;
@@ -512,9 +503,8 @@
     }
   }
 
-  .status-badge {
-    padding: 4px 8px;
-    font-size: 11px;
+  .status-cell {
+    font-size: 12px;
   }
 
   .pagination {

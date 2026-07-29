@@ -1,9 +1,15 @@
-import { ChangeDetectionStrategy, Component, inject, signal, ViewChild, ElementRef, HostListener } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 
-import { HeaderService } from '../../core';
 import { ScreenHeader } from '../../shared/screen-header/screen-header';
 import { TabBar } from '../../shared/tab-bar/tab-bar';
 
@@ -29,7 +35,6 @@ interface RouteChrome {
 })
 export class PrivateLayout {
   private readonly router = inject(Router);
-  protected readonly header = inject(HeaderService);
 
   @ViewChild('mainContent') private mainContent?: ElementRef<HTMLElement>;
   protected readonly isScrolled = signal(false);

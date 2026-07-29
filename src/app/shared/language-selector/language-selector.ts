@@ -21,9 +21,7 @@ export class LanguageSelector {
 
   readonly isOpen = signal(false);
 
-  get currentLanguage(): LangCode {
-    return this.translateService.currentLang;
-  }
+  readonly currentLanguage = this.translateService.currentLang;
 
   toggleDropdown(): void {
     this.isOpen.update((open) => !open);

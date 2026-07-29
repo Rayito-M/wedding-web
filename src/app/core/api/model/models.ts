@@ -43,6 +43,7 @@ export * from './rsvp-dto-adults-partner1';
 export * from './rsvp-dto-adults-partner1-options';
 export * from './rsvp-dto-adults-partner2';
 export * from './rsvp-dto-adults-partner2-any-of';
+export * from './rsvp-dto-children-inner';
 export * from './rsvp-list-response-dto';
 export * from './rsvp-list-response-dto-items-inner';
 export * from './rsvp-list-response-dto-items-inner-adults';

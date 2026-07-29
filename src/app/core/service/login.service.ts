@@ -238,16 +238,16 @@ export class LoginService {
    * Decode the JWT payload and return the app claims (sub and role).
    * Returns { sub: undefined, role: guest } for any missing or malformed token.
    */
-  currentUserClaims(): AppJwtClaimsDto {
+  currentUserClaims(): AppJwtClaimsDto | undefined {
     const token = this.token();
     if (!token) {
-      return { sub: undefined as unknown as string, role: AppJwtClaimsDto.RoleEnum.GUEST };
+      return undefined;
     }
 
     try {
       const payload = token.split('.')[1];
       if (!payload) {
-        return { sub: undefined as unknown as string, role: AppJwtClaimsDto.RoleEnum.GUEST };
+        return undefined;
       }
       const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
       const json = JSON.parse(atob(base64)) as Partial<AppJwtClaimsDto>;
@@ -262,7 +262,7 @@ export class LoginService {
         role,
       };
     } catch {
-      return { sub: undefined as unknown as string, role: AppJwtClaimsDto.RoleEnum.GUEST };
+      return undefined;
     }
   }
 

@@ -6,7 +6,7 @@
       (click)="toggleDropdown()"
       [attr.aria-expanded]="isOpen()"
     >
-      {{ currentLanguage.toUpperCase() }}
+      {{ currentLanguage().toUpperCase() }}
       <span class="icon">▼</span>
     </button>
     @if (isOpen() && Object.keys(languages() || {}).length >= 2) {
@@ -15,7 +15,7 @@
           <button
             type="button"
             class="dropdown-item"
-            [class.active]="currentLanguage === entry.key"
+            [class.active]="currentLanguage() === entry.key"
             (click)="selectLanguage(entry.key); $event.stopPropagation()"
           >
             <span>{{ entry.value }}</span>

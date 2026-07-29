@@ -1,4 +1,4 @@
-import { Injectable, effect, inject } from '@angular/core';
+import { Injectable, effect, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
 import { LangCode } from '../../model';
@@ -12,6 +12,12 @@ export class TranslateLanguageService {
   private readonly configService = inject(ConfigurationService);
   private readonly translateService = inject(TranslateService);
 
+  private readonly _currentLang = signal<LangCode>(
+    this.readLanguage() || this.detectBrowserLanguage(),
+  );
+
+  readonly currentLang = this._currentLang.asReadonly();
+
   constructor() {
     // React to the wedding configuration (loaded asynchronously): register the
     // available languages and apply the current one once it arrives.
@@ -20,7 +26,7 @@ export class TranslateLanguageService {
 
       if (!config) return;
       this.translateService.addLangs(Object.keys(config.language) ?? ['en']);
-      this.translateService.use(this.currentLang);
+      this.translateService.use(this.currentLang());
     });
   }
 
@@ -49,19 +55,12 @@ export class TranslateLanguageService {
   init(): void {
     // Apply the current language immediately; the constructor effect re-applies
     // it (and registers all languages) once the configuration loads.
-    this.translateService.use(this.currentLang);
-  }
-
-  get currentLang(): LangCode {
-    const storedLanguage = this.readLanguage();
-    console.log('[I18n] Stored language:', storedLanguage);
-    return this.readLanguage() || this.detectBrowserLanguage();
+    this.translateService.use(this.currentLang());
   }
 
   setLanguage(lang: LangCode): void {
-    console.log('[I18n] Setting language to:', lang);
     this.storeLanguage(lang);
     this.translateService.use(lang);
-    console.log('[I18n] TranslateService.use() called for:', lang);
+    this._currentLang.set(lang);
   }
 }

@@ -1,5 +1,5 @@
-<div class="label">{{ label() }}</div>
-<div class="value">{{ value() }}</div>
+<div class="label">{{ label() | translate }}</div>
+<div class="value">{{ value() | translate }}</div>
 @if (sub()) {
-  <div class="sub">{{ sub() }}</div>
+  <div class="sub">{{ sub() | translate }}</div>
 }

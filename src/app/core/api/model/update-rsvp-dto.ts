@@ -7,8 +7,8 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { RsvpDtoChildrenInner } from './rsvp-dto-children-inner';
 import { UpdateRsvpDtoAdults } from './update-rsvp-dto-adults';
-import { RsvpDtoAdultsPartner2AnyOf } from './rsvp-dto-adults-partner2-any-of';
 
 
 export interface UpdateRsvpDto { 
@@ -16,7 +16,7 @@ export interface UpdateRsvpDto {
     version: number;
     status?: UpdateRsvpDto.StatusEnum;
     adults?: UpdateRsvpDtoAdults;
-    children?: Array<RsvpDtoAdultsPartner2AnyOf>;
+    children?: Array<RsvpDtoChildrenInner>;
     delegatedTo?: string;
 }
 export namespace UpdateRsvpDto {

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { EntityCollectionDataService } from '@ngrx/data';
 import { Observable, throwError } from 'rxjs';
 
-import { UserProfileDto, WeddingUserProfileService } from '../api';
+import { UserProfileDto, UpdateUserProfileDto, WeddingUserProfileService } from '../api';
 
 import { EntityNamesEnum } from './entity-metadata';
 
@@ -38,8 +38,32 @@ export class UserProfileDataService implements EntityCollectionDataService<UserP
     return this.notImplemented();
   }
 
-  update(): Observable<UserProfileDto> {
-    return this.notImplemented();
+  /**
+   * `PATCH /v1/profile/{id}` — only `firstName`, `lastName`, `preferredLang`,
+   * `role` and `relation` are editable per `UpdateUserProfileDto` (`email` /
+   * `phoneNumber` are read-only server-side; the profile edit view keeps them
+   * display-only for that reason). `role` is required by the DTO even though
+   * this app never changes it, so callers must pass the existing value through.
+   */
+  update(update: { id: string; changes: Partial<UserProfileDto> }): Observable<UserProfileDto> {
+    const changes = update.changes;
+    if (!changes.role) {
+      return throwError(
+        () => new Error('UserProfile update requires "role" to be included in changes.'),
+      );
+    }
+    const updateUserProfileDto: UpdateUserProfileDto = {
+      id: update.id,
+      firstName: changes.firstName,
+      lastName: changes.lastName,
+      preferredLang: changes.preferredLang,
+      role: changes.role,
+      relation: changes.relation,
+    };
+    return this.serviceApi.profileControllerUpdateProfileByIdV1({
+      id: update.id,
+      updateUserProfileDto,
+    });
   }
 
   upsert(): Observable<UserProfileDto> {

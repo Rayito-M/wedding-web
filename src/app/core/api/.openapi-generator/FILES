@@ -60,6 +60,7 @@ model/rsvp-dto-adults-partner1.ts
 model/rsvp-dto-adults-partner2-any-of.ts
 model/rsvp-dto-adults-partner2.ts
 model/rsvp-dto-adults.ts
+model/rsvp-dto-children-inner.ts
 model/rsvp-dto.ts
 model/rsvp-list-response-dto-items-inner-adults.ts
 model/rsvp-list-response-dto-items-inner.ts

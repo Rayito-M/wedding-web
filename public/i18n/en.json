@@ -112,6 +112,11 @@
     ]
   },
   "rsvp": {
+    "status": {
+      "attending": "Attending",
+      "pending": "Pending",
+      "declined": "Declined"
+    },
     "header": "RSVP",
     "step": "STEP {{current}}/3",
     "step1": {
@@ -255,16 +260,29 @@
     }
   },
   "invitee": {
-    "greeting": "Hola, {{name}}.",
-    "daysToGo": "See you in {{count}} days",
+    "greeting": "Hola",
+    "seeYouIn": "See you in",
     "countdown": {
       "date": "5 June 2027 · Granada",
       "venue": "Palacio de los Córdova",
-      "daysToGo": "{{count}} days to go"
+      "daysToGo": "days to go"
     },
     "rsvp": {
       "label": "Your RSVP",
-      "confirmedFor": "Confirmed for {{partySize}}",
+      "status": {
+        "confirmed": {
+          "adults": {
+            "plural": "Confirmed for {{count}} adults",
+            "singular": "Confirmed for {{count}} adult"
+          },
+          "children": {
+            "plural": "- {{count}} kids",
+            "singular": "- {{count}} kid"
+          }
+        },
+        "pending": "Can't wait for your confirmation",
+        "declined": "What a sad news, we'll miss you on the day"
+      },
       "edit": "Edit"
     },
     "yourSeat": "Your seat",
@@ -274,7 +292,8 @@
     "busNoteDate": "3 days ago",
     "schedule": {
       "title": "The day · highlights",
-      "all": "All"
+      "all": "All",
+      "noEvents": "The day's events will appear here once the agenda is ready"
     },
     "photos": {
       "title": "{{count}} photos in the live album",
@@ -305,12 +324,21 @@
     "save": "Save",
     "ok": "OK",
     "add": "Add",
-    "close": "Close"
-  },
-  "common": {
-    "add": "Add",
-    "cancel": "Cancel",
-    "close": "Close"
+    "close": "Close",
+    "edit": "Edit",
+    "remove": "Remove",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "you": "You",
+    "seat": {
+      "your": "Your seat",
+      "notAssigned": "Stay tuned..."
+    },
+    "menu": {
+      "your": "Your menu",
+      "notAssigned": "Stay tuned..."
+    }
   },
   "nav": {
     "home": "Home",
@@ -388,6 +416,9 @@
       "adults": "Adults",
       "children": "Children",
       "party": "Party details",
+      "childrenSummary": "Children: {{names}}",
+      "dietarySummary": "Dietary: {{items}}",
+      "allergySummary": "Allergies: {{items}}",
       "comments": "Comments",
       "commentsPlaceholder": "Add any notes or special requests…",
       "cancel": "Cancel",
@@ -399,6 +430,18 @@
       "phone": "Phone",
       "table": "Table"
     },
+    "relation": {
+      "side": {
+        "bride": "Bride",
+        "groom": "Groom"
+      },
+      "kind": {
+        "family": "Family",
+        "friends": "Friends",
+        "colleagues": "Colleagues",
+        "other": "Other"
+      }
+    },
     "rsvp": {
       "summary": "RSVP summary",
       "manage": "Manage →",
@@ -407,11 +450,12 @@
       "dietary": "Dietary",
       "attending": "Attending?",
       "you": "You",
-      "partner": "Partner",
-      "children": "Children"
+      "partner": "Partner"
     },
     "form": {
       "name": "Full name",
+      "firstName": "First name",
+      "lastName": "Last name",
       "side": "Side",
       "group": "Group",
       "email": "Email",

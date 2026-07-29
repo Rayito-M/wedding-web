@@ -2,6 +2,7 @@
   <!-- Header -->
   <header class="header">
     <div class="header-left">
+      <app-monogram [size]="18" />
       <div class="header-title">
         <div class="header-meta">
           {{ 'guest_manager.header.meta' | translate }}
@@ -152,7 +153,8 @@
               }
             </div>
             <div class="col-status" [attr.data-label]="'guest_manager.table.status' | translate">
-              <span class="status-badge" [class]="'status-' + rsvp.status">
+              <span class="status-cell" [class]="'status-' + rsvp.status">
+                <span class="status-dot"></span>
                 {{ 'guest_manager.status.' + rsvp.status | translate }}
               </span>
             </div>
