@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { ImportUserDtoGuestsInnerAnyOfRelation } from './import-user-dto-guests-inner-any-of-relation';
 
 
 export interface ImportUserDtoGuestsInnerAnyOf { 
@@ -16,5 +17,6 @@ export interface ImportUserDtoGuestsInnerAnyOf {
     email?: string;
     role: string;
     delegateTo?: Array<string>;
+    relation: ImportUserDtoGuestsInnerAnyOfRelation;
 }
 

@@ -7,12 +7,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { RsvpDtoAdultsGuest } from './rsvp-dto-adults-guest';
-import { RsvpDtoAdultsPartner } from './rsvp-dto-adults-partner';
+import { RsvpDtoAdultsPartner2 } from './rsvp-dto-adults-partner2';
+import { RsvpDtoAdultsPartner1 } from './rsvp-dto-adults-partner1';
 
 
 export interface RsvpListResponseDtoItemsInnerAdults { 
-    guest: RsvpDtoAdultsGuest;
-    partner?: RsvpDtoAdultsPartner;
+    partner1: RsvpDtoAdultsPartner1;
+    partner2?: RsvpDtoAdultsPartner2;
 }
 

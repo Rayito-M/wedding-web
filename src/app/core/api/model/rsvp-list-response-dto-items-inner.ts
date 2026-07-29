@@ -8,7 +8,7 @@
  * Do not edit the class manually.
  */
 import { RsvpListResponseDtoItemsInnerAdults } from './rsvp-list-response-dto-items-inner-adults';
-import { RsvpDtoChildrenInner } from './rsvp-dto-children-inner';
+import { RsvpDtoAdultsPartner2AnyOf } from './rsvp-dto-adults-partner2-any-of';
 
 
 export interface RsvpListResponseDtoItemsInner { 
@@ -18,7 +18,7 @@ export interface RsvpListResponseDtoItemsInner {
     updatedAt: string;
     status: RsvpListResponseDtoItemsInner.StatusEnum;
     adults: RsvpListResponseDtoItemsInnerAdults;
-    children?: Array<RsvpDtoChildrenInner>;
+    children?: Array<RsvpDtoAdultsPartner2AnyOf>;
     submittedBy: string;
     delegatedTo?: string;
 }

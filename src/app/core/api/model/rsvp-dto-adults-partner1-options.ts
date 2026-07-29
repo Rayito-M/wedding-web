@@ -9,7 +9,7 @@
  */
 
 
-export interface RsvpDtoAdultsGuestOptions { 
+export interface RsvpDtoAdultsPartner1Options { 
     dietaryPreferenceIds?: Array<string>;
     customDietaryPreferences?: Array<string>;
     allergyIds?: Array<string>;

@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { UserProfileDtoRelation } from './user-profile-dto-relation';
 
 
 export interface UpdateUserProfileDto { 
@@ -14,6 +15,8 @@ export interface UpdateUserProfileDto {
     firstName?: string;
     lastName?: string;
     preferredLang?: UpdateUserProfileDto.PreferredLangEnum;
+    role: UpdateUserProfileDto.RoleEnum;
+    relation?: UserProfileDtoRelation;
 }
 export namespace UpdateUserProfileDto {
     export const PreferredLangEnum = {
@@ -22,6 +25,13 @@ export namespace UpdateUserProfileDto {
         FR: 'fr'
     } as const;
     export type PreferredLangEnum = typeof PreferredLangEnum[keyof typeof PreferredLangEnum];
+    export const RoleEnum = {
+        BRIDE: 'bride',
+        GROOM: 'groom',
+        GUEST: 'guest',
+        PROVIDER: 'provider'
+    } as const;
+    export type RoleEnum = typeof RoleEnum[keyof typeof RoleEnum];
 }
 
 

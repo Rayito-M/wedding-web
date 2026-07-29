@@ -8,7 +8,7 @@
  * Do not edit the class manually.
  */
 import { RsvpDtoAdults } from './rsvp-dto-adults';
-import { RsvpDtoChildrenInner } from './rsvp-dto-children-inner';
+import { RsvpDtoAdultsPartner2AnyOf } from './rsvp-dto-adults-partner2-any-of';
 
 
 export interface RsvpDto { 
@@ -18,7 +18,7 @@ export interface RsvpDto {
     updatedAt: string;
     status: RsvpDto.StatusEnum;
     adults: RsvpDtoAdults;
-    children?: Array<RsvpDtoChildrenInner>;
+    children?: Array<RsvpDtoAdultsPartner2AnyOf>;
     submittedBy: string;
 }
 export namespace RsvpDto {
