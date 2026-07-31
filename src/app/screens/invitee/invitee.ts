@@ -14,7 +14,7 @@ import {
   UserProfileDto,
   WeddingConfigResponseDto,
   TranslateLanguageService,
-  CreateWeddingConfigDtoAgendaInner,
+  CreateWeddingConfigDtoAgendaItemsInner,
   PluralTranslatePipe,
 } from '@app/core';
 
@@ -138,7 +138,7 @@ export class Invitee {
     );
   });
 
-  getEventTranslation(event: CreateWeddingConfigDtoAgendaInner): {
+  getEventTranslation(event: CreateWeddingConfigDtoAgendaItemsInner): {
     id: string;
     time: string;
     title: string;

@@ -9,7 +9,7 @@
  */
 
 
-export interface CreateWeddingConfigDtoAgendaInnerTitle { 
+export interface CreateWeddingConfigDtoAgendaItemsInnerTitle { 
     es: string;
     en: string;
     fr: string;

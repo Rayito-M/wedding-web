@@ -15,7 +15,7 @@ export interface UserProfileDto {
     firstName: string;
     lastName: string;
     email?: string;
-    phoneNumber: string;
+    phoneNumber?: string;
     preferredLang?: UserProfileDto.PreferredLangEnum;
     role: UserProfileDto.RoleEnum;
     relation?: UserProfileDtoRelation;

@@ -231,7 +231,7 @@
             </div>
           </div>
           <div class="card-list">
-            @for (item of cfg().agenda; track item.id) {
+            @for (item of cfg().agenda.items; track item.id) {
               <div class="card">
                 <div class="row-top">
                   <label class="field field-time">

@@ -7,13 +7,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { CreateWeddingConfigDtoAgendaInnerTitle } from './create-wedding-config-dto-agenda-inner-title';
+import { CreateWeddingConfigDtoAgendaItemsInnerTitle } from './create-wedding-config-dto-agenda-items-inner-title';
 
 
 export interface CreateWeddingConfigDtoMenusInner { 
     id: string;
-    name: CreateWeddingConfigDtoAgendaInnerTitle;
-    description: CreateWeddingConfigDtoAgendaInnerTitle;
+    name: CreateWeddingConfigDtoAgendaItemsInnerTitle;
+    description: CreateWeddingConfigDtoAgendaItemsInnerTitle;
     suitablePreferenceIds?: Array<string>;
     suitableAllergyIds?: Array<string>;
     active?: boolean;

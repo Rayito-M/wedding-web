@@ -15,7 +15,7 @@ export interface UserProfileListResponseDtoProfilesInner {
     firstName: string;
     lastName: string;
     email?: string;
-    phoneNumber: string;
+    phoneNumber?: string;
     preferredLang?: UserProfileListResponseDtoProfilesInner.PreferredLangEnum;
     role: UserProfileListResponseDtoProfilesInner.RoleEnum;
     relation?: ImportUserDtoGuestsInnerAnyOfRelation;

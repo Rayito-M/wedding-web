@@ -23,8 +23,9 @@ model/couple-response-dto.ts
 model/create-bride-dto.ts
 model/create-groom-dto.ts
 model/create-user-dto.ts
-model/create-wedding-config-dto-agenda-inner-title.ts
-model/create-wedding-config-dto-agenda-inner.ts
+model/create-wedding-config-dto-agenda-items-inner-title.ts
+model/create-wedding-config-dto-agenda-items-inner.ts
+model/create-wedding-config-dto-agenda.ts
 model/create-wedding-config-dto-dietary-preferences-inner.ts
 model/create-wedding-config-dto-hotels-inner.ts
 model/create-wedding-config-dto-language.ts
@@ -72,6 +73,7 @@ model/update-rsvp-dto-adults.ts
 model/update-rsvp-dto.ts
 model/update-user-dto.ts
 model/update-user-profile-dto.ts
+model/update-wedding-config-dto-agenda.ts
 model/update-wedding-config-dto-language.ts
 model/update-wedding-config-dto.ts
 model/user-list-response-dto-items-inner.ts

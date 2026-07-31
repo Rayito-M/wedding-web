@@ -16,7 +16,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
 import {
-  CreateWeddingConfigDtoAgendaInnerTitle,
+  CreateWeddingConfigDtoAgendaItemsInner,
+  CreateWeddingConfigDtoAgendaItemsInnerTitle,
   CreateWeddingConfigDtoDietaryPreferencesInner,
   CreateWeddingConfigDtoHotelsInner,
   CreateWeddingConfigDtoVenuesInner,
@@ -36,7 +37,8 @@ import { Pill } from '@app/shared/pill/pill';
 // (T211-T214, not built yet). This screen is UI-only, local component state.
 type ConfigState = WeddingConfigResponseDto;
 type Venue = CreateWeddingConfigDtoVenuesInner;
-type MultiLangText = CreateWeddingConfigDtoAgendaInnerTitle;
+type MultiLangText = CreateWeddingConfigDtoAgendaItemsInnerTitle;
+type AgendaItem = CreateWeddingConfigDtoAgendaItemsInner;
 type Hotel = CreateWeddingConfigDtoHotelsInner;
 type DietTag = CreateWeddingConfigDtoDietaryPreferencesInner;
 type TagCollection = 'dietaryPreferences' | 'allergies';
@@ -119,7 +121,7 @@ function buildEmptyConfig(): ConfigState {
     themeId: 'terracotta',
     language: { es: '', en: '', fr: '' },
     venues: [],
-    agenda: [],
+    agenda: { status: 'provisional', items: [] },
     hotels: [],
     dietaryPreferences: [],
     allergies: [],
@@ -251,9 +253,12 @@ export class ConfigManager implements OnInit {
   protected setAgendaTime(id: string, value: string): void {
     this.mutate((c) => ({
       ...c,
-      agenda: c.agenda.map((a) =>
-        a.id === id ? { ...a, time: this.mergeHourIntoIso(a.time, value) } : a,
-      ),
+      agenda: {
+        ...c.agenda,
+        items: c.agenda.items.map((a) =>
+          a.id === id ? { ...a, time: this.mergeHourIntoIso(a.time, value) } : a,
+        ),
+      },
     }));
   }
 
@@ -295,7 +300,10 @@ export class ConfigManager implements OnInit {
   protected setAgendaVenue(id: string, venueId: string): void {
     this.mutate((c) => ({
       ...c,
-      agenda: c.agenda.map((a) => (a.id === id ? { ...a, venueId } : a)),
+      agenda: {
+        ...c.agenda,
+        items: c.agenda.items.map((a) => (a.id === id ? { ...a, venueId } : a)),
+      },
     }));
   }
 
@@ -303,31 +311,36 @@ export class ConfigManager implements OnInit {
     const lang = this.lang();
     this.mutate((c) => ({
       ...c,
-      agenda: c.agenda.map((a) =>
-        a.id === id ? { ...a, [field]: { ...a[field], [lang]: value } } : a,
-      ),
+      agenda: {
+        ...c.agenda,
+        items: c.agenda.items.map((a) =>
+          a.id === id ? { ...a, [field]: { ...a[field], [lang]: value } } : a,
+        ),
+      },
     }));
   }
 
   protected addAgenda(): void {
     const firstVenueId = this.cfg().venues[0]?.id ?? null;
+    const newItem: AgendaItem = {
+      id: uid(),
+      status: 'planned',
+      time: '',
+      venueId: firstVenueId,
+      title: emptyLangText(),
+      desc: emptyLangText(),
+    };
     this.mutate((c) => ({
       ...c,
-      agenda: [
-        ...c.agenda,
-        {
-          id: uid(),
-          time: '',
-          venueId: firstVenueId,
-          title: emptyLangText(),
-          desc: emptyLangText(),
-        },
-      ],
+      agenda: { ...c.agenda, items: [...c.agenda.items, newItem] },
     }));
   }
 
   protected removeAgenda(id: string): void {
-    this.mutate((c) => ({ ...c, agenda: c.agenda.filter((a) => a.id !== id) }));
+    this.mutate((c) => ({
+      ...c,
+      agenda: { ...c.agenda, items: c.agenda.items.filter((a) => a.id !== id) },
+    }));
   }
 
   protected setHotel(id: string, patch: Partial<Hotel>): void {

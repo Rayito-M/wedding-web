@@ -52,6 +52,15 @@ export interface UsersControllerImportJsonV1RequestParams {
     importUserDto: ImportUserDto;
 }
 
+export interface UsersControllerListV1RequestParams {
+    /** Filter by role. \&quot;couple\&quot; includes both bride and groom. */
+    role?: 'bride' | 'groom' | 'guest' | 'provider' | 'couple';
+    /** Opaque cursor for pagination. */
+    cursor?: string;
+    /** Max items per page (default 100). */
+    limit?: number;
+}
+
 export interface UsersControllerRemoveV1RequestParams {
     /** User ULID, or the literal &#x60;me&#x60; for the authenticated user */
     id: string;
@@ -349,14 +358,47 @@ export class WeddingUsersService extends BaseService {
     /**
      * List all users (admin)
      * @endpoint get /v1/users
+     * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public usersControllerListV1(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserListResponseDto>;
-    public usersControllerListV1(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserListResponseDto>>;
-    public usersControllerListV1(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserListResponseDto>>;
-    public usersControllerListV1(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public usersControllerListV1(requestParameters?: UsersControllerListV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserListResponseDto>;
+    public usersControllerListV1(requestParameters?: UsersControllerListV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserListResponseDto>>;
+    public usersControllerListV1(requestParameters?: UsersControllerListV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserListResponseDto>>;
+    public usersControllerListV1(requestParameters?: UsersControllerListV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        const role = requestParameters?.role;
+        const cursor = requestParameters?.cursor;
+        const limit = requestParameters?.limit;
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'role',
+            <any>role,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'cursor',
+            <any>cursor,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'limit',
+            <any>limit,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -391,6 +433,7 @@ export class WeddingUsersService extends BaseService {
         return this.httpClient.request<UserListResponseDto>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

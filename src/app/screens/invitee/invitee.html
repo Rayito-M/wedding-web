@@ -72,10 +72,10 @@
         <div class="label">{{ 'invitee.schedule.title' | translate }}</div>
         <a class="all" routerLink="/schedule">{{ 'invitee.schedule.all' | translate }}</a>
       </div>
-      @if (weddingConfig()?.agenda?.length === 0 || true) {
+      @if (weddingConfig()?.agenda?.items?.length === 0) {
         <div class="no-events">{{ 'invitee.schedule.noEvents' | translate }}</div>
       } @else {
-        @for (event of weddingConfig()?.agenda; track event.id; let last = $last) {
+        @for (event of weddingConfig()?.agenda?.items; track event.id; let last = $last) {
           <app-timeline-item
             [time]="getEventTranslation(event).time"
             [heading]="getEventTranslation(event).title"
@@ -88,11 +88,11 @@
   }
 
   <!-- Live album preview -->
-  <a class="card album-row" routerLink="/album">
+  <!-- <a class="card album-row" routerLink="/album">
     <div class="album-info">
       <div class="album-title">{{ 'invitee.photos.title' | translate: { count: 247 } }}</div>
       <div class="album-sub">{{ 'invitee.photos.subtitle' | translate }}</div>
     </div>
     <span class="arrow" aria-hidden="true">→</span>
-  </a>
+  </a> -->
 </div>

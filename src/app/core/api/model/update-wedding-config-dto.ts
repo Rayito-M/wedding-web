@@ -11,7 +11,7 @@ import { CreateWeddingConfigDtoVenuesInner } from './create-wedding-config-dto-v
 import { CreateWeddingConfigDtoDietaryPreferencesInner } from './create-wedding-config-dto-dietary-preferences-inner';
 import { CreateWeddingConfigDtoMenusInner } from './create-wedding-config-dto-menus-inner';
 import { UpdateWeddingConfigDtoLanguage } from './update-wedding-config-dto-language';
-import { CreateWeddingConfigDtoAgendaInner } from './create-wedding-config-dto-agenda-inner';
+import { UpdateWeddingConfigDtoAgenda } from './update-wedding-config-dto-agenda';
 import { CreateWeddingConfigDtoHotelsInner } from './create-wedding-config-dto-hotels-inner';
 
 
@@ -30,7 +30,7 @@ export interface UpdateWeddingConfigDto {
     country?: string;
     rsvpDeadline?: string;
     venues?: Array<CreateWeddingConfigDtoVenuesInner>;
-    agenda?: Array<CreateWeddingConfigDtoAgendaInner>;
+    agenda?: UpdateWeddingConfigDtoAgenda;
     hotels?: Array<CreateWeddingConfigDtoHotelsInner>;
     dietaryPreferences?: Array<CreateWeddingConfigDtoDietaryPreferencesInner>;
     allergies?: Array<CreateWeddingConfigDtoDietaryPreferencesInner>;
