@@ -1,4 +1,6 @@
 <div class="content" [formGroup]="form">
+  <div class="eyebrow">RSVP · STEP {{ step() + 1 }}/3</div>
+
   @if (step() === 0) {
     <div class="step">
       <h2>{{ 'rsvp.step1.title' | translate }}</h2>

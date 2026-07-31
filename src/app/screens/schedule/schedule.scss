@@ -3,10 +3,14 @@
 :host {
   display: block;
   width: 100%;
+  position: relative;
 }
 
 .title-block {
   padding: 14px t.$space-6 6px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
 
   h1 {
     font-family: t.$font-serif;
@@ -22,6 +26,17 @@
   }
 }
 
+.date-badge {
+  font-size: t.$text-label;
+  color: var(--text-muted);
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+
+  .date-badge-full {
+    display: none;
+  }
+}
+
 // Timeline rows are the shared app-timeline-item component (design system).
 .timeline {
   padding: 14px t.$space-6 8px;
@@ -31,5 +46,19 @@
   :host {
     max-width: 560px;
     margin: 0 auto;
+  }
+
+  .date-badge {
+    .date-badge-full {
+      display: inline;
+    }
+
+    .date-badge-short {
+      display: none;
+    }
+  }
+
+  .mobile-moto {
+    display: none;
   }
 }

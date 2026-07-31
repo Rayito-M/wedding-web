@@ -614,7 +614,7 @@
   Assumes T219 and T230 done.
 
 ### T225 — RSVP screen: step eyebrow label + desktop card chrome
-- **Status:** todo
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** T219, T230
 - **Acceptance:**
@@ -636,7 +636,7 @@
   and T230 done.
 
 ### T226 — Schedule screen: date eyebrow badge + motorcycle decor
-- **Status:** todo
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** T219, T230, T220 (reuses `app-decor-motorcycle-rider`)
 - **Acceptance:**
@@ -655,7 +655,7 @@
   files: `src/app/screens/schedule/`. Assumes T219, T230, and T220 done.
 
 ### T227 — Travel screen: desktop two-column layout, eyebrow badge, motorcycle decor
-- **Status:** todo
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** T219, T230, T220 (reuses `app-decor-motorcycle-rider`)
 - **Acceptance:**
@@ -697,7 +697,7 @@
   and T220 done.
 
 ### T229 — Scaffold new Seating plan screen (presentational only)
-- **Status:** todo
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** T219, T230
 - **Acceptance:**
@@ -875,14 +875,44 @@
 > `pnpm typecheck && pnpm lint && pnpm build` green) apply to all.
 
 ### T235 — Re-baseline the private shell to the rewritten `AppShell` (nav model + desktop chrome)
-- **Status:** in progress — **nav-model partial done (2026-07-31, "wire existing now"):**
-  `nav-tabs.ts` reordered to the DS AppShell order and guest/couple `home` unified to a single
-  `home` id (guest → `/me`, couple → `/dashboard`); `/dashboard` route `data.tab` → `home`.
-  **Still deferred / blocked:** `people` tab+route (needs T237 screen), `seating` tab+route (needs
-  T229 screen), and the mobile `TabBar` "More" overflow sheet (needs couple > tab-bar capacity, i.e.
-  people/seating landed). Desktop-chrome/`maxWidth` token reconciliation still to do. Per-user WIP:
-  the route-enable force-hacks in `route-enabled.guard.ts` / `route-config.service.ts` are the user's
-  and were left untouched.
+- **Status:** done (2026-07-31) — **nav-model fully landed.**
+  `nav-tabs.ts` reordered to the DS AppShell order (`home, rsvp, schedule, album, travel, people,
+  guests, seating, config`) and guest/couple `home` unified to a single `home` id (guest → `/me`,
+  couple → `/dashboard`); `/dashboard` route `data.tab` → `home`. `seating` tab+route landed (T229;
+  `path: 'seating'` in `app.routes.ts` + `seating` entry with `roles: ['groom','bride']` in
+  `nav-tabs.ts`, plus `nav.seating`/`titles.seating` i18n in all three locales — done ad hoc at
+  explicit user request, outside this task's own diff pass, but tracked here). **Update
+  (2026-07-31, `people` tab+route landed):** now that T237 shipped the People screen, `people` entry
+  added to `NAV_TABS` (`{ id: 'people', labelKey: 'nav.people', link: '/people' }`, no `roles`
+  restriction — matches DS, visible to both roles) and `path: 'people'` registered in
+  `app.routes.ts` (`data: { tab: 'people', tabBar: true, topNav: true }`) — done ad hoc alongside the
+  `/profile` route wiring at explicit user request, tracked here as it resolves this task's FLAG
+  item 1. This closes the nav-model FLAG entirely: `home`/`seating`/`people` all wired, matching the
+  full rewritten `AppShell` nav list. Desktop-chrome diff against the rewritten `AppHeader`/`TabBar`
+  completed and pure token/spacing/typography drift re-applied: `screen-header.scss` nav `flex:1` fix
+  (left-align vs. centered), desktop header padding/gap (`13px 28px`/`26px` matching DS `wide`, also
+  now consistent with the pre-existing `main { margin-top: 52px }` chrome-height assumption),
+  nav-link padding/font-size/letter-spacing/dot sizing brought in line with `AppHeader.jsx`, and
+  `tab-bar.scss` `:host` padding (`10px 4px 14px`, was `6px`) + tab letter-spacing (`0.02em`, was
+  `0.04em`) fixed. Per-screen `maxWidth` reconciliation done for every screen listed in the
+  acceptance table: Schedule's desktop `max-width` corrected `560px` → `620px` (`schedule.scss`; DS
+  `ScreenSchedule.jsx`'s `wide` fragment has no inner max-width wrapper, so the full `AppShell
+  maxWidth={620}` is the visible width, unlike RSVP which wraps at an inner 560 — see acceptance
+  note); Home/Album/Travel/RSVP already correct (T220/T225/T227, no change); People (`980px`) and
+  Profile (`860px`) confirmed already correct as scaffolded by T237/T238 (no change needed) now that
+  those screens exist.
+  **Remaining (explicit follow-ups, not blocking this task's completion):** the mobile `TabBar`
+  "More" overflow sheet remains **unbuilt** — couple nav is now at 8 destinations (home, schedule,
+  album, travel, people, guests, seating, config; guest nav is 6: home, rsvp, schedule, album,
+  travel, people), past the DS `TabBar`'s effective 5-tab-before-overflow capacity. Per FLAG item 2
+  below, building the sheet was explicitly out of scope for this task (new markup + new local
+  open/close state); couple's bottom tab bar renders all 8 entries un-overflowed until that
+  follow-up lands — tracked as a new task, not reopening T235. Mock status bar intentionally not
+  replicated (flagged below, confirmed non-issue). Account-dropdown "My profile" row wiring —
+  explicitly out of scope for this task's own acceptance (depended on T238) — has since been wired
+  ad hoc alongside the `/profile` route, at explicit user request, outside this task's diff pass.
+  Per-user WIP: the route-enable force-hacks in `route-enabled.guard.ts` /
+  `route-config.service.ts` are the user's and were left untouched.
 - **Owner:** agent (implementer)
 - **Depends on:** T230 (predecessor; T235 supersedes its stale AppShell scope note)
 - **Acceptance:**
@@ -894,18 +924,18 @@
     this repo that width lives in each screen's SCSS; confirm each screen's desktop `max-width` matches
     its DS value and correct any that drifted. (Album 880 and Travel 880 already tracked by T220/T227.)
   - **FLAG — NOT visual-only, needs user decision before building (do not silently introduce):**
-    1. **Nav model change.** `NAV_TABS` (`shared/nav-tabs.ts`) currently splits the guest `home`
-       (`/me`) from the couple `dashboard` (`/dashboard`). The new `AppShell` uses a single `home`
-       destination for both roles, and adds `people` and `seating` (couple-only) destinations that
-       **have no screen in this repo**. Changing `NAV_TABS` + routing is a `.ts`/routing change tied to
-       the Home merge (T236) and the People/Seating screens (T237, T229). Recommend sequencing: land
-       T236/T237 first, then wire nav here.
-    2. **`TabBar` "More" overflow sheet.** The couple role now has 9 nav destinations; the DS `TabBar`
-       overflows everything past the primary few into a "More" bottom sheet. This repo's `tab-bar` has
-       no overflow UI. Building it is new markup **and** new local state (open/close) — flag as a
-       follow-up to land with whichever task first pushes couple nav past the mobile tab-bar capacity.
+    1. **Nav model change — mostly landed, `people` still outstanding.** `home` is now unified
+       (guest `/me` / couple `/dashboard` under one `home` id) and `seating` is now wired (T229
+       landed). Only `people` remains unwired — it **has no screen in this repo** (needs T237).
+       Recommend sequencing: land T237, then add `people` to `NAV_TABS` + routing.
+    2. **`TabBar` "More" overflow sheet.** The couple role is now at 7 nav destinations (home,
+       schedule, album, travel, guests, seating, config) — past the DS `TabBar`'s effective
+       5-tab-before-overflow capacity (`maxTabs=4`, overflow once `items.length > 5`). This is no
+       longer a speculative future condition — it's real today, and will grow to 8 once `people`
+       lands. This repo's `tab-bar` has no overflow UI; building it is new markup **and** new local
+       state (open/close) — flag as a follow-up to land now (or with `people`/T237 at the latest).
     3. **Mock status bar.** The DS mobile shell renders a `9:41 ●●●●` status bar — a prototype artifact.
-       Do **not** replicate it.
+       Do **not** replicate it. (Confirmed not present in this repo's shell.)
   - **Explicitly out of scope:** account-dropdown "My profile" row wiring (depends on T238), and any
     real data behind nav badges/counts.
   - `pnpm typecheck && pnpm lint && pnpm build` green; shell verified in all three themes, mobile +
@@ -955,7 +985,7 @@
   (Option A) or new `src/app/screens/home/` (Option B); supersedes T222 (couple) + T224 (guest).
 
 ### T237 — Scaffold new People (guest directory) screen (presentational only)
-- **Status:** todo
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** T219, T235
 - **Acceptance:**
@@ -981,7 +1011,7 @@
   `src/app/screens/people/`.
 
 ### T238 — Scaffold new Profile (own profile) screen (presentational only)
-- **Status:** todo
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** T219, T235
 - **Acceptance:**

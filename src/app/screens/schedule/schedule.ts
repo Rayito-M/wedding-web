@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HeaderService } from '../../core';
+import { DecorMotorcycleRider } from '../../shared/decor/motorcycle-rider/motorcycle-rider';
 import { TimelineItem } from '../../shared/timeline-item/timeline-item';
 
 @Component({
   selector: 'app-schedule',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TimelineItem, TranslatePipe],
+  imports: [TimelineItem, TranslatePipe, DecorMotorcycleRider],
   templateUrl: './schedule.html',
   styleUrl: './schedule.scss',
 })

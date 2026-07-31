@@ -3,10 +3,14 @@
 :host {
   display: block;
   width: 100%;
+  position: relative;
 }
 
 .title-block {
   padding: 14px t.$space-6 12px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
 
   h1 {
     font-family: t.$font-serif;
@@ -20,6 +24,16 @@
     color: var(--sub);
     margin-top: 6px;
   }
+}
+
+// Right-aligned uppercase location badge, desktop only (not present on mobile).
+.eyebrow-badge {
+  display: none;
+  font-size: t.$text-label;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .map {
@@ -75,9 +89,38 @@ app-stay-card {
   }
 }
 
+// Desktop: two-column grid — map (taller) on the left, "Stays nearby" list on
+// the right — with the ALBAICÍN · GRANADA badge next to the title (DS
+// ScreenTravel.jsx `wide` fragment, maxWidth 880).
 @media (min-width: 900px) {
   :host {
-    max-width: 560px;
+    max-width: 880px;
     margin: 0 auto;
+  }
+
+  .eyebrow-badge {
+    display: inline;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 28px;
+    padding: 0 t.$space-6;
+    margin-top: 24px;
+  }
+
+  .map {
+    margin: 0;
+    height: 250px;
+  }
+
+  .stays {
+    padding: 0;
+  }
+
+  .mobile-moto {
+    display: none;
   }
 }

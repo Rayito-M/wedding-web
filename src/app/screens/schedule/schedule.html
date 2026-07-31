@@ -1,6 +1,12 @@
 <div class="title-block">
-  <h1>{{ 'schedule.title' | translate }}</h1>
-  <p class="sub">{{ 'schedule.subtitle' | translate }}</p>
+  <div>
+    <h1>{{ 'schedule.title' | translate }}</h1>
+    <p class="sub">{{ 'schedule.subtitle' | translate }}</p>
+  </div>
+  <span class="date-badge">
+    <span class="date-badge-full">SAT &middot; 5 JUN 2027</span>
+    <span class="date-badge-short">SAT &middot; 5 JUN</span>
+  </span>
 </div>
 
 <div class="timeline">
@@ -14,3 +20,12 @@
     />
   }
 </div>
+
+<app-decor-motorcycle-rider
+  class="mobile-moto"
+  mode="ground"
+  color="var(--ink)"
+  accentColor="var(--brand-accent)"
+  [width]="54"
+  [bottom]="52"
+/>
