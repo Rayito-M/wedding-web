@@ -106,11 +106,51 @@
   align-items: baseline;
   margin-bottom: 6px;
 
+  .label-group {
+    display: flex;
+    align-items: center;
+    gap: t.$space-2;
+  }
+
   .all {
     font-size: t.$text-micro;
     color: var(--accent);
     text-decoration: none;
   }
+}
+
+// Hand-built status pill (Final / Provisional) — no equivalent DS component;
+// mirrors ScreenHome.jsx's inline `schedulePill`.
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: t.$radius-pill;
+  color: var(--sub);
+  border: 1px dashed var(--line);
+  white-space: nowrap;
+
+  &.final {
+    background: var(--accent);
+    color: var(--on-accent);
+    border: 1px solid var(--accent);
+  }
+
+  &.provisional {
+    background: #b8862b;
+    color: var(--chip);
+    border: 1px dashed var(--line);
+    font-weight: bolder;
+  }
+}
+
+.provisional-note {
+  font-size: t.$text-label;
+  color: var(--sub);
+  margin-bottom: t.$space-2;
 }
 
 .no-events {

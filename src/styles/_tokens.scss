@@ -76,6 +76,10 @@
   --brand-accent-soft: var(--accent-2);
   --brand-accent-tertiary: var(--accent-3);
   --on-accent: var(--surface);
+  // schedule item status
+  --status-confirmed: var(--accent);
+  --status-planned: var(--accent-3);
+  --status-cancelled: var(--sub);
 }
 
 // ── Typography (tokens/typography.css) ──

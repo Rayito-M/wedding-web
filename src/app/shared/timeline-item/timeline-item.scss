@@ -5,6 +5,17 @@
   padding-bottom: 18px;
   position: relative;
   font-family: var(--font-sans);
+  // Default (confirmed) row color; overridden per [data-status] below.
+  --row-status-color: var(--status-confirmed);
+}
+
+:host([data-status='planned']) {
+  --row-status-color: var(--status-planned);
+}
+
+:host([data-status='cancelled']) {
+  --row-status-color: var(--status-cancelled);
+  opacity: 0.55;
 }
 
 .time {
@@ -13,7 +24,11 @@
   padding-top: 2px;
   font-family: var(--font-serif);
   font-size: var(--text-heading);
-  color: var(--brand-accent);
+  color: var(--row-status-color);
+}
+
+:host([data-status='cancelled']) .time {
+  text-decoration: line-through;
 }
 
 .rail {
@@ -28,7 +43,8 @@
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: var(--brand-accent);
+    background: var(--row-status-color);
+    box-sizing: border-box;
   }
 
   .line {
@@ -39,6 +55,20 @@
     width: 1px;
     background: var(--border-hairline);
   }
+}
+
+// Hollow dot for planned/cancelled rows (solid dot only for confirmed).
+:host([data-status='planned']) .dot,
+:host([data-status='cancelled']) .dot {
+  background: var(--surface-card);
+  border: 1px solid var(--row-status-color);
+}
+
+// Dashed connector below a planned row.
+:host([data-status='planned']) .line {
+  background: none;
+  border-left: 1px dashed var(--border-hairline);
+  width: 0;
 }
 
 .body {
@@ -57,6 +87,17 @@
   color: var(--text-body-color);
 }
 
+:host([data-status='cancelled']) .item-title {
+  text-decoration: line-through;
+}
+
+.badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .tag {
   font-size: 9px;
   padding: 2px var(--space-2);
@@ -65,6 +106,17 @@
   border-radius: var(--radius-pill);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.status-badge {
+  font-size: 9px;
+  padding: 1px var(--space-2);
+  color: var(--row-status-color);
+  border: 1px solid var(--row-status-color);
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .item-sub {

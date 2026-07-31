@@ -85,6 +85,15 @@
     "title": "The day",
     "subtitle": "From afternoon into the small hours.",
     "header": "SAT · 5 JUN",
+    "status": {
+      "final": "Final schedule"
+    },
+    "note": {
+      "final": "Times are locked in. Cancelled moments stay listed so nobody turns up for them.",
+      "provisional": "Times may still shift — planned moments aren't confirmed yet.",
+      "counts": "{{confirmed}} confirmed · {{planned}} planned",
+      "countsWithCancelled": "{{confirmed}} confirmed · {{planned}} planned · {{cancelled}} cancelled"
+    },
     "timeline": [
       {
         "time": "15:30",
@@ -289,7 +298,8 @@
       "hotelName": "Hotel name",
       "priceTier": "Price tier",
       "distanceKm": "Distance (km)",
-      "bookingUrl": "Booking link"
+      "bookingUrl": "Booking link",
+      "status": "Status"
     },
     "venueType": {
       "ceremony": "Ceremony",
@@ -301,7 +311,11 @@
     },
     "agenda": {
       "add": "Add moment",
-      "remove": "Remove moment"
+      "remove": "Remove moment",
+      "scheduleStatus": "Schedule status",
+      "scheduleStatusFinalNote": "Guests see a locked, final schedule.",
+      "scheduleStatusProvisionalNote": "Guests see a provisional schedule — times may still shift.",
+      "scheduleStatusCounts": "{{confirmed}} confirmed · {{planned}} planned · {{cancelled}} cancelled"
     },
     "hotels": {
       "add": "Add hotel",
@@ -363,7 +377,8 @@
     "schedule": {
       "title": "The day · highlights",
       "all": "All",
-      "noEvents": "The day's events will appear here once the agenda is ready"
+      "noEvents": "The day's events will appear here once the agenda is ready",
+      "provisionalNote": "Times may still shift until the schedule is final."
     },
     "photos": {
       "title": "{{count}} photos in the live album",
@@ -411,6 +426,15 @@
     "menu": {
       "your": "Your menu",
       "notAssigned": "Stay tuned..."
+    },
+    "agendaStatus": {
+      "planned": "Planned",
+      "confirmed": "Confirmed",
+      "cancelled": "Cancelled"
+    },
+    "scheduleStatus": {
+      "provisional": "Provisional",
+      "final": "Final"
     }
   },
   "nav": {
@@ -546,5 +570,29 @@
       "notes": "Note from guest"
     },
     "empty": "No guests to display. Add your first guest to get started."
+  },
+  "people": {
+    "eyebrow_singular": "{{count}} person going",
+    "eyebrow_plural": "{{count}} people going",
+    "title": "Find",
+    "titleAccent": "each other",
+    "subtitle": "Everyone who has signed in appears here. Your own card opens your profile.",
+    "search": {
+      "placeholder": "Search a name…"
+    },
+    "filter": {
+      "all": "Everyone",
+      "side": "{{name}}'s side",
+      "provider": "Vendors"
+    },
+    "relation": {
+      "cousin": "Cousin",
+      "plusOne": "Plus one",
+      "sister": "Sister",
+      "work": "Work",
+      "catering": "Catering",
+      "photography": "Photography"
+    },
+    "empty": "No one matches \"{{query}}\"."
   }
 }

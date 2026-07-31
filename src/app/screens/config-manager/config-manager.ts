@@ -24,6 +24,7 @@ import {
   HeaderService,
   WeddingConfigResponseDto,
   EntityNamesEnum,
+  extractAgendaTime,
 } from '@app/core';
 import { LangCode, ThemeId } from '@app/model';
 import { Btn } from '@app/shared/button/button';
@@ -193,6 +194,24 @@ export class ConfigManager implements OnInit {
     this.dirty() ? 'configManager.actions.save' : 'configManager.actions.saved',
   );
 
+  protected readonly itemStatuses: readonly AgendaItem['status'][] = [
+    'planned',
+    'confirmed',
+    'cancelled',
+  ];
+
+  protected readonly scheduleStatuses: readonly ConfigState['agenda']['status'][] = [
+    'provisional',
+    'final',
+  ];
+
+  protected readonly agendaCounts = computed(() =>
+    this.cfg().agenda.items.reduce(
+      (acc, item) => ({ ...acc, [item.status]: acc[item.status] + 1 }),
+      { planned: 0, confirmed: 0, cancelled: 0 },
+    ),
+  );
+
   constructor() {
     inject(HeaderService).set(this.translateService.instant('configManager.headerMeta'));
     inject(DestroyRef).onDestroy(() => clearTimeout(this.savedFlashTimer));
@@ -262,16 +281,9 @@ export class ConfigManager implements OnInit {
     }));
   }
 
-  /**
-   * Agenda `time` is stored as a full ISO datetime (API contract:
-   * `AgendaItemSchema.time = z.iso.datetime()`), but the design edits it as a
-   * bare hour ("15:00"). Extract just HH:MM for the text field; a value that is
-   * already bare (or otherwise unparseable) is shown verbatim.
-   */
+  /** Bare-hour text-field value for the agenda `time` ISO datetime. */
   protected timeInputValue(iso: string | undefined): string {
-    if (!iso) return '';
-    const match = /T(\d{2}:\d{2})/.exec(iso);
-    return match ? match[1] : iso;
+    return extractAgendaTime(iso);
   }
 
   /**
@@ -305,6 +317,22 @@ export class ConfigManager implements OnInit {
         items: c.agenda.items.map((a) => (a.id === id ? { ...a, venueId } : a)),
       },
     }));
+  }
+
+  protected setAgendaStatus(id: string, status: AgendaItem['status']): void {
+    this.mutate((c) => ({
+      ...c,
+      agenda: {
+        ...c.agenda,
+        items: c.agenda.items.map((a) => (a.id === id ? { ...a, status } : a)),
+      },
+    }));
+  }
+
+  /** Overall schedule status (`provisional` | `final`) — the agenda root, not
+   *  a single item; drives the "Schedule status" toggle. */
+  protected setScheduleStatus(status: ConfigState['agenda']['status']): void {
+    this.mutate((c) => ({ ...c, agenda: { ...c.agenda, status } }));
   }
 
   protected setAgendaText(id: string, field: 'title' | 'desc', value: string): void {

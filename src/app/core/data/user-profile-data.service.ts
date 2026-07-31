@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { EntityCollectionDataService } from '@ngrx/data';
-import { Observable, throwError } from 'rxjs';
+import { map, Observable, throwError } from 'rxjs';
 
 import { UserProfileDto, UpdateUserProfileDto, WeddingUserProfileService } from '../api';
 
@@ -23,7 +23,7 @@ export class UserProfileDataService implements EntityCollectionDataService<UserP
   private readonly serviceApi = inject(WeddingUserProfileService);
 
   getAll(): Observable<UserProfileDto[]> {
-    return throwError(() => new Error('Not implemented'));
+    return this.serviceApi.profileControllerGetAllV1().pipe(map((response) => response.profiles));
   }
 
   getById(id: string): Observable<UserProfileDto> {

@@ -8,9 +8,14 @@
 <div class="body">
   <div class="row">
     <div class="item-title">{{ heading() }}</div>
-    @if (tag()) {
-      <span class="tag">{{ tag() }}</span>
-    }
+    <div class="badges">
+      @if (tag()) {
+        <span class="tag">{{ tag() }}</span>
+      }
+      @if (showBadge()) {
+        <span class="status-badge">{{ statusLabelKey() | translate }}</span>
+      }
+    </div>
   </div>
   @if (sub()) {
     <div class="item-sub">{{ sub() }}</div>

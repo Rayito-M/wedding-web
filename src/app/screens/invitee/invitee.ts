@@ -16,6 +16,7 @@ import {
   TranslateLanguageService,
   CreateWeddingConfigDtoAgendaItemsInner,
   PluralTranslatePipe,
+  AgendaTimePipe,
 } from '@app/core';
 
 import { DecorFish } from '../../shared/decor/fish';
@@ -33,6 +34,7 @@ import { TimelineItem } from '../../shared/timeline-item/timeline-item';
     TranslatePipe,
     RsvpStatusTick,
     PluralTranslatePipe,
+    AgendaTimePipe,
     TimelineItem,
   ],
   templateUrl: './invitee.html',
@@ -109,6 +111,10 @@ export class Invitee {
   }
 
   readonly currentLang = computed(() => this.translate.currentLang());
+
+  protected readonly isAgendaFinal = computed(
+    () => this.weddingConfig()?.agenda?.status === 'final',
+  );
 
   daysToGo = computed(() => {
     const configuration = this.weddingConfig();

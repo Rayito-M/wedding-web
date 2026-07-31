@@ -26,6 +26,14 @@
   }
 }
 
+.status-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .date-badge {
   font-size: t.$text-label;
   color: var(--text-muted);
@@ -35,6 +43,58 @@
   .date-badge-full {
     display: none;
   }
+}
+
+// Hand-built status pill (Final schedule / Provisional) — no equivalent DS
+// component; mirrors ScreenSchedule.jsx's inline `statusPill`.
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: t.$radius-pill;
+  color: var(--text-muted);
+  border: 1px dashed var(--border-hairline);
+  white-space: nowrap;
+
+  &.final {
+    background: var(--brand-accent);
+    color: var(--on-accent);
+    border: 1px solid var(--brand-accent);
+  }
+
+  &.provisional {
+    background: #b8862b;
+    color: var(--chip);
+    border: 1px dashed var(--line);
+    font-weight: bolder;
+  }
+}
+
+// Hand-built note row (counts by status) — mirrors ScreenSchedule.jsx's
+// inline `note` block; no equivalent DS component.
+.note {
+  margin: 6px t.$space-6 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+  padding: 10px t.$space-3;
+  border-radius: t.$radius-md;
+  background: var(--surface-chip);
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.note-counts {
+  white-space: nowrap;
+  font-size: t.$text-label;
+  letter-spacing: 0.06em;
 }
 
 // Timeline rows are the shared app-timeline-item component (design system).

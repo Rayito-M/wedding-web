@@ -82,6 +82,15 @@
     "title": "El día",
     "subtitle": "De la tarde hasta la madrugada.",
     "header": "SÁB · 5 JUN",
+    "status": {
+      "final": "Agenda definitiva"
+    },
+    "note": {
+      "final": "Los horarios ya son definitivos. Los momentos cancelados se mantienen en la lista para que nadie se presente sin saberlo.",
+      "provisional": "Los horarios pueden cambiar todavía — los momentos previstos aún no están confirmados.",
+      "counts": "{{confirmed}} confirmados · {{planned}} previstos",
+      "countsWithCancelled": "{{confirmed}} confirmados · {{planned}} previstos · {{cancelled}} cancelados"
+    },
     "timeline": [
       {
         "time": "15:30",
@@ -286,7 +295,8 @@
       "hotelName": "Nombre del hotel",
       "priceTier": "Rango de precio",
       "distanceKm": "Distancia (km)",
-      "bookingUrl": "Enlace de reserva"
+      "bookingUrl": "Enlace de reserva",
+      "status": "Estado"
     },
     "venueType": {
       "ceremony": "Ceremonia",
@@ -298,7 +308,11 @@
     },
     "agenda": {
       "add": "Añadir momento",
-      "remove": "Eliminar momento"
+      "remove": "Eliminar momento",
+      "scheduleStatus": "Estado de la agenda",
+      "scheduleStatusFinalNote": "Los invitados ven una agenda definitiva y cerrada.",
+      "scheduleStatusProvisionalNote": "Los invitados ven una agenda provisional — los horarios pueden cambiar todavía.",
+      "scheduleStatusCounts": "{{confirmed}} confirmados · {{planned}} previstos · {{cancelled}} cancelados"
     },
     "hotels": {
       "add": "Añadir hotel",
@@ -360,7 +374,8 @@
     "schedule": {
       "title": "El día · momentos clave",
       "all": "Todo",
-      "noEvents": "Los eventos del día aparecerán aquí una vez que la agenda esté lista"
+      "noEvents": "Los eventos del día aparecerán aquí una vez que la agenda esté lista",
+      "provisionalNote": "Los horarios pueden cambiar todavía hasta que la agenda sea definitiva."
     },
     "photos": {
       "title": "{{count}} fotos en el álbum en vivo",
@@ -408,6 +423,15 @@
     "menu": {
       "your": "Tu menú",
       "notAssigned": "Processando..."
+    },
+    "agendaStatus": {
+      "planned": "Previsto",
+      "confirmed": "Confirmado",
+      "cancelled": "Cancelado"
+    },
+    "scheduleStatus": {
+      "provisional": "Provisional",
+      "final": "Definitivo"
     }
   },
   "nav": {
@@ -543,5 +567,29 @@
       "notes": "Nota del invitado"
     },
     "empty": "Sin invitados. Añade el primer invitado para comenzar."
+  },
+  "people": {
+    "eyebrow_singular": "{{count}} persona asistiendo",
+    "eyebrow_plural": "{{count}} personas asistiendo",
+    "title": "Encuentra",
+    "titleAccent": "a los demás",
+    "subtitle": "Todos los que han iniciado sesión aparecen aquí. Tu propia tarjeta abre tu perfil.",
+    "search": {
+      "placeholder": "Buscar un nombre…"
+    },
+    "filter": {
+      "all": "Todos",
+      "side": "Lado de {{name}}",
+      "provider": "Proveedores"
+    },
+    "relation": {
+      "cousin": "Prima/o",
+      "plusOne": "Acompañante",
+      "sister": "Hermana",
+      "work": "Trabajo",
+      "catering": "Catering",
+      "photography": "Fotografía"
+    },
+    "empty": "Nadie coincide con \"{{query}}\"."
   }
 }

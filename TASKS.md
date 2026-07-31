@@ -1033,3 +1033,76 @@
   - `pnpm typecheck && pnpm lint && pnpm build` green; all three themes, mobile + desktop.
 - **Refs:** DS `ui_kits/wedding-app/ScreenProfile.jsx` (`90246bd`); new files:
   `src/app/screens/profile/`. Unblocks the "My profile" dropdown link deferred by T230 / T234.
+
+### T239 — Schedule status: item status + overall provisional/final, guest home + schedule + config
+- **Status:** done (2026-07-31) — `shared/timeline-item` gained `status`/`showStatus` inputs (dot/
+  badge/strikethrough driven by `[attr.data-status]` + a `--row-status-color` custom property, no
+  inline styles); guest home and the schedule screen now read `weddingConfig().agenda.status` for a
+  hand-built Final/Provisional pill (no equivalent DS shared component, same precedent as the
+  hotel-price-tier segmented control); the schedule screen was migrated off static
+  `schedule.timeline` i18n onto the same `WEDDING_CONFIG` `EntityCollectionService` signal as
+  `invitee`/`config-manager` (title/subtitle/header date left as static i18n, per scope); config
+  manager's agenda section got a per-item status segmented control (`setAgendaStatus(id, status)`)
+  and an overall "Schedule status" toggle (`setScheduleStatus`, local state only, no `PATCH`
+  wiring, per existing doc comment). `--status-confirmed/planned/cancelled` mirrored into
+  `_tokens.scss`. New keys added to `es/en/fr.json` (`shared.agendaStatus.*`,
+  `shared.scheduleStatus.*`, `schedule.status.final`, `schedule.note.*`,
+  `invitee.schedule.provisionalNote`, `configManager.field.status`,
+  `configManager.agenda.scheduleStatus*`). `pnpm typecheck`/`lint`/`build` verified green in an
+  isolated copy of the tree (the live tree has unrelated concurrent WIP in `people.ts` breaking
+  `pnpm typecheck` — confirmed pre-existing/unrelated, not touched by this task).
+- **Owner:** agent (implementer)
+- **Depends on:** T219, T224, T226
+- **Context:** DS update adds a `status` concept to the schedule: each agenda item is
+  `planned | confirmed | cancelled`, and the schedule as a whole is `provisional | final`
+  (`agenda.status`). The generated API client already carries both — see
+  `CreateWeddingConfigDtoAgendaItemsInner.status` and `CreateWeddingConfigDtoAgenda.status`
+  (`src/app/core/api/model/`) — so this is a display/consumption task, not a contract change.
+  `--status-confirmed` / `--status-planned` / `--status-cancelled` tokens already exist
+  (`tokens/colors.css`); confirm they're mirrored in `src/styles/_tokens.scss` (add them under the
+  existing semantic-alias block if missing, no invented colors).
+- **Acceptance:**
+  - **`shared/timeline-item`:** add `status` (`'planned' | 'confirmed' | 'cancelled'`, default
+    `'confirmed'`) and `showStatus` (default `true`) inputs, per DS
+    `components/data-display/TimelineItem.jsx` + `.prompt.md`: solid accent dot for `confirmed`
+    (no badge); hollow dot + dashed connector + uppercase outline badge for `planned`; struck-through
+    time/title + dimmed (opacity) row + badge for `cancelled`. Dot/badge/time color comes from the
+    `--status-*` token for the row's status. `showStatus=false` suppresses the badge only (dot/strike
+    behavior unchanged) — used where a whole schedule is provisional and every row would otherwise
+    show "Planned".
+  - **Guest home (`screens/invitee/`):** already wired to real `weddingConfig().agenda.items` (see
+    current uncommitted `invitee.ts`/`.html`) — pass each item's `status` into `app-timeline-item`.
+    Add the status pill next to the "The day · highlights" label (Final = solid accent pill; else
+    outline "Provisional" pill, dashed border) and, when not final, the small sub-line "Times may
+    still shift until the schedule is final." — matches `ScreenHome.jsx` `schedulePill` +
+    `highlights` block (~lines 20–25, 110–119). Final/provisional comes from
+    `weddingConfig().agenda.status`.
+  - **Schedule screen (`screens/schedule/`):** currently sources rows from static i18n
+    `schedule.timeline` (no `id`/`status`) — migrate to the same `EntityCollectionService`-backed
+    `weddingConfig()` signal already used by `invitee`/`config-manager` (`WEDDING_CONFIG` entity),
+    reading `agenda.items` (id/time/title/desc per current language, matching `getEventTranslation`
+    in `invitee.ts`) and `agenda.status`. Keep `schedule.title`/`schedule.subtitle`/header date as
+    static i18n (unchanged). Add the status pill ("Final schedule" / "Provisional") and the note row
+    with per-status counts, matching `ScreenSchedule.jsx`'s `statusPill` + `note` (confirmed/planned/
+    cancelled counts; cancelled count only shown when > 0).
+  - **Config manager agenda section (`screens/config-manager/`, `section === 'agenda'`):** add a
+    per-item status control — three segmented buttons (Planned/Confirmed/Cancelled), each using its
+    own `--status-*` token when selected — wired to `setAgendaStatus(id, status)` (new method,
+    mirrors the existing `setAgendaTime`/`setAgendaVenue` pattern). Add an overall "Schedule status"
+    segmented toggle (Provisional/Final) bound to `cfg().agenda.status` (new `setAgendaStatus`-level
+    method or extend `setBasics`-style setter for the agenda root). Matches `ScreenConfigManager.jsx`
+    `ITEM_STATUSES` + the "Schedule status" toggle (~lines 59, 199–227). Cancelled items keep the
+    existing dimmed-card treatment (`opacity: a.status === 'cancelled' ? 0.65 : 1`).
+  - **i18n:** add new keys (status labels, the two note strings, the guest-home pill note) in all
+    three files (`public/i18n/es.json`, `en.json`, `fr.json`), following each section's existing key
+    style — no hardcoded copy in templates (Hard Rule #8).
+  - **Explicitly out of scope:** no `PATCH /v1/config` wiring for the new agenda-status edits (Save
+    stays local-state-only, matching the rest of `config-manager` per its existing doc comment) — this
+    task is view + edit-state only, not persistence.
+  - `pnpm typecheck && pnpm lint && pnpm build` green; verify all three themes, mobile + desktop, and
+    all three statuses (including a cancelled row and a provisional vs. final schedule) actually
+    render as described above — not just typecheck-green.
+- **Refs:** DS `components/data-display/TimelineItem.jsx`/`.d.ts`/`.prompt.md`,
+  `ui_kits/wedding-app/ScreenHome.jsx`, `ScreenSchedule.jsx`, `ScreenConfigManager.jsx` /
+  `ScreenConfigManagerMobile.jsx`; files: `src/app/shared/timeline-item/`, `src/app/screens/invitee/`,
+  `src/app/screens/schedule/`, `src/app/screens/config-manager/`.

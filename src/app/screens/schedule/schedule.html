@@ -3,19 +3,37 @@
     <h1>{{ 'schedule.title' | translate }}</h1>
     <p class="sub">{{ 'schedule.subtitle' | translate }}</p>
   </div>
-  <span class="date-badge">
-    <span class="date-badge-full">SAT &middot; 5 JUN 2027</span>
-    <span class="date-badge-short">SAT &middot; 5 JUN</span>
+  <div class="status-col">
+    <span class="date-badge">
+      <span class="date-badge-full">SAT &middot; 5 JUN 2027</span>
+      <span class="date-badge-short">SAT &middot; 5 JUN</span>
+    </span>
+    <span class="status-pill" [class.final]="isFinal()" [class.provisional]="!isFinal()">
+      {{ (isFinal() ? 'schedule.status.final' : 'shared.scheduleStatus.provisional') | translate }}
+    </span>
+  </div>
+</div>
+
+<div class="note">
+  <span class="note-text">
+    {{ (isFinal() ? 'schedule.note.final' : 'schedule.note.provisional') | translate }}
+  </span>
+  <span class="note-counts">
+    @if (counts().cancelled > 0) {
+      {{ 'schedule.note.countsWithCancelled' | translate: counts() }}
+    } @else {
+      {{ 'schedule.note.counts' | translate: counts() }}
+    }
   </span>
 </div>
 
 <div class="timeline">
-  @for (it of items(); track it.t; let last = $last) {
+  @for (it of items(); track it.id; let last = $last) {
     <app-timeline-item
-      [time]="it.t"
+      [time]="it.t | agendaTime"
       [heading]="it.title"
-      [tag]="it.tag"
       [sub]="it.sub"
+      [status]="it.status"
       [last]="last"
     />
   }

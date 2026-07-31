@@ -230,9 +230,41 @@
               }
             </div>
           </div>
+          <div class="card schedule-status-card">
+            <div>
+              <span class="field-label">{{ 'configManager.agenda.scheduleStatus' | translate }}</span>
+              <p class="schedule-status-note">
+                {{
+                  (cfg().agenda.status === 'final'
+                    ? 'configManager.agenda.scheduleStatusFinalNote'
+                    : 'configManager.agenda.scheduleStatusProvisionalNote'
+                  ) | translate
+                }}
+                {{ 'configManager.agenda.scheduleStatusCounts' | translate: agendaCounts() }}
+              </p>
+            </div>
+            <div
+              class="segmented schedule-status-toggle"
+              role="radiogroup"
+              [attr.aria-label]="'configManager.agenda.scheduleStatus' | translate"
+            >
+              @for (s of scheduleStatuses; track s) {
+                <button
+                  type="button"
+                  role="radio"
+                  class="segment"
+                  [class.on]="cfg().agenda.status === s"
+                  [attr.aria-checked]="cfg().agenda.status === s"
+                  (click)="setScheduleStatus(s)"
+                >
+                  {{ ('shared.scheduleStatus.' + s) | translate }}
+                </button>
+              }
+            </div>
+          </div>
           <div class="card-list">
             @for (item of cfg().agenda.items; track item.id) {
-              <div class="card">
+              <div class="card" [class.cancelled]="item.status === 'cancelled'">
                 <div class="row-top">
                   <label class="field field-time">
                     <span class="field-label">{{ 'configManager.field.time' | translate }}</span>
@@ -264,6 +296,30 @@
                   >
                     ×
                   </button>
+                </div>
+                <div class="field">
+                  <span class="field-label">{{ 'configManager.field.status' | translate }}</span>
+                  <div
+                    class="segmented"
+                    role="radiogroup"
+                    [attr.aria-label]="'configManager.field.status' | translate"
+                  >
+                    @for (s of itemStatuses; track s) {
+                      <button
+                        type="button"
+                        role="radio"
+                        class="segment"
+                        [class.on]="item.status === s"
+                        [class.status-planned]="s === 'planned'"
+                        [class.status-confirmed]="s === 'confirmed'"
+                        [class.status-cancelled]="s === 'cancelled'"
+                        [attr.aria-checked]="item.status === s"
+                        (click)="setAgendaStatus(item.id, s)"
+                      >
+                        {{ ('shared.agendaStatus.' + s) | translate }}
+                      </button>
+                    }
+                  </div>
                 </div>
                 <label class="field">
                   <span class="field-label"

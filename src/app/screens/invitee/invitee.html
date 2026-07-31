@@ -69,19 +69,39 @@
   @if (weddingConfig()?.agenda) {
     <div class="schedule">
       <div class="schedule-header">
-        <div class="label">{{ 'invitee.schedule.title' | translate }}</div>
+        <div class="label-group">
+          <div class="label">{{ 'invitee.schedule.title' | translate }}</div>
+          <span
+            class="status-pill"
+            [class.final]="isAgendaFinal()"
+            [class.provisional]="!isAgendaFinal()"
+          >
+            {{
+              (isAgendaFinal()
+                ? 'shared.scheduleStatus.final'
+                : 'shared.scheduleStatus.provisional'
+              ) | translate
+            }}
+          </span>
+        </div>
         <a class="all" routerLink="/schedule">{{ 'invitee.schedule.all' | translate }}</a>
       </div>
+      @if (!isAgendaFinal()) {
+        <div class="provisional-note">{{ 'invitee.schedule.provisionalNote' | translate }}</div>
+      }
       @if (weddingConfig()?.agenda?.items?.length === 0) {
         <div class="no-events">{{ 'invitee.schedule.noEvents' | translate }}</div>
       } @else {
         @for (event of weddingConfig()?.agenda?.items; track event.id; let last = $last) {
-          <app-timeline-item
-            [time]="getEventTranslation(event).time"
-            [heading]="getEventTranslation(event).title"
-            [sub]="getEventTranslation(event).desc"
-            [last]="last"
-          />
+          @if (event.highlight) {
+            <app-timeline-item
+              [time]="getEventTranslation(event).time | agendaTime"
+              [heading]="getEventTranslation(event).title"
+              [sub]="getEventTranslation(event).desc"
+              [status]="event.status"
+              [last]="last"
+            />
+          }
         }
       }
     </div>

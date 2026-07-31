@@ -13,6 +13,7 @@ import { CreateWeddingConfigDtoAgendaItemsInnerTitle } from './create-wedding-co
 export interface CreateWeddingConfigDtoAgendaItemsInner { 
     id: string;
     status: CreateWeddingConfigDtoAgendaItemsInner.StatusEnum;
+    highlight?: boolean;
     time: string;
     title: CreateWeddingConfigDtoAgendaItemsInnerTitle;
     desc: CreateWeddingConfigDtoAgendaItemsInnerTitle;

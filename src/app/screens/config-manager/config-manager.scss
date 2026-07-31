@@ -300,6 +300,29 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+
+  // Cancelled agenda items stay listed but visually recede.
+  &.cancelled {
+    opacity: 0.65;
+  }
+}
+
+// ── Overall "Schedule status" toggle (agenda root: provisional/final) ──
+// Mobile (default): stacked column — label, then a full-width row of two
+// equal, individually-pilled buttons (the base `.segmented`/`.segment` look,
+// same as the per-item status control), then the counts note below — per
+// `ScreenConfigManagerMobile.jsx`'s inline `scheduleStatus` block. Desktop
+// override lives in the `@media (min-width: 900px)` block below, switching
+// to a single row with the note+counts on the left and a joined pill-toggle
+// on the right — per `ScreenConfigManager.jsx`.
+.schedule-status-card {
+  max-width: 660px;
+}
+
+.schedule-status-note {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin: 5px 0 0;
 }
 
 .card-top {
@@ -401,6 +424,24 @@
   border-color: var(--brand-accent);
   background: var(--brand-accent);
   color: var(--on-accent);
+}
+
+// Per-item agenda status segments (Planned/Confirmed/Cancelled) — each uses
+// its own `--status-*` token when selected, per ScreenConfigManager.jsx's
+// ITEM_STATUSES.
+.segment.status-planned.on {
+  border-color: var(--status-planned);
+  background: var(--status-planned);
+}
+
+.segment.status-confirmed.on {
+  border-color: var(--status-confirmed);
+  background: var(--status-confirmed);
+}
+
+.segment.status-cancelled.on {
+  border-color: var(--status-cancelled);
+  background: var(--status-cancelled);
 }
 
 // ── Dietary / allergy tag editors ──
@@ -692,5 +733,34 @@
 
   .mobile-bar {
     display: none;
+  }
+
+  .schedule-status-card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  // Overrides the generic per-item `.segmented`/`.segment` (flex:1 pill-per-
+  // button, per-DS ITEM_STATUSES) with the DS's single joined pill-toggle
+  // look for the two-way Provisional/Final switch: one bordered, radius-pill
+  // container with `overflow: hidden`, borderless inner segments meeting
+  // edge-to-edge.
+  .segmented.schedule-status-toggle {
+    flex-shrink: 0;
+    gap: 0;
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    background: var(--surface-card);
+
+    .segment {
+      flex: 0 0 auto;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 0;
+      font-size: var(--text-label);
+    }
   }
 }
