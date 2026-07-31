@@ -17,8 +17,9 @@
     "venue": "Palacio de los Córdova · Granada"
   },
   "login": {
-    "title": "Welcome",
-    "subtitle": "Sign in to view your invitation and RSVP.",
+    "eyebrow": "Private event · Sign in",
+    "title": "Welcome back",
+    "subtitle": "Sign in to see your invitation, RSVP and the plan for the day.",
     "or": "or",
     "tabs": {
       "phone": "Phone",
@@ -31,12 +32,15 @@
       "sending": "Sending…"
     },
     "code": {
+      "eyebrow": "Text code · Sent",
+      "title": "Enter the code",
+      "sub": "Texted to {{value}}. It expires in 10 minutes.",
       "label": "Verification code",
       "placeholder": "123456",
-      "sentTo": "We sent a code to",
       "cta": "Verify",
       "verifying": "Verifying…",
-      "changeNumber": "Use a different number"
+      "changeNumber": "Use a different number",
+      "resend": "Resend code"
     },
     "email": {
       "label": "Email address",
@@ -45,17 +49,26 @@
       "sending": "Sending…"
     },
     "magicLink": {
-      "sentTo": "We sent a link to",
-      "info": "Check your inbox for a sign-in link. It expires in 15 minutes.",
-      "changeEmail": "Use a different email"
+      "eyebrow": "Magic link · Sent",
+      "title": "Check your inbox",
+      "sub": "We emailed a sign-in link to {{value}}. It works once and expires in 15 minutes.",
+      "changeEmail": "Use a different email",
+      "resend": "Resend link"
     },
     "social": {
       "google": "Continue with Google",
       "apple": "Continue with Apple",
+      "caption": "No password — links and codes are personal to your invitation.",
       "errorTitle": "Sign-in failed",
       "errorBody": "We couldn't sign you in with that account. Please try again."
     },
     "callback": {
+      "verifying": {
+        "eyebrow": "Secure callback",
+        "title": "Signing you in",
+        "sub": "Verified. Setting up your invitation…",
+        "oneMoment": "One moment"
+      },
       "errorTitle": "Sign-in failed",
       "errorBody": "We couldn't sign you in. Please try again."
     },
@@ -330,6 +343,8 @@
     "yes": "Yes",
     "no": "No",
     "confirm": "Confirm",
+    "language": "Language",
+    "logout": "Logout",
     "you": "You",
     "seat": {
       "your": "Your seat",
@@ -347,6 +362,7 @@
     "config": "Config",
     "rsvp": "RSVP",
     "schedule": "Schedule",
+    "album": "Album",
     "travel": "Travel"
   },
   "titles": {
@@ -356,6 +372,7 @@
     "rsvp": "RSVP · Sara & Christophe",
     "schedule": "The day · Sara & Christophe",
     "travel": "Getting there · Sara & Christophe",
+    "album": "Album · Sara & Christophe",
     "dashboard": "Dashboard · Sara & Christophe",
     "config": "Configuration · Sara & Christophe",
     "guestManager": "Guest manager · Sara & Christophe",

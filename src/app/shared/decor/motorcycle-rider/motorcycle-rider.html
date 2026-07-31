@@ -1,0 +1,77 @@
+<div
+  #track
+  class="overlay"
+  [style.bottom.px]="bottom()"
+  [style.height.px]="overlayHeight()"
+  [style.z-index]="zIndex()"
+>
+  @if (crossing(); as c) {
+    <div
+      class="crossing"
+      [style.animation-duration.s]="c.durationSeconds"
+      [style.--moto-from.px]="c.from"
+      [style.--moto-to.px]="c.to"
+      (animationend)="onCrossingEnd()"
+    >
+      <div class="bob" [class.ridge]="mode() === 'ridge'" [style.width.px]="width()">
+        <div
+          class="hop"
+          [class.hop-right]="c.dir === 1"
+          [class.hop-left]="c.dir === -1"
+          [style.width.px]="width()"
+          [style.transform-origin]="c.transformOrigin"
+        >
+          <svg
+            [attr.width]="width()"
+            [attr.height]="svgHeight()"
+            viewBox="0 0 130 74"
+            aria-hidden="true"
+            [class.flip]="c.flip"
+          >
+            <!-- big knobby wheels: hubs, spokes, tyre ticks -->
+            <g class="thin" [style.stroke]="color()">
+              @for (k of knobTicks; track $index) {
+                <line [attr.x1]="k.x1" [attr.y1]="k.y1" [attr.x2]="k.x2" [attr.y2]="k.y2" />
+              }
+              @for (sp of wheelSpokes; track $index) {
+                <line [attr.x1]="sp.x1" [attr.y1]="sp.y1" [attr.x2]="sp.x2" [attr.y2]="sp.y2" />
+              }
+              <circle cx="32" cy="51" r="5" />
+              <circle cx="98" cy="51" r="5" />
+            </g>
+
+            <!-- frame, forks, mudguard, tank, seat, rider -->
+            <g class="main" [style.stroke]="color()">
+              <circle cx="32" cy="51" r="15" />
+              <circle cx="98" cy="51" r="15" />
+              <path d="M 98 51 L 93 24" />
+              <path d="M 94 28 L 88 31" />
+              <path d="M 84 31 Q 94 27 105 31" />
+              <path d="M 92 16 L 100 16" />
+              <path d="M 92 20 L 82 22" />
+              <path d="M 98 51 L 66 50" />
+              <path d="M 46 50 L 53 56 L 72 55 L 82 48" />
+              <path d="M 56 44 L 64 30 L 80 30 L 84 44" />
+              <path d="M 34 38 L 56 40 L 60 40" />
+              <path d="M 34 38 L 34 44 L 46 46" />
+              <circle cx="62" cy="8" r="8" />
+              <path d="M 62 16 Q 60 26 54 34" />
+              <path d="M 62 18 Q 74 22 84 23" />
+              <path d="M 54 34 L 50 50 L 44 52" />
+              <path d="M 54 34 L 60 48 L 56 54" />
+            </g>
+
+            <!-- rally screen / beak tower + rear luggage rack, accent outline -->
+            <g class="accent-line" [style.stroke]="accentColor()">
+              <path d="M 88 30 L 92 16 L 100 16 L 96 28" />
+              <path d="M 30 37 L 46 38" />
+            </g>
+
+            <!-- fuel tank shrouds, accent fill -->
+            <path class="accent-fill" [style.fill]="accentColor()" d="M 64 30 L 80 30 L 82 40 L 60 40 Z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,172 @@
+// DS components/motion/MotorcycleRider — decorative overlay, absolutely
+// positioned against the nearest positioned ancestor (the screen host).
+:host {
+  display: block;
+}
+
+.overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.crossing {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  animation-name: moto-cross;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+.bob {
+  &.ridge {
+    animation: moto-ridge 2.3s ease-in-out infinite;
+  }
+}
+
+.hop {
+  &.hop-right {
+    animation: moto-hop-right 1.5s ease-in-out infinite;
+  }
+
+  &.hop-left {
+    animation: moto-hop-left 1.5s ease-in-out infinite;
+  }
+}
+
+svg {
+  display: block;
+
+  &.flip {
+    transform: scaleX(-1);
+  }
+}
+
+.thin {
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.main {
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.accent-line {
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.accent-fill {
+  stroke: none;
+}
+
+@keyframes moto-cross {
+  from {
+    transform: translateX(var(--moto-from));
+  }
+
+  to {
+    transform: translateX(var(--moto-to));
+  }
+}
+
+@keyframes moto-ridge {
+  0%,
+  100% {
+    transform: translateY(4px);
+  }
+
+  20% {
+    transform: translateY(-9px);
+  }
+
+  45% {
+    transform: translateY(2px);
+  }
+
+  65% {
+    transform: translateY(-11px);
+  }
+
+  85% {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes moto-hop-right {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  10% {
+    transform: translateY(-3px) rotate(-2deg);
+  }
+
+  20% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  46% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  56% {
+    transform: translateY(-4px) rotate(-17deg);
+  }
+
+  68% {
+    transform: translateY(-3px) rotate(-15deg);
+  }
+
+  78% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes moto-hop-left {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  10% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+
+  20% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  46% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  56% {
+    transform: translateY(-4px) rotate(17deg);
+  }
+
+  68% {
+    transform: translateY(-3px) rotate(15deg);
+  }
+
+  78% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}

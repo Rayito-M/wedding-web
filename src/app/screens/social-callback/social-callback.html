@@ -1,0 +1,15 @@
+<header>
+  <app-monogram [size]="28" />
+</header>
+
+<div class="content">
+  <app-auth-heading
+    eyebrowKey="login.callback.verifying.eyebrow"
+    titleKey="login.callback.verifying.title"
+    subKey="login.callback.verifying.sub"
+  />
+
+  <app-progress-bar [percent]="percent()" [height]="4" />
+
+  <p class="one-moment">{{ 'login.callback.verifying.oneMoment' | translate }}</p>
+</div>

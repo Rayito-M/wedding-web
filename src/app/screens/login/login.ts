@@ -10,7 +10,10 @@ import {
   ConfigurationService,
 } from '../../core';
 import { PhoneCountry, defaultCountryForLang } from '../../model';
+import { AuthHeading } from '../../shared/auth-heading/auth-heading';
 import { Btn } from '../../shared/button/button';
+import { DecorAlhambra } from '../../shared/decor/alhambra';
+import { DecorFishPair } from '../../shared/decor/fish-pair';
 import { TextInput } from '../../shared/input/input';
 import { Monogram } from '../../shared/monogram/monogram';
 import { LanguageSelector } from '../../shared/language-selector/language-selector';
@@ -27,7 +30,10 @@ type Step = 'request' | 'verify';
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     ReactiveFormsModule,
+    AuthHeading,
     Btn,
+    DecorAlhambra,
+    DecorFishPair,
     TextInput,
     Monogram,
     TranslatePipe,
@@ -140,6 +146,16 @@ export class Login {
     if (ok) {
       await this.router.navigateByUrl(this.login.landingUrl());
     }
+  }
+
+  /** Re-sends the SMS code to the already-submitted number, without leaving the verify step. */
+  protected async resendCode(): Promise<void> {
+    await this.requestPhoneCode();
+  }
+
+  /** Re-sends the magic link to the already-submitted address, without leaving the verify step. */
+  protected async resendMagicLink(): Promise<void> {
+    await this.requestMagicLink();
   }
 
   protected editPhone(): void {

@@ -36,6 +36,14 @@
 <div class="bottom">
   <div class="alhambra">
     <app-decor-alhambra [w]="desktop() ? 900 : 360" />
+    <app-decor-motorcycle-rider
+      mode="ridge"
+      color="var(--brand-accent)"
+      accentColor="var(--brand-accent-soft)"
+      [width]="desktop() ? 68 : 52"
+      [bottom]="desktop() ? 146 : 78"
+      [zIndex]="1"
+    />
   </div>
   <div class="cta">
     <button app-btn [full]="true" (click)="open()">{{ 'welcome.cta' | translate }}</button>

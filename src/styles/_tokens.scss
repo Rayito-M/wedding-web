@@ -7,7 +7,23 @@
 // ─────────────────────────────────────────────────────────────
 
 // ── Color themes (tokens/colors.css) ──
+// Order and default-theme selector mirror the DS file exactly (DS update
+// 2026-07-27, commit b816c12): terracotta is now the fallback theme applied
+// via the bare :root selector when no [data-theme] attribute is set; mauve
+// and verdeagua are override-only blocks, reached explicitly.
 :root,
+[data-theme='terracotta'] {
+  --bg: #f8f6f2;
+  --surface: #ffffff;
+  --ink: #3a2a1f;
+  --sub: #8a6b54;
+  --line: rgba(58, 42, 31, 0.12);
+  --accent: #c97155; // terracotta
+  --accent-2: #e6c779; // butter
+  --accent-3: #c2a48a; // warm tan
+  --chip: #f4ead8;
+}
+
 [data-theme='mauve'] {
   --bg: #f8f6f2;
   --surface: #ffffff;
@@ -18,18 +34,6 @@
   --accent-2: #d6c5c8; // pale mauve
   --accent-3: #c9c4bb; // warm gray
   --chip: #f0ede7;
-}
-
-[data-theme='terracotta'] {
-  --bg: #f8f6f2; 
-  --surface: #ffffff;
-  --ink: #3a2a1f;
-  --sub: #8a6b54;
-  --line: rgba(58, 42, 31, 0.12);
-  --accent: #c97155; // terracotta
-  --accent-2: #e6c779; // butter
-  --accent-3: #c2a48a; // warm tan
-  --chip: #f4ead8;
 }
 
 [data-theme='verdeagua'] {
@@ -50,6 +54,21 @@
   --surface-page: var(--bg);
   --surface-card: var(--surface);
   --surface-chip: var(--chip);
+  // Naming drift vs. the DS file (which uses --text-body for this color
+  // alias): this repo has 24 existing usages of --text-body-color across
+  // shared components/screens (T219). Renaming everywhere is out of scope
+  // for this token-mirror-only pass (touches only this file), so
+  // --text-body-color stays the primary/only color alias. NOT dual-aliasing
+  // to --text-body here: that name is already taken in this file by the
+  // typography scale token below (--text-body: 13px, mirrors
+  // tokens/typography.css, actively used as font-size in ~12 component
+  // .scss files). Declaring a same-named color var(--text-body) here would
+  // either be silently shadowed by that later :root block (dead code) or,
+  // if reordered after it, break font-size everywhere it's used — a real
+  // regression the DS file itself doesn't hit only because it never uses
+  // --text-body for color and font-size together in the same cascade the
+  // way component styles in this repo do. --text-body-color remains the
+  // one functional alias; no visual regression.
   --text-body-color: var(--ink);
   --text-muted: var(--sub);
   --border-hairline: var(--line);

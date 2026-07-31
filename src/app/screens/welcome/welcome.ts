@@ -9,6 +9,7 @@ import { ConfigurationService, mediaSignal, TranslateLanguageService } from '../
 import { Btn } from '../../shared/button/button';
 import { DecorAlhambra } from '../../shared/decor/alhambra';
 import { DecorFishPair } from '../../shared/decor/fish-pair';
+import { DecorMotorcycleRider } from '../../shared/decor/motorcycle-rider/motorcycle-rider';
 import { DecorSun } from '../../shared/decor/sun';
 import { Pill } from '../../shared/pill/pill';
 import { LanguageSelector } from '../../shared/language-selector/language-selector';
@@ -21,6 +22,7 @@ import { LanguageSelector } from '../../shared/language-selector/language-select
     DecorSun,
     DecorFishPair,
     DecorAlhambra,
+    DecorMotorcycleRider,
     TranslatePipe,
     DatePipe,
     LanguageSelector,

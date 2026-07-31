@@ -14,8 +14,9 @@
     "venue": "Palais des Córdova · Grenade"
   },
   "login": {
-    "title": "Bienvenue",
-    "subtitle": "Connectez-vous pour voir votre invitation et confirmer votre présence.",
+    "eyebrow": "Événement privé · Connexion",
+    "title": "Bon retour",
+    "subtitle": "Connectez-vous pour voir votre invitation, confirmer votre présence et le déroulé du jour.",
     "or": "ou",
     "tabs": {
       "phone": "Téléphone",
@@ -28,12 +29,15 @@
       "sending": "Envoi…"
     },
     "code": {
+      "eyebrow": "Code SMS · Envoyé",
+      "title": "Saisissez le code",
+      "sub": "Envoyé par SMS au {{value}}. Expire dans 10 minutes.",
       "label": "Code de vérification",
       "placeholder": "123456",
-      "sentTo": "Nous avons envoyé un code au",
       "cta": "Vérifier",
       "verifying": "Vérification…",
-      "changeNumber": "Utiliser un autre numéro"
+      "changeNumber": "Utiliser un autre numéro",
+      "resend": "Renvoyer le code"
     },
     "email": {
       "label": "Adresse e-mail",
@@ -42,17 +46,26 @@
       "sending": "Envoi…"
     },
     "magicLink": {
-      "sentTo": "Nous avons envoyé un lien à",
-      "info": "Vérifiez votre boîte de réception pour un lien de connexion. Il expire dans 15 minutes.",
-      "changeEmail": "Utiliser une autre adresse e-mail"
+      "eyebrow": "Lien magique · Envoyé",
+      "title": "Consultez votre boîte de réception",
+      "sub": "Nous avons envoyé un lien de connexion à {{value}}. Il fonctionne une seule fois et expire dans 15 minutes.",
+      "changeEmail": "Utiliser une autre adresse e-mail",
+      "resend": "Renvoyer le lien"
     },
     "social": {
       "google": "Continuer avec Google",
       "apple": "Continuer avec Apple",
+      "caption": "Pas de mot de passe — les liens et codes sont personnels à votre invitation.",
       "errorTitle": "Échec de la connexion",
       "errorBody": "Impossible de vous connecter avec ce compte. Veuillez réessayer."
     },
     "callback": {
+      "verifying": {
+        "eyebrow": "Retour sécurisé",
+        "title": "Connexion en cours",
+        "sub": "Vérifié. Préparation de votre invitation…",
+        "oneMoment": "Un instant"
+      },
       "errorTitle": "Échec de la connexion",
       "errorBody": "Impossible de vous connecter. Veuillez réessayer."
     },
@@ -327,6 +340,8 @@
     "yes": "Oui",
     "no": "Non",
     "confirm": "Confirmer",
+    "language": "Langue",
+    "logout": "Déconnexion",
     "you": "Vous",
     "seat": {
       "your": "Votre table",
@@ -344,6 +359,7 @@
     "config": "Configuration",
     "rsvp": "RSVP",
     "schedule": "Agenda",
+    "album": "Album",
     "travel": "S'y rendre"
   },
   "titles": {
@@ -353,6 +369,7 @@
     "rsvp": "RSVP · Sara & Christophe",
     "schedule": "Le jour J · Sara & Christophe",
     "travel": "S'y rendre · Sara & Christophe",
+    "album": "Album · Sara & Christophe",
     "dashboard": "Tableau de bord · Sara & Christophe",
     "config": "Configuration · Sara & Christophe",
     "guestManager": "Gestionnaire d'invités · Sara & Christophe",

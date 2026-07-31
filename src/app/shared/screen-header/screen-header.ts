@@ -89,6 +89,13 @@ export class ScreenHeader implements OnInit {
     return `${first}${last}`;
   });
 
+  /** Full display name shown at the top of the account dropdown (DS `AccountMenu`). */
+  protected readonly userName = computed(() => {
+    const profile = this.userProfile();
+    if (!profile) return '';
+    return [profile.firstName, profile.lastName].filter(Boolean).join(' ');
+  });
+
   /** Languages enabled for this wedding (code → display name), or undefined until config loads. */
   protected readonly languages = computed(() => this.config.weddingConfigPublic()?.language);
 

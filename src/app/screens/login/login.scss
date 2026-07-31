@@ -1,6 +1,19 @@
 @use '../../../styles/tokens' as t;
 
 :host {
+  display: block;
+  min-height: 100%;
+  position: relative;
+}
+
+// Desktop-only decorative Alhambra skyline behind the card (ScreenLogin.jsx
+// `wide` branch); hidden on mobile, where the card fills the screen edge to
+// edge and there's no room for a background illustration.
+.alhambra-decor {
+  display: none;
+}
+
+.card {
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -25,63 +38,35 @@ header {
   margin: 0 auto;
 }
 
-.intro {
-  text-align: center;
+.fish {
+  display: flex;
+  justify-content: center;
 }
 
-.title {
-  margin: 0;
-  font-family: t.$font-serif;
-  font-weight: 400;
-  font-size: t.$text-display-md;
-  line-height: 1.05;
-  color: var(--ink);
-}
-
-.subtitle {
-  margin: t.$space-2 0 0;
-  font-family: t.$font-sans;
-  font-size: t.$text-body;
-  color: var(--sub);
-}
-
+// Segmented pill control (DS ScreenLogin.jsx `segBtn`) — not underline tabs.
 .auth-tabs {
   display: flex;
   gap: t.$space-2;
-  margin-bottom: t.$space-3;
-  border-bottom: 1px solid var(--border-hairline);
 
   button {
     flex: 1;
-    padding: t.$space-3 t.$space-2;
-    background: none;
-    border: none;
+    padding: t.$space-3 0;
+    background: transparent;
+    border: 1px solid var(--border-hairline);
+    border-radius: t.$radius-pill;
     font-family: t.$font-sans;
-    font-size: t.$text-label;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--sub);
+    font-size: t.$text-body;
+    color: var(--ink);
     cursor: pointer;
-    position: relative;
-    transition: color 0.2s ease-in-out;
+    transition:
+      background-color 0.2s ease-in-out,
+      color 0.2s ease-in-out,
+      border-color 0.2s ease-in-out;
 
     &.active {
-      color: var(--ink);
-
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: -1px;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: var(--ink);
-      }
-    }
-
-    &:hover:not(.active) {
-      color: var(--ink);
+      border-color: transparent;
+      background: var(--brand-accent);
+      color: var(--on-accent);
     }
   }
 }
@@ -109,11 +94,27 @@ header {
   }
 }
 
+.code-input {
+  font-family: t.$font-serif;
+  font-size: t.$text-display-sm;
+  letter-spacing: 0.45em;
+  text-align: center;
+  text-indent: 0.45em;
+}
+
 .social-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: t.$space-2;
+}
+
+.social-caption {
+  margin: 0;
+  text-align: center;
+  font-family: t.$font-sans;
+  font-size: t.$text-caption;
+  color: var(--text-muted);
 }
 
 .label {
@@ -122,28 +123,28 @@ header {
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--sub);
+  color: var(--text-muted);
 }
 
-.sent-to {
-  margin: 0;
-  text-align: center;
-  font-family: t.$font-sans;
-  font-size: t.$text-body;
-  color: var(--sub);
+.links {
+  display: flex;
+  justify-content: center;
+  gap: t.$space-5;
+}
 
-  strong {
-    color: var(--ink);
-    font-weight: 600;
+.link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: t.$font-sans;
+  font-size: t.$text-caption;
+  color: var(--brand-accent);
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
-}
-
-.info {
-  margin: 0;
-  text-align: center;
-  font-family: t.$font-sans;
-  font-size: t.$text-body;
-  color: var(--sub);
 }
 
 .error {
@@ -158,7 +159,7 @@ header {
   display: flex;
   align-items: center;
   gap: t.$space-3;
-  color: var(--sub);
+  color: var(--text-muted);
   font-family: t.$font-sans;
   font-size: t.$text-label;
   letter-spacing: 0.14em;
@@ -177,4 +178,38 @@ header {
   display: flex;
   flex-direction: column;
   gap: t.$space-2;
+}
+
+// ── Desktop: centered card over the Alhambra skyline (ScreenLogin.jsx `wide`) ──
+@media (min-width: 1024px) {
+  :host {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-page);
+    padding: t.$space-7;
+  }
+
+  .alhambra-decor {
+    display: block;
+    position: absolute;
+    right: 36px;
+    bottom: -8px;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .card {
+    width: 430px;
+    max-width: 90%;
+    min-height: 0;
+    background: var(--surface-card);
+    border: 1px solid var(--border-hairline);
+    border-radius: t.$radius-card;
+    padding: t.$space-6 34px;
+  }
+
+  .content {
+    max-width: none;
+  }
 }

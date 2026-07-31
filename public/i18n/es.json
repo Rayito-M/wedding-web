@@ -14,8 +14,9 @@
     "venue": "Palacio de los Córdova · Granada"
   },
   "login": {
-    "title": "Bienvenido",
-    "subtitle": "Inicia sesión para ver tu invitación y confirmar asistencia.",
+    "eyebrow": "Evento privado · Inicia sesión",
+    "title": "Bienvenido de nuevo",
+    "subtitle": "Inicia sesión para ver tu invitación, confirmar asistencia y el plan del día.",
     "or": "o",
     "tabs": {
       "phone": "Teléfono",
@@ -28,12 +29,15 @@
       "sending": "Enviando…"
     },
     "code": {
+      "eyebrow": "Código por SMS · Enviado",
+      "title": "Introduce el código",
+      "sub": "Enviado por SMS a {{value}}. Caduca en 10 minutos.",
       "label": "Código de verificación",
       "placeholder": "123456",
-      "sentTo": "Enviamos un código a",
       "cta": "Verificar",
       "verifying": "Verificando…",
-      "changeNumber": "Usar otro número"
+      "changeNumber": "Usar otro número",
+      "resend": "Reenviar código"
     },
     "email": {
       "label": "Correo electrónico",
@@ -42,17 +46,26 @@
       "sending": "Enviando…"
     },
     "magicLink": {
-      "sentTo": "Enviamos un enlace a",
-      "info": "Revisa tu bandeja de entrada para un enlace de acceso. Expira en 15 minutos.",
-      "changeEmail": "Usar otro correo"
+      "eyebrow": "Enlace mágico · Enviado",
+      "title": "Revisa tu bandeja de entrada",
+      "sub": "Enviamos un enlace de acceso a {{value}}. Funciona una sola vez y caduca en 15 minutos.",
+      "changeEmail": "Usar otro correo",
+      "resend": "Reenviar enlace"
     },
     "social": {
       "google": "Continuar con Google",
       "apple": "Continuar con Apple",
+      "caption": "Sin contraseña: los enlaces y códigos son personales de tu invitación.",
       "errorTitle": "Error al iniciar sesión",
       "errorBody": "No pudimos iniciar sesión con esa cuenta. Inténtalo de nuevo."
     },
     "callback": {
+      "verifying": {
+        "eyebrow": "Retorno seguro",
+        "title": "Iniciando sesión",
+        "sub": "Verificado. Preparando tu invitación…",
+        "oneMoment": "Un momento"
+      },
       "errorTitle": "Error al iniciar sesión",
       "errorBody": "No pudimos iniciar sesión. Inténtalo de nuevo."
     },
@@ -327,6 +340,8 @@
     "yes": "Sí",
     "no": "No",
     "confirm": "Confirmar",
+    "language": "Idioma",
+    "logout": "Cerrar sesión",
     "you": "Tú",
     "seat": {
       "your": "Tu asiento",
@@ -344,6 +359,7 @@
     "config": "Configuración",
     "rsvp": "Gestión de asistencia",
     "schedule": "Agenda",
+    "album": "Álbum",
     "travel": "Cómo llegar"
   },
   "titles": {
@@ -353,6 +369,7 @@
     "rsvp": "RSVP · Sara & Christophe",
     "schedule": "El gran día · Sara & Christophe",
     "travel": "Cómo llegar · Sara & Christophe",
+    "album": "Álbum · Sara & Christophe",
     "dashboard": "Panel · Sara & Christophe",
     "config": "Configuración · Sara & Christophe",
     "guestManager": "Gestor de invitados · Sara & Christophe",
