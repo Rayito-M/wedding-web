@@ -8,7 +8,7 @@
 }
 
 .content {
-  padding: 20px t.$space-6;
+  padding: 30px t.$space-6;
 }
 
 // Eyebrow label above each step's content — "RSVP · STEP {n}/{total}".
@@ -174,7 +174,7 @@ footer {
 @media (min-width: 900px) {
   :host {
     max-width: 560px;
-    margin: 0 auto;
+    margin: t.$space-6 auto;
     // Undo the mobile `min-height: 100%` (needed there to pin the footer at
     // the bottom of a full-height screen) — the desktop card has no such
     // requirement and must size to its content, matching the DS reference

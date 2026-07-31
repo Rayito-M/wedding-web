@@ -38,10 +38,13 @@
             type="button"
             app-toggle
             [checked]="draft().withPartner"
-            [disabled]="hasLinkedPartner()"
             (toggled)="toggleWithPartner($event)"
           >
-            {{ 'rsvp.create.attending.withPartner' | translate }}
+            @if (hasLinkedPartner()) {
+              {{ rsvp()?.adults.partner2?.firstName }} {{ rsvp()?.adults.partner2?.lastName }}
+            } @else {
+              {{ 'rsvp.create.attending.withPartner' | translate }}
+            }
           </button>
           <button
             type="button"
@@ -94,7 +97,9 @@
                   app-input
                   type="text"
                   [value]="child.firstName"
-                  [placeholder]="'rsvp.create.party.childFirstName' | translate: { index: $index + 1 }"
+                  [placeholder]="
+                    'rsvp.create.party.childFirstName' | translate: { index: $index + 1 }
+                  "
                   (input)="setChildFirstName($index, inputValue($event))"
                 />
                 <input

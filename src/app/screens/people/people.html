@@ -2,9 +2,14 @@
   <div class="page">
     <div class="top">
       <header class="head">
-        <div class="eyebrow">{{ people.length }} people going</div>
-        <h1 class="title">Find <span class="accent">each other</span></h1>
-        <p class="subtitle">Everyone who has signed in appears here. Your own card opens your profile.</p>
+        <div class="eyebrow">
+          {{ eyebrowKey() | translate: { count: userProfileList().length } }}
+        </div>
+        <h1 class="title">
+          {{ 'people.title' | translate }}
+          <span class="accent">{{ 'people.titleAccent' | translate }}</span>
+        </h1>
+        <p class="subtitle">{{ 'people.subtitle' | translate }}</p>
       </header>
 
       <div class="controls">
@@ -12,7 +17,7 @@
           app-input
           type="text"
           class="search"
-          placeholder="Search a name…"
+          [attr.placeholder]="'people.search.placeholder' | translate"
           [value]="query()"
           (input)="setQuery(inputValue($event))"
         />
@@ -24,7 +29,7 @@
               [class.on]="filter() === f.id"
               (click)="setFilter(f.id)"
             >
-              {{ f.label }}
+              {{ f.labelKey | translate: f.labelParams }}
             </button>
           }
         </div>
@@ -47,13 +52,20 @@
             <div class="name-row">
               <span class="name">{{ person.firstName }} {{ person.lastName }}</span>
               @if (person.preferredLang) {
-                <span class="lang">{{ langLabel(person.preferredLang) }}</span>
+                <span class="lang">{{ person.preferredLang.toUpperCase() }}</span>
               }
             </div>
             <div class="badges">
-              <app-pill [tone]="isCouple(person) ? 'accent' : 'soft'">{{ roleLabel(person.role) }}</app-pill>
+              <app-pill [tone]="isCouple(person) ? 'accent' : 'soft'">{{
+                'roles.' + person.role | translate
+              }}</app-pill>
               @if (person.relation) {
-                <app-pill>{{ relationText(person) }}</app-pill>
+                <app-pill>
+                  {{ person.relation.link | translate }}
+                  @if (person.relation.side) {
+                    · {{ 'roles.' + person.relation.side | translate }}
+                  }
+                </app-pill>
               }
             </div>
             @if (person.email || person.phoneNumber) {
@@ -70,7 +82,7 @@
         </div>
       }
       @if (filteredPeople().length === 0) {
-        <div class="empty">No one matches "{{ query() }}".</div>
+        <div class="empty">{{ 'people.empty' | translate: { query: query() } }}</div>
       }
     </div>
   </div>

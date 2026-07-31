@@ -200,7 +200,6 @@ export class RsvpCreate {
   }
 
   protected toggleWithPartner(value: boolean): void {
-    if (this.hasLinkedPartner()) return;
     this.draft.update((d) => ({ ...d, withPartner: value }));
   }
 
@@ -296,9 +295,7 @@ export class RsvpCreate {
     // A partner account already linked server-side (`hasLinkedPartner`) isn't
     // editable here — carried forward verbatim rather than replaced.
     const partner2 =
-      d.attending === 'yes' && d.withPartner
-        ? (typedPartner ?? rsvp.adults.partner2)
-        : undefined;
+      d.attending === 'yes' && d.withPartner ? (typedPartner ?? rsvp.adults.partner2) : undefined;
 
     const children: RsvpDtoChildrenInner[] | undefined =
       d.attending === 'yes' && d.withChildren
