@@ -1,0 +1,39 @@
+@use '../../../styles/tokens' as t;
+
+:host {
+  display: block;
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 t.$space-3;
+  font-family: t.$font-sans;
+  font-size: t.$text-label;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.title {
+  margin: 0;
+  font-family: t.$font-serif;
+  font-weight: 400;
+  font-size: t.$text-display-md;
+  line-height: 1.05;
+  color: var(--ink);
+}
+
+.sub {
+  margin: t.$space-3 auto 0;
+  max-width: 300px;
+  font-family: t.$font-sans;
+  font-size: t.$text-body;
+  line-height: 1.55;
+  color: var(--text-muted);
+
+  strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+}

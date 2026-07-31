@@ -1,0 +1,5 @@
+<p class="eyebrow">{{ eyebrowKey() | translate }}</p>
+<h1 class="title">{{ titleKey() | translate }}</h1>
+@if (subKey(); as key) {
+  <p class="sub">{{ key | translate: subParams() }}</p>
+}

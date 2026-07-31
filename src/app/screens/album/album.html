@@ -1,7 +1,10 @@
 <div class="title-block">
   <div>
     <h1>Our album</h1>
-    <p class="sub">Shared by all of you.</p>
+    <p class="sub">
+      Shared by all of you.
+      <span class="meta">&middot; LIVE &middot; {{ album.totalCount() }} PHOTOS</span>
+    </p>
   </div>
   <button class="fab" type="button" aria-label="Add a photo" (click)="album.upload()">+</button>
 </div>
@@ -22,9 +25,18 @@
 
   <div class="grid">
     @for (p of album.filtered(); track p.label) {
-      <app-photo-placeholder [label]="p.label" [style.height.px]="p.h" />
+      <app-photo-placeholder [label]="p.label" [style.--tile-h.px]="p.h" />
     }
   </div>
 
   <div class="hint">Tap <strong>+</strong> to add a photo from the day.</div>
 </div>
+
+<app-decor-motorcycle-rider
+  class="mobile-moto"
+  mode="ground"
+  color="var(--ink)"
+  accentColor="var(--brand-accent)"
+  [width]="54"
+  [bottom]="52"
+/>

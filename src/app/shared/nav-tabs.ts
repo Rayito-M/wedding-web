@@ -15,5 +15,6 @@ export const NAV_TABS: NavTab[] = [
   { id: 'config', labelKey: 'nav.config', link: '/config', roles: ['groom', 'bride'] },
   { id: 'rsvp', labelKey: 'nav.rsvp', link: '/rsvp', roles: ['guest'] },
   { id: 'schedule', labelKey: 'nav.schedule', link: '/schedule' },
+  { id: 'album', labelKey: 'nav.album', link: '/album' },
   { id: 'travel', labelKey: 'nav.travel', link: '/travel' },
 ];

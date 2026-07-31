@@ -3,6 +3,7 @@
 :host {
   display: block;
   width: 100%;
+  position: relative;
 }
 
 .title-block {
@@ -22,6 +23,12 @@
     font-size: t.$text-caption;
     color: var(--sub);
     margin-top: 6px;
+  }
+
+  // Desktop-only metadata fragment next to "Shared by all of you." — hidden
+  // on mobile to match ScreenAlbum.jsx's narrow branch (no metadata shown).
+  .meta {
+    display: none;
   }
 }
 
@@ -80,6 +87,7 @@
 
   app-photo-placeholder {
     border-radius: t.$radius-input;
+    height: var(--tile-h);
   }
 }
 
@@ -98,20 +106,31 @@
   }
 }
 
-// Album gets a wider column and 3–4 grid columns on desktop.
+// Album gets a wider column, 3 taller grid tiles, and its desktop metadata
+// fragment; the mobile-only motorcycle decor is hidden (matches
+// ScreenAlbum.jsx's `wide` AppShell maxWidth={880} + grid(3, 40) call — no
+// 4-column step in the reference).
 @media (min-width: 900px) {
   :host {
-    max-width: 840px;
+    max-width: 880px;
     margin: 0 auto;
+  }
+
+  .title-block .sub .meta {
+    display: inline;
+    font-size: t.$text-micro;
+    letter-spacing: 0.1em;
   }
 
   .grid {
     grid-template-columns: repeat(3, 1fr);
-  }
-}
 
-@media (min-width: 1200px) {
-  .grid {
-    grid-template-columns: repeat(4, 1fr);
+    app-photo-placeholder {
+      height: calc(var(--tile-h) + 40px);
+    }
+  }
+
+  .mobile-moto {
+    display: none;
   }
 }
