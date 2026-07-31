@@ -1,119 +1,109 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { HeaderService } from '../../core';
-import { RsvpReply, RsvpService } from '../../core/rsvp.service';
-import { Btn } from '../../shared/button/button';
-import { ChoiceCard } from '../../shared/choice-card/choice-card';
-import { DecorFishPair } from '../../shared/decor/fish-pair';
-import { TextInput } from '../../shared/input/input';
-import { TextareaInput } from '../../shared/textarea/textarea';
-import { Toggle } from '../../shared/toggle/toggle';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  type Signal,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 
-export const DIET_OPTIONS = [
-  'vegetarian',
-  'vegan',
-  'pescatarian',
-  'glutenFree',
-  'nutAllergy',
-  'noAlcohol',
-] as const;
+import { firstValueFrom, map } from 'rxjs';
+import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
+import { EntityNamesEnum, LoginService, RsvpDto, WeddingRsvpService } from '@app/core';
+import { AppLoadingComponent } from '@app/shared/loading/loading';
+
+import { RsvpCreate } from '../rsvp-create/rsvp-create';
+import { RsvpEdit } from '../rsvp-edit/rsvp-edit';
+
+/**
+ * Thin orchestrator (ad hoc rebuild, see design system `ScreenRSVPCreate.jsx`
+ * / `ScreenRSVPEdit.jsx`, commit 9e44df2): on init, reads the guest's `RsvpDto`
+ * directly from the API (a 204 "no RSVP yet" needs a definite answer before
+ * deciding whether to provision one — not a racy cache read) and, if none
+ * exists, immediately asks the API to create the minimal `pending` record
+ * (server fills `adults.partner1` and, if the guest already has a linked
+ * partner account, `adults.partner2`). From then on the guest always has a
+ * real, patchable record: `pending` stays on the first-time reply flow
+ * (`app-rsvp-create`, which now only ever PATCHes — the record already
+ * exists); `attending`/`declined` go to the standing record editor
+ * (`app-rsvp-edit`). No route, no step state, no form of its own lives here.
+ */
 @Component({
   selector: 'app-rsvp',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    ReactiveFormsModule,
-    Btn,
-    ChoiceCard,
-    TextInput,
-    TextareaInput,
-    Toggle,
-    DecorFishPair,
-    TranslatePipe,
-  ],
+  imports: [RsvpCreate, RsvpEdit, AppLoadingComponent],
   templateUrl: './rsvp.html',
   styleUrl: './rsvp.scss',
 })
-export class Rsvp {
-  private readonly rsvpService = inject(RsvpService);
-  private readonly fb = inject(NonNullableFormBuilder);
-  private readonly translateService = inject(TranslateService);
-  private readonly header = inject(HeaderService);
+export class Rsvp implements OnInit {
+  private readonly login = inject(LoginService);
+  private readonly rsvpApi = inject(WeddingRsvpService);
 
-  protected readonly dietOptions = DIET_OPTIONS;
-  protected readonly step = signal(0);
+  private readonly rsvpCollection: EntityCollectionService<RsvpDto> = inject(
+    EntityServices,
+  ).getEntityCollectionService<RsvpDto>(EntityNamesEnum.RSVP);
 
-  constructor() {
-    effect(() => {
-      const header = this.translateService.instant('rsvp.header');
-      const step = this.translateService.instant('rsvp.step', { current: this.step() + 1 });
-      this.header.set(`${header} · ${step}`);
-    });
-  }
+  /** Flips to `true` on "Change my answer"; reset once a fresh reply lands. */
+  protected readonly forceCreate = signal(false);
 
-  protected readonly confirmationTitle = computed(() => {
-    const isAttending = this.form.controls.attending.value === 'yes';
-    return this.translateService.instant(
-      isAttending ? 'rsvp.step3.yesTitle' : 'rsvp.step3.noTitle',
-    );
-  });
+  /** Gates the initial render until the existence check (and, if needed, the
+   *  auto-provision create call) below has resolved. */
+  protected readonly loaded = signal(false);
 
-  protected readonly confirmationMessage = computed(() => {
-    const isAttending = this.form.controls.attending.value === 'yes';
-    return this.translateService.instant(
-      isAttending ? 'rsvp.step3.yesMessage' : 'rsvp.step3.noMessage',
-    );
-  });
-
-  protected readonly form = this.fb.group({
-    name: [this.rsvpService.reply()?.name ?? 'Laura Mendoza'],
-    attending: this.fb.control<'yes' | 'no' | null>(
-      this.rsvpService.reply()?.attending ?? null,
-      Validators.required,
+  // Read pattern copied verbatim from `invitee.ts`: derive the current
+  // guest's RSVP from the cached collection, so subsequent PATCHes made by
+  // `app-rsvp-create` / `app-rsvp-edit` (which go through this same
+  // collection) are reflected here reactively.
+  protected readonly rsvp: Signal<RsvpDto | undefined> = toSignal(
+    this.rsvpCollection.entities$.pipe(
+      map((rsvps) => {
+        const currentUser = this.login.currentUserClaims();
+        const found = rsvps.find(
+          (r) => r.id === currentUser?.sub || r.adults.partner2?.id === currentUser?.sub,
+        );
+        return found;
+      }),
     ),
-    plusOne: [this.rsvpService.reply()?.plusOne ?? false],
-    diet: [this.rsvpService.reply()?.diet ?? ([] as string[])],
-    note: [this.rsvpService.reply()?.note ?? ''],
+    { initialValue: undefined },
+  );
+
+  protected readonly isDecided = computed(() => {
+    const status = this.rsvp()?.status;
+    return status === RsvpDto.StatusEnum.ATTENDING || status === RsvpDto.StatusEnum.DECLINED;
   });
 
-  protected setAttending(value: 'yes' | 'no'): void {
-    this.form.controls.attending.setValue(value);
+  protected onSubmitted(): void {
+    this.forceCreate.set(false);
   }
 
-  protected togglePlusOne(): void {
-    this.form.controls.plusOne.setValue(!this.form.controls.plusOne.value);
+  protected onChangeAnswer(): void {
+    this.forceCreate.set(true);
   }
 
-  protected toggleDiet(option: string): void {
-    const diet = this.form.controls.diet.value;
-    this.form.controls.diet.setValue(
-      diet.includes(option) ? diet.filter((d) => d !== option) : [...diet, option],
-    );
-  }
-
-  protected continue(): void {
-    if (this.step() === 0) {
-      // Cannot advance without an "Attending?" selection.
-      if (this.form.controls.attending.invalid) return;
-      this.step.set(1);
-    } else {
-      this.rsvpService.submit(this.form.getRawValue() as RsvpReply);
-      this.step.set(2);
+  async ngOnInit(): Promise<void> {
+    const currentUser = this.login.currentUserClaims();
+    if (!currentUser) {
+      this.loaded.set(true);
+      return;
     }
-  }
 
-  protected back(): void {
-    this.step.update((s) => s - 1);
-  }
-
-  protected edit(): void {
-    this.step.set(0);
-  }
-
-  protected statusLine(): string {
-    const { attending, plusOne, diet } = this.form.getRawValue();
-    const base = attending === 'yes' ? `Attending${plusOne ? ' · +1' : ''}` : 'Not attending';
-    return diet.length ? `${base} · ${diet.join(', ')}` : base;
+    let rsvp = await firstValueFrom(this.rsvpApi.rsvpControllerGetV1({ id: currentUser.sub }));
+    if (!rsvp) {
+      try {
+        rsvp = await firstValueFrom(
+          this.rsvpApi.rsvpControllerCreateV1({ id: currentUser.sub }),
+        );
+      } catch {
+        // Lost a create race (e.g. two tabs open at once) — it exists now, re-read it.
+        rsvp = await firstValueFrom(this.rsvpApi.rsvpControllerGetV1({ id: currentUser.sub }));
+      }
+    }
+    if (rsvp) {
+      this.rsvpCollection.addOneToCache(rsvp);
+    }
+    this.loaded.set(true);
   }
 }

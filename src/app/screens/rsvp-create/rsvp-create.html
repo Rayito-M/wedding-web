@@ -1,0 +1,152 @@
+<div class="content">
+  <div class="eyebrow">
+    {{ 'rsvp.header' | translate }} ·
+    {{ 'rsvp.create.step' | translate: { current: step() + 1, total: steps() } }}
+  </div>
+
+  @if (step() === 0) {
+    <div class="step">
+      <h2>{{ 'rsvp.create.attending.title' | translate }}</h2>
+      <p class="sub">{{ 'rsvp.create.attending.subtitle' | translate }}</p>
+
+      <div class="field">
+        <div class="label">{{ 'rsvp.create.attending.label' | translate }}</div>
+        <div class="choices">
+          <button
+            type="button"
+            app-choice-card
+            [selected]="draft().attending === 'yes'"
+            (click)="setAttending('yes')"
+          >
+            {{ 'rsvp.create.attending.yes' | translate }}
+          </button>
+          <button
+            type="button"
+            app-choice-card
+            [selected]="draft().attending === 'no'"
+            (click)="setAttending('no')"
+          >
+            {{ 'rsvp.create.attending.no' | translate }}
+          </button>
+        </div>
+      </div>
+
+      @if (draft().attending === 'yes') {
+        <div class="field who">
+          <div class="label">{{ 'rsvp.create.attending.withLabel' | translate }}</div>
+          <button
+            type="button"
+            app-toggle
+            [checked]="draft().withPartner"
+            [disabled]="hasLinkedPartner()"
+            (toggled)="toggleWithPartner($event)"
+          >
+            {{ 'rsvp.create.attending.withPartner' | translate }}
+          </button>
+          <button
+            type="button"
+            app-toggle
+            [checked]="draft().withChildren"
+            (toggled)="toggleWithChildren($event)"
+          >
+            {{ 'rsvp.create.attending.withChildren' | translate }}
+          </button>
+          <p class="hint">{{ 'rsvp.create.attending.hint' | translate }}</p>
+        </div>
+      }
+    </div>
+  }
+
+  @if (isPartyStep()) {
+    <div class="step">
+      <h2 class="party-title">{{ 'rsvp.create.party.title' | translate }}</h2>
+      <p class="sub">{{ 'rsvp.create.party.subtitle' | translate }}</p>
+
+      @if (draft().withPartner) {
+        <div class="field">
+          <div class="label">{{ 'rsvp.create.party.partnerLabel' | translate }}</div>
+          <div class="row">
+            <input
+              app-input
+              type="text"
+              [value]="draft().partner.firstName"
+              [placeholder]="'rsvp.create.party.firstName' | translate"
+              (input)="setPartnerFirstName(inputValue($event))"
+            />
+            <input
+              app-input
+              type="text"
+              [value]="draft().partner.lastName"
+              [placeholder]="'rsvp.create.party.lastName' | translate"
+              (input)="setPartnerLastName(inputValue($event))"
+            />
+          </div>
+        </div>
+      }
+
+      @if (draft().withChildren) {
+        <div class="field" [class.tight]="draft().withPartner">
+          <div class="label">{{ 'rsvp.create.party.childrenLabel' | translate }}</div>
+          <div class="children">
+            @for (child of draft().children; track $index) {
+              <div class="row child-row">
+                <input
+                  app-input
+                  type="text"
+                  [value]="child.firstName"
+                  [placeholder]="'rsvp.create.party.childFirstName' | translate: { index: $index + 1 }"
+                  (input)="setChildFirstName($index, inputValue($event))"
+                />
+                <input
+                  app-input
+                  type="text"
+                  class="age"
+                  [value]="child.age"
+                  [placeholder]="'rsvp.create.party.age' | translate"
+                  (input)="setChildAge($index, inputValue($event))"
+                />
+                <button
+                  type="button"
+                  class="remove-btn"
+                  [attr.aria-label]="'rsvp.create.party.removeChild' | translate"
+                  (click)="removeChild($index)"
+                >
+                  ×
+                </button>
+              </div>
+            }
+          </div>
+          <button type="button" class="add-link" (click)="addChild()">
+            {{ 'rsvp.create.party.addChild' | translate }}
+          </button>
+          <p class="hint">{{ 'rsvp.create.party.childrenHint' | translate }}</p>
+        </div>
+      }
+    </div>
+  }
+
+  @if (isFinalStep()) {
+    <div class="step confirmation">
+      <app-decor-fish-pair [size]="120" />
+      @if (draft().attending === 'yes') {
+        <h2>{{ 'rsvp.create.confirm.yesTitle' | translate }}</h2>
+        <p class="sub outro">{{ 'rsvp.create.confirm.yesMessage' | translate }}</p>
+      } @else {
+        <h2>{{ 'rsvp.create.confirm.noTitle' | translate }}</h2>
+        <p class="sub outro">{{ 'rsvp.create.confirm.noMessage' | translate }}</p>
+      }
+      @if (submitFailed()) {
+        <p class="error">{{ 'rsvp.create.error' | translate }}</p>
+      }
+    </div>
+  }
+</div>
+
+<footer>
+  @if (step() > 0 && !isFinalStep()) {
+    <button app-btn [primary]="false" (click)="back()">{{ 'shared.back' | translate }}</button>
+  }
+  <button app-btn [full]="true" [disabled]="continueDisabled()" (click)="continue()">
+    {{ continueLabelKey() | translate }}
+  </button>
+</footer>

@@ -1,0 +1,145 @@
+<div class="profile">
+  <div class="page">
+    <div class="eyebrow">My profile</div>
+
+    <div class="layout">
+      <div class="main">
+        <!-- identity card -->
+        <div class="card identity">
+          <app-decor-fish class="deco-fish" [w]="54" [flip]="true" />
+          <div class="avatar-wrap">
+            <div class="avatar">{{ initials() }}</div>
+            @if (editing()) {
+              <button type="button" class="avatar-edit" title="Change photo" aria-label="Change photo">
+                ✎
+              </button>
+            }
+          </div>
+          <div class="identity-info">
+            <div class="name">{{ form().firstName }} {{ form().lastName }}</div>
+            <div class="badges">
+              <app-pill tone="accent">{{ me.role }}</app-pill>
+              <app-pill>{{ relationText() }}</app-pill>
+            </div>
+          </div>
+        </div>
+
+        <!-- editable-looking fields -->
+        <div class="card details">
+          <div class="grid-2">
+            <div class="field">
+              <div class="field-label">First name</div>
+              @if (editing()) {
+                <input
+                  app-input
+                  type="text"
+                  placeholder="Laura"
+                  [value]="form().firstName"
+                  (input)="setField('firstName', inputValue($event))"
+                />
+              } @else {
+                <div class="field-value" [class.empty]="!form().firstName">
+                  {{ form().firstName || '—' }}
+                </div>
+              }
+            </div>
+            <div class="field">
+              <div class="field-label">Last name</div>
+              @if (editing()) {
+                <input
+                  app-input
+                  type="text"
+                  placeholder="Ortega"
+                  [value]="form().lastName"
+                  (input)="setField('lastName', inputValue($event))"
+                />
+              } @else {
+                <div class="field-value" [class.empty]="!form().lastName">
+                  {{ form().lastName || '—' }}
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="field-label">Email</div>
+            @if (editing()) {
+              <input
+                app-input
+                type="email"
+                placeholder="you&#64;example.com"
+                [value]="form().email"
+                (input)="setField('email', inputValue($event))"
+              />
+            } @else {
+              <div class="field-value" [class.empty]="!form().email">
+                {{ form().email || '—' }}
+              </div>
+            }
+          </div>
+
+          <div class="field">
+            <div class="field-label">Phone number</div>
+            @if (editing()) {
+              <input
+                app-input
+                type="tel"
+                placeholder="+34 600 000 000"
+                [value]="form().phoneNumber"
+                (input)="setField('phoneNumber', inputValue($event))"
+              />
+            } @else {
+              <div class="field-value" [class.empty]="!form().phoneNumber">
+                {{ form().phoneNumber || '—' }}
+              </div>
+            }
+          </div>
+
+          <div class="field">
+            <div class="field-label">Preferred language</div>
+            <div class="lang-options">
+              @for (l of langs; track l.code) {
+                <button
+                  type="button"
+                  class="lang-chip"
+                  [class.on]="lang() === l.code"
+                  [disabled]="!editing()"
+                  (click)="setLang(l.code)"
+                >
+                  {{ l.label }}
+                </button>
+              }
+            </div>
+            <div class="lang-hint">Also switchable any time from the avatar menu.</div>
+          </div>
+        </div>
+
+        <!-- actions -->
+        <div class="actions">
+          @if (editing()) {
+            <button app-btn type="button" (click)="save()">Save changes</button>
+            <button app-btn type="button" [primary]="false" (click)="cancelEdit()">Cancel</button>
+          } @else {
+            <button app-btn type="button" (click)="startEdit()">Edit profile</button>
+            <button app-btn type="button" [primary]="false" routerLink="/people">
+              Back to people
+            </button>
+          }
+          @if (saved()) {
+            <span class="saved">Saved.</span>
+          }
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="card visibility">
+          <div class="field-label">Visible to other guests</div>
+          <p class="visibility-text">
+            Your name, role and relation always appear in
+            <a class="link" routerLink="/people">People</a>. Email and phone are shared with the couple only.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

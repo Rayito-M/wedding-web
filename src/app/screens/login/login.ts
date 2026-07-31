@@ -144,7 +144,7 @@ export class Login {
       this.codeForm.controls.code.value.trim(),
     );
     if (ok) {
-      await this.router.navigateByUrl(this.login.landingUrl());
+      await this.router.navigateByUrl(await this.login.postLoginUrl());
     }
   }
 

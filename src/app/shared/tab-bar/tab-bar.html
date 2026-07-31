@@ -1,8 +1,48 @@
-@for (tab of tabs(); track tab.id) {
-  @if (isRouteEnabled(tab.link)) {
+@if (overflows()) {
+  <!-- Click-to-close scrim only; Escape (document-level) covers keyboard close, so this
+       stays out of the tab order on purpose (per DS: aria-hidden, no focus). -->
+  <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+  <div class="backdrop" [class.open]="open()" [attr.aria-hidden]="!open()" (click)="closeSheet()"></div>
+
+  <div class="sheet" [class.open]="open()" role="menu">
+    <span class="grabber"></span>
+    <div class="sheet-label">{{ 'nav.more' | translate }}</div>
+    @for (tab of restTabs(); track tab.id) {
+      <a
+        class="sheet-row"
+        [class.on]="tab.id === active()"
+        role="menuitem"
+        [routerLink]="tab.link"
+        (click)="closeSheet()"
+      >
+        <span class="dot"></span>
+        <span class="sheet-row-label">{{ tab.labelKey | translate }}</span>
+        @if (tab.id === active()) {
+          <span class="sheet-row-arrow">→</span>
+        }
+      </a>
+    }
+  </div>
+}
+
+<div class="bar">
+  @for (tab of primaryTabs(); track tab.id) {
     <a class="tab" [class.on]="tab.id === active()" [routerLink]="tab.link">
       <span class="dot"></span>
       {{ tab.labelKey | translate }}
     </a>
   }
-}
+  @if (overflows()) {
+    <button
+      type="button"
+      class="tab"
+      [class.on]="inRest() || open()"
+      aria-haspopup="menu"
+      [attr.aria-expanded]="open()"
+      (click)="toggleSheet()"
+    >
+      <span class="chevron" [class.open]="open()"></span>
+      {{ inRest() ? (activeRestTab()?.labelKey | translate) : ('nav.more' | translate) }}
+    </button>
+  }
+</div>

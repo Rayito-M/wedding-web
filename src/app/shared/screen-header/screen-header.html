@@ -37,6 +37,16 @@
               <div class="menu-role">{{ roleKey() | translate }}</div>
             </div>
           }
+          <div class="menu-section">
+            <a
+              class="menu-item"
+              routerLink="/profile"
+              (click)="goToProfile($event)"
+            >
+              <span class="menu-item-label">{{ 'shared.myProfile' | translate }}</span>
+              <span class="menu-item-arrow">→</span>
+            </a>
+          </div>
           @if (languages(); as langs) {
             <div class="menu-section">
               <span class="menu-label">{{ 'shared.language' | translate }}</span>

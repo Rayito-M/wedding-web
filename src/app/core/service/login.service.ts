@@ -3,9 +3,11 @@ import { firstValueFrom } from 'rxjs';
 
 import {
   WeddingAuthenticationService,
+  WeddingRsvpService,
   AuthTokenDto,
   SocialLoginDto,
   AppJwtClaimsDto,
+  RsvpDto,
 } from '@app/core/api';
 import { ConfigurationService } from './configuration.service';
 import { TokenStorageService } from './token-storage.service';
@@ -38,6 +40,7 @@ const LANDING_BY_ROLE: Record<UserRole, string> = {
 @Injectable({ providedIn: 'root' })
 export class LoginService {
   private readonly authApi = inject(WeddingAuthenticationService);
+  private readonly rsvpApi = inject(WeddingRsvpService);
   private readonly config = inject(ConfigurationService);
   private readonly tokenStorage = inject(TokenStorageService);
 
@@ -64,6 +67,32 @@ export class LoginService {
   /** Where to send the user after authentication, based on their role. */
   landingUrl(): string {
     return LANDING_BY_ROLE[this.role()];
+  }
+
+  /**
+   * Where to send the user right after they complete sign-in (any method).
+   * A guest with no RSVP yet, or one still `pending`, is sent straight to
+   * `/rsvp` instead of their normal landing page — replying is the first
+   * thing they need to do, and the RSVP screen's own orchestrator takes it
+   * from there (auto-provisioning the record if needed). Only guests RSVP
+   * (bride/groom are admins, provider is external), and any fetch failure
+   * falls back to the normal landing page rather than blocking sign-in.
+   */
+  async postLoginUrl(): Promise<string> {
+    const claims = this.currentUserClaims();
+    if (claims?.sub && claims.role === AppJwtClaimsDto.RoleEnum.GUEST) {
+      try {
+        const rsvp = await firstValueFrom(
+          this.rsvpApi.rsvpControllerGetV1({ id: claims.sub }),
+        );
+        if (!rsvp || rsvp.status === RsvpDto.StatusEnum.PENDING) {
+          return '/rsvp';
+        }
+      } catch {
+        // Fall through to the normal landing page.
+      }
+    }
+    return this.landingUrl();
   }
 
   /**

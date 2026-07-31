@@ -1,0 +1,77 @@
+<div class="people">
+  <div class="page">
+    <div class="top">
+      <header class="head">
+        <div class="eyebrow">{{ people.length }} people going</div>
+        <h1 class="title">Find <span class="accent">each other</span></h1>
+        <p class="subtitle">Everyone who has signed in appears here. Your own card opens your profile.</p>
+      </header>
+
+      <div class="controls">
+        <input
+          app-input
+          type="text"
+          class="search"
+          placeholder="Search a name…"
+          [value]="query()"
+          (input)="setQuery(inputValue($event))"
+        />
+        <div class="filters">
+          @for (f of filters; track f.id) {
+            <button
+              type="button"
+              class="filter-chip"
+              [class.on]="filter() === f.id"
+              (click)="setFilter(f.id)"
+            >
+              {{ f.label }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      @for (person of filteredPeople(); track person.id) {
+        <div
+          class="card"
+          [class.clickable]="isMine(person)"
+          [routerLink]="isMine(person) ? '/profile' : null"
+          [attr.role]="isMine(person) ? 'link' : null"
+          [attr.tabindex]="isMine(person) ? 0 : null"
+          (keydown.enter)="goToProfile(person)"
+          (keydown.space)="goToProfile(person)"
+        >
+          <div class="avatar" [class.couple]="isCouple(person)">{{ initials(person) }}</div>
+          <div class="info">
+            <div class="name-row">
+              <span class="name">{{ person.firstName }} {{ person.lastName }}</span>
+              @if (person.preferredLang) {
+                <span class="lang">{{ langLabel(person.preferredLang) }}</span>
+              }
+            </div>
+            <div class="badges">
+              <app-pill [tone]="isCouple(person) ? 'accent' : 'soft'">{{ roleLabel(person.role) }}</app-pill>
+              @if (person.relation) {
+                <app-pill>{{ relationText(person) }}</app-pill>
+              }
+            </div>
+            @if (person.email || person.phoneNumber) {
+              <div class="contact">
+                @if (person.email) {
+                  <span class="contact-line">{{ person.email }}</span>
+                }
+                @if (person.phoneNumber) {
+                  <span class="contact-line">{{ person.phoneNumber }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+      @if (filteredPeople().length === 0) {
+        <div class="empty">No one matches "{{ query() }}".</div>
+      }
+    </div>
+  </div>
+</div>

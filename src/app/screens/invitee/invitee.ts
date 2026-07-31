@@ -74,7 +74,7 @@ export class Invitee {
 
   protected readonly rsvpStatus = computed(() => this.rsvp()?.status);
 
-  private readonly rsvp: Signal<RsvpDto | undefined> = toSignal(
+  protected readonly rsvp: Signal<RsvpDto | undefined> = toSignal(
     this.rsvpCollection.entities$.pipe(
       map((rsvps) => {
         const currentUser = this.login.currentUserClaims();

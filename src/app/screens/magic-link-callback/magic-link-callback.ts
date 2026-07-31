@@ -52,7 +52,7 @@ export class MagicLinkCallback {
     if (ok) {
       clearInterval(this.timer);
       this.percent.set(100);
-      await this.router.navigateByUrl(this.login.landingUrl());
+      await this.router.navigateByUrl(await this.login.postLoginUrl());
     } else {
       await this.failToLogin();
     }

@@ -1,31 +1,42 @@
 // Per design system components/navigation/TabBar.jsx
 :host {
+  position: relative;
+  z-index: 30;
   flex: 0 0 auto;
+}
+
+.bar {
+  position: relative;
   border-top: 1px solid var(--border-hairline);
   background: var(--surface-card);
   display: flex;
-  padding: 10px 6px 14px;
+  padding: 10px 4px 14px;
   gap: 2px;
 }
 
 .tab {
   flex: 1;
+  min-width: 0;
+  border: 0;
   padding: 6px 0 2px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-1);
+  background: transparent;
   text-decoration: none;
   color: var(--text-muted);
+  font-family: var(--font-sans);
   font-size: var(--text-label);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   font-weight: 500;
 }
 
 .dot {
   width: 6px;
   height: 6px;
+  flex: 0 0 auto;
   border-radius: 50%;
   background: transparent;
   border: 1px solid var(--border-hairline);
@@ -39,4 +50,121 @@
 .tab.on .dot {
   background: var(--brand-accent);
   border: none;
+}
+
+// Chevron toggle on the "More" tab, built from two borders (rotates open/closed).
+.chevron {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-135deg);
+  transition: transform 0.26s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.chevron.open {
+  transform: rotate(45deg);
+}
+
+// Scrim behind the sheet, covering the screen above the bar; click-to-close.
+.backdrop {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  height: 1400px;
+  background: color-mix(in oklab, var(--ink) 30%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.26s ease;
+}
+
+.backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+// Sheet rising from behind the bar with the overflowed nav destinations.
+.sheet {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: var(--surface-card);
+  border-top: 1px solid var(--border-hairline);
+  border-radius: 20px 20px 0 0;
+  padding: 10px 0 6px;
+  transform: translateY(101%);
+  pointer-events: none;
+  transition: transform 0.34s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.sheet.open {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.grabber {
+  display: block;
+  width: 38px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-hairline);
+  margin: 2px auto 10px;
+}
+
+.sheet-label {
+  padding: 0 16px 8px;
+  font-size: var(--text-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sheet-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  border: 0;
+  border-top: 1px solid var(--border-hairline);
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  letter-spacing: 0.01em;
+  color: var(--text-body-color);
+  font-weight: 500;
+}
+
+.sheet-row:hover {
+  background: var(--surface-chip);
+}
+
+.sheet-row.on {
+  color: var(--brand-accent);
+  font-weight: 600;
+}
+
+.sheet-row .dot {
+  width: 7px;
+  height: 7px;
+}
+
+.sheet-row.on .dot {
+  background: var(--brand-accent);
+  border: none;
+}
+
+.sheet-row-label {
+  flex: 1;
+}
+
+.sheet-row-arrow {
+  color: var(--brand-accent);
+  font-size: var(--text-body);
 }

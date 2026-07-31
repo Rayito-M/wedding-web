@@ -131,40 +131,79 @@
       "declined": "Declined"
     },
     "header": "RSVP",
-    "step": "STEP {{current}}/3",
-    "step1": {
-      "title": "Will you join us?",
-      "subtitle": "Please reply by 1 May. We can't wait.",
-      "nameLabel": "Your name",
-      "attendingLabel": "Attending?",
-      "yesOption": "With joy",
-      "noOption": "Sadly no",
-      "plusOneLabel": "Bringing a plus-one"
+    "create": {
+      "step": "STEP {{current}}/{{total}}",
+      "attending": {
+        "title": "Will you join us?",
+        "subtitle": "Please reply by 1 May. We can't wait.",
+        "label": "Attending?",
+        "yes": "With joy",
+        "no": "Sadly no",
+        "withLabel": "Who's coming with you?",
+        "withPartner": "With my partner",
+        "withChildren": "With children",
+        "hint": "Meals, allergies and seating come later — you can edit all of it any time."
+      },
+      "party": {
+        "title": "Your party",
+        "subtitle": "Just names for now, so we can put everyone on the list.",
+        "partnerLabel": "Your partner",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "childrenLabel": "Children",
+        "childFirstName": "Child {{index}} first name",
+        "age": "Age",
+        "addChild": "+ Add another child",
+        "removeChild": "Remove child",
+        "childrenHint": "Ages help us with the kids' menu and the babysitter."
+      },
+      "confirm": {
+        "yesTitle": "See you in June",
+        "noTitle": "You'll be missed",
+        "yesMessage": "Your reply is in. Next, tell us what everyone eats — you can come back to it any time.",
+        "noMessage": "Thank you for letting us know. We'll be thinking of you on the day."
+      },
+      "actions": {
+        "send": "Send reply",
+        "addMeals": "Add meals & allergies",
+        "done": "Done"
+      },
+      "error": "Something went wrong sending your reply. Please try again."
     },
-    "step2": {
-      "title": "At the table",
-      "subtitle": "Any dietary preferences?",
+    "edit": {
+      "eyebrow": "CONFIRMED",
+      "titleAttending": "Your party",
+      "titleDeclined": "Your reply",
+      "seatsHeld": {
+        "none": "No seats held yet. Edit anything until 1 May.",
+        "singular": "{{count}} seat held. Edit anything until 1 May.",
+        "plural": "{{count}} seats held. Edit anything until 1 May."
+      },
+      "declinedSub": "You told us you can't make it. You can change your mind until 1 May.",
+      "addPartner": "+ Add a partner",
+      "addChild": "+ Add a child",
       "noteLabel": "A note for us (optional)",
-      "notePlaceholder": "A song to dance to, a memory…"
-    },
-    "step3": {
-      "yesTitle": "See you in June",
-      "noTitle": "You'll be missed",
-      "yesMessage": "Your reply is in. We'll send travel details and the schedule closer to the day.",
-      "noMessage": "Thank you for letting us know. We'll be thinking of you on the day.",
-      "replyConfirmed": "Reply confirmed",
-      "back": "Back",
-      "continue": "Continue",
-      "send": "Send reply",
-      "edit": "Edit reply"
-    },
-    "diet": {
-      "vegetarian": "Vegetarian",
-      "vegan": "Vegan",
-      "pescatarian": "Pescatarian",
-      "glutenFree": "Gluten-free",
-      "nutAllergy": "Nut allergy",
-      "noAlcohol": "No alcohol"
+      "notePlaceholder": "A song to dance to, a memory…",
+      "changeAnswer": "Change my answer",
+      "kind": {
+        "you": "You",
+        "partner": "Partner",
+        "child": "Child"
+      },
+      "person": {
+        "newGuest": "New guest",
+        "meal": "Meal",
+        "allergies": "Allergies",
+        "allergiesPlaceholder": "Nuts, shellfish, sesame…",
+        "noMealDetails": "No meal details yet",
+        "yearsOld": "{{age}} years old",
+        "allergiesSummary": "Allergies: {{list}}"
+      },
+      "footer": {
+        "saved": "Changes saved ✓",
+        "unsaved": "Unsaved changes"
+      },
+      "error": "Something went wrong saving your changes. Please try again."
     }
   },
   "dashboard": {
@@ -299,6 +338,7 @@
     },
     "rsvp": {
       "label": "Your RSVP",
+      "notFound": "Please, give us your Response",
       "status": {
         "confirmed": {
           "adults": {
@@ -362,6 +402,7 @@
     "confirm": "Confirm",
     "language": "Language",
     "logout": "Logout",
+    "myProfile": "My profile",
     "you": "You",
     "seat": {
       "your": "Your seat",
@@ -380,20 +421,26 @@
     "rsvp": "RSVP",
     "schedule": "Schedule",
     "album": "Album",
-    "travel": "Travel"
+    "travel": "Travel",
+    "seating": "Seating",
+    "people": "Contacts",
+    "more": "More"
   },
   "titles": {
     "welcome": "Sara & Christophe · Save the date",
-    "login": "Sign in · Sara & Christophe",
-    "signingIn": "Signing in · Sara & Christophe",
-    "rsvp": "RSVP · Sara & Christophe",
-    "schedule": "The day · Sara & Christophe",
-    "travel": "Getting there · Sara & Christophe",
-    "album": "Album · Sara & Christophe",
-    "dashboard": "Dashboard · Sara & Christophe",
-    "config": "Configuration · Sara & Christophe",
-    "guestManager": "Guest manager · Sara & Christophe",
-    "invitee": "Your day · Sara & Christophe"
+    "login": "Sara & Christophe · Sign in",
+    "signingIn": "Sara & Christophe · Signing in",
+    "rsvp": "Sara & Christophe · RSVP",
+    "schedule": "Sara & Christophe · The day",
+    "travel": "Sara & Christophe · Getting there",
+    "album": "Sara & Christophe · Album",
+    "dashboard": "Sara & Christophe · Dashboard",
+    "config": "Sara & Christophe · Configuration",
+    "guestManager": "Sara & Christophe · Guest manager",
+    "seating": "Sara & Christophe · Seating plan",
+    "invitee": "Sara & Christophe · Your day",
+    "profile": "Sara & Christophe · My profile",
+    "people": "Sara & Christophe · Contacts"
   },
   "guest_manager": {
     "header": {

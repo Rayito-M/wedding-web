@@ -82,6 +82,13 @@ export const routes: Routes = [
         data: { tab: 'home', tabBar: true, topNav: true },
       },
       {
+        path: 'people',
+        loadComponent: () => import('./screens/people/people').then((m) => m.People),
+        title: 'titles.people',
+        canActivate: [routeEnabledGuard],
+        data: { tab: 'people', tabBar: true, topNav: true },
+      },
+      {
         path: 'config',
         loadComponent: () =>
           import('./screens/config-manager/config-manager').then((m) => m.ConfigManager),
@@ -98,11 +105,30 @@ export const routes: Routes = [
         data: { tab: 'guests', tabBar: true, topNav: true },
       },
       {
+        path: 'seating',
+        loadComponent: () =>
+          import('./screens/seating-plan/seating-plan').then((m) => m.SeatingPlan),
+        title: 'titles.seating',
+        canActivate: [adminGuard, routeEnabledGuard],
+        data: { tab: 'seating', tabBar: true, topNav: true },
+      },
+      {
         path: 'me',
         loadComponent: () => import('./screens/invitee/invitee').then((m) => m.Invitee),
         title: 'titles.invitee',
         canActivate: [routeEnabledGuard],
         data: { tab: 'home', tabBar: true, topNav: true },
+      },
+      {
+        // Reached only from the account dropdown (ScreenHeader), never the tab
+        // bar / desktop nav — `tab: 'profile'` deliberately matches no
+        // `NAV_TABS` entry, so nothing highlights, but the full chrome still
+        // renders around it.
+        path: 'profile',
+        loadComponent: () => import('./screens/profile/profile').then((m) => m.Profile),
+        title: 'titles.profile',
+        canActivate: [routeEnabledGuard],
+        data: { tab: 'profile', tabBar: true, topNav: true },
       },
     ],
   },

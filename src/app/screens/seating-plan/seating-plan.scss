@@ -1,0 +1,545 @@
+// Per design reference `ScreenSeatingPlan.jsx` (desktop two-panel) /
+// `ScreenSeatingPlanMobile.jsx` (segmented Unseated/Tables) — same file in the
+// DS kit, split here purely by `@media (min-width: 900px)`, following the
+// precedent set by `config-manager` (rail vs. pills). This screen owns its
+// own header markup (not `app-screen-header`/`HeaderService`) since T229 is
+// scaffold-only and explicitly out of AppShell wiring.
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.seating-plan {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--surface-page);
+  color: var(--text-body-color);
+  font-family: var(--font-sans);
+}
+
+// ── Header ──
+.header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6) var(--space-3);
+  border-bottom: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+}
+
+.eyebrow {
+  font-size: var(--text-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1;
+  margin: 0;
+}
+
+.header-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.stat {
+  text-align: right;
+}
+
+.stat-value {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--text-body-color);
+}
+
+.stat-value.accent {
+  color: var(--brand-accent);
+}
+
+.stat-value-sub {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+.stat-label {
+  font-size: var(--text-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+// ── Mobile segmented Unseated/Tables tabs ──
+.mobile-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6) var(--space-2);
+}
+
+.seg {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-hairline);
+  background: transparent;
+  color: var(--text-body-color);
+  font-size: var(--text-caption);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.seg.on {
+  border-color: transparent;
+  background: var(--brand-accent);
+  color: var(--on-accent);
+}
+
+// ── Selection banner (mobile) ──
+.selection-banner {
+  flex: 0 0 auto;
+  margin: 0 var(--space-6) var(--space-2);
+  padding: 9px 14px;
+  border: 1px solid var(--brand-accent);
+  border-radius: var(--radius-pill);
+  background: var(--surface-chip);
+  font-size: var(--text-caption);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.selection-text {
+  flex: 1;
+}
+
+.selection-clear {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  line-height: 1;
+}
+
+// ── Body: unassigned column + tables grid ──
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.section-label {
+  font-size: var(--text-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.section-label.accent {
+  color: var(--brand-accent);
+}
+
+.section-label-spaced {
+  margin-top: var(--space-4);
+}
+
+// Unassigned column
+.unassigned {
+  display: none;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--surface-card);
+}
+
+.unassigned.mobile-hidden {
+  display: none;
+}
+
+.unassigned:not(.mobile-hidden) {
+  display: flex;
+}
+
+.unassigned-head {
+  flex: 0 0 auto;
+  padding: var(--space-4) var(--space-5) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+// Hand-built pill search field — no equivalent DS component today (checked
+// `app-input`, which is a bordered serif entry field, not a rounded search
+// pill); styled from tokens only, same precedent as config-manager's
+// hand-built select-native/segmented control.
+.search-pill {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 14px;
+  background: var(--surface-page);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  color: var(--text-body-color);
+  outline: none;
+}
+
+.unassigned-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-1) var(--space-4) var(--space-4);
+}
+
+.unit-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+// Hand-built selectable unit row (guest/child pick) — no DS list-item button
+// equivalent; hand-built from tokens.
+.unit-btn {
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: var(--radius-input);
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-page);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  width: 100%;
+  transition: border-color var(--transition-fast);
+}
+
+.unit-btn.on {
+  border-color: var(--brand-accent);
+  background: var(--surface-chip);
+}
+
+.unit-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.unit-name {
+  font-size: var(--text-body);
+  font-weight: 500;
+  color: var(--text-body-color);
+}
+
+.unit-name-sub {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.unit-seats {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.unit-partner {
+  display: block;
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin: 4px 0 0 17px;
+}
+
+.empty-note {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  padding: var(--space-1) 2px;
+}
+
+.unassigned-footer {
+  display: none;
+  flex: 0 0 auto;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-hairline);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
+// Tables panel
+.tables {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-6);
+}
+
+.tables.mobile-hidden {
+  display: none;
+}
+
+.tables:not(.mobile-hidden) {
+  display: flex;
+}
+
+.tables-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+.table-card {
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: var(--space-4);
+  transition: border-color var(--transition-fast);
+}
+
+.table-card.assignable {
+  border-color: var(--brand-accent);
+  cursor: pointer;
+}
+
+.table-card-top {
+  margin-bottom: 4px;
+}
+
+.table-name {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  cursor: text;
+}
+
+.table-name-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  background: var(--surface-page);
+  border: 1px solid var(--brand-accent);
+  border-radius: var(--radius-md);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--text-body-color);
+  outline: none;
+}
+
+.table-progress-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.table-count {
+  font-size: var(--text-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.table-count.full {
+  color: var(--brand-accent);
+}
+
+// Hand-built two-tone capacity track (accent-3 while there's room, accent
+// once full) — `app-progress-bar` (data-display/ProgressBar) only renders a
+// single fixed accent fill with no full/not-full variant, which is a visual
+// state this screen needs to show; hand-built here from tokens instead.
+.progress-track {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-hairline);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--brand-accent-tertiary);
+}
+
+.progress-fill.full {
+  background: var(--brand-accent);
+}
+
+.table-guests {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 40px;
+}
+
+.table-guest {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-caption);
+}
+
+.table-guest-name {
+  color: var(--text-body-color);
+}
+
+.table-guest-sub {
+  color: var(--text-muted);
+}
+
+.table-guest-partner {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin-left: 16px;
+}
+
+.unassign-btn {
+  margin-left: auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.table-empty {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.table-warning {
+  margin-top: var(--space-3);
+  font-size: var(--text-micro);
+  color: var(--brand-accent);
+  letter-spacing: 0.04em;
+}
+
+.table-capacity {
+  margin-top: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cap-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-page);
+  color: var(--text-body-color);
+  font-size: var(--text-caption);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.cap-value {
+  font-size: var(--text-body);
+  min-width: 16px;
+  text-align: center;
+}
+
+.add-table {
+  border: 1px dashed var(--border-hairline);
+  border-radius: var(--radius-card);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  padding: 18px 0;
+}
+
+@media (min-width: 900px) {
+  .header {
+    padding: var(--space-5) var(--space-7) var(--space-4);
+  }
+
+  .title {
+    font-size: 32px;
+  }
+
+  .stat-value {
+    font-size: var(--text-display-sm);
+  }
+
+  .mobile-tabs,
+  .selection-banner {
+    display: none;
+  }
+
+  .body {
+    flex-direction: row;
+  }
+
+  .unassigned {
+    flex: 0 0 300px;
+    border-right: 1px solid var(--border-hairline);
+  }
+
+  .unassigned.mobile-hidden {
+    display: flex;
+  }
+
+  .unassigned-footer {
+    display: block;
+  }
+
+  .tables {
+    flex: 1;
+    padding: var(--space-5) var(--space-6);
+  }
+
+  .tables.mobile-hidden {
+    display: flex;
+  }
+
+  .tables-grid {
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  }
+
+  .add-table {
+    min-height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+}

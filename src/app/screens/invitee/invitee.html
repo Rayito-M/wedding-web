@@ -32,7 +32,9 @@
     <div class="rsvp-info">
       <div class="label">{{ 'invitee.rsvp.label' | translate }}</div>
       <div class="rsvp-title">
-        @if (rsvpStatus() === 'attending') {
+        @if (!rsvp()) {
+          {{ 'invitee.rsvp.notFound' | translate }}
+        } @else if (rsvpStatus() === 'attending') {
           {{
             'invitee.rsvp.status.confirmed.adults'
               | pluralTranslate: adultsCount()

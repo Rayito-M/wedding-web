@@ -1,0 +1,248 @@
+// Per design reference `ScreenPeople.jsx` — single layout, switched purely by
+// `@media (min-width: 900px)` (mobile single-column card list vs. desktop
+// header+search row and `repeat(auto-fill,minmax(280px,1fr))` grid at
+// `maxWidth: 980`), same precedent as `seating-plan` (T229). This screen owns
+// its own header markup (not `app-screen-header`/`HeaderService`) since T237
+// is scaffold-only and explicitly out of AppShell wiring.
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.people {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--surface-page);
+  color: var(--text-body-color);
+  font-family: var(--font-sans);
+}
+
+// AppShell `maxWidth={980}` equivalent — centered content column.
+.page {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: var(--space-3) var(--space-6) var(--space-5);
+}
+
+// ── Header ──
+.head {
+  min-width: 0;
+}
+
+.eyebrow {
+  font-size: var(--text-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.05;
+  margin: 4px 0 0;
+}
+
+.accent {
+  color: var(--brand-accent);
+}
+
+.subtitle {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin: 6px 0 0;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+// ── Search + filter controls ──
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.search {
+  width: 100%;
+}
+
+.filters {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+// Hand-built filter chip — no DS list-item toggle equivalent (checked
+// `app-pill`, which is a static label not an interactive toggle); styled
+// from tokens only, same precedent as `seating-plan`'s hand-built `.seg`.
+.filter-chip {
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+  color: var(--text-muted);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.filter-chip.on {
+  border-color: transparent;
+  background: var(--brand-accent);
+  color: var(--on-accent);
+}
+
+// ── Profile card grid ──
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.empty {
+  padding: 28px 4px;
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+// Hand-built profile card — no `app-profile-card`-equivalent shared
+// component exists in this repo yet; hand-built from tokens per the DS
+// `ProfileCard` reference, same precedent as `seating-plan`'s hand-built
+// unit rows.
+.card {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-4);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  font-family: var(--font-sans);
+}
+
+// The signed-in user's own card (T237/T238 wiring) — the only card that
+// navigates to `/profile`.
+.card.clickable {
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.card.clickable:hover,
+.card.clickable:focus-visible {
+  border-color: var(--brand-accent);
+}
+
+.avatar {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--brand-accent-soft);
+  color: var(--text-body-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-size: 19px;
+  line-height: 1;
+  user-select: none;
+}
+
+.avatar.couple {
+  background: var(--brand-accent);
+  color: var(--on-accent);
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.name {
+  font-family: var(--font-serif);
+  font-size: var(--text-heading);
+  line-height: 1.15;
+  color: var(--text-body-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lang {
+  flex-shrink: 0;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.contact {
+  margin-top: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.contact-line {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 900px) {
+  .page {
+    padding: var(--space-5) var(--space-7) var(--space-6);
+  }
+
+  .top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-6);
+    flex-wrap: wrap;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+
+  .controls {
+    width: 320px;
+    flex-shrink: 0;
+    margin-top: 0;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    margin-top: var(--space-6);
+  }
+}

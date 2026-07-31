@@ -1,0 +1,248 @@
+<div class="seating-plan">
+  <header class="header">
+    <div class="header-titles">
+      <div class="eyebrow">Seating</div>
+      <h1 class="title">Seating plan</h1>
+    </div>
+    <div class="header-stats">
+      <div class="stat">
+        <div class="stat-value">{{ tables().length }}</div>
+        <div class="stat-label">Tables</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value accent">
+          {{ seatedSeats() }}<span class="stat-value-sub">/{{ totalSeats() }}</span>
+        </div>
+        <div class="stat-label">Seated</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="mobile-tabs">
+    <button
+      type="button"
+      class="seg"
+      [class.on]="mobileTab() === 'unseated'"
+      (click)="setMobileTab('unseated')"
+    >
+      Unseated · {{ unassignedSeatCount() }}
+    </button>
+    <button
+      type="button"
+      class="seg"
+      [class.on]="mobileTab() === 'tables'"
+      (click)="setMobileTab('tables')"
+    >
+      Tables · {{ tables().length }}
+    </button>
+  </div>
+
+  @if (selection()) {
+    <div class="selection-banner">
+      <span class="selection-text"
+        >Pick a table for <b>{{ selectedName() }}</b> · {{ selectedSeats() }}
+        {{ selectedSeats() === 1 ? 'seat' : 'seats' }}</span
+      >
+      <button
+        type="button"
+        class="selection-clear"
+        aria-label="Clear selection"
+        (click)="clearSelection()"
+      >
+        ×
+      </button>
+    </div>
+  }
+
+  <div class="body">
+    <aside class="unassigned" [class.mobile-hidden]="mobileTab() !== 'unseated'">
+      <div class="unassigned-head">
+        <div class="section-label">Unassigned · {{ unassignedSeatCount() }} seats</div>
+        <input
+          type="text"
+          class="search-pill"
+          placeholder="Search guest…"
+          [value]="query()"
+          (input)="setQuery(inputValue($event))"
+        />
+      </div>
+
+      <div class="unassigned-body">
+        <div class="section-label accent">Adults · {{ unassignedAdultSeatCount() }}</div>
+        <div class="unit-list">
+          @for (unit of unassignedAdults(); track unit.id) {
+            <button
+              type="button"
+              class="unit-btn"
+              [class.on]="isSelected('adult', unit.id)"
+              (click)="toggleSelect('adult', unit.id)"
+            >
+              <span class="unit-row">
+                <span class="dot" [style.background]="groupDot(unit.party.group)"></span>
+                <span class="unit-name">{{ unit.party.name }}</span>
+                <span class="unit-seats">{{ unit.seats }} {{ unit.seats === 1 ? 'seat' : 'seats' }}</span>
+              </span>
+              @if (unit.party.partner) {
+                <span class="unit-partner">+ {{ unit.party.partner }}</span>
+              }
+            </button>
+          }
+          @if (unassignedAdults().length === 0) {
+            <div class="empty-note">All adults seated.</div>
+          }
+        </div>
+
+        <div class="section-label accent section-label-spaced">
+          Children · {{ unassignedChildren().length }}
+        </div>
+        <div class="unit-list">
+          @for (unit of unassignedChildren(); track unit.id) {
+            <button
+              type="button"
+              class="unit-btn"
+              [class.on]="isSelected('child', unit.id)"
+              (click)="toggleSelect('child', unit.id)"
+            >
+              <span class="unit-row">
+                <span class="dot" [style.background]="groupDot(unit.party.group)"></span>
+                <span class="unit-name"
+                  >{{ unit.child.name }} <span class="unit-name-sub">· {{ unit.child.age }} yrs</span></span
+                >
+                <span class="unit-seats">{{ unit.party.name }}</span>
+              </span>
+            </button>
+          }
+          @if (unassignedChildren().length === 0) {
+            <div class="empty-note">No children to seat.</div>
+          }
+        </div>
+      </div>
+
+      @if (selection()) {
+        <div class="unassigned-footer">
+          Pick a table to seat <b>{{ selectedName() }}</b>
+        </div>
+      }
+    </aside>
+
+    <section class="tables" [class.mobile-hidden]="mobileTab() !== 'tables'">
+      <div class="tables-grid">
+        @for (table of tables(); track table.name; let i = $index) {
+          <div
+            class="table-card"
+            [class.assignable]="canAssign(table)"
+            [attr.role]="canAssign(table) ? 'button' : null"
+            [attr.tabindex]="canAssign(table) ? 0 : null"
+            (click)="assignToTable(table)"
+            (keydown.enter)="assignToTable(table)"
+            (keydown.space)="assignToTable(table)"
+          >
+            <div class="table-card-top">
+              @if (editingIndex() === i) {
+                <input
+                  type="text"
+                  class="table-name-input"
+                  [value]="table.name"
+                  (click)="$event.stopPropagation()"
+                  (input)="renameTable(i, inputValue($event))"
+                  (blur)="stopEditing()"
+                  (keydown.enter)="stopEditing()"
+                />
+              } @else {
+                <div
+                  class="table-name"
+                  role="button"
+                  tabindex="0"
+                  aria-label="Rename table"
+                  (click)="$event.stopPropagation(); startEditing(i)"
+                  (keydown.enter)="$event.stopPropagation(); startEditing(i)"
+                  (keydown.space)="$event.stopPropagation(); startEditing(i)"
+                >
+                  {{ table.name }}
+                </div>
+              }
+            </div>
+
+            <div class="table-progress-row">
+              <span class="table-count" [class.full]="isFull(table)"
+                >{{ seatsAt(table.name) }} / {{ table.cap }}</span
+              >
+              <div class="progress-track">
+                <div
+                  class="progress-fill"
+                  [class.full]="isFull(table)"
+                  [style.width.%]="fillRatio(table)"
+                ></div>
+              </div>
+            </div>
+
+            <div class="table-guests">
+              @for (party of seatedAdultsAt(table.name); track party.id) {
+                <div class="table-guest">
+                  <span class="dot" [style.background]="groupDot(party.group)"></span>
+                  <span class="table-guest-name">{{ party.name }}</span>
+                  <button
+                    type="button"
+                    class="unassign-btn"
+                    aria-label="Remove {{ party.name }} from table"
+                    (click)="$event.stopPropagation(); unassignAdult(party.id)"
+                  >
+                    ×
+                  </button>
+                </div>
+                @if (party.partner) {
+                  <div class="table-guest-partner">+ {{ party.partner }}</div>
+                }
+              }
+              @for (unit of seatedChildrenAt(table.name); track unit.id) {
+                <div class="table-guest">
+                  <span class="dot" [style.background]="groupDot(unit.party.group)"></span>
+                  <span class="table-guest-name"
+                    >{{ unit.child.name }} <span class="table-guest-sub">· {{ unit.child.age }} yrs</span></span
+                  >
+                  <button
+                    type="button"
+                    class="unassign-btn"
+                    aria-label="Remove {{ unit.child.name }} from table"
+                    (click)="$event.stopPropagation(); unassignChild(unit.id)"
+                  >
+                    ×
+                  </button>
+                </div>
+              }
+              @if (seatedAdultsAt(table.name).length === 0 && seatedChildrenAt(table.name).length === 0) {
+                <div class="table-empty">Empty</div>
+              }
+            </div>
+
+            @if (selection() && !canAssign(table)) {
+              <div class="table-warning">Not enough room for {{ selectedSeats() }}</div>
+            }
+
+            <div class="table-capacity">
+              <span class="section-label">Capacity</span>
+              <button
+                type="button"
+                class="cap-btn"
+                aria-label="Decrease capacity"
+                (click)="$event.stopPropagation(); setCapacity(i, table.cap - 1)"
+              >
+                –
+              </button>
+              <span class="cap-value">{{ table.cap }}</span>
+              <button
+                type="button"
+                class="cap-btn"
+                aria-label="Increase capacity"
+                (click)="$event.stopPropagation(); setCapacity(i, table.cap + 1)"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        }
+        <button type="button" class="add-table">+ Add table</button>
+      </div>
+    </section>
+  </div>
+</div>

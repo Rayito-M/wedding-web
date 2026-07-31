@@ -128,40 +128,79 @@
       "declined": "Déclinés"
     },
     "header": "RSVP",
-    "step": "ÉTAPE {{current}}/3",
-    "step1": {
-      "title": "Nous rejoindrez-vous ?",
-      "subtitle": "Veuillez répondre avant le 1er mai. Nous avons hâte.",
-      "nameLabel": "Votre nom",
-      "attendingLabel": "Allez-vous venir ?",
-      "yesOption": "Avec joie",
-      "noOption": "Malheureusement non",
-      "plusOneLabel": "Apportez un plus-un"
+    "create": {
+      "step": "ÉTAPE {{current}}/{{total}}",
+      "attending": {
+        "title": "Nous rejoindrez-vous ?",
+        "subtitle": "Veuillez répondre avant le 1er mai. Nous avons hâte.",
+        "label": "Allez-vous venir ?",
+        "yes": "Avec joie",
+        "no": "Malheureusement non",
+        "withLabel": "Qui vous accompagne ?",
+        "withPartner": "Avec mon/ma partenaire",
+        "withChildren": "Avec des enfants",
+        "hint": "Les repas, allergies et le plan de table viendront plus tard — vous pouvez tout modifier à tout moment."
+      },
+      "party": {
+        "title": "Votre groupe",
+        "subtitle": "Juste les noms pour l'instant, pour inscrire tout le monde sur la liste.",
+        "partnerLabel": "Votre partenaire",
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "childrenLabel": "Enfants",
+        "childFirstName": "Prénom de l'enfant {{index}}",
+        "age": "Âge",
+        "addChild": "+ Ajouter un autre enfant",
+        "removeChild": "Retirer l'enfant",
+        "childrenHint": "Les âges nous aident pour le menu enfant et la baby-sitter."
+      },
+      "confirm": {
+        "yesTitle": "À bientôt en juin",
+        "noTitle": "Vous nous manquerez",
+        "yesMessage": "Votre réponse est enregistrée. Dites-nous maintenant ce que chacun mange — vous pourrez y revenir à tout moment.",
+        "noMessage": "Merci de nous le faire savoir. Nous penserons à vous ce jour-là."
+      },
+      "actions": {
+        "send": "Envoyer la réponse",
+        "addMeals": "Ajouter repas et allergies",
+        "done": "Terminé"
+      },
+      "error": "Une erreur est survenue lors de l'envoi de votre réponse. Veuillez réessayer."
     },
-    "step2": {
-      "title": "À table",
-      "subtitle": "Avez-vous des préférences alimentaires ?",
+    "edit": {
+      "eyebrow": "CONFIRMÉ",
+      "titleAttending": "Votre groupe",
+      "titleDeclined": "Votre réponse",
+      "seatsHeld": {
+        "none": "Aucune place réservée pour l'instant. Modifiez tout ce que vous voulez jusqu'au 1er mai.",
+        "singular": "{{count}} place réservée. Modifiez tout ce que vous voulez jusqu'au 1er mai.",
+        "plural": "{{count}} places réservées. Modifiez tout ce que vous voulez jusqu'au 1er mai."
+      },
+      "declinedSub": "Vous nous avez dit que vous ne pourrez pas venir. Vous pouvez changer d'avis jusqu'au 1er mai.",
+      "addPartner": "+ Ajouter un partenaire",
+      "addChild": "+ Ajouter un enfant",
       "noteLabel": "Un message pour nous (optionnel)",
-      "notePlaceholder": "Une chanson à danser, un souvenir…"
-    },
-    "step3": {
-      "yesTitle": "À bientôt en juin",
-      "noTitle": "Vous nous manquerez",
-      "yesMessage": "Votre réponse est enregistrée. Nous vous enverrons les détails de voyage et le programme plus tard.",
-      "noMessage": "Merci de nous le faire savoir. Nous penserons à vous ce jour-là.",
-      "replyConfirmed": "Réponse confirmée",
-      "back": "Retour",
-      "continue": "Continuer",
-      "send": "Envoyer la réponse",
-      "edit": "Modifier la réponse"
-    },
-    "diet": {
-      "vegetarian": "Végétarien",
-      "vegan": "Vegan",
-      "pescatarian": "Pescétarien",
-      "glutenFree": "Sans gluten",
-      "nutAllergy": "Allergie aux fruits secs",
-      "noAlcohol": "Sans alcool"
+      "notePlaceholder": "Une chanson à danser, un souvenir…",
+      "changeAnswer": "Modifier ma réponse",
+      "kind": {
+        "you": "Vous",
+        "partner": "Partenaire",
+        "child": "Enfant"
+      },
+      "person": {
+        "newGuest": "Nouvel invité",
+        "meal": "Repas",
+        "allergies": "Allergies",
+        "allergiesPlaceholder": "Fruits à coque, crustacés, sésame…",
+        "noMealDetails": "Pas encore de détails de repas",
+        "yearsOld": "{{age}} ans",
+        "allergiesSummary": "Allergies : {{list}}"
+      },
+      "footer": {
+        "saved": "Modifications enregistrées ✓",
+        "unsaved": "Modifications non enregistrées"
+      },
+      "error": "Une erreur est survenue lors de l'enregistrement de vos modifications. Veuillez réessayer."
     }
   },
   "dashboard": {
@@ -296,6 +335,7 @@
     },
     "rsvp": {
       "label": "Ta réponse",
+      "notFound": "Tu nous donnes ta réponse ?",
       "status": {
         "confirmed": {
           "adults": {
@@ -359,6 +399,7 @@
     "confirm": "Confirmer",
     "language": "Langue",
     "logout": "Déconnexion",
+    "myProfile": "Mon profil",
     "you": "Vous",
     "seat": {
       "your": "Votre table",
@@ -377,20 +418,26 @@
     "rsvp": "RSVP",
     "schedule": "Agenda",
     "album": "Album",
-    "travel": "S'y rendre"
+    "travel": "S'y rendre",
+    "seating": "Tables",
+    "people": "Contacts",
+    "more": "Plus"
   },
   "titles": {
     "welcome": "Sara & Christophe · Réservez la date",
-    "login": "Connexion · Sara & Christophe",
-    "signingIn": "Connexion en cours · Sara & Christophe",
-    "rsvp": "RSVP · Sara & Christophe",
-    "schedule": "Le jour J · Sara & Christophe",
-    "travel": "S'y rendre · Sara & Christophe",
-    "album": "Album · Sara & Christophe",
-    "dashboard": "Tableau de bord · Sara & Christophe",
-    "config": "Configuration · Sara & Christophe",
-    "guestManager": "Gestionnaire d'invités · Sara & Christophe",
-    "invitee": "Votre journée · Sara & Christophe"
+    "login": "Sara & Christophe · Connexion",
+    "signingIn": "Sara & Christophe · Connexion en cours",
+    "rsvp": "Sara & Christophe · RSVP",
+    "schedule": "Sara & Christophe · Le jour J",
+    "travel": "Sara & Christophe · S'y rendre",
+    "album": "Sara & Christophe · Album",
+    "dashboard": "Sara & Christophe · Tableau de bord",
+    "config": "Sara & Christophe · Configuration",
+    "guestManager": "Sara & Christophe · Gestionnaire d'invités",
+    "seating": "Sara & Christophe · Plan de table",
+    "invitee": "Sara & Christophe · Votre journée",
+    "profile": "Sara & Christophe · Mon profil",
+    "people": "Sara & Christophe · Contacts"
   },
   "guest_manager": {
     "header": {

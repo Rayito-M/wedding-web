@@ -119,6 +119,13 @@ export class ScreenHeader implements OnInit {
     this.menuOpen.update((open) => !open);
   }
 
+  /** "My profile" row (DS `AccountMenu`) — closes the dropdown; navigation is
+   *  handled by `routerLink`. */
+  protected goToProfile(event: MouseEvent): void {
+    this.menuOpen.set(false);
+    event.stopPropagation();
+  }
+
   protected selectLanguage(code: string): void {
     this.lang.setLanguage(code as LangCode);
     this.menuOpen.set(false);
