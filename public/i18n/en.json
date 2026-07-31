@@ -180,11 +180,28 @@
     "budget": "Budget",
     "vendors": "Vendors",
     "thisWeek": "This week",
-    "seeAll": "See all"
+    "seeAll": "See all",
+    "manage": {
+      "title": "Manage",
+      "guests": {
+        "title": "Guest manager",
+        "sub": "172 invited · 18 pending"
+      },
+      "seating": {
+        "title": "Seating plan",
+        "sub": "5 tables · 12 seats left"
+      },
+      "config": {
+        "title": "General config",
+        "sub": "Theme, languages, event details"
+      }
+    }
   },
   "configManager": {
     "headerMeta": "Couple · Settings",
     "title": "General configuration",
+    "eyebrow": "Settings",
+    "version": "Version {{version}}",
     "status": {
       "dirty": "Unsaved changes",
       "upToDate": "Up to date",
@@ -380,7 +397,7 @@
   },
   "guest_manager": {
     "header": {
-      "meta": "Couple · Guest list",
+      "meta": "Guest list",
       "title": "Guest manager",
       "headCount": "Head count"
     },

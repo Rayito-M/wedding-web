@@ -251,8 +251,45 @@ export class ConfigManager implements OnInit {
   protected setAgendaTime(id: string, value: string): void {
     this.mutate((c) => ({
       ...c,
-      agenda: c.agenda.map((a) => (a.id === id ? { ...a, time: value } : a)),
+      agenda: c.agenda.map((a) =>
+        a.id === id ? { ...a, time: this.mergeHourIntoIso(a.time, value) } : a,
+      ),
     }));
+  }
+
+  /**
+   * Agenda `time` is stored as a full ISO datetime (API contract:
+   * `AgendaItemSchema.time = z.iso.datetime()`), but the design edits it as a
+   * bare hour ("15:00"). Extract just HH:MM for the text field; a value that is
+   * already bare (or otherwise unparseable) is shown verbatim.
+   */
+  protected timeInputValue(iso: string | undefined): string {
+    if (!iso) return '';
+    const match = /T(\d{2}:\d{2})/.exec(iso);
+    return match ? match[1] : iso;
+  }
+
+  /**
+   * Splice a typed "HH:MM" back into the item's ISO datetime, preserving its
+   * existing date portion (falling back to the wedding date, then epoch). This
+   * keeps the stored value a valid ISO datetime for the API while the UI only
+   * ever exposes the hour. An unparseable entry is kept verbatim so a partial
+   * edit isn't silently discarded.
+   */
+  private mergeHourIntoIso(existing: string, typed: string): string {
+    const hhmm = /^(\d{1,2}):(\d{2})$/.exec(typed.trim());
+    if (!hhmm) return typed.trim();
+    const hh = hhmm[1].padStart(2, '0');
+    const mm = hhmm[2];
+    const datePart =
+      this.isoDatePart(existing) ?? this.isoDatePart(this.cfg().date) ?? '1970-01-01';
+    return `${datePart}T${hh}:${mm}:00.000Z`;
+  }
+
+  private isoDatePart(iso: string | undefined): string | null {
+    if (!iso) return null;
+    const match = /^(\d{4}-\d{2}-\d{2})/.exec(iso);
+    return match ? match[1] : null;
   }
 
   protected setAgendaVenue(id: string, venueId: string): void {
@@ -367,6 +404,16 @@ export class ConfigManager implements OnInit {
       return 'configManager.dietary.addDietaryPreference';
     }
     return 'configManager.dietary.addAllergy';
+  }
+
+  // Close only when the backdrop itself is clicked — clicks inside the dialog
+  // land on descendants, so `target === currentTarget` distinguishes the two
+  // without a stopPropagation handler on the dialog (which would also swallow
+  // the overlay's Escape keybinding). Keyboard close stays on the overlay.
+  protected onOverlayClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.closeTagModal();
+    }
   }
 
   protected closeTagModal(): void {

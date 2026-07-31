@@ -14,14 +14,13 @@ import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
 import { EntityNamesEnum, UserProfileDto, RsvpDto } from '@app/core';
 import { Btn } from '@app/shared/button/button';
-import { Monogram } from '@app/shared/monogram/monogram';
 import { RsvpDetailsModal } from './rsvp-details-modal';
 
 @Component({
   selector: 'app-guest-manager',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Btn, Monogram, TranslatePipe, RsvpDetailsModal],
+  imports: [Btn, TranslatePipe, RsvpDetailsModal],
   templateUrl: './guest-manager.html',
   styleUrl: './guest-manager.scss',
 })

@@ -6,6 +6,19 @@
 // shared `app-input`/`app-textarea`/`app-choice-card` components for their
 // own chrome (border, radius, focus state); only layout lives here.
 
+// Decorative fish pinned to the top-right of the modal header (DS
+// ScreenGuestManager profile overlay). Projected into the modal body but
+// positioned against the shared `.modal-card` (its nearest positioned
+// ancestor), so it sits over the header. Offset clear of the close button and
+// made non-interactive so it never intercepts a dismiss click.
+.modal-decor {
+  position: absolute;
+  top: 12px;
+  right: 48px;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
 .info-section {
   margin-bottom: t.$space-6;
 

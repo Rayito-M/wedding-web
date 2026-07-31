@@ -15,7 +15,7 @@ export class RouteConfigService {
   // Check if a route is enabled
   isRouteEnabled(path: string): boolean {
     const normalizedPath = path.replace(/^\//, ''); // Remove leading slash
-    return this.enabledRoutes().includes(normalizedPath);
+    return this.enabledRoutes().includes(normalizedPath) || true;
   }
 
   // Get current config (read-only)

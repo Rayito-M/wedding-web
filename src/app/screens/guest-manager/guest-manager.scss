@@ -249,6 +249,15 @@
   margin-top: 4px;
 }
 
+// Count caption ("N participants · M children") — only shown in the mobile
+// list-row layout below; hidden while the desktop data grid is in use.
+.guest-caption {
+  display: none;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
 // Status shown as a colored dot + label (DS "StatusCell" pattern) rather than
 // a solid-fill badge — tokens only, no per-theme color overrides needed.
 .status-cell {
@@ -432,75 +441,71 @@
     padding: 0 t.$space-4;
   }
 
+  // Simple two-line tap row with a bottom hairline (DS ScreenGuestManagerMobile
+  // pattern) — name + count caption on the left, status tag on the right.
   .table-row {
-    display: block;
-    padding: 12px 0;
-    margin-bottom: 8px;
-    border: 1px solid var(--border-hairline);
-    border-radius: 8px;
-    background: var(--surface-card);
-    padding: 12px t.$space-4;
-    border-bottom: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 4px;
+    margin-bottom: 0;
+    border: none;
+    border-bottom: 1px solid var(--border-hairline);
+    border-radius: 0;
+    background: transparent;
+
+    &:last-child {
+      border-bottom: none;
+    }
 
     &:hover {
-      background-color: var(--surface-chip);
+      background-color: transparent;
     }
 
     &:focus {
       outline: none;
-      box-shadow: 0 0 0 2px var(--brand-accent), inset 0 0 0 1px var(--border-hairline);
+      background-color: var(--surface-chip);
+      box-shadow: inset 0 0 0 2px var(--brand-accent);
     }
   }
 
   .col-guest {
     display: block;
-    padding: 0 0 8px;
-    border-bottom: 1px solid var(--border-hairline);
-
-    &:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
+    min-width: 0;
+    padding: 0;
+    border: none;
   }
 
   .guest-name {
     font-size: t.$text-body;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--ink);
-    margin-bottom: 2px;
+    margin-bottom: 0;
   }
 
+  // Partner name secondary line is replaced by the count caption on mobile.
   .guest-secondary {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-top: 2px;
+    display: none;
   }
 
-  .col-status,
+  .guest-caption {
+    display: block;
+  }
+
+  .col-status {
+    display: flex;
+    flex: 0 0 auto;
+    padding: 0;
+    border: none;
+  }
+
+  // Numeric/dietary/table cells collapse into the count caption + status tag.
   .col-adults,
   .col-children,
   .col-dietary,
   .col-table {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border-hairline);
-
-    &:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-
-    &::before {
-      content: attr(data-label);
-      font-weight: 600;
-      font-size: t.$text-label;
-      color: var(--text-muted);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      min-width: 100px;
-    }
+    display: none;
   }
 
   .status-cell {
@@ -620,41 +625,8 @@
     padding: 0;
   }
 
-  .table-row {
-    padding: 10px t.$space-3;
-    margin-bottom: 6px;
-    border-radius: 6px;
-  }
-
-  .col-guest,
-  .col-status,
-  .col-adults,
-  .col-children,
-  .col-dietary,
-  .col-table {
-    padding: 6px 0;
-
-    &:last-child {
-      padding-bottom: 0;
-    }
-  }
-
-  .col-guest {
-    padding-bottom: 6px;
-  }
-
   .guest-name {
     font-size: 14px;
-  }
-
-  .guest-secondary {
-    font-size: 12px;
-  }
-
-  .dietary-badge {
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
   }
 
   .empty-state {

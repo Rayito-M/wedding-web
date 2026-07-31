@@ -8,13 +8,21 @@ export interface NavTab {
   roles?: UserRole[];
 }
 
+// Order mirrors the DS AppShell nav model (commit 90246bd):
+//   base (all roles): home · rsvp · schedule · album · travel · people
+//   couple-only:      guests · seating · config
+// `home` is a single destination for both roles — it just resolves to the
+// role-appropriate screen (guest → /me, couple → /dashboard); role filtering
+// guarantees only one `home` entry is ever present in a rendered list.
+// `people` and `seating` are intentionally omitted for now: their screens/routes
+// don't exist yet (people → T237, seating → T229). Add them here once built.
 export const NAV_TABS: NavTab[] = [
   { id: 'home', labelKey: 'nav.home', link: '/me', roles: ['guest'] },
-  { id: 'dashboard', labelKey: 'nav.dashboard', link: '/dashboard', roles: ['groom', 'bride'] },
-  { id: 'guests', labelKey: 'nav.guests', link: '/guests', roles: ['groom', 'bride'] },
-  { id: 'config', labelKey: 'nav.config', link: '/config', roles: ['groom', 'bride'] },
+  { id: 'home', labelKey: 'nav.home', link: '/dashboard', roles: ['groom', 'bride'] },
   { id: 'rsvp', labelKey: 'nav.rsvp', link: '/rsvp', roles: ['guest'] },
   { id: 'schedule', labelKey: 'nav.schedule', link: '/schedule' },
   { id: 'album', labelKey: 'nav.album', link: '/album' },
   { id: 'travel', labelKey: 'nav.travel', link: '/travel' },
+  { id: 'guests', labelKey: 'nav.guests', link: '/guests', roles: ['groom', 'bride'] },
+  { id: 'config', labelKey: 'nav.config', link: '/config', roles: ['groom', 'bride'] },
 ];

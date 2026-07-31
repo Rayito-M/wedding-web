@@ -23,6 +23,7 @@ import { Modal } from '@app/shared/modal/modal';
 import { Btn } from '@app/shared/button/button';
 import { TextInput } from '@app/shared/input/input';
 import { ChoiceCard } from '@app/shared/choice-card/choice-card';
+import { DecorFish } from '@app/shared/decor/fish';
 
 type RelationSide = 'bride' | 'groom';
 type RelationKind = 'family' | 'friends' | 'colleagues' | 'other';
@@ -31,7 +32,7 @@ type RelationKind = 'family' | 'friends' | 'colleagues' | 'other';
   selector: 'app-rsvp-details-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [TranslatePipe, Modal, Btn, ReactiveFormsModule, TextInput, ChoiceCard],
+  imports: [TranslatePipe, Modal, Btn, ReactiveFormsModule, TextInput, ChoiceCard, DecorFish],
   templateUrl: './rsvp-details-modal.html',
   styleUrl: './rsvp-details-modal.scss',
 })

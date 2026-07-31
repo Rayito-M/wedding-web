@@ -1,13 +1,21 @@
 <div class="toolbar">
   <div class="toolbar-titles">
+    <span class="eyebrow">{{ 'configManager.eyebrow' | translate }}</span>
     <h1 class="title">{{ 'configManager.title' | translate }}</h1>
-    <p class="status" [class.dirty]="dirty()" [class.saved]="savedFlash()">
-      {{ statusKey() | translate }}
-    </p>
   </div>
-  <button app-btn type="button" [disabled]="!dirty()" (click)="save()">
-    {{ 'configManager.actions.save' | translate }}
-  </button>
+  <div class="toolbar-actions">
+    <div class="toolbar-status">
+      <p class="status" [class.dirty]="dirty()" [class.saved]="savedFlash()">
+        {{ statusKey() | translate }}
+      </p>
+      <span class="version">{{
+        'configManager.version' | translate: { version: cfg().version }
+      }}</span>
+    </div>
+    <button app-btn type="button" [disabled]="!dirty()" (click)="save()">
+      {{ 'configManager.actions.save' | translate }}
+    </button>
+  </div>
 </div>
 
 <div class="layout">
@@ -232,8 +240,8 @@
                       app-input
                       type="text"
                       placeholder="15:00"
-                      [value]="item.time"
-                      (input)="setAgendaTime(item.id, inputValue($event))"
+                      [value]="timeInputValue(item.time)"
+                      (change)="setAgendaTime(item.id, inputValue($event))"
                     />
                   </label>
                   <label class="field field-grow">
@@ -567,7 +575,7 @@
   <div
     class="modal-overlay"
     role="presentation"
-    (click)="closeTagModal()"
+    (click)="onOverlayClick($event)"
     (keydown.escape)="closeTagModal()"
   >
     <div
@@ -575,7 +583,6 @@
       role="dialog"
       aria-modal="true"
       [attr.aria-labelledby]="'tagModalTitle'"
-      (click)="$event.stopPropagation()"
     >
       <div class="modal-header">
         <h2 class="modal-title" id="tagModalTitle">

@@ -1,5 +1,7 @@
 @if (rsvp(); as rsvp) {
   <app-modal [open]="isOpen()" [size]="'lg'" [title]="modalTitle()" (close)="close()">
+    <!-- Decorative header fish (DS ScreenGuestManager profile-overlay header) -->
+    <app-decor-fish class="modal-decor" [w]="54" [flip]="true" color="var(--brand-accent)" />
     @if (viewMode() === 'profile') {
       <ng-container>
         <!-- Guest information -->

@@ -67,11 +67,19 @@ export const routes: Routes = [
         data: { tab: 'travel', tabBar: true, topNav: true },
       },
       {
+        path: 'album',
+        loadComponent: () => import('./screens/album/album').then((m) => m.Album),
+        title: 'titles.album',
+        canActivate: [routeEnabledGuard],
+        data: { tab: 'album', tabBar: true, topNav: true },
+      },
+      {
         path: 'dashboard',
         loadComponent: () => import('./screens/dashboard/dashboard').then((m) => m.Dashboard),
         title: 'titles.dashboard',
         canActivate: [adminGuard, routeEnabledGuard],
-        data: { tab: 'dashboard', tabBar: true, topNav: true },
+        // Unified "Home" nav destination for the couple role (guest home is /me).
+        data: { tab: 'home', tabBar: true, topNav: true },
       },
       {
         path: 'config',

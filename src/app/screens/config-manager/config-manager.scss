@@ -23,6 +23,15 @@
   background: var(--surface-card);
 }
 
+.eyebrow {
+  display: block;
+  font-size: var(--text-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+
 .title {
   font-family: var(--font-serif);
   font-weight: 400;
@@ -31,14 +40,33 @@
   margin: 0;
 }
 
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.toolbar-status {
+  text-align: right;
+}
+
 .status {
   font-size: var(--text-caption);
   color: var(--text-muted);
-  margin: 6px 0 0;
+  margin: 0;
 }
 
 .status.saved {
   color: var(--brand-accent);
+}
+
+.version {
+  display: block;
+  font-size: var(--text-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 3px;
 }
 
 // ── Sticky save bar — mobile only ──
@@ -283,7 +311,7 @@
 .meta {
   margin-left: auto;
   font-size: var(--text-label);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-muted);
 }

@@ -1,5 +1,5 @@
-<div class="content">
-  <!-- Greeting -->
+<!-- Greeting -->
+<div class="greeting">
   <div class="hello">{{ 'invitee.greeting' | translate }}, {{ profile()?.firstName }}.</div>
   <h1>
     {{ 'invitee.seeYouIn' | translate }} <span class="accent">{{ daysToGo() }} days</span>
@@ -9,7 +9,9 @@
       ?
     }
   </h1>
+</div>
 
+<div class="content">
   <!-- Countdown card -->
   <div class="card countdown">
     <app-decor-fish class="deco-fish" [w]="48" [flip]="true" />
@@ -43,11 +45,10 @@
                 | translate: { count: childrenCount() }
             }}
           }
-          &nbsp; &#128525;
         } @else if (rsvpStatus() === 'pending') {
-          {{ 'invitee.rsvp.status.pending' | translate }}... &#128522;
+          {{ 'invitee.rsvp.status.pending' | translate }}
         } @else if (rsvpStatus() === 'declined') {
-          {{ 'invitee.rsvp.status.declined' | translate }}... &#128542;
+          {{ 'invitee.rsvp.status.declined' | translate }}
         }
       </div>
       @if (rsvpStatus() === 'attending' && (adultsCount() > 0 || childrenCount() > 0)) {
@@ -62,57 +63,34 @@
     <a class="edit" routerLink="/rsvp">{{ 'shared.edit' | translate }}</a>
   </div>
 
-  <!-- Quick tiles -->
-  <div class="tiles">
-    <app-stat-tile label="shared.seat.your" [value]="'shared.seat.notAssigned'" />
-    <app-stat-tile label="shared.menu.your" [value]="'shared.menu.notAssigned'" />
-  </div>
-
-  <!-- Announcement from the couple -->
-  <!-- <div class="announcement">
-    <div class="label from">From S&amp;C</div>
-    <div class="announcement-body">
-      <div class="quote">
-        "Bus from Plaza Nueva at 15:00 — don't be late, we'll be the ones smiling!"
-      </div>
-      <div class="when">3 days ago</div>
-    </div>
-  </div> -->
-
-  <!-- Today's schedule preview -->
+  <!-- The day · highlights -->
   @if (weddingConfig()?.agenda) {
     <div class="schedule">
       <div class="schedule-header">
-        <div class="label">The day · highlights</div>
-        <!-- <a class="all" routerLink="/schedule">All</a> -->
+        <div class="label">{{ 'invitee.schedule.title' | translate }}</div>
+        <a class="all" routerLink="/schedule">{{ 'invitee.schedule.all' | translate }}</a>
       </div>
       @if (weddingConfig()?.agenda?.length === 0 || true) {
         <div class="no-events">{{ 'invitee.schedule.noEvents' | translate }}</div>
       } @else {
         @for (event of weddingConfig()?.agenda; track event.id; let last = $last) {
-          <div class="item" [class.last]="last">
-            <div class="time">{{ event.time | date: 'HH:mm' }}</div>
-            <div class="body">
-              <div class="item-title">{{ getEventTranslation(event).title }}</div>
-              <div class="item-sub">{{ getEventTranslation(event).desc }}</div>
-            </div>
-          </div>
+          <app-timeline-item
+            [time]="getEventTranslation(event).time"
+            [heading]="getEventTranslation(event).title"
+            [sub]="getEventTranslation(event).desc"
+            [last]="last"
+          />
         }
       }
     </div>
   }
 
-  <!-- Photos preview -->
-  <!-- <a class="card photos" routerLink="/album">
-    <div class="stack">
-      <span class="bubble a"></span>
-      <span class="bubble b"></span>
-      <span class="bubble c"></span>
+  <!-- Live album preview -->
+  <a class="card album-row" routerLink="/album">
+    <div class="album-info">
+      <div class="album-title">{{ 'invitee.photos.title' | translate: { count: 247 } }}</div>
+      <div class="album-sub">{{ 'invitee.photos.subtitle' | translate }}</div>
     </div>
-    <div class="photos-info">
-      <div class="photos-title">247 photos in the live album</div>
-      <div class="photos-sub">Add yours during the day</div>
-    </div>
-    <span class="arrow">→</span>
-  </a> -->
+    <span class="arrow" aria-hidden="true">→</span>
+  </a>
 </div>

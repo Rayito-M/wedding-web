@@ -2,7 +2,6 @@
   <!-- Header -->
   <header class="header">
     <div class="header-left">
-      <app-monogram [size]="18" />
       <div class="header-title">
         <div class="header-meta">
           {{ 'guest_manager.header.meta' | translate }}
@@ -151,23 +150,28 @@
                   {{ rsvp.adults.partner2.firstName }} {{ rsvp.adults.partner2.lastName }}
                 </div>
               }
+              <!-- Mobile-only count caption (DS mobile row pattern): "N participants · M children" -->
+              <div class="guest-caption">
+                {{ (rsvp.adults.partner2 ? 2 : 1) + (rsvp.children?.length || 0) }}
+                {{ 'guest_manager.rsvp.participants' | translate }}
+                @if (rsvp.children && rsvp.children.length > 0) {
+                  · {{ rsvp.children.length }} {{ 'guest_manager.table.children' | translate }}
+                }
+              </div>
             </div>
-            <div class="col-status" [attr.data-label]="'guest_manager.table.status' | translate">
+            <div class="col-status">
               <span class="status-cell" [class]="'status-' + rsvp.status">
                 <span class="status-dot"></span>
                 {{ 'guest_manager.status.' + rsvp.status | translate }}
               </span>
             </div>
-            <div class="col-adults" [attr.data-label]="'guest_manager.table.adults' | translate">
+            <div class="col-adults">
               {{ rsvp.adults.partner2 ? 2 : 1 }}
             </div>
-            <div
-              class="col-children"
-              [attr.data-label]="'guest_manager.table.children' | translate"
-            >
+            <div class="col-children">
               {{ rsvp.children?.length || 0 }}
             </div>
-            <div class="col-dietary" [attr.data-label]="'guest_manager.table.dietary' | translate">
+            <div class="col-dietary">
               <span class="dietary-badge">
                 @if (
                   rsvp.adults.partner1.options?.dietaryPreferenceIds?.length ||
@@ -179,7 +183,7 @@
                 }
               </span>
             </div>
-            <div class="col-table" [attr.data-label]="'guest_manager.table.table' | translate">
+            <div class="col-table">
               <span class="table-assignment">—</span>
             </div>
           </div>

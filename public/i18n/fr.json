@@ -177,11 +177,28 @@
     "budget": "Budget",
     "vendors": "Prestataires",
     "thisWeek": "Cette semaine",
-    "seeAll": "Voir tout"
+    "seeAll": "Voir tout",
+    "manage": {
+      "title": "Gérer",
+      "guests": {
+        "title": "Gestion des invités",
+        "sub": "172 invités · 18 en attente"
+      },
+      "seating": {
+        "title": "Plan de table",
+        "sub": "5 tables · 12 places restantes"
+      },
+      "config": {
+        "title": "Configuration générale",
+        "sub": "Thème, langues, détails de l'événement"
+      }
+    }
   },
   "configManager": {
-    "headerMeta": "Couple · Réglages",
+    "headerMeta": "Réglages",
     "title": "Configuration générale",
+    "eyebrow": "Réglages",
+    "version": "Version {{version}}",
     "status": {
       "dirty": "Modifications non enregistrées",
       "upToDate": "À jour",
@@ -377,7 +394,7 @@
   },
   "guest_manager": {
     "header": {
-      "meta": "Couple · Liste d'invités",
+      "meta": "Liste d'invités",
       "title": "Gestionnaire d'invités",
       "headCount": "Nombre total"
     },

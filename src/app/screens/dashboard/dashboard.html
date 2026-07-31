@@ -9,13 +9,11 @@
   <!-- RSVP stats -->
   <div class="stats-card">
     <app-decor-fish class="deco-fish" [w]="60" [flip]="true" />
-    <app-decor-sun class="deco-sun" [size]="60" />
-    <app-decor-wave class="deco-wave" [w]="120" />
 
     <div class="stats">
       <div class="stat">
         <div class="value accent">{{ dash.rsvp().yes }}</div>
-        <div class="label stat-label">{{ 'dashboard.rsvp.yes' | translate }}</div>
+        <div class="label stat-label">{{ 'dashboard.rsvp.attending' | translate }}</div>
       </div>
       <div class="stat">
         <div class="value">{{ dash.rsvp().pending }}</div>
@@ -23,7 +21,7 @@
       </div>
       <div class="stat">
         <div class="value">{{ dash.rsvp().no }}</div>
-        <div class="label stat-label">{{ 'dashboard.rsvp.no' | translate }}</div>
+        <div class="label stat-label">{{ 'dashboard.rsvp.declined' | translate }}</div>
       </div>
     </div>
     <app-progress-bar class="progress" [percent]="dash.repliedPct()" />
@@ -47,6 +45,34 @@
       [value]="dash.vendors().value"
       [sub]="dash.vendors().sub"
     />
+  </div>
+
+  <!-- manage -->
+  <div class="manage">
+    <div class="label manage-title">{{ 'dashboard.manage.title' | translate }}</div>
+    <div class="manage-list">
+      <button type="button" class="manage-row">
+        <span class="manage-text">
+          <span class="manage-name">{{ 'dashboard.manage.guests.title' | translate }}</span>
+          <span class="manage-sub">{{ 'dashboard.manage.guests.sub' | translate }}</span>
+        </span>
+        <span class="manage-arrow" aria-hidden="true">→</span>
+      </button>
+      <button type="button" class="manage-row">
+        <span class="manage-text">
+          <span class="manage-name">{{ 'dashboard.manage.seating.title' | translate }}</span>
+          <span class="manage-sub">{{ 'dashboard.manage.seating.sub' | translate }}</span>
+        </span>
+        <span class="manage-arrow" aria-hidden="true">→</span>
+      </button>
+      <button type="button" class="manage-row">
+        <span class="manage-text">
+          <span class="manage-name">{{ 'dashboard.manage.config.title' | translate }}</span>
+          <span class="manage-sub">{{ 'dashboard.manage.config.sub' | translate }}</span>
+        </span>
+        <span class="manage-arrow" aria-hidden="true">→</span>
+      </button>
+    </div>
   </div>
 
   <!-- tasks -->

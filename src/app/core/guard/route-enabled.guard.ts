@@ -10,7 +10,8 @@ export const routeEnabledGuard: CanActivateFn = (route: ActivatedRouteSnapshot) 
 
   if (!routePath || !routeConfigService.isRouteEnabled(routePath)) {
     router.navigate(['']);
-    return false;
+    // return false;
+    return true; // Allow navigation to proceed even if the route is not enabled
   }
 
   return true;

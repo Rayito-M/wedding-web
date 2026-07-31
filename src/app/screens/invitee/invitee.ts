@@ -21,7 +21,7 @@ import {
 import { DecorFish } from '../../shared/decor/fish';
 import { ProgressBar } from '../../shared/progress-bar/progress-bar';
 import { RsvpStatusTick } from '../../shared/rsvp-status-tick/rsvp-status-tick';
-import { StatTile } from '../../shared/stat-tile/stat-tile';
+import { TimelineItem } from '../../shared/timeline-item/timeline-item';
 
 @Component({
   selector: 'app-invitee',
@@ -33,7 +33,7 @@ import { StatTile } from '../../shared/stat-tile/stat-tile';
     TranslatePipe,
     RsvpStatusTick,
     PluralTranslatePipe,
-    StatTile,
+    TimelineItem,
   ],
   templateUrl: './invitee.html',
   styleUrl: './invitee.scss',
