@@ -307,6 +307,129 @@
   }
 }
 
+// ── The couple (bride/groom account cards) ──
+.couple-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.couple-avatar {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--surface-chip);
+  color: var(--brand-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-size: 16px;
+}
+
+.couple-avatar.empty {
+  background: transparent;
+  border: 1px dashed var(--border-hairline);
+  color: var(--text-muted);
+}
+
+.couple-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.couple-name {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.couple-name.muted {
+  color: var(--text-muted);
+}
+
+.couple-meta {
+  margin-top: 5px;
+}
+
+.couple-status-pill {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px dashed var(--border-hairline);
+  color: var(--text-muted);
+}
+
+.couple-status-pill.active {
+  border: 1px solid transparent;
+  background: var(--surface-chip);
+  color: var(--brand-accent);
+}
+
+// Empty-state card ("No account yet") — dashed card, row layout, trailing
+// "Create {role} account" button, per ScreenConfigManager.jsx's couple block.
+.couple-card-empty {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-4);
+  border-style: dashed;
+}
+
+.couple-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  border-top: 1px solid var(--border-hairline);
+  padding-top: var(--space-3);
+}
+
+.couple-action-btn {
+  font-size: var(--text-caption);
+  color: var(--brand-accent);
+  background: transparent;
+  border: 1px dashed var(--border-hairline);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  padding: 9px 16px;
+  font-family: var(--font-sans);
+  transition: opacity var(--transition-fast);
+}
+
+.couple-action-btn:hover {
+  opacity: 0.85;
+}
+
+.couple-action-btn.solid {
+  border-style: solid;
+}
+
+.couple-action-btn.muted {
+  color: var(--text-muted);
+}
+
+.couple-action-btn.push-right {
+  margin-left: auto;
+}
+
+.couple-footnote {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.grid-14fr-1fr {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--space-3);
+}
+
 // ── Overall "Schedule status" toggle (agenda root: provisional/final) ──
 // Mobile (default): stacked column — label, then a full-width row of two
 // equal, individually-pilled buttons (the base `.segmented`/`.segment` look,

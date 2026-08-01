@@ -43,7 +43,7 @@ type AgendaItem = CreateWeddingConfigDtoAgendaItemsInner;
 type Hotel = CreateWeddingConfigDtoHotelsInner;
 type DietTag = CreateWeddingConfigDtoDietaryPreferencesInner;
 type TagCollection = 'dietaryPreferences' | 'allergies';
-type SectionId = 'basics' | 'venues' | 'agenda' | 'hotels' | 'dietary' | 'appearance';
+type SectionId = 'basics' | 'couple' | 'venues' | 'agenda' | 'hotels' | 'dietary' | 'appearance';
 
 interface SectionDef {
   readonly id: SectionId;
@@ -53,12 +53,69 @@ interface SectionDef {
 
 const SECTIONS: readonly SectionDef[] = [
   { id: 'basics', number: '01', labelKey: 'configManager.section.basics' },
-  { id: 'venues', number: '02', labelKey: 'configManager.section.venues' },
-  { id: 'agenda', number: '03', labelKey: 'configManager.section.agenda' },
-  { id: 'hotels', number: '04', labelKey: 'configManager.section.hotels' },
-  { id: 'dietary', number: '05', labelKey: 'configManager.section.dietary' },
-  { id: 'appearance', number: '06', labelKey: 'configManager.section.appearance' },
+  { id: 'couple', number: '02', labelKey: 'configManager.section.couple' },
+  { id: 'venues', number: '03', labelKey: 'configManager.section.venues' },
+  { id: 'agenda', number: '04', labelKey: 'configManager.section.agenda' },
+  { id: 'hotels', number: '05', labelKey: 'configManager.section.hotels' },
+  { id: 'dietary', number: '06', labelKey: 'configManager.section.dietary' },
+  { id: 'appearance', number: '07', labelKey: 'configManager.section.appearance' },
 ];
+
+// "The couple" section — the two accounts (bride/groom) that own the wedding.
+// There is no `couple` field anywhere on the generated API client (verified
+// against `WeddingConfigResponseDto` / `CreateWeddingConfigDto*`), so — like
+// the rest of this screen — this is UI-only, local component state, seeded
+// from a fixture (same precedent as `screens/profile/profile.ts`'s `ME_SEED`),
+// not wired to any API. Mirrors `SEED.couple` (`ScreenConfigManager.jsx`
+// lines 11-14) and its `setPerson`/`addPerson`/`rmPerson` helpers.
+type CoupleRole = 'bride' | 'groom';
+type CoupleAccess = 'owner' | 'editor' | 'viewer';
+type CoupleAccountStatus = 'active' | 'invited';
+
+interface CoupleAccount {
+  readonly id: string;
+  readonly role: CoupleRole;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  access: CoupleAccess;
+  status: CoupleAccountStatus;
+  lastSeen: string;
+}
+
+const COUPLE_ROLES: readonly CoupleRole[] = ['bride', 'groom'];
+const COUPLE_ACCESS_LEVELS: readonly CoupleAccess[] = ['owner', 'editor', 'viewer'];
+
+// Fixture data mirroring the reference SEED.couple `c1`/`c2` entries — literal
+// content (names, contact details, "last seen" copy), not UI chrome, so it
+// isn't run through i18n (same precedent as `ME_SEED`'s `relation.label`).
+function buildCoupleSeed(): CoupleAccount[] {
+  return [
+    {
+      id: 'c1',
+      role: 'bride',
+      firstName: 'Sara',
+      lastName: 'Ortega',
+      email: 'sara@ortega.es',
+      phone: '+34 611 20 44 08',
+      access: 'owner',
+      status: 'active',
+      lastSeen: 'Today, 09:12',
+    },
+    {
+      id: 'c2',
+      role: 'groom',
+      firstName: 'Christophe',
+      lastName: 'Lemoine',
+      email: 'christophe.lemoine@mail.fr',
+      phone: '+33 6 42 11 87 30',
+      access: 'owner',
+      status: 'active',
+      lastSeen: 'Yesterday, 21:40',
+    },
+  ];
+}
 
 // Order for the per-language edit tabs (Agenda, Dietary) — mirrors the design
 // reference's LangTabs order (FR · EN · ES); a UI convenience, not the app-wide
@@ -131,11 +188,12 @@ function buildEmptyConfig(): ConfigState {
 }
 
 /**
- * Admin-only wedding configuration editor (6 sections: basics, venues, agenda,
- * stays, dietary, appearance). UI-only, local component state — there is no
- * live `PATCH /v1/config` wiring yet (blocked on T211-T214); Save just clears
- * the `dirty` flag and flashes a confirmation. See the design reference:
- * `ScreenConfigManager.jsx` / `ScreenConfigManagerMobile.jsx`.
+ * Admin-only wedding configuration editor (7 sections: basics, the couple,
+ * venues, agenda, stays, dietary, appearance). UI-only, local component
+ * state — there is no live `PATCH /v1/config` wiring yet (blocked on
+ * T211-T214); Save just clears the `dirty` flag and flashes a confirmation.
+ * See the design reference: `ScreenConfigManager.jsx` /
+ * `ScreenConfigManagerMobile.jsx`.
  */
 @Component({
   selector: 'app-config-manager',
@@ -175,6 +233,11 @@ export class ConfigManager implements OnInit {
   protected readonly lang = signal<LangCode>('en');
   protected readonly dirty = signal(false);
   protected readonly savedFlash = signal(false);
+  // "The couple" section — local state only, not part of `cfg`/the API client
+  // (no `couple` field on `WeddingConfigResponseDto`). See buildCoupleSeed().
+  protected readonly couple = signal<CoupleAccount[]>(buildCoupleSeed());
+  protected readonly coupleRoles = COUPLE_ROLES;
+  protected readonly coupleAccessLevels = COUPLE_ACCESS_LEVELS;
   // Draft text for the inline "+ Add tag" chip input, per tag collection.
   protected readonly draftTag = signal<Record<TagCollection, string>>({
     dietaryPreferences: '',
@@ -260,6 +323,73 @@ export class ConfigManager implements OnInit {
 
   protected setLanguageLabel(code: LangCode, value: string): void {
     this.mutate((c) => ({ ...c, language: { ...c.language, [code]: value } }));
+  }
+
+  // ── The couple (bride/groom accounts) — local state, see buildCoupleSeed() ──
+
+  protected findPerson(role: CoupleRole): CoupleAccount | undefined {
+    return this.couple().find((p) => p.role === role);
+  }
+
+  protected setPerson(id: string, patch: Partial<CoupleAccount>): void {
+    this.couple.update((people) => people.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+    this.dirty.set(true);
+  }
+
+  protected addPerson(role: CoupleRole): void {
+    const newPerson: CoupleAccount = {
+      id: uid(),
+      role,
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      access: 'owner',
+      status: 'invited',
+      lastSeen: this.translateService.instant('configManager.couple.lastSeen.neverSignedIn'),
+    };
+    this.couple.update((people) => [...people, newPerson]);
+    this.dirty.set(true);
+  }
+
+  protected removePerson(id: string): void {
+    this.couple.update((people) => people.filter((p) => p.id !== id));
+    this.dirty.set(true);
+  }
+
+  protected coupleInitials(person: CoupleAccount): string {
+    const first = person.firstName.charAt(0) || '?';
+    const last = person.lastName.charAt(0) || '';
+    return (first + last).toUpperCase();
+  }
+
+  protected coupleFullName(person: CoupleAccount): string | null {
+    const name = [person.firstName, person.lastName].filter(Boolean).join(' ');
+    return name || null;
+  }
+
+  /** "Send sign-in link" (active accounts) / "Resend invitation" (invited). */
+  protected sendCoupleInvite(person: CoupleAccount): void {
+    const key =
+      person.status === 'active'
+        ? 'configManager.couple.lastSeen.signInLinkSent'
+        : 'configManager.couple.lastSeen.inviteSent';
+    this.setPerson(person.id, { lastSeen: this.translateService.instant(key) });
+  }
+
+  /** "Suspend access" (active → invited) / "Mark as active" (invited → active). */
+  protected toggleCoupleStatus(person: CoupleAccount): void {
+    if (person.status === 'active') {
+      this.setPerson(person.id, {
+        status: 'invited',
+        lastSeen: this.translateService.instant('configManager.couple.lastSeen.invitationPending'),
+      });
+    } else {
+      this.setPerson(person.id, {
+        status: 'active',
+        lastSeen: this.translateService.instant('configManager.couple.lastSeen.justNow'),
+      });
+    }
   }
 
   protected setVenue(id: string, patch: Partial<Venue>): void {

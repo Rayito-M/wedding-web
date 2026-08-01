@@ -262,6 +262,7 @@
     },
     "section": {
       "basics": "Informations",
+      "couple": "Le couple",
       "venues": "Lieux",
       "agenda": "Agenda",
       "hotels": "Hébergements",
@@ -270,6 +271,7 @@
     },
     "note": {
       "basics": "Les prénoms, la formule et les dates clés qui structurent chaque écran.",
+      "couple": "Les deux comptes propriétaires de ce mariage. Ils se connectent, modifient tout et reçoivent les réponses des invités.",
       "venues": "Où se déroule la journée. Chaque lieu peut être lié à un moment de l'agenda.",
       "agenda": "Le déroulé de la journée. Titres et descriptions sont par langue.",
       "hotels": "Hôtels recommandés près des lieux, affichés sur l'écran S'y rendre.",
@@ -305,6 +307,49 @@
     },
     "priceTier": {
       "aria": "Gamme de prix {{tier}}"
+    },
+    "couple": {
+      "role": {
+        "bride": "Mariée",
+        "groom": "Marié"
+      },
+      "status": {
+        "active": "Actif",
+        "invited": "Invité"
+      },
+      "field": {
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "email": "E-mail",
+        "phone": "Téléphone",
+        "access": "Accès"
+      },
+      "access": {
+        "owner": "Propriétaire",
+        "editor": "Éditeur",
+        "viewer": "Lecteur"
+      },
+      "action": {
+        "sendSignInLink": "Envoyer le lien de connexion",
+        "resendInvitation": "Renvoyer l'invitation",
+        "suspendAccess": "Suspendre l'accès",
+        "markActive": "Marquer comme actif",
+        "deleteAccount": "Supprimer le compte",
+        "createAccount": {
+          "bride": "Créer un compte pour la mariée",
+          "groom": "Créer un compte pour le marié"
+        }
+      },
+      "noAccountYet": "Pas encore de compte · cette moitié du couple ne peut pas se connecter",
+      "noNameYet": "Pas encore de nom",
+      "deleteNote": "La suppression d'un compte révoque immédiatement son lien de connexion ; la place peut être recréée à tout moment.",
+      "lastSeen": {
+        "neverSignedIn": "Jamais connecté",
+        "signInLinkSent": "Lien de connexion envoyé à l'instant",
+        "inviteSent": "Invitation envoyée à l'instant",
+        "invitationPending": "Invitation en attente",
+        "justNow": "À l'instant"
+      }
     },
     "agenda": {
       "add": "Ajouter un moment",
@@ -493,7 +538,8 @@
       "addChild": "Ajouter un enfant",
       "back": "Retour",
       "saveProfile": "Enregistrer le profil",
-      "saveChanges": "Enregistrer les modifications"
+      "saveChanges": "Enregistrer les modifications",
+      "createGuest": "Créer l’invité"
     },
     "table": {
       "guest": "Invité",
@@ -524,7 +570,8 @@
       "comments": "Commentaires",
       "commentsPlaceholder": "Ajoutez vos notes ou demandes spéciales…",
       "cancel": "Annuler",
-      "save": "Enregistrer les modifications"
+      "save": "Enregistrer les modifications",
+      "newGuest": "Nouvel invité"
     },
     "profile": {
       "sideGroup": "Côté · Groupe",
@@ -564,7 +611,10 @@
       "phone": "Téléphone",
       "dietary": "Préférences alimentaires",
       "allergies": "Allergies et intolérances",
-      "notes": "Note de l'invité"
+      "notes": "Note de l'invité",
+      "phoneHint": "Format international, par ex. +33600000000",
+      "emailHint": "Saisissez une adresse e-mail valide",
+      "createFailed": "L’invité n’a pas pu être créé. Vérifiez les informations et réessayez."
     },
     "empty": "Aucun invité. Ajoutez votre premier invité pour commencer."
   },

@@ -265,6 +265,7 @@
     },
     "section": {
       "basics": "Basics",
+      "couple": "The couple",
       "venues": "Venues",
       "agenda": "Agenda",
       "hotels": "Stays",
@@ -273,6 +274,7 @@
     },
     "note": {
       "basics": "The names, saying and key dates that anchor every screen.",
+      "couple": "The two accounts that own this wedding. They sign in, edit everything and receive guest replies.",
       "venues": "Where the day unfolds. Each venue can be linked from an agenda moment.",
       "agenda": "The order of the day. Titles and descriptions are per-language.",
       "hotels": "Recommended hotels near the venues, shown on the Travel screen.",
@@ -308,6 +310,49 @@
     },
     "priceTier": {
       "aria": "Price tier {{tier}}"
+    },
+    "couple": {
+      "role": {
+        "bride": "Bride",
+        "groom": "Groom"
+      },
+      "status": {
+        "active": "Active",
+        "invited": "Invited"
+      },
+      "field": {
+        "firstName": "First name",
+        "lastName": "Last name",
+        "email": "Email",
+        "phone": "Phone",
+        "access": "Access"
+      },
+      "access": {
+        "owner": "Owner",
+        "editor": "Editor",
+        "viewer": "Viewer"
+      },
+      "action": {
+        "sendSignInLink": "Send sign-in link",
+        "resendInvitation": "Resend invitation",
+        "suspendAccess": "Suspend access",
+        "markActive": "Mark as active",
+        "deleteAccount": "Delete account",
+        "createAccount": {
+          "bride": "Create bride account",
+          "groom": "Create groom account"
+        }
+      },
+      "noAccountYet": "No account yet · this half of the couple cannot sign in",
+      "noNameYet": "No name yet",
+      "deleteNote": "Deleting an account revokes its sign-in link immediately; the slot can be recreated at any time.",
+      "lastSeen": {
+        "neverSignedIn": "Never signed in",
+        "signInLinkSent": "Sign-in link sent just now",
+        "inviteSent": "Invite sent just now",
+        "invitationPending": "Invitation pending",
+        "justNow": "Just now"
+      }
     },
     "agenda": {
       "add": "Add moment",
@@ -496,7 +541,8 @@
       "addChild": "Add child",
       "back": "Back",
       "saveProfile": "Save profile",
-      "saveChanges": "Save changes"
+      "saveChanges": "Save changes",
+      "createGuest": "Create guest"
     },
     "table": {
       "guest": "Guest",
@@ -527,7 +573,8 @@
       "comments": "Comments",
       "commentsPlaceholder": "Add any notes or special requests…",
       "cancel": "Cancel",
-      "save": "Save changes"
+      "save": "Save changes",
+      "newGuest": "New guest"
     },
     "profile": {
       "sideGroup": "Side · Group",
@@ -567,7 +614,10 @@
       "phone": "Phone",
       "dietary": "Dietary",
       "allergies": "Allergies & intolerances",
-      "notes": "Note from guest"
+      "notes": "Note from guest",
+      "phoneHint": "International format, e.g. +34600000000",
+      "emailHint": "Enter a valid email address",
+      "createFailed": "The guest could not be created. Please check the details and try again."
     },
     "empty": "No guests to display. Add your first guest to get started."
   },

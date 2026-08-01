@@ -262,6 +262,7 @@
     },
     "section": {
       "basics": "Datos básicos",
+      "couple": "La pareja",
       "venues": "Lugares",
       "agenda": "Agenda",
       "hotels": "Alojamiento",
@@ -270,6 +271,7 @@
     },
     "note": {
       "basics": "Los nombres, el lema y las fechas clave que dan forma a cada pantalla.",
+      "couple": "Las dos cuentas propietarias de esta boda. Inician sesión, lo editan todo y reciben las respuestas de los invitados.",
       "venues": "Dónde transcurre el día. Cada lugar puede enlazarse desde un momento de la agenda.",
       "agenda": "El orden del día. Títulos y descripciones son por idioma.",
       "hotels": "Hoteles recomendados cerca de los lugares, mostrados en la pantalla Cómo llegar.",
@@ -305,6 +307,49 @@
     },
     "priceTier": {
       "aria": "Rango de precio {{tier}}"
+    },
+    "couple": {
+      "role": {
+        "bride": "Novia",
+        "groom": "Novio"
+      },
+      "status": {
+        "active": "Activa",
+        "invited": "Invitada"
+      },
+      "field": {
+        "firstName": "Nombre",
+        "lastName": "Apellidos",
+        "email": "Correo electrónico",
+        "phone": "Teléfono",
+        "access": "Acceso"
+      },
+      "access": {
+        "owner": "Propietario",
+        "editor": "Editor",
+        "viewer": "Espectador"
+      },
+      "action": {
+        "sendSignInLink": "Enviar enlace de acceso",
+        "resendInvitation": "Reenviar invitación",
+        "suspendAccess": "Suspender acceso",
+        "markActive": "Marcar como activa",
+        "deleteAccount": "Eliminar cuenta",
+        "createAccount": {
+          "bride": "Crear cuenta de novia",
+          "groom": "Crear cuenta de novio"
+        }
+      },
+      "noAccountYet": "Aún no hay cuenta · esta mitad de la pareja no puede iniciar sesión",
+      "noNameYet": "Sin nombre todavía",
+      "deleteNote": "Eliminar una cuenta revoca su enlace de acceso de inmediato; la plaza se puede volver a crear en cualquier momento.",
+      "lastSeen": {
+        "neverSignedIn": "Nunca ha iniciado sesión",
+        "signInLinkSent": "Enlace de acceso enviado ahora mismo",
+        "inviteSent": "Invitación enviada ahora mismo",
+        "invitationPending": "Invitación pendiente",
+        "justNow": "Ahora mismo"
+      }
     },
     "agenda": {
       "add": "Añadir momento",
@@ -493,7 +538,8 @@
       "addChild": "Añadir niño/a",
       "back": "Atrás",
       "saveProfile": "Guardar perfil",
-      "saveChanges": "Guardar cambios"
+      "saveChanges": "Guardar cambios",
+      "createGuest": "Crear invitado"
     },
     "table": {
       "guest": "Invitado",
@@ -524,7 +570,8 @@
       "comments": "Comentarios",
       "commentsPlaceholder": "Añade tus notas o solicitudes especiales…",
       "cancel": "Cancelar",
-      "save": "Guardar cambios"
+      "save": "Guardar cambios",
+      "newGuest": "Nuevo invitado"
     },
     "profile": {
       "sideGroup": "Lado · Grupo",
@@ -564,7 +611,10 @@
       "phone": "Teléfono",
       "dietary": "Preferencias dietéticas",
       "allergies": "Alergias e intolerancias",
-      "notes": "Nota del invitado"
+      "notes": "Nota del invitado",
+      "phoneHint": "Formato internacional, p. ej. +34600000000",
+      "emailHint": "Introduce un correo electrónico válido",
+      "createFailed": "No se ha podido crear el invitado. Revisa los datos e inténtalo de nuevo."
     },
     "empty": "Sin invitados. Añade el primer invitado para comenzar."
   },

@@ -141,6 +141,162 @@
         </section>
       }
 
+      @case ('couple') {
+        <section>
+          <div class="section-header">
+            <div>
+              <h2>{{ 'configManager.section.couple' | translate }}</h2>
+              <p class="note">{{ 'configManager.note.couple' | translate }}</p>
+            </div>
+          </div>
+          <div class="card-list">
+            @for (role of coupleRoles; track role) {
+              @if (findPerson(role); as person) {
+                <div class="card">
+                  <div class="couple-card-header">
+                    <span class="couple-avatar">{{ coupleInitials(person) }}</span>
+                    <div class="couple-card-info">
+                      <div class="couple-name">
+                        {{ ('configManager.couple.role.' + role) | translate }}
+                      </div>
+                      <div class="field-label couple-meta">
+                        {{ coupleFullName(person) ?? ('configManager.couple.noNameYet' | translate) }}
+                        · {{ person.lastSeen }}
+                      </div>
+                    </div>
+                    <span class="couple-status-pill" [class.active]="person.status === 'active'">
+                      {{ ('configManager.couple.status.' + person.status) | translate }}
+                    </span>
+                  </div>
+                  <div class="grid-2">
+                    <label class="field">
+                      <span class="field-label">{{
+                        'configManager.couple.field.firstName' | translate
+                      }}</span>
+                      <input
+                        app-input
+                        type="text"
+                        [value]="person.firstName"
+                        (input)="setPerson(person.id, { firstName: inputValue($event) })"
+                      />
+                    </label>
+                    <label class="field">
+                      <span class="field-label">{{
+                        'configManager.couple.field.lastName' | translate
+                      }}</span>
+                      <input
+                        app-input
+                        type="text"
+                        [value]="person.lastName"
+                        (input)="setPerson(person.id, { lastName: inputValue($event) })"
+                      />
+                    </label>
+                  </div>
+                  <div class="grid-14fr-1fr">
+                    <label class="field">
+                      <span class="field-label">{{
+                        'configManager.couple.field.email' | translate
+                      }}</span>
+                      <input
+                        app-input
+                        type="email"
+                        placeholder="name@mail.com"
+                        [value]="person.email"
+                        (input)="setPerson(person.id, { email: inputValue($event) })"
+                      />
+                    </label>
+                    <label class="field">
+                      <span class="field-label">{{
+                        'configManager.couple.field.phone' | translate
+                      }}</span>
+                      <input
+                        app-input
+                        type="tel"
+                        placeholder="+34 600 00 00 00"
+                        [value]="person.phone"
+                        (input)="setPerson(person.id, { phone: inputValue($event) })"
+                      />
+                    </label>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">{{
+                      'configManager.couple.field.access' | translate
+                    }}</span>
+                    <div
+                      class="segmented"
+                      role="radiogroup"
+                      [attr.aria-label]="'configManager.couple.field.access' | translate"
+                    >
+                      @for (accessLevel of coupleAccessLevels; track accessLevel) {
+                        <button
+                          type="button"
+                          role="radio"
+                          class="segment"
+                          [class.on]="person.access === accessLevel"
+                          [attr.aria-checked]="person.access === accessLevel"
+                          (click)="setPerson(person.id, { access: accessLevel })"
+                        >
+                          {{ ('configManager.couple.access.' + accessLevel) | translate }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+                  <div class="couple-actions">
+                    <button
+                      type="button"
+                      class="couple-action-btn solid"
+                      (click)="sendCoupleInvite(person)"
+                    >
+                      {{
+                        (person.status === 'active'
+                          ? 'configManager.couple.action.sendSignInLink'
+                          : 'configManager.couple.action.resendInvitation'
+                        ) | translate
+                      }}
+                    </button>
+                    <button
+                      type="button"
+                      class="couple-action-btn muted"
+                      (click)="toggleCoupleStatus(person)"
+                    >
+                      {{
+                        (person.status === 'active'
+                          ? 'configManager.couple.action.suspendAccess'
+                          : 'configManager.couple.action.markActive'
+                        ) | translate
+                      }}
+                    </button>
+                    <button
+                      type="button"
+                      class="couple-action-btn muted push-right"
+                      (click)="removePerson(person.id)"
+                    >
+                      {{ 'configManager.couple.action.deleteAccount' | translate }}
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <div class="card couple-card-empty">
+                  <span class="couple-avatar empty" aria-hidden="true">?</span>
+                  <div class="couple-card-info">
+                    <div class="couple-name muted">
+                      {{ ('configManager.couple.role.' + role) | translate }}
+                    </div>
+                    <div class="field-label couple-meta">
+                      {{ 'configManager.couple.noAccountYet' | translate }}
+                    </div>
+                  </div>
+                  <button type="button" class="couple-action-btn solid" (click)="addPerson(role)">
+                    {{ ('configManager.couple.action.createAccount.' + role) | translate }}
+                  </button>
+                </div>
+              }
+            }
+            <p class="couple-footnote">{{ 'configManager.couple.deleteNote' | translate }}</p>
+          </div>
+        </section>
+      }
+
       @case ('venues') {
         <section>
           <div class="section-header">
