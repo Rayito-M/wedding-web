@@ -45,34 +45,6 @@
   }
 }
 
-// Hand-built status pill (Final schedule / Provisional) — no equivalent DS
-// component; mirrors ScreenSchedule.jsx's inline `statusPill`.
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 3px 9px;
-  border-radius: t.$radius-pill;
-  color: var(--text-muted);
-  border: 1px dashed var(--border-hairline);
-  white-space: nowrap;
-
-  &.final {
-    background: var(--status-final);
-    color: var(--on-accent);
-    border: 1px solid var(--status-final);
-  }
-
-  &.provisional {
-    background: var(--status-provisional);
-    color: var(--chip);
-    border: 1px dashed var(--border-hairline);
-    font-weight: bolder;
-  }
-}
 
 // Hand-built note row (counts by status) — mirrors ScreenSchedule.jsx's
 // inline `note` block; no equivalent DS component.

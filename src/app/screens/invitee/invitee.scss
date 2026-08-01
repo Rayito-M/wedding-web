@@ -10,7 +10,7 @@
 
   .hello {
     font-size: t.$text-caption;
-    color: var(--sub);
+    color: var(--text-muted);
   }
 
   h1 {
@@ -21,7 +21,7 @@
     margin-top: 4px;
 
     .accent {
-      color: var(--accent);
+      color: var(--brand-accent);
     }
   }
 }
@@ -34,8 +34,8 @@
 }
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
   border-radius: t.$radius-card;
 }
 
@@ -65,7 +65,7 @@
 
   .caption {
     font-size: t.$text-label;
-    color: var(--sub);
+    color: var(--text-muted);
     margin-top: 4px;
     letter-spacing: 0.06em;
   }
@@ -89,12 +89,12 @@
 
   .rsvp-sub {
     font-size: t.$text-micro;
-    color: var(--sub);
+    color: var(--text-muted);
     margin-top: 2px;
   }
 
   .edit {
-    color: var(--accent);
+    color: var(--brand-accent);
     font-size: t.$text-micro;
     text-decoration: none;
   }
@@ -114,48 +114,21 @@
 
   .all {
     font-size: t.$text-micro;
-    color: var(--accent);
+    color: var(--brand-accent);
     text-decoration: none;
   }
 }
 
-// Hand-built status pill (Final / Provisional) — no equivalent DS component;
-// mirrors ScreenHome.jsx's inline `schedulePill`.
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: t.$radius-pill;
-  color: var(--text-muted);
-  border: 1px dashed var(--border-hairline);
-  white-space: nowrap;
-
-  &.final {
-    background: var(--status-final);
-    color: var(--on-accent);
-    border: 1px solid var(--status-final);
-  }
-
-  &.provisional {
-    background: var(--status-provisional);
-    color: var(--chip);
-    border: 1px dashed var(--border-hairline);
-    font-weight: bolder;
-  }
-}
 
 .provisional-note {
   font-size: t.$text-label;
-  color: var(--sub);
+  color: var(--text-muted);
   margin-bottom: t.$space-2;
 }
 
 .no-events {
   font-size: t.$text-caption;
-  color: var(--sub);
+  color: var(--text-muted);
   padding: 8px 0;
 }
 
@@ -180,12 +153,12 @@
 
   .album-sub {
     font-size: t.$text-label;
-    color: var(--sub);
+    color: var(--text-muted);
     margin-top: 1px;
   }
 
   .arrow {
-    color: var(--accent);
+    color: var(--brand-accent);
     font-size: 16px;
   }
 }

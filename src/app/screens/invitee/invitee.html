@@ -71,18 +71,14 @@
       <div class="schedule-header">
         <div class="label-group">
           <div class="label">{{ 'invitee.schedule.title' | translate }}</div>
-          <span
-            class="status-pill"
-            [class.final]="isAgendaFinal()"
-            [class.provisional]="!isAgendaFinal()"
-          >
+          <app-status-pill [variant]="isAgendaFinal() ? 'final' : 'provisional'">
             {{
               (isAgendaFinal()
                 ? 'shared.scheduleStatus.final'
                 : 'shared.scheduleStatus.provisional'
               ) | translate
             }}
-          </span>
+          </app-status-pill>
         </div>
         <a class="all" routerLink="/schedule">{{ 'invitee.schedule.all' | translate }}</a>
       </div>
