@@ -80,8 +80,3 @@
   color: var(--surface);
 }
 
-@media (prefers-color-scheme: dark) {
-  .dropdown-item.active {
-    color: var(--text);
-  }
-}
