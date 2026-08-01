@@ -7,7 +7,7 @@ export const environment: Environment = {
   enableLogging: false,
   enableAnalytics: true,
   // TODO: set the real GA4 measurement ID before this ships to production (ADR-0027).
-  gaMeasurementId: '',
+  gaMeasurementId: 'G-D165J9XHN6',
   appName: 'Wedding App',
   appVersion: '1.0.0',
   enabledRoutes: ['rsvp', 'dashboard', 'config', 'me', 'schedule', 'people', 'guests'],

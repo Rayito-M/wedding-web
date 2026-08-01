@@ -6,7 +6,7 @@ export const environment: Environment = {
   apiTimeout: 30000,
   enableLogging: true,
   enableAnalytics: false,
-  gaMeasurementId: '',
+  gaMeasurementId: 'G-818GKW72TD',
   appName: 'Wedding App',
   appVersion: '1.0.0',
   enabledRoutes: ['rsvp', 'dashboard', 'config', 'me', 'schedule', 'people', 'guests'],
