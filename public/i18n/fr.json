@@ -480,6 +480,13 @@
       "final": "Définitif"
     }
   },
+  "consentBanner": {
+    "message": "Nous aimerions utiliser un peu d'analytique pour voir combien d'invités nous visitent — rien de plus.",
+    "note": "Pas de publicité, pas de profilage. Vous pouvez changer d'avis à tout moment.",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "privacyLink": "Politique de confidentialité"
+  },
   "nav": {
     "home": "Accueil",
     "dashboard": "Tableau de bord",

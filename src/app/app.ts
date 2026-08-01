@@ -5,10 +5,11 @@ import { ConfigurationService, TranslateLanguageService } from './core';
 
 import { ThemeService } from './core/theme.service';
 import { AppLoadingComponent, AppErrorComponent } from './shared';
+import { ConsentBanner } from './shared/consent-banner/consent-banner';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, AppLoadingComponent, AppErrorComponent],
+  imports: [RouterOutlet, AppLoadingComponent, AppErrorComponent, ConsentBanner],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

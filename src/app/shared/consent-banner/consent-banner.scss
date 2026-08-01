@@ -1,0 +1,50 @@
+// Per design system components/core/ConsentBanner.jsx
+:host {
+  display: contents;
+}
+
+.banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  background: var(--surface-card);
+  border-top: 1px solid var(--border-hairline);
+  padding: var(--space-5) var(--space-6) calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+  font-family: var(--font-sans);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.message {
+  margin: 0;
+  font-size: var(--text-body);
+  line-height: 1.5;
+  color: var(--text-body-color);
+  text-wrap: pretty;
+}
+
+.note {
+  margin: 6px 0 0;
+  font-size: var(--text-micro);
+  line-height: 1.5;
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.privacy-link {
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.actions button[app-btn] {
+  flex: 1 1 140px;
+}
