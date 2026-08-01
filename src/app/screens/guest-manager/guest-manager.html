@@ -233,5 +233,8 @@
   </div>
 
   <!-- RSVP Details Modal -->
-  <app-rsvp-details-modal (saveComments)="onSaveComments($event)" />
+  <app-rsvp-details-modal
+    (saveComments)="onSaveComments($event)"
+    (guestCreated)="onGuestCreated($event)"
+  />
 </div>

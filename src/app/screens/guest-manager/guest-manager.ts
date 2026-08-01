@@ -139,10 +139,23 @@ export class GuestManager {
     this.currentPage.set(Math.min(maxPage, this.currentPage() + 1));
   }
 
-  /** Add a new guest */
+  /**
+   * Add a new guest — opens the shared guest overlay on a blank draft, the way
+   * the design system's `ScreenGuestManager`/`ScreenGuestManagerMobile`
+   * `addGuest()` reuses the profile overlay in "New guest" mode rather than
+   * navigating away. The modal owns the form and the create calls.
+   */
   addNewGuest(): void {
-    // Placeholder for adding a new guest
-    // In full implementation, this would open a modal or navigate to an edit screen
+    this.rsvpModal.openNew();
+  }
+
+  /**
+   * A guest was just created: its RSVP is already in the collection (the modal
+   * created it), but its profile is not — fetch it so the row renders the same
+   * side/group and contact details as any other guest.
+   */
+  onGuestCreated(userId: string): void {
+    this.userProfileCollection.getByKey(userId);
   }
 
   /** Get the current filter value (for template) */
