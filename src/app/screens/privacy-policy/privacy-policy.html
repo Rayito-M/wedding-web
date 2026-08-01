@@ -1,0 +1,43 @@
+<div class="page">
+  <header>
+    <button app-btn type="button" [primary]="false" routerLink="/">
+      {{ 'shared.back' | translate }}
+    </button>
+    <app-monogram [size]="28" />
+  </header>
+
+  <div class="content">
+    <h1>{{ 'privacyPolicy.title' | translate }}</h1>
+    <p class="intro">{{ 'privacyPolicy.intro' | translate }}</p>
+
+    <section>
+      <h2>{{ 'privacyPolicy.analytics.title' | translate }}</h2>
+      <p>{{ 'privacyPolicy.analytics.body' | translate }}</p>
+    </section>
+
+    <section>
+      <h2>{{ 'privacyPolicy.cookies.title' | translate }}</h2>
+      <p>{{ 'privacyPolicy.cookies.body' | translate }}</p>
+    </section>
+
+    <section>
+      <h2>{{ 'privacyPolicy.ipAnonymization.title' | translate }}</h2>
+      <p>{{ 'privacyPolicy.ipAnonymization.body' | translate }}</p>
+    </section>
+
+    <section>
+      <h2>{{ 'privacyPolicy.googlePolicy.title' | translate }}</h2>
+      <p>
+        {{ 'privacyPolicy.googlePolicy.body' | translate }}
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">
+          {{ 'privacyPolicy.googlePolicy.link' | translate }}
+        </a>
+      </p>
+    </section>
+
+    <section>
+      <h2>{{ 'privacyPolicy.changeChoice.title' | translate }}</h2>
+      <p>{{ 'privacyPolicy.changeChoice.body' | translate }}</p>
+    </section>
+  </div>
+</div>

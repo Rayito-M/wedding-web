@@ -1,0 +1,76 @@
+@use '../../../styles/tokens' as t;
+
+// Public, unguarded informational screen — owns its own header markup (no
+// PrivateLayout chrome), same precedent as `login`/`magic-link-callback`.
+:host {
+  display: block;
+  min-height: 100%;
+  background: var(--surface-page);
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  // Readable measure for legal-style body copy — wider than the auth card's
+  // 360px, narrower than a full-bleed dashboard column.
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 12px t.$space-6 t.$space-7;
+  box-sizing: border-box;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-5;
+  margin-top: t.$space-6;
+}
+
+h1 {
+  margin: 0;
+  font-family: t.$font-serif;
+  font-size: t.$text-display-lg;
+  font-weight: 400;
+  color: var(--text-body-color);
+}
+
+.intro {
+  margin: 0;
+  font-family: t.$font-sans;
+  font-size: t.$text-body;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+h2 {
+  margin: 0;
+  font-family: t.$font-serif;
+  font-size: t.$text-heading;
+  font-weight: 400;
+  color: var(--text-body-color);
+}
+
+p {
+  margin: 0;
+  font-family: t.$font-sans;
+  font-size: t.$text-body;
+  line-height: 1.6;
+  color: var(--text-body-color);
+}
+
+a {
+  color: var(--brand-accent);
+}

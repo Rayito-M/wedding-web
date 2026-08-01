@@ -507,7 +507,8 @@
     "seating": "Sara & Christophe · Plan de mesas",
     "invitee": "Sara & Christophe · Tu día",
     "profile": "Sara & Christophe · Mi perfil",
-    "people": "Sara & Christophe · Contactos"
+    "people": "Sara & Christophe · Contactos",
+    "privacyPolicy": "Sara & Christophe · Política de privacidad"
   },
   "guest_manager": {
     "header": {
@@ -642,5 +643,30 @@
       "photography": "Fotografía"
     },
     "empty": "Nadie coincide con \"{{query}}\"."
+  },
+  "privacyPolicy": {
+    "title": "Política de privacidad",
+    "intro": "Esta página explica cómo el sitio usa Google Analytics para entender el tráfico general de visitantes.",
+    "analytics": {
+      "title": "Google Analytics",
+      "body": "Usamos Google Analytics para ver el tráfico agregado de este sitio — cosas como visitas, páginas vistas y tendencias generales de dispositivo y ubicación geográfica. No rastreamos acciones individuales ni configuramos seguimiento de eventos personalizados."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "body": "Google Analytics coloca cookies en tu navegador para ayudar a medir las visitas. Estas cookies solo se establecen después de que aceptes el uso de analítica más abajo."
+    },
+    "ipAnonymization": {
+      "title": "Anonimización de IP",
+      "body": "Tu dirección IP se anonimiza antes de que Google Analytics la procese, por lo que no se usa para identificarte individualmente."
+    },
+    "googlePolicy": {
+      "title": "Política de privacidad de Google",
+      "body": "Para más detalle sobre cómo Google gestiona los datos recogidos a través de Analytics, consulta",
+      "link": "la política de privacidad de Google"
+    },
+    "changeChoice": {
+      "title": "Cambiar tu elección",
+      "body": "Puedes cambiar tu elección de Aceptar/Rechazar en cualquier momento borrando los datos de este sitio en la configuración de tu navegador; se te volverá a preguntar en tu próxima visita."
+    }
   }
 }

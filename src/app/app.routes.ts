@@ -40,6 +40,14 @@ export const routes: Routes = [
     canActivate: [publicOnlyGuard],
   },
   {
+    // GA disclosure (ADR-0027) linked from the consent banner's note line
+    // (T250). Reachable whether the visitor is signed in or not — no guard.
+    path: 'privacy-policy',
+    loadComponent: () =>
+      import('./screens/privacy-policy/privacy-policy').then((m) => m.PrivacyPolicy),
+    title: 'titles.privacyPolicy',
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./layouts/private-layout/private-layout').then((m) => m.PrivateLayout),
