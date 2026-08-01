@@ -1,3 +1,6 @@
+@use '../../../styles/tokens' as t;
+@use '../../../styles/primitives';
+
 // Per design reference `ScreenPeople.jsx` — single layout, switched purely by
 // `@media (min-width: 900px)` (mobile single-column card list vs. desktop
 // header+search row and `repeat(auto-fill,minmax(280px,1fr))` grid at
@@ -35,10 +38,7 @@
 }
 
 .eyebrow {
-  font-size: var(--text-label);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %eyebrow-wide;
 }
 
 .title {
@@ -124,14 +124,12 @@
 // `ProfileCard` reference, same precedent as `seating-plan`'s hand-built
 // unit rows.
 .card {
+  @extend %card-shell;
   display: flex;
-  gap: var(--space-3);
+  gap: t.$space-3;
   align-items: flex-start;
-  padding: var(--space-4);
-  background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-card);
-  font-family: var(--font-sans);
+  padding: t.$space-4;
+  font-family: t.$font-sans;
 }
 
 // The signed-in user's own card (T237/T238 wiring) — the only card that

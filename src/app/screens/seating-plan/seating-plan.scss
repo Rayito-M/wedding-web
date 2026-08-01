@@ -1,3 +1,6 @@
+@use '../../../styles/tokens' as t;
+@use '../../../styles/primitives';
+
 // Per design reference `ScreenSeatingPlan.jsx` (desktop two-panel) /
 // `ScreenSeatingPlanMobile.jsx` (segmented Unseated/Tables) — same file in the
 // DS kit, split here purely by `@media (min-width: 900px)`, following the
@@ -40,10 +43,7 @@
 }
 
 .eyebrow {
-  font-size: var(--text-label);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %eyebrow-wide;
   margin-bottom: 3px;
 }
 

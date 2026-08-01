@@ -1,0 +1,122 @@
+// ─────────────────────────────────────────────────────────────
+// Wedding App — Shared SCSS Primitives & Block Shells
+// ─────────────────────────────────────────────────────────────
+// Consolidated placeholders for re-authored screen CSS classes.
+// Used via @extend to avoid duplication. Screens extend these and
+// add context-specific overrides as needed.
+//
+// Scope: atomic styling fragments (not behavior-bearing UI).
+// Mechanism: SCSS placeholders (%name) + @extend, or @mixin.
+// Ref: T247 (SCSS consolidation). Semantic tokens only.
+// ─────────────────────────────────────────────────────────────
+
+@use './tokens' as t;
+
+// ── Typography Primitives ──
+
+/// Eyebrow label: uppercase, small, muted color.
+/// Canonical values per DS + audit consensus (T243).
+/// Variation: letter-spacing (0.12em typical, 0.14em in newer screens);
+/// margin-bottom context-dependent. Screens extend and override as needed.
+%eyebrow {
+  font-size: t.$text-label;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/// Eyebrow variant: extra letter-spacing (0.14em) for certain contexts.
+%eyebrow-wide {
+  @extend %eyebrow;
+  letter-spacing: 0.14em;
+}
+
+/// Muted subtext: secondary/tertiary info below titles.
+%sub {
+  font-size: t.$text-body;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+// ── Card Shell Primitives ──
+
+/// Base card surface: border, background, radius, overflow clipping. No layout/padding.
+/// Used by screens that add their own padding/flex/grid on top.
+%card-shell {
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: t.$radius-card;
+  overflow: hidden;
+}
+
+/// Card with padding: standard inner spacing. Use when card is a
+/// standalone surface with uniform padding (no internal flex/grid).
+%card-padded {
+  @extend %card-shell;
+  padding: t.$space-4 t.$space-5;
+}
+
+/// Card with vertical padding only (e.g., for flex column children).
+%card-padded-vert {
+  @extend %card-shell;
+  padding: t.$space-5 0;
+}
+
+/// Card with large uniform padding (profile/detail cards).
+%card-padded-lg {
+  @extend %card-shell;
+  padding: t.$space-5;
+}
+
+// ── A2 Block Shells (dashboard ≈ invitee) ──
+
+/// Greeting header: title + subtitle area.
+/// Canonical per dashboard + invitee audit (byte-identical structure).
+%greeting-block {
+  padding: 12px t.$space-6 0;
+}
+
+/// Greeting eyebrow label (small caption above title).
+%greeting-hello {
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+}
+
+/// Accent color marker (for span.accent inside titles).
+%accent-marker {
+  color: var(--brand-accent);
+}
+
+/// Main content area below greeting (flex column, gap-based).
+%content-block {
+  padding: 14px t.$space-6 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/// Decorative fish positioning: base location, overrideable opacity.
+/// Note: prefer using app-decor-fish component with [position] input
+/// rather than re-declaring these offsets. Kept here for contexts where
+/// inline decoration is unavoidable.
+%deco-fish-base {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  opacity: 0.85;
+}
+
+%deco-fish-compact {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  opacity: 0.7;
+}
+
+%deco-fish-subtle {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  opacity: 0.5;
+}
