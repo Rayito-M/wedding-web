@@ -15,6 +15,7 @@ You take one task from `TASKS.md` and produce code that satisfies its acceptance
 3. Read linked SPEC sections and ADRs.
 4. If building a component: read `../wedding-ui-design/readme.md` and the component's `*.prompt.md` in the design system.
 5. If touching auth or HTTP: read `src/app/core/` to understand the auth service and HTTP interceptor.
+6. **Before adding any new CSS class, grep for it first.** You work one task at a time and have no cross-screen visibility, so it's easy to re-invent a class that already exists in a sibling screen — and the copies then diverge (real incident: `.status-pill` diverged across `schedule` and `invitee`). Search `src/app/shared/**/*.scss` and `src/app/screens/**/*.scss` for the class name **and** the visual pattern (e.g. `pill`, `badge`, `chip`, `card`, `tag`). If a match exists: reuse the shared component/class, or extend it — do **not** re-declare it locally. If the pattern recurs across screens but has no shared home, that's a signal to stop and flag it for a consolidation task, not to add a third copy.
 
 ## Rules
 
@@ -23,7 +24,8 @@ You take one task from `TASKS.md` and produce code that satisfies its acceptance
 - **No inline styles or `style` attributes.** All CSS in the `.scss` file; use semantic token aliases (`--surface-card`, `--text-muted`, `--brand-accent`, etc.).
 - **Signals-first:** prefer `input()`, `output()`, `effect()`, `computed()` over `@Input/@Output` and `subscribe()`.
 - **TypeScript strict;** no `any` unless commented `// reason: …`.
-- **All styling from the design system:** never invent colors, spacing, or radii. Use CSS custom properties from `src/styles/_tokens.scss`.
+- **All styling from the design system:** never invent colors, spacing, or radii. Use CSS custom properties from `src/styles/_tokens.scss`. **Always use the semantic token aliases** (`--surface-card`, `--text-muted`, `--brand-accent`, `--border-hairline`, `--on-accent`…) — never raw role tokens (`--surface`, `--sub`, `--accent`, `--line`) and never a hardcoded hex/rgb. If the value you need has no token, it's a DS/token gap — stop and flag it, don't hardcode it.
+- **Reuse before you re-declare:** before writing a new CSS class or a one-off styled element, grep `src/app/shared/**/*.scss` and `src/app/screens/**/*.scss` for the same class name or visual pattern and reuse/extend the existing shared component or class instead of duplicating it (see step 6 above).
 - **i18n is mandatory:** mark all user-facing text with `i18n="@@key"` or the `translate` pipe. No hardcoded text in any language.
 - **Forms validate on blur;** errors appear on submit or focus-out, not in real-time.
 - **No third-party UI libraries.** Components are hand-built per design spec.
@@ -55,4 +57,6 @@ Run through `.agent/checks.md`. Every applicable box must be ticked.
 - ❌ "I'll use inline styles for this one button."
 - ❌ "I'll hardcode the text in English."
 - ❌ "The component is simple enough for `template:`."
+- ❌ "I'll just re-declare `.status-pill` here — I don't know if another screen already has it." (Grep first; reuse or extend, never duplicate.)
+- ❌ "I'll use `--sub`/`--accent`/`--line` (raw roles) or drop in `#b8862b` directly." (Semantic aliases only; no hardcoded hex.)
 - ❌ Using a third-party component library instead of building per spec.

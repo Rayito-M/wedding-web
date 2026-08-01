@@ -1106,3 +1106,185 @@
   `ui_kits/wedding-app/ScreenHome.jsx`, `ScreenSchedule.jsx`, `ScreenConfigManager.jsx` /
   `ScreenConfigManagerMobile.jsx`; files: `src/app/shared/timeline-item/`, `src/app/screens/invitee/`,
   `src/app/screens/schedule/`, `src/app/screens/config-manager/`.
+
+### T240 — Config manager: missing "The couple" section
+- **Status:** done (2026-08-01) — added `'couple'` to `SectionId`/`SECTIONS` (second, after
+  `basics`), renumbered venues→03, agenda→04, hotels→05, dietary→06, appearance→07. New local
+  `couple` signal (`CoupleAccount[]`, not part of `cfg`/the API client — no `couple` field exists on
+  `WeddingConfigResponseDto`), seeded from a `buildCoupleSeed()` fixture mirroring the reference's
+  `c1`/`c2` (same local-fixture precedent as `profile.ts`'s `ME_SEED`). New setters `setPerson`/
+  `addPerson`/`removePerson` plus `sendCoupleInvite`/`toggleCoupleStatus` action wrappers (all
+  `dirty.set(true)` on mutation, matching every other section's setters); dynamically-generated
+  "last seen" copy (sign-in link sent, invite sent, invitation pending, just now, never signed in)
+  goes through `translateService.instant(...)` (same pattern already used for `HeaderService.set`
+  in this file's constructor) — the seeded fixture's own `lastSeen` text ("Today, 09:12" etc.) stays
+  literal fixture content, consistent with `ME_SEED`. Section content matches
+  `ScreenConfigManager.jsx` lines 179-232: per-role card (avatar-with-initials, name + last-seen,
+  active/invited status pill, first/last name + email/phone fields, Owner/Editor/Viewer segmented
+  access reusing the existing generic `.segment`/`.segment.on` styling, and a bordered actions row
+  — send sign-in link/resend invitation, suspend/reactivate, delete) plus a dashed empty-state card
+  ("No account yet…", "Create {role} account") when a role's slot is unset. New CSS is scoped to the
+  couple section only (`.couple-*` classes, `.grid-14fr-1fr`) and reuses existing `.card`/`.field`/
+  `.card-list`/`.field-label` rather than duplicating them. i18n: added `configManager.section.couple`
+  + `configManager.note.couple` to the existing maps, plus a new `configManager.couple.*` namespace
+  (role/status/field/access/action/lastSeen labels) in all three locale files — no hardcoded copy in
+  the template. Out of scope, as specified: no `PATCH`/API wiring, no separate mobile-only template
+  (fits the existing single-template + SCSS breakpoint pattern). `pnpm typecheck && pnpm lint && pnpm
+  build` all green (confirmed the 5 pre-existing lint errors in `login.ts`/`shared/modal/` and the
+  `config-manager.scss`/`guest-manager.scss` budget warnings predate this change, via `git stash`
+  diff). Live interactive verification in a running browser (dev server) was not completed — the
+  local `wedding-api` dev environment was shared with other concurrent agent sessions at the time,
+  and reaching `/config` requires a full admin SMS-OTP sign-in round trip; verification instead
+  relied on structural line-by-line comparison against the DS reference JSX and reuse of CSS classes
+  already shipped and visually confirmed in this same screen's other sections. Recommend a follow-up
+  manual pass (three themes, mobile+desktop) before this ships to guests.
+- **Owner:** agent (implementer)
+- **Depends on:** T219, T221
+- **Context:** DS reference `ScreenConfigManager.jsx` defines 7 sections (`SECTIONS`, lines 54-62):
+  `basics` (01), `couple` (02), `venues` (03), `agenda` (04), `hotels` (05), `dietary` (06),
+  `appearance` (07). The implemented screen (`src/app/screens/config-manager/config-manager.ts`,
+  `SectionId`) only has 6 — `couple` was never built and every section after it is numbered one
+  short of the reference. T221 (visual polish pass) explicitly kept `.ts` section-switching logic
+  untouched, so this gap was never in scope until now. There is no `couple` field anywhere on the
+  generated API client (`WeddingConfigResponseDto` / `CreateWeddingConfigDto*`) — like the rest of
+  `config-manager` (no live `PATCH /v1/config` yet), this section is UI-only, local component state;
+  do not invent an API shape. Follow the same seed-fixture-as-local-state precedent as
+  `screens/profile/profile.ts`'s `ME_SEED`.
+- **Acceptance:**
+  - New `'couple'` entry added to `SectionId` and `SECTIONS`, positioned second (after `basics`,
+    before `venues`), per `ui_kits/wedding-app/ScreenConfigManager.jsx` lines 54-62. Renumber the
+    existing `number` field on every later section to match the reference (venues 02→03, agenda
+    03→04, hotels 04→05, dietary 05→06, appearance 06→07).
+  - New local signal holding two slots (`bride`, `groom`), each either unset or
+    `{ firstName, lastName, email, phone, access: 'owner' | 'editor' | 'viewer', status: 'active' | 'invited', lastSeen }`
+    — mirrors the reference `SEED.couple` shape (lines 11-14). Seed both slots populated (matching
+    the reference `c1`/`c2` fixture), consistent with how `config-manager.ts` already seeds `cfg`.
+  - Section content matches `ScreenConfigManager.jsx` lines 179-232: section header + note ("The two
+    accounts that own this wedding. They sign in, edit everything and receive guest replies.");
+    per-role (bride/groom) card with initials avatar, name + last-seen line, active/invited status
+    pill, editable first name/last name/email/phone fields, a 3-way Owner/Editor/Viewer segmented
+    access control, and a row of actions: send sign-in link (invited) / resend invitation (active) —
+    reference has this inverted, verify against the actual JSX not this summary; suspend/reactivate
+    access; delete account. Empty state (no account yet for a role): dashed card, "No account yet ·
+    this half of the couple cannot sign in", "Create {role} account" button.
+  - New setter methods on `ConfigManager` mirroring the existing `setPerson`/`addPerson`/`rmPerson`
+    naming from the reference (adapted to this codebase's signal-update style, e.g.
+    `cfg.update(...)` or a dedicated `couple` signal — implementer's call, follow the pattern already
+    used by `setAgendaTime`/`setAgendaVenue` etc. in this file) — all local state, `dirty.set(true)`
+    on every mutation, exactly like every other section's setters.
+  - i18n: add `configManager.section.couple` and `configManager.note.couple` (all 3 section-label/
+    note maps already have every other section — add the missing key, do not restructure), plus a
+    new `configManager.couple.*` namespace for field labels, access levels, status pill text, and
+    action button copy, in all three files (`public/i18n/es.json`, `en.json`, `fr.json`). No
+    hardcoded copy in the template (Hard Rule #8).
+  - **Explicitly out of scope:** no `PATCH`/API wiring (matches the rest of the screen); no
+    `ScreenConfigManagerMobile.jsx`-specific layout fork — this codebase already unifies mobile/
+    desktop per-screen via SCSS (see T219 re-baseline note), so fit the couple section into that same
+    one-template pattern, not a separate mobile file.
+  - `pnpm typecheck && pnpm lint && pnpm build` green; verify manually (dev server) that the couple
+    section renders, the section rail numbering is consistent end-to-end, and editing/access/status/
+    delete/empty-state all visually work, in all three themes, mobile + desktop.
+- **Refs:** DS `ui_kits/wedding-app/ScreenConfigManager.jsx` (lines 11-14, 54-62, 179-232); files:
+  `src/app/screens/config-manager/`, `public/i18n/{es,en,fr}.json`.
+
+## Phase — Cross-screen CSS hygiene (in-repo, no hub dependency)
+
+> Recurring quality problem: implementers work one task at a time with no cross-screen
+> visibility, so they re-declare hand-built CSS classes that already exist in a sibling screen —
+> and the copies then diverge. Confirmed instance: `.status-pill` is declared independently in
+> `screens/schedule/schedule.scss` (semantic aliases, `padding: 3px 9px`, `gap: 6px`) and
+> `screens/invitee/invitee.scss` (raw role tokens `--sub`/`--line`/`--accent`, `padding: 2px 8px`,
+> no gap) — same intent ("Final schedule / Provisional"), diverged look; both hardcode `#b8862b`
+> for `.provisional` (violates CLAUDE.md Hard Rule #3). A related-but-distinct account pill lives
+> at `config-manager.scss` (`.couple-status-pill`, active/invited). T241 does the safe token
+> hygiene + inventory first; T242 consolidates the duplicated markup once the inventory exists.
+> The systemic prevention (implementer guardrail + a read-only CSS-audit agent) is handled outside
+> TASKS.md in `.claude/agents/`.
+
+### T241 — Audit duplicated screen CSS + fix token violations (hygiene only, no restructure)
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** —
+- **Context:** The `#b8862b` in `schedule.scss:70` and `invitee.scss:143` is **not** an invented
+  color — the DS `tokens/colors.css:58` already defines `--status-provisional: #b8862b`, but that
+  token was never mirrored into `src/styles/_tokens.scss` (T239 mirrored `--status-confirmed`/
+  `-planned`/`-cancelled` but missed `-provisional`). So this is a token-sync + reference fix, **not**
+  a DS change — no hub/DS escalation. The raw-role-vs-semantic-alias split (`--sub` vs `--text-muted`,
+  `--line` vs `--border-hairline`, `--accent` vs `--brand-accent`) is likewise a CLAUDE.md Hard Rule
+  #3 fix, resolved in favor of the semantic aliases.
+- **Acceptance:**
+  - Produce an **inventory** (in the PR description) of every class name declared in more than one
+    file across `src/app/screens/**/*.scss` — grep each declared selector and list the duplicates,
+    flagging which have **diverged** (different property values). Start from `.status-pill` but list
+    all matches; this inventory is the input to T242's consolidation decision. No behavior change here.
+  - Mirror `--status-provisional: #b8862b` into `src/styles/_tokens.scss` under the existing
+    status-token block (alongside `--status-confirmed`/`-planned`/`-cancelled`), diffed 1:1 against
+    `../wedding-ui-design/tokens/colors.css` — no hex drift, no new value invented.
+  - Replace the hardcoded `#b8862b` in `schedule.scss` and `invitee.scss` with
+    `var(--status-provisional)`; remove any remaining raw hex from these two `.status-pill` blocks.
+  - Resolve the raw-role vs semantic-alias inconsistency **in favor of semantic aliases**: in
+    `invitee.scss`'s `.status-pill`, `--sub`→`--text-muted`, `--line`→`--border-hairline`,
+    `--accent`→`--brand-accent`, `--on-accent` unchanged; verify `schedule.scss`'s block already uses
+    the aliases and matches. (This aligns the two blocks on tokens but does **not** yet dedupe them —
+    that's T242. Divergent padding/gap is deliberately left for T242's single source of truth.)
+  - Confirm `.couple-status-pill` (`config-manager.scss`) uses only semantic aliases (it currently
+    does) — no change unless a raw role or hex is found; note it in the inventory as a consolidation
+    candidate for T242, don't restructure it here.
+  - No `.ts`/template changes; class names and DOM unchanged. `pnpm typecheck && pnpm lint && pnpm
+    build` green; verify no visual regression in all three themes (values are unchanged for the
+    terracotta/verdeagua paths; `--status-provisional` now resolves to the same `#b8862b` it did when
+    hardcoded).
+- **Refs:** `../wedding-ui-design/tokens/colors.css` (line 58, `--status-provisional`); CLAUDE.md Hard
+  Rule #3; files: `src/styles/_tokens.scss`, `src/app/screens/schedule/schedule.scss`,
+  `src/app/screens/invitee/invitee.scss`, `src/app/screens/config-manager/config-manager.scss`.
+
+### T242 — Consolidate the duplicated status pill into one shared implementation
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** T241
+- **Context & consolidation decision (architect — recorded here, do not re-litigate):** The
+  duplicated `.status-pill` (final/provisional) in `schedule` + `invitee` should collapse to **one
+  shared Angular component** — `src/app/shared/status-pill/` (`app-status-pill`) — following the
+  established shared-reuse precedent (`shared/pill` implements DS `core/Pill`; `shared/timeline-item`
+  implements DS `TimelineItem`). A shared **SCSS partial/mixin** is an acceptable fallback *only if*
+  the component wrapper element measurably breaks the existing inline layout; if the implementer takes
+  the partial route, record why in the PR. Rationale for the component over leaving two copies: a
+  partial still permits class-name drift and doesn't enforce token usage; a component gives one
+  DOM/token contract. **Scope/escalation flag:** the DS has **no named `StatusPill` component** — the
+  final/provisional shape appears *inline and un-factored* in `ScreenSchedule.jsx` (`statusPill`) and
+  `ScreenHome.jsx` (`schedulePill`), and the status tones (planned/confirmed/cancelled) are already
+  tokenized (`--status-*`). Reproducing that existing inline pattern as an in-repo shared component is
+  **in wedding-web scope** (DRYing an existing visual, not inventing one) and needs **no hub/DS
+  escalation to proceed**. Promoting "status pill" to a *canonical DS component* (a `Pill`-sibling with
+  its own `.prompt.md`, and refactoring the DS screens to consume it) **is** a design-system decision →
+  that is a **parallel, non-blocking escalation to the system-architect** (`../wedding-architecture`);
+  note it in the PR, but do not wait on it. No in-repo ADR required for a single-pattern extraction.
+- **Acceptance:**
+  - New `src/app/shared/status-pill/` (`.ts`/`.html`/`.scss`, `app-status-pill`, standalone,
+    `OnPush`) reproducing the final/provisional pill exactly as it renders **after T241** (semantic
+    aliases only; `--status-provisional` for provisional; dashed hairline default, solid accent when
+    final). Expose the state via a typed `input()` (e.g. `variant: 'final' | 'provisional'`), no inline
+    styles, tokens only. Pick **one** source of truth for the padding/gap that diverged between the two
+    screens (schedule's `3px 9px` + `gap: 6px` is the newer DS-aligned value — prefer it unless the DS
+    reference says otherwise) and document the choice in the component `.scss`.
+  - `screens/schedule/` and `screens/invitee/` consume `app-status-pill` and **delete** their local
+    `.status-pill` blocks (and the now-dead `.provisional`/`.final` rules); the two screens render
+    identically to each other. Template markup swaps the `<span class="status-pill …">` for
+    `<app-status-pill [variant]="…">`; the existing bound condition (final vs provisional from
+    `weddingConfig().agenda.status`) is reused — no new component/service logic, no `.ts` data changes
+    beyond adding the component to `imports`.
+  - Evaluate `.couple-status-pill` (config-manager, active/invited) against the new component: if it
+    fits with an added tone/variant, fold it in; if its semantics (account active/invited, different
+    padding) make it a distinct concern, **leave it** and note the decision in the PR — do not force an
+    ill-fitting merge. Either way it must not reintroduce a raw hex or raw-role token.
+  - The T241 inventory is re-checked: any *other* duplicated-and-diverged screen class it surfaced is
+    either consolidated here (if it's the same visual pattern) or explicitly listed as a follow-up task
+    candidate — this task's structural change stays scoped to the status pill.
+  - `pnpm typecheck && pnpm lint && pnpm build` green; visual parity verified for schedule + invitee
+    (and config-manager if folded in) across all three themes, mobile + desktop, final vs provisional.
+- **Refs:** DS `components/core/Pill.jsx`/`.prompt.md` (precedent, soft/accent only — not the status
+  shape), `ui_kits/wedding-app/ScreenSchedule.jsx` (`statusPill`), `ScreenHome.jsx` (`schedulePill`);
+  existing shared precedent `src/app/shared/pill/`, `src/app/shared/timeline-item/`; files:
+  new `src/app/shared/status-pill/`, `src/app/screens/schedule/`, `src/app/screens/invitee/`,
+  `src/app/screens/config-manager/`. Parallel escalation (non-blocking): system-architect, DS
+  `StatusPill` spec.
