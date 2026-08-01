@@ -21,7 +21,7 @@
 
   .sub {
     font-size: t.$text-caption;
-    color: var(--sub);
+    color: var(--text-muted);
     margin-top: 6px;
   }
 }
@@ -43,7 +43,7 @@
   border-radius: t.$radius-card;
   overflow: hidden;
   background: var(--chip);
-  border: 1px solid var(--line);
+  border: 1px solid var(--border-hairline);
 }
 
 .map-label {
@@ -52,12 +52,12 @@
   left: 12px;
   font-size: 9px;
   letter-spacing: 0.14em;
-  color: var(--sub);
+  color: var(--text-muted);
   text-transform: uppercase;
-  background: var(--surface);
+  background: var(--surface-card);
   padding: 3px 8px;
   border-radius: t.$radius-pill;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border-hairline);
 }
 
 .river-label {
@@ -66,7 +66,7 @@
   right: 12px;
   font-size: 8px;
   letter-spacing: 0.16em;
-  color: var(--sub);
+  color: var(--text-muted);
   text-transform: uppercase;
   font-style: italic;
 }
@@ -82,10 +82,41 @@
 // Stay rows are the shared app-stay-card component (design system);
 // the divider between rows is screen-level layout.
 app-stay-card {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--border-hairline);
 
   &.last {
     border-bottom: none;
+  }
+}
+
+// SVG map illustration styles (extracted from inline style attributes for Hard Rule #2 compliance).
+svg {
+  .sierra-peaks {
+    fill: var(--accent-3);
+  }
+
+  .alhambra-hill {
+    fill: var(--accent-3);
+  }
+
+  .albaicin-hill {
+    fill: var(--accent-3);
+  }
+
+  .darro-river {
+    stroke: var(--brand-accent);
+  }
+
+  .roads {
+    stroke: var(--border-hairline);
+  }
+
+  .pin-dot {
+    fill: var(--brand-accent);
+  }
+
+  .pin-glow {
+    fill: var(--brand-accent);
   }
 }
 

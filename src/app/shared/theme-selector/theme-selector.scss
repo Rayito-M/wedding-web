@@ -5,7 +5,7 @@
 
 .dropdown-toggle {
   padding: 0.5rem 1rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border-hairline);
   background: transparent;
   border-radius: 4px;
   cursor: pointer;
@@ -18,8 +18,8 @@
 }
 
 .dropdown-toggle:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
 }
 
 .swatch {
@@ -45,8 +45,8 @@
   left: 0;
   min-width: 100%;
   width: max-content;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
   border-radius: 4px;
   margin-top: 0.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -71,12 +71,12 @@
 }
 
 .dropdown-item:hover {
-  background: var(--line);
-  color: var(--accent);
+  background: var(--border-hairline);
+  color: var(--brand-accent);
 }
 
 .dropdown-item.active {
-  background: var(--accent);
-  color: var(--surface);
+  background: var(--brand-accent);
+  color: var(--surface-card);
 }
 

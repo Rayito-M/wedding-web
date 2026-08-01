@@ -21,7 +21,7 @@
 
   .sub {
     font-size: t.$text-caption;
-    color: var(--sub);
+    color: var(--text-muted);
     margin-top: 6px;
   }
 
@@ -37,8 +37,8 @@
   height: 40px;
   border-radius: 50%;
   border: none;
-  background: var(--accent);
-  color: var(--surface);
+  background: var(--brand-accent);
+  color: var(--surface-card);
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
@@ -75,8 +75,8 @@
   cursor: pointer;
 
   &.on {
-    background: var(--accent);
-    color: var(--surface);
+    background: var(--brand-accent);
+    color: var(--surface-card);
   }
 }
 
@@ -94,15 +94,15 @@
 .hint {
   margin-top: 14px;
   padding: 14px;
-  background: var(--surface);
-  border: 1px dashed var(--line);
+  background: var(--surface-card);
+  border: 1px dashed var(--border-hairline);
   border-radius: t.$radius-md;
   text-align: center;
   font-size: t.$text-caption;
-  color: var(--sub);
+  color: var(--text-muted);
 
   strong {
-    color: var(--accent);
+    color: var(--brand-accent);
   }
 }
 
