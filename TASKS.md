@@ -1426,7 +1426,7 @@
   `rsvp-details-modal.scss`, new `_status-cell.scss`).
 
 ### T247 — Consolidate near-clone screen SCSS: dashboard≈invitee blocks + generic primitives
-- **Status:** todo
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** T243 (operate on alias-consistent SCSS), T236 (done; established the two components
   stay separate under Option A)
