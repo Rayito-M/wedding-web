@@ -233,11 +233,11 @@
       "title": "Manage",
       "guests": {
         "title": "Guest manager",
-        "sub": "172 invited · 18 pending"
+        "sub": "Add, edit and track Guest and their RSVPs"
       },
       "seating": {
         "title": "Seating plan",
-        "sub": "5 tables · 12 seats left"
+        "sub": "Assign guests to tables and track their meals"
       },
       "config": {
         "title": "General config",

@@ -230,11 +230,11 @@
       "title": "Gestionar",
       "guests": {
         "title": "Gestión de invitados",
-        "sub": "172 invitados · 18 pendientes"
+        "sub": "Añadir, editar y seguimiento de invitados"
       },
       "seating": {
         "title": "Plano de mesas",
-        "sub": "5 mesas · 12 asientos libres"
+        "sub": "Asignar invitados a las mesas"
       },
       "config": {
         "title": "Configuración general",

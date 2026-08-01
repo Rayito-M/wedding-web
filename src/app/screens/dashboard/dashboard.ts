@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HeaderService } from '../../core';
 import { DashboardService } from '../../core/dashboard.service';
@@ -10,7 +11,7 @@ import { TaskRow } from '../../shared/task-row/task-row';
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecorFish, ProgressBar, StatTile, TaskRow, TranslatePipe],
+  imports: [DecorFish, ProgressBar, StatTile, TaskRow, TranslatePipe, RouterLink],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })

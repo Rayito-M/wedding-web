@@ -230,11 +230,11 @@
       "title": "Gérer",
       "guests": {
         "title": "Gestion des invités",
-        "sub": "172 invités · 18 en attente"
+        "sub": "Ajouter, modifier et suivre les invités et leurs réponses"
       },
       "seating": {
         "title": "Plan de table",
-        "sub": "5 tables · 12 places restantes"
+        "sub": "Attribuer les invités aux tables et suivre leurs repas"
       },
       "config": {
         "title": "Configuration générale",

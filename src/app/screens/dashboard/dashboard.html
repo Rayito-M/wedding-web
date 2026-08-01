@@ -12,29 +12,26 @@
 
     <div class="stats">
       <div class="stat">
-        <div class="value accent">{{ dash.rsvp().yes }}</div>
+        <div class="value accent">??</div>
         <div class="label stat-label">{{ 'dashboard.rsvp.attending' | translate }}</div>
       </div>
       <div class="stat">
-        <div class="value">{{ dash.rsvp().pending }}</div>
+        <div class="value">??</div>
         <div class="label stat-label">{{ 'dashboard.rsvp.pending' | translate }}</div>
       </div>
       <div class="stat">
-        <div class="value">{{ dash.rsvp().no }}</div>
+        <div class="value">??</div>
         <div class="label stat-label">{{ 'dashboard.rsvp.declined' | translate }}</div>
       </div>
     </div>
-    <app-progress-bar class="progress" [percent]="dash.repliedPct()" />
+    <app-progress-bar class="progress" [percent]="0" />
     <div class="caption">
-      {{
-        'dashboard.rsvp.progress'
-          | translate: { percent: dash.repliedPct(), total: dash.rsvp().total }
-      }}
+      {{ 'dashboard.rsvp.progress' | translate: { percent: 0, total: 80 } }}
     </div>
   </div>
 
   <!-- quick tiles -->
-  <div class="tiles">
+  <!-- <div class="tiles">
     <app-stat-tile
       [label]="'dashboard.budget' | translate"
       [value]="dash.budget().spent"
@@ -45,27 +42,27 @@
       [value]="dash.vendors().value"
       [sub]="dash.vendors().sub"
     />
-  </div>
+  </div> -->
 
   <!-- manage -->
   <div class="manage">
     <div class="label manage-title">{{ 'dashboard.manage.title' | translate }}</div>
     <div class="manage-list">
-      <button type="button" class="manage-row">
+      <button type="button" class="manage-row" routerLink="/guests">
         <span class="manage-text">
           <span class="manage-name">{{ 'dashboard.manage.guests.title' | translate }}</span>
           <span class="manage-sub">{{ 'dashboard.manage.guests.sub' | translate }}</span>
         </span>
         <span class="manage-arrow" aria-hidden="true">→</span>
       </button>
-      <button type="button" class="manage-row">
+      <!-- <button type="button" class="manage-row">
         <span class="manage-text">
           <span class="manage-name">{{ 'dashboard.manage.seating.title' | translate }}</span>
           <span class="manage-sub">{{ 'dashboard.manage.seating.sub' | translate }}</span>
         </span>
         <span class="manage-arrow" aria-hidden="true">→</span>
-      </button>
-      <button type="button" class="manage-row">
+      </button> -->
+      <button type="button" class="manage-row" routerLink="/config">
         <span class="manage-text">
           <span class="manage-name">{{ 'dashboard.manage.config.title' | translate }}</span>
           <span class="manage-sub">{{ 'dashboard.manage.config.sub' | translate }}</span>
@@ -76,7 +73,7 @@
   </div>
 
   <!-- tasks -->
-  <div class="tasks">
+  <!-- <div class="tasks">
     <div class="tasks-header">
       <div class="label">{{ 'dashboard.thisWeek' | translate }}</div>
       <span class="see-all">{{ 'dashboard.seeAll' | translate }}</span>
@@ -90,5 +87,5 @@
         (toggled)="dash.toggleTask(i)"
       />
     }
-  </div>
+  </div> -->
 </div>
