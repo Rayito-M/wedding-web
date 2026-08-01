@@ -8,7 +8,7 @@
   align-items: center;
   justify-content: center;
   padding: t.$space-5;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--scrim);
 
   &.lg {
     @media (max-width: 640px) {
@@ -27,7 +27,7 @@
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-card);
   padding: t.$space-6;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-modal);
   overflow-y: auto;
 
   // ── size="lg" — larger dialog with bordered header/body/footer,

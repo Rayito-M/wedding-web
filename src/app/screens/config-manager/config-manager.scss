@@ -741,7 +741,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -751,7 +751,7 @@
 .modal-dialog {
   background: var(--surface-card);
   border-radius: var(--radius-card);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-modal);
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
