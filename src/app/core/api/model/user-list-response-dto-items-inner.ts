@@ -18,10 +18,18 @@ export interface UserListResponseDtoItemsInner {
     googleSub?: string;
     appleSub?: string;
     phoneNumber: string;
+    role: UserListResponseDtoItemsInner.RoleEnum;
     preferredLang?: UserListResponseDtoItemsInner.PreferredLangEnum;
     delegateTo?: Array<string>;
 }
 export namespace UserListResponseDtoItemsInner {
+    export const RoleEnum = {
+        BRIDE: 'bride',
+        GROOM: 'groom',
+        GUEST: 'guest',
+        PROVIDER: 'provider'
+    } as const;
+    export type RoleEnum = typeof RoleEnum[keyof typeof RoleEnum];
     export const PreferredLangEnum = {
         ES: 'es',
         EN: 'en',

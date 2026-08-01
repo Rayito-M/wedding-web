@@ -5,7 +5,7 @@ import {
   WeddingConfigPublicResponseDto,
   RsvpDto,
   UserProfileDto,
-  UserResponseDto,
+  UserDto,
 } from '../api';
 
 export enum EntityNamesEnum {
@@ -44,7 +44,7 @@ export const entityMetadata: EntityMetadataMap = {
     selectId: (rsvp: RsvpDto) => rsvp.id,
   },
   [EntityNamesEnum.USER]: {
-    selectId: (user: UserResponseDto) => user.id,
+    selectId: (user: UserDto) => user.id,
   },
   [EntityNamesEnum.USER_PROFILE]: {
     selectId: (profile: UserProfileDto) => profile.id,

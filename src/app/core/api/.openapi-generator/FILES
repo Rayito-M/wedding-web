@@ -76,13 +76,13 @@ model/update-user-profile-dto.ts
 model/update-wedding-config-dto-agenda.ts
 model/update-wedding-config-dto-language.ts
 model/update-wedding-config-dto.ts
+model/user-dto.ts
 model/user-list-response-dto-items-inner.ts
 model/user-list-response-dto.ts
 model/user-profile-dto-relation.ts
 model/user-profile-dto.ts
 model/user-profile-list-response-dto-profiles-inner.ts
 model/user-profile-list-response-dto.ts
-model/user-response-dto.ts
 model/wedding-config-public-response-dto-main-venue.ts
 model/wedding-config-public-response-dto-social-providers.ts
 model/wedding-config-public-response-dto.ts

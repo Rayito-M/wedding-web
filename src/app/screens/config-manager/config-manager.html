@@ -150,23 +150,22 @@
             </div>
           </div>
           <div class="card-list">
-            @for (role of coupleRoles; track role) {
-              @if (findPerson(role); as person) {
+            @for (user of coupleProfiles() | keyvalue; track user.key) {
+              @if (user.value) {
                 <div class="card">
                   <div class="couple-card-header">
-                    <span class="couple-avatar">{{ coupleInitials(person) }}</span>
+                    <span class="couple-avatar">{{ coupleInitials(user.value) }}</span>
                     <div class="couple-card-info">
                       <div class="couple-name">
-                        {{ ('configManager.couple.role.' + role) | translate }}
+                        {{ 'configManager.couple.role.' + user.value.role | translate }}
                       </div>
                       <div class="field-label couple-meta">
-                        {{ coupleFullName(person) ?? ('configManager.couple.noNameYet' | translate) }}
-                        · {{ person.lastSeen }}
+                        {{
+                          coupleFullName(user.value) ??
+                            ('configManager.couple.noNameYet' | translate)
+                        }}
                       </div>
                     </div>
-                    <span class="couple-status-pill" [class.active]="person.status === 'active'">
-                      {{ ('configManager.couple.status.' + person.status) | translate }}
-                    </span>
                   </div>
                   <div class="grid-2">
                     <label class="field">
@@ -176,8 +175,8 @@
                       <input
                         app-input
                         type="text"
-                        [value]="person.firstName"
-                        (input)="setPerson(person.id, { firstName: inputValue($event) })"
+                        [value]="user.value.firstName"
+                        (input)="setPerson(user.value.id, { firstName: inputValue($event) })"
                       />
                     </label>
                     <label class="field">
@@ -187,8 +186,8 @@
                       <input
                         app-input
                         type="text"
-                        [value]="person.lastName"
-                        (input)="setPerson(person.id, { lastName: inputValue($event) })"
+                        [value]="user.value.lastName"
+                        (input)="setPerson(user.value.id, { lastName: inputValue($event) })"
                       />
                     </label>
                   </div>
@@ -201,8 +200,8 @@
                         app-input
                         type="email"
                         placeholder="name@mail.com"
-                        [value]="person.email"
-                        (input)="setPerson(person.id, { email: inputValue($event) })"
+                        [value]="user.value.email"
+                        (input)="setPerson(user.value.id, { email: inputValue($event) })"
                       />
                     </label>
                     <label class="field">
@@ -213,12 +212,12 @@
                         app-input
                         type="tel"
                         placeholder="+34 600 00 00 00"
-                        [value]="person.phone"
-                        (input)="setPerson(person.id, { phone: inputValue($event) })"
+                        [value]="user.value.phoneNumber"
+                        (input)="setPerson(user.value.id, { phoneNumber: inputValue($event) })"
                       />
                     </label>
                   </div>
-                  <div class="field">
+                  <!-- <div class="field">
                     <span class="field-label">{{
                       'configManager.couple.field.access' | translate
                     }}</span>
@@ -236,40 +235,38 @@
                           [attr.aria-checked]="person.access === accessLevel"
                           (click)="setPerson(person.id, { access: accessLevel })"
                         >
-                          {{ ('configManager.couple.access.' + accessLevel) | translate }}
+                          {{ 'configManager.couple.access.' + accessLevel | translate }}
                         </button>
                       }
                     </div>
-                  </div>
+                  </div> -->
+                  @if (magicLinkError()) {
+                    <div class="error-message" role="alert">
+                      {{ magicLinkError() }}
+                    </div>
+                  }
+                  @if (magicLinkSuccess()?.userId === user.value.id) {
+                    <div class="success-message" role="status">
+                      {{ magicLinkSuccess()?.message }}
+                    </div>
+                  }
                   <div class="couple-actions">
                     <button
                       type="button"
                       class="couple-action-btn solid"
-                      (click)="sendCoupleInvite(person)"
+                      [disabled]="!user.value.email || magicLinkLoading() === user.value.id"
+                      (click)="sendCoupleInvite(user.value)"
                     >
-                      {{
-                        (person.status === 'active'
-                          ? 'configManager.couple.action.sendSignInLink'
-                          : 'configManager.couple.action.resendInvitation'
-                        ) | translate
-                      }}
-                    </button>
-                    <button
-                      type="button"
-                      class="couple-action-btn muted"
-                      (click)="toggleCoupleStatus(person)"
-                    >
-                      {{
-                        (person.status === 'active'
-                          ? 'configManager.couple.action.suspendAccess'
-                          : 'configManager.couple.action.markActive'
-                        ) | translate
-                      }}
+                      @if (magicLinkLoading() === user.value.id) {
+                        {{ 'shared.loading' | translate }}
+                      } @else {
+                        {{ 'configManager.couple.action.sendSignInLink' | translate }}
+                      }
                     </button>
                     <button
                       type="button"
                       class="couple-action-btn muted push-right"
-                      (click)="removePerson(person.id)"
+                      (click)="removePerson(user.value.id)"
                     >
                       {{ 'configManager.couple.action.deleteAccount' | translate }}
                     </button>
@@ -280,14 +277,18 @@
                   <span class="couple-avatar empty" aria-hidden="true">?</span>
                   <div class="couple-card-info">
                     <div class="couple-name muted">
-                      {{ ('configManager.couple.role.' + role) | translate }}
+                      {{ 'configManager.couple.role.' + user.key | translate }}
                     </div>
                     <div class="field-label couple-meta">
                       {{ 'configManager.couple.noAccountYet' | translate }}
                     </div>
                   </div>
-                  <button type="button" class="couple-action-btn solid" (click)="addPerson(role)">
-                    {{ ('configManager.couple.action.createAccount.' + role) | translate }}
+                  <button
+                    type="button"
+                    class="couple-action-btn solid"
+                    (click)="addPerson(user.key)"
+                  >
+                    {{ 'configManager.couple.action.createAccount.' + user.key | translate }}
                   </button>
                 </div>
               }
@@ -388,7 +389,9 @@
           </div>
           <div class="card schedule-status-card">
             <div>
-              <span class="field-label">{{ 'configManager.agenda.scheduleStatus' | translate }}</span>
+              <span class="field-label">{{
+                'configManager.agenda.scheduleStatus' | translate
+              }}</span>
               <p class="schedule-status-note">
                 {{
                   (cfg().agenda.status === 'final'
@@ -413,7 +416,7 @@
                   [attr.aria-checked]="cfg().agenda.status === s"
                   (click)="setScheduleStatus(s)"
                 >
-                  {{ ('shared.scheduleStatus.' + s) | translate }}
+                  {{ 'shared.scheduleStatus.' + s | translate }}
                 </button>
               }
             </div>
@@ -472,7 +475,7 @@
                         [attr.aria-checked]="item.status === s"
                         (click)="setAgendaStatus(item.id, s)"
                       >
-                        {{ ('shared.agendaStatus.' + s) | translate }}
+                        {{ 'shared.agendaStatus.' + s | translate }}
                       </button>
                     }
                   </div>
@@ -833,6 +836,120 @@
         </button>
         <button app-btn type="button" variant="primary" (click)="submitTagModal()">
           {{ 'common.add' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (createModalOpen()) {
+  <div
+    class="modal-overlay"
+    role="presentation"
+    (click)="onCreateModalBackdropClick($event)"
+    (keydown.escape)="closeCreateModal()"
+  >
+    <div
+      class="modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="'createModalTitle'"
+    >
+      <div class="modal-header">
+        <h2 class="modal-title" id="createModalTitle">
+          {{ 'shared.add' | translate }}
+          {{ 'configManager.couple.role.' + createModalRole() | translate }}
+        </h2>
+        <button
+          type="button"
+          class="modal-close"
+          (click)="closeCreateModal()"
+          [attr.aria-label]="'shared.close' | translate"
+        >
+          ×
+        </button>
+      </div>
+      <div class="modal-body">
+        @if (createModalError()) {
+          <div class="error-message" role="alert">
+            {{ createModalError() }}
+          </div>
+        }
+        <div class="grid-2">
+          <label class="field">
+            <span class="field-label">{{
+              'configManager.couple.field.firstName' | translate
+            }}</span>
+            <input
+              app-input
+              type="text"
+              [value]="createModalData().firstName"
+              (input)="setCreateModalField('firstName', inputValue($event))"
+              [disabled]="createModalLoading()"
+            />
+          </label>
+          <label class="field">
+            <span class="field-label">{{ 'configManager.couple.field.lastName' | translate }}</span>
+            <input
+              app-input
+              type="text"
+              [value]="createModalData().lastName"
+              (input)="setCreateModalField('lastName', inputValue($event))"
+              [disabled]="createModalLoading()"
+            />
+          </label>
+        </div>
+        <label class="field">
+          <span class="field-label">{{ 'configManager.couple.field.email' | translate }}</span>
+          <input
+            app-input
+            type="email"
+            placeholder="name@mail.com"
+            pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+            [value]="createModalData().email"
+            (input)="setCreateModalField('email', inputValue($event))"
+            [disabled]="createModalLoading()"
+          />
+          @if (createModalFieldErrors()['email']) {
+            <span class="field-error">{{ createModalFieldErrors()['email'] }}</span>
+          }
+        </label>
+        <label class="field">
+          <span class="field-label">{{ 'configManager.couple.field.phone' | translate }}</span>
+          <input
+            app-input
+            type="tel"
+            placeholder="+34 600 00 00 00"
+            [value]="createModalData().phoneNumber"
+            (input)="setCreateModalField('phoneNumber', inputValue($event))"
+            [disabled]="createModalLoading()"
+          />
+          @if (createModalFieldErrors()['phoneNumber']) {
+            <span class="field-error">{{ createModalFieldErrors()['phoneNumber'] }}</span>
+          }
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button
+          app-btn
+          type="button"
+          (click)="closeCreateModal()"
+          [disabled]="createModalLoading()"
+        >
+          {{ 'shared.cancel' | translate }}
+        </button>
+        <button
+          app-btn
+          type="button"
+          variant="primary"
+          (click)="submitCreateModal()"
+          [disabled]="!isCreateFormValid() || createModalLoading()"
+        >
+          @if (createModalLoading()) {
+            {{ 'shared.loading' | translate }}
+          } @else {
+            {{ 'shared.add' | translate }}
+          }
         </button>
       </div>
     </div>

@@ -25,9 +25,9 @@ import { ImportUserResultDto } from '../model/import-user-result-dto';
 // @ts-ignore
 import { UpdateUserDto } from '../model/update-user-dto';
 // @ts-ignore
-import { UserListResponseDto } from '../model/user-list-response-dto';
+import { UserDto } from '../model/user-dto';
 // @ts-ignore
-import { UserResponseDto } from '../model/user-response-dto';
+import { UserListResponseDto } from '../model/user-list-response-dto';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -90,9 +90,9 @@ export class WeddingUsersService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public usersControllerCreateV1(requestParameters: UsersControllerCreateV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserResponseDto>;
-    public usersControllerCreateV1(requestParameters: UsersControllerCreateV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserResponseDto>>;
-    public usersControllerCreateV1(requestParameters: UsersControllerCreateV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserResponseDto>>;
+    public usersControllerCreateV1(requestParameters: UsersControllerCreateV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserDto>;
+    public usersControllerCreateV1(requestParameters: UsersControllerCreateV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserDto>>;
+    public usersControllerCreateV1(requestParameters: UsersControllerCreateV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserDto>>;
     public usersControllerCreateV1(requestParameters: UsersControllerCreateV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         const createUserDto = requestParameters?.createUserDto;
         if (createUserDto === null || createUserDto === undefined) {
@@ -138,7 +138,7 @@ export class WeddingUsersService extends BaseService {
 
         let localVarPath = `/v1/users`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<UserResponseDto>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<UserDto>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 body: createUserDto,
@@ -161,9 +161,9 @@ export class WeddingUsersService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public usersControllerGetV1(requestParameters: UsersControllerGetV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserResponseDto>;
-    public usersControllerGetV1(requestParameters: UsersControllerGetV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserResponseDto>>;
-    public usersControllerGetV1(requestParameters: UsersControllerGetV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserResponseDto>>;
+    public usersControllerGetV1(requestParameters: UsersControllerGetV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserDto>;
+    public usersControllerGetV1(requestParameters: UsersControllerGetV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserDto>>;
+    public usersControllerGetV1(requestParameters: UsersControllerGetV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserDto>>;
     public usersControllerGetV1(requestParameters: UsersControllerGetV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         const id = requestParameters?.id;
         if (id === null || id === undefined) {
@@ -200,7 +200,7 @@ export class WeddingUsersService extends BaseService {
 
         let localVarPath = `/v1/users/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<UserResponseDto>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<UserDto>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -512,9 +512,9 @@ export class WeddingUsersService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public usersControllerUpdateV1(requestParameters: UsersControllerUpdateV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserResponseDto>;
-    public usersControllerUpdateV1(requestParameters: UsersControllerUpdateV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserResponseDto>>;
-    public usersControllerUpdateV1(requestParameters: UsersControllerUpdateV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserResponseDto>>;
+    public usersControllerUpdateV1(requestParameters: UsersControllerUpdateV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserDto>;
+    public usersControllerUpdateV1(requestParameters: UsersControllerUpdateV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserDto>>;
+    public usersControllerUpdateV1(requestParameters: UsersControllerUpdateV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserDto>>;
     public usersControllerUpdateV1(requestParameters: UsersControllerUpdateV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         const id = requestParameters?.id;
         if (id === null || id === undefined) {
@@ -564,7 +564,7 @@ export class WeddingUsersService extends BaseService {
 
         let localVarPath = `/v1/users/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<UserResponseDto>('patch', `${basePath}${localVarPath}`,
+        return this.httpClient.request<UserDto>('patch', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 body: updateUserDto,

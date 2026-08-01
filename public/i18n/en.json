@@ -446,6 +446,8 @@
     "hint": "Tap <strong>+</strong> to add a photo from the day."
   },
   "shared": {
+    "bride": "bride",
+    "groom": "groom",
     "couple": "COUPLE",
     "invitee": "INVITEE",
     "back": "Back",
@@ -455,6 +457,7 @@
     "ok": "OK",
     "add": "Add",
     "close": "Close",
+    "loading": "Loading…",
     "edit": "Edit",
     "remove": "Remove",
     "yes": "Yes",

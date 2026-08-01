@@ -811,6 +811,33 @@
   justify-content: flex-end;
 }
 
+.error-message {
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--surface-error-light, rgba(211, 47, 47, 0.1));
+  border-left: 4px solid var(--text-error, #d32f2f);
+  color: var(--text-error, #d32f2f);
+  font-size: var(--text-body-sm);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+}
+
+.field-error {
+  display: block;
+  color: var(--text-error, #d32f2f);
+  font-size: var(--text-caption);
+  margin-top: var(--space-2);
+}
+
+.success-message {
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--surface-success-light, rgba(76, 175, 80, 0.1));
+  border-left: 4px solid var(--text-success, #4caf50);
+  color: var(--text-success, #4caf50);
+  font-size: var(--text-body-sm);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+}
+
 .tag-add-btn {
   align-self: flex-start;
   font-size: var(--text-caption);

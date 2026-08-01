@@ -10,10 +10,11 @@ import {
   OnInit,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { KeyValuePipe } from '@angular/common';
 
 import { map } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EntityCollectionService, EntityServices } from '@ngrx/data';
+import { EntityCollectionService, EntityServices, DataServiceError } from '@ngrx/data';
 
 import {
   CreateWeddingConfigDtoAgendaItemsInner,
@@ -25,6 +26,9 @@ import {
   WeddingConfigResponseDto,
   EntityNamesEnum,
   extractAgendaTime,
+  UserDto,
+  CreateUserDto,
+  LoginService,
 } from '@app/core';
 import { LangCode, ThemeId } from '@app/model';
 import { Btn } from '@app/shared/button/button';
@@ -61,61 +65,11 @@ const SECTIONS: readonly SectionDef[] = [
   { id: 'appearance', number: '07', labelKey: 'configManager.section.appearance' },
 ];
 
-// "The couple" section — the two accounts (bride/groom) that own the wedding.
-// There is no `couple` field anywhere on the generated API client (verified
-// against `WeddingConfigResponseDto` / `CreateWeddingConfigDto*`), so — like
-// the rest of this screen — this is UI-only, local component state, seeded
-// from a fixture (same precedent as `screens/profile/profile.ts`'s `ME_SEED`),
-// not wired to any API. Mirrors `SEED.couple` (`ScreenConfigManager.jsx`
-// lines 11-14) and its `setPerson`/`addPerson`/`rmPerson` helpers.
+// "The couple" section — bride/groom accounts from the userCollection (UserDto).
+// Managed via EntityCollectionService; persisted to API when endpoint available.
 type CoupleRole = 'bride' | 'groom';
-type CoupleAccess = 'owner' | 'editor' | 'viewer';
-type CoupleAccountStatus = 'active' | 'invited';
-
-interface CoupleAccount {
-  readonly id: string;
-  readonly role: CoupleRole;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  access: CoupleAccess;
-  status: CoupleAccountStatus;
-  lastSeen: string;
-}
 
 const COUPLE_ROLES: readonly CoupleRole[] = ['bride', 'groom'];
-const COUPLE_ACCESS_LEVELS: readonly CoupleAccess[] = ['owner', 'editor', 'viewer'];
-
-// Fixture data mirroring the reference SEED.couple `c1`/`c2` entries — literal
-// content (names, contact details, "last seen" copy), not UI chrome, so it
-// isn't run through i18n (same precedent as `ME_SEED`'s `relation.label`).
-function buildCoupleSeed(): CoupleAccount[] {
-  return [
-    {
-      id: 'c1',
-      role: 'bride',
-      firstName: 'Sara',
-      lastName: 'Ortega',
-      email: 'sara@ortega.es',
-      phone: '+34 611 20 44 08',
-      access: 'owner',
-      status: 'active',
-      lastSeen: 'Today, 09:12',
-    },
-    {
-      id: 'c2',
-      role: 'groom',
-      firstName: 'Christophe',
-      lastName: 'Lemoine',
-      email: 'christophe.lemoine@mail.fr',
-      phone: '+33 6 42 11 87 30',
-      access: 'owner',
-      status: 'active',
-      lastSeen: 'Yesterday, 21:40',
-    },
-  ];
-}
 
 // Order for the per-language edit tabs (Agenda, Dietary) — mirrors the design
 // reference's LangTabs order (FR · EN · ES); a UI convenience, not the app-wide
@@ -163,6 +117,8 @@ const THEME_SWATCHES: readonly ThemeSwatch[] = [
 ];
 
 const emptyLangText = (): MultiLangText => ({ es: '', en: '', fr: '' });
+
+//TOD: UID are manage by the backend, so we should not generate them on the frontend.
 const uid = (): string => globalThis.crypto.randomUUID();
 
 function buildEmptyConfig(): ConfigState {
@@ -198,12 +154,13 @@ function buildEmptyConfig(): ConfigState {
 @Component({
   selector: 'app-config-manager',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Btn, TextInput, TextareaInput, Pill, DecorFish, TranslatePipe],
+  imports: [Btn, TextInput, TextareaInput, Pill, DecorFish, TranslatePipe, KeyValuePipe],
   templateUrl: './config-manager.html',
   styleUrl: './config-manager.scss',
 })
 export class ConfigManager implements OnInit {
   private readonly translateService = inject(TranslateService);
+  private readonly loginService = inject(LoginService);
   /**
    * `WeddingConfigPublic` @ngrx/data collection (ADR W-0001 decisions 3–4):
    * store → custom data service → generated API client. RxJS stays inside
@@ -220,6 +177,33 @@ export class ConfigManager implements OnInit {
     { initialValue: undefined },
   );
 
+  private readonly userCollection: EntityCollectionService<UserDto> = inject(
+    EntityServices,
+  ).getEntityCollectionService<UserDto>(EntityNamesEnum.USER);
+
+  protected readonly coupleProfiles: Signal<{
+    groom: UserDto | undefined;
+    bride: UserDto | undefined;
+  }> = toSignal(
+    this.userCollection.entities$.pipe(
+      map((users) => {
+        const result = {
+          groom: undefined as UserDto | undefined,
+          bride: undefined as UserDto | undefined,
+        };
+        for (const user of users) {
+          if (user.role === 'groom') result.groom = user;
+          if (user.role === 'bride') result.bride = user;
+          if (result.groom && result.bride) break; // early exit once both found
+        }
+        return result;
+      }),
+    ),
+    { initialValue: { groom: undefined, bride: undefined } },
+  );
+
+  protected userToCreate: UserDto | null = null;
+
   private savedFlashTimer: ReturnType<typeof setTimeout> | undefined;
 
   protected readonly sections = SECTIONS;
@@ -233,11 +217,7 @@ export class ConfigManager implements OnInit {
   protected readonly lang = signal<LangCode>('en');
   protected readonly dirty = signal(false);
   protected readonly savedFlash = signal(false);
-  // "The couple" section — local state only, not part of `cfg`/the API client
-  // (no `couple` field on `WeddingConfigResponseDto`). See buildCoupleSeed().
-  protected readonly couple = signal<CoupleAccount[]>(buildCoupleSeed());
   protected readonly coupleRoles = COUPLE_ROLES;
-  protected readonly coupleAccessLevels = COUPLE_ACCESS_LEVELS;
   // Draft text for the inline "+ Add tag" chip input, per tag collection.
   protected readonly draftTag = signal<Record<TagCollection, string>>({
     dietaryPreferences: '',
@@ -247,6 +227,41 @@ export class ConfigManager implements OnInit {
   protected readonly tagModalOpen = signal(false);
   protected readonly tagModalCollection = signal<TagCollection | null>(null);
   protected readonly tagModalLabel = signal<MultiLangText>(emptyLangText());
+
+  protected readonly createModalOpen = signal(false);
+  protected readonly createModalRole = signal<CoupleRole | null>(null);
+  protected readonly createModalData = signal<Omit<CreateUserDto, 'role'>>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+  });
+  protected readonly createModalLoading = signal(false);
+  protected readonly createModalError = signal<string | null>(null);
+  protected readonly createModalFieldErrors = signal<Record<string, string | null>>({
+    firstName: null,
+    lastName: null,
+    email: null,
+    phoneNumber: null,
+  });
+
+  protected readonly isCreateFormValid = computed(() => {
+    const data = this.createModalData();
+    const errors = this.createModalFieldErrors();
+    return (
+      data.firstName?.trim() &&
+      data.lastName?.trim() &&
+      !errors['firstName'] &&
+      !errors['lastName'] &&
+      !errors['email'] &&
+      !errors['phoneNumber']
+    );
+  });
+
+  protected readonly magicLinkLoading = signal<string | null>(null); // userId being invited
+  protected readonly magicLinkError = signal<string | null>(null);
+  protected readonly magicLinkSuccess = signal<{ userId: string; message: string } | null>(null);
+  private magicLinkSuccessTimer: ReturnType<typeof setTimeout> | undefined;
 
   protected readonly statusKey = computed(() => {
     if (this.savedFlash()) return 'configManager.status.saved';
@@ -277,8 +292,12 @@ export class ConfigManager implements OnInit {
 
   constructor() {
     inject(HeaderService).set(this.translateService.instant('configManager.headerMeta'));
-    inject(DestroyRef).onDestroy(() => clearTimeout(this.savedFlashTimer));
+    inject(DestroyRef).onDestroy(() => {
+      clearTimeout(this.savedFlashTimer);
+      clearTimeout(this.magicLinkSuccessTimer);
+    });
     this.weddingConfigCollection.load();
+    this.userCollection.load();
 
     effect(() => {
       const apiConfig = this.weddingConfig();
@@ -325,71 +344,182 @@ export class ConfigManager implements OnInit {
     this.mutate((c) => ({ ...c, language: { ...c.language, [code]: value } }));
   }
 
-  // ── The couple (bride/groom accounts) — local state, see buildCoupleSeed() ──
+  // ── The couple (bride/groom accounts) — from userCollection ──
 
-  protected findPerson(role: CoupleRole): CoupleAccount | undefined {
-    return this.couple().find((p) => p.role === role);
+  protected findPerson(role: CoupleRole): UserDto | undefined {
+    const profiles = this.coupleProfiles();
+    return role === 'bride' ? profiles.bride : profiles.groom;
   }
 
-  protected setPerson(id: string, patch: Partial<CoupleAccount>): void {
-    this.couple.update((people) => people.map((p) => (p.id === id ? { ...p, ...patch } : p)));
-    this.dirty.set(true);
+  protected setPerson(id: string, patch: Partial<UserDto>): void {
+    const profiles = this.coupleProfiles();
+    const existing =
+      profiles.bride?.id === id
+        ? profiles.bride
+        : profiles.groom?.id === id
+          ? profiles.groom
+          : undefined;
+    if (existing) {
+      const updated: UserDto = { ...existing, ...patch };
+      this.userCollection.upsert(updated);
+    }
   }
-
-  protected addPerson(role: CoupleRole): void {
-    const newPerson: CoupleAccount = {
-      id: uid(),
-      role,
+  protected addPerson(role: string): void {
+    this.createModalRole.set(role as CoupleRole);
+    this.createModalData.set({
       firstName: '',
       lastName: '',
       email: '',
-      phone: '',
-      access: 'owner',
-      status: 'invited',
-      lastSeen: this.translateService.instant('configManager.couple.lastSeen.neverSignedIn'),
-    };
-    this.couple.update((people) => [...people, newPerson]);
-    this.dirty.set(true);
+      phoneNumber: '',
+    });
+    this.createModalFieldErrors.set({
+      firstName: null,
+      lastName: null,
+      email: null,
+      phoneNumber: null,
+    });
+    this.createModalError.set(null);
+    this.createModalOpen.set(true);
   }
 
   protected removePerson(id: string): void {
-    this.couple.update((people) => people.filter((p) => p.id !== id));
-    this.dirty.set(true);
+    this.userCollection.delete(id);
   }
 
-  protected coupleInitials(person: CoupleAccount): string {
+  protected closeCreateModal(): void {
+    this.createModalOpen.set(false);
+    this.createModalRole.set(null);
+    this.createModalData.set({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
+    });
+    this.createModalError.set(null);
+    this.createModalLoading.set(false);
+  }
+
+  protected setCreateModalField(field: keyof UserDto, value: string): void {
+    this.createModalData.update((data) => ({ ...data, [field]: value }));
+    this.validateCreateModalField(field, value);
+  }
+
+  protected validateCreateModalField(field: keyof UserDto, value: string): void {
+    let error: string | null = null;
+
+    if (field === 'email' && value.trim()) {
+      if (!this.isValidEmail(value)) {
+        error = 'Invalid email format';
+      }
+    } else if (field === 'phoneNumber' && value.trim()) {
+      if (!this.isValidPhoneNumber(value)) {
+        error = 'Invalid phone number format';
+      }
+    }
+
+    this.createModalFieldErrors.update((errors) => ({
+      ...errors,
+      [field]: error,
+    }));
+  }
+
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  }
+
+  private isValidPhoneNumber(phone: string): boolean {
+    // International phone format: +XX XXXX XXXX... (+ followed by country code, then digits and spaces)
+    const phoneRegex = /^\+?[1-9]\d{1,14}(\s|-)?\d*$/;
+    return phoneRegex.test(phone.replace(/[\s()-]/g, ''));
+  }
+
+  protected submitCreateModal(): void {
+    const role = this.createModalRole();
+    const data = this.createModalData();
+    if (!role || !data.firstName?.trim() || !data.lastName?.trim()) {
+      this.createModalError.set('First and last names are required');
+      return;
+    }
+
+    this.createModalLoading.set(true);
+    this.createModalError.set(null);
+
+    const newPerson: UserDto = {
+      id: uid(),
+      version: 0,
+      role: role,
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      email: data.email?.trim() || undefined,
+      phoneNumber: data.phoneNumber?.trim() || '',
+    };
+
+    this.userCollection.add(newPerson).subscribe({
+      next: () => {
+        this.createModalLoading.set(false);
+        this.closeCreateModal();
+      },
+      error: (error: DataServiceError) => {
+        this.createModalLoading.set(false);
+        console.error('Failed to create account:', error);
+        this.createModalError.set(
+          error?.error?.error?.message?.message || 'Failed to create account',
+        );
+      },
+    });
+  }
+
+  protected onCreateModalBackdropClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.closeCreateModal();
+    }
+  }
+
+  protected coupleInitials(person: UserDto): string {
     const first = person.firstName.charAt(0) || '?';
     const last = person.lastName.charAt(0) || '';
     return (first + last).toUpperCase();
   }
 
-  protected coupleFullName(person: CoupleAccount): string | null {
+  protected coupleFullName(person: UserDto): string | null {
     const name = [person.firstName, person.lastName].filter(Boolean).join(' ');
     return name || null;
   }
 
   /** "Send sign-in link" (active accounts) / "Resend invitation" (invited). */
-  protected sendCoupleInvite(person: CoupleAccount): void {
-    const key =
-      person.status === 'active'
-        ? 'configManager.couple.lastSeen.signInLinkSent'
-        : 'configManager.couple.lastSeen.inviteSent';
-    this.setPerson(person.id, { lastSeen: this.translateService.instant(key) });
+  protected sendCoupleInvite(person: UserDto): void {
+    if (!person.email) {
+      this.magicLinkError.set('Email is missing for this account');
+      return;
+    }
+
+    this.magicLinkLoading.set(person.id);
+    this.magicLinkError.set(null);
+    this.magicLinkSuccess.set(null);
+
+    this.loginService
+      .requestMagicLink(person.email)
+      .then(() => {
+        this.magicLinkLoading.set(null);
+        this.magicLinkSuccess.set({
+          userId: person.id,
+          message: 'Sign-in link sent to ' + person.email,
+        });
+        clearTimeout(this.magicLinkSuccessTimer);
+        this.magicLinkSuccessTimer = setTimeout(() => {
+          this.magicLinkSuccess.set(null);
+        }, 3000);
+      })
+      .catch((error) => {
+        this.magicLinkLoading.set(null);
+        this.magicLinkError.set(error?.message || 'Failed to send magic link');
+      });
   }
 
   /** "Suspend access" (active → invited) / "Mark as active" (invited → active). */
-  protected toggleCoupleStatus(person: CoupleAccount): void {
-    if (person.status === 'active') {
-      this.setPerson(person.id, {
-        status: 'invited',
-        lastSeen: this.translateService.instant('configManager.couple.lastSeen.invitationPending'),
-      });
-    } else {
-      this.setPerson(person.id, {
-        status: 'active',
-        lastSeen: this.translateService.instant('configManager.couple.lastSeen.justNow'),
-      });
-    }
+  protected toggleCoupleStatus(person: UserDto): void {
+    void person; // TODO: Implement via API endpoint once available
   }
 
   protected setVenue(id: string, patch: Partial<Venue>): void {

@@ -19,7 +19,7 @@ import {
   RsvpDtoAdultsPartner1Options,
   UserProfileDto,
   UserProfileDtoRelation,
-  UserResponseDto,
+  UserDto,
 } from '@app/core';
 import { Modal } from '@app/shared/modal/modal';
 import { Btn } from '@app/shared/button/button';
@@ -67,9 +67,9 @@ export class RsvpDetailsModal implements OnInit {
     EntityServices,
   ).getEntityCollectionService<UserProfileDto>(EntityNamesEnum.USER_PROFILE);
 
-  private readonly userCollection: EntityCollectionService<UserResponseDto> = inject(
+  private readonly userCollection: EntityCollectionService<UserDto> = inject(
     EntityServices,
-  ).getEntityCollectionService<UserResponseDto>(EntityNamesEnum.USER);
+  ).getEntityCollectionService<UserDto>(EntityNamesEnum.USER);
 
   private readonly rsvpCollection: EntityCollectionService<RsvpDto> = inject(
     EntityServices,
@@ -283,9 +283,10 @@ export class RsvpDetailsModal implements OnInit {
     this.createFailed.set(false);
 
     // `id`/`version` are server-assigned — `UserDataService.add()` ignores both.
-    const draft: UserResponseDto = {
+    const draft: UserDto = {
       id: '',
       version: 1,
+      role: 'guest',
       firstName,
       lastName,
       phoneNumber,
@@ -330,7 +331,7 @@ export class RsvpDetailsModal implements OnInit {
    * (the guest the record is created for), `status`, `adults.partner2` and
    * `children` — the server owns every other field.
    */
-  private blankRsvp(user: UserResponseDto): RsvpDto {
+  private blankRsvp(user: UserDto): RsvpDto {
     return {
       id: user.id,
       version: 1,

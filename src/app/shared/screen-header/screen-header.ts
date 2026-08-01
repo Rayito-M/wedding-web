@@ -22,7 +22,7 @@ import {
   LoginService,
   RouteConfigService,
   TranslateLanguageService,
-  UserProfileDto,
+  UserDto,
 } from '@app/core';
 
 import { LangCode } from '../../model';
@@ -51,11 +51,11 @@ export class ScreenHeader implements OnInit {
   private readonly routeConfig = inject(RouteConfigService);
   private readonly router = inject(Router);
 
-  private readonly userProfileCollection: EntityCollectionService<UserProfileDto> = inject(
+  private readonly userProfileCollection: EntityCollectionService<UserDto> = inject(
     EntityServices,
-  ).getEntityCollectionService<UserProfileDto>(EntityNamesEnum.USER_PROFILE);
+  ).getEntityCollectionService<UserDto>(EntityNamesEnum.USER_PROFILE);
 
-  private readonly userProfile: Signal<UserProfileDto | undefined> = toSignal(
+  private readonly userProfile: Signal<UserDto | undefined> = toSignal(
     this.userProfileCollection.entities$.pipe(
       map((profiles) => {
         const currentUser = this.login.currentUserClaims();

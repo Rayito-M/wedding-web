@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { EntityCollectionDataService } from '@ngrx/data';
 import { Observable, throwError, map } from 'rxjs';
 
-import { CreateUserDto, UserResponseDto, WeddingUsersService } from '../api';
+import { CreateUserDto, UserDto, WeddingUsersService } from '../api';
 
 import { EntityNamesEnum } from './entity-metadata';
 
@@ -17,20 +17,20 @@ import { EntityNamesEnum } from './entity-metadata';
  * interceptor's job (Hard Rule #6) — and this endpoint needs none.
  */
 @Injectable({ providedIn: 'root' })
-export class UserDataService implements EntityCollectionDataService<UserResponseDto> {
+export class UserDataService implements EntityCollectionDataService<UserDto> {
   readonly name = EntityNamesEnum.USER;
 
   private readonly serviceApi = inject(WeddingUsersService);
 
-  getAll(): Observable<UserResponseDto[]> {
+  getAll(): Observable<UserDto[]> {
     return this.serviceApi.usersControllerListV1().pipe(map((response) => response.items));
   }
 
-  getById(id: string): Observable<UserResponseDto> {
+  getById(id: string): Observable<UserDto> {
     return this.serviceApi.usersControllerGetV1({ id });
   }
 
-  getWithQuery(): Observable<UserResponseDto[]> {
+  getWithQuery(): Observable<UserDto[]> {
     return this.getAll();
   }
 
@@ -41,10 +41,11 @@ export class UserDataService implements EntityCollectionDataService<UserResponse
    * guest's `relation` (side · group) is a separate `PATCH /v1/profile/{id}`
    * the caller issues afterwards.
    */
-  add(entity: UserResponseDto): Observable<UserResponseDto> {
+  add(entity: UserDto): Observable<UserDto> {
     const createUserDto: CreateUserDto = {
       firstName: entity.firstName,
       lastName: entity.lastName,
+      role: entity.role,
       phoneNumber: entity.phoneNumber,
       email: entity.email,
       preferredLang: entity.preferredLang,
@@ -52,11 +53,11 @@ export class UserDataService implements EntityCollectionDataService<UserResponse
     return this.serviceApi.usersControllerCreateV1({ createUserDto });
   }
 
-  update(): Observable<UserResponseDto> {
+  update(): Observable<UserDto> {
     return this.notImplemented();
   }
 
-  upsert(): Observable<UserResponseDto> {
+  upsert(): Observable<UserDto> {
     return this.notImplemented();
   }
 

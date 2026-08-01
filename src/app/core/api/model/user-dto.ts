@@ -9,7 +9,7 @@
  */
 
 
-export interface UserResponseDto { 
+export interface UserDto { 
     id: string;
     version: number;
     firstName: string;
@@ -18,10 +18,18 @@ export interface UserResponseDto {
     googleSub?: string;
     appleSub?: string;
     phoneNumber: string;
-    preferredLang?: UserResponseDto.PreferredLangEnum;
+    role: UserDto.RoleEnum;
+    preferredLang?: UserDto.PreferredLangEnum;
     delegateTo?: Array<string>;
 }
-export namespace UserResponseDto {
+export namespace UserDto {
+    export const RoleEnum = {
+        BRIDE: 'bride',
+        GROOM: 'groom',
+        GUEST: 'guest',
+        PROVIDER: 'provider'
+    } as const;
+    export type RoleEnum = typeof RoleEnum[keyof typeof RoleEnum];
     export const PreferredLangEnum = {
         ES: 'es',
         EN: 'en',

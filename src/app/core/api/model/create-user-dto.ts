@@ -16,10 +16,18 @@ export interface CreateUserDto {
     googleSub?: string;
     appleSub?: string;
     phoneNumber: string;
+    role: CreateUserDto.RoleEnum;
     preferredLang?: CreateUserDto.PreferredLangEnum;
     delegateTo?: Array<string>;
 }
 export namespace CreateUserDto {
+    export const RoleEnum = {
+        BRIDE: 'bride',
+        GROOM: 'groom',
+        GUEST: 'guest',
+        PROVIDER: 'provider'
+    } as const;
+    export type RoleEnum = typeof RoleEnum[keyof typeof RoleEnum];
     export const PreferredLangEnum = {
         ES: 'es',
         EN: 'en',
