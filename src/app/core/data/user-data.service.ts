@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { EntityCollectionDataService } from '@ngrx/data';
 import { Observable, throwError, map } from 'rxjs';
 
-import { UserResponseDto, WeddingUsersService } from '../api';
+import { CreateUserDto, UserResponseDto, WeddingUsersService } from '../api';
 
 import { EntityNamesEnum } from './entity-metadata';
 
@@ -34,8 +34,22 @@ export class UserDataService implements EntityCollectionDataService<UserResponse
     return this.getAll();
   }
 
-  add(): Observable<UserResponseDto> {
-    return this.notImplemented();
+  /**
+   * `POST /v1/users` (admin) — creates the guest account the guest manager's
+   * "Add guest" flow needs. `CreateUserDto` only accepts identity fields, so
+   * `entity.id`/`entity.version` are ignored (the server assigns both) and the
+   * guest's `relation` (side · group) is a separate `PATCH /v1/profile/{id}`
+   * the caller issues afterwards.
+   */
+  add(entity: UserResponseDto): Observable<UserResponseDto> {
+    const createUserDto: CreateUserDto = {
+      firstName: entity.firstName,
+      lastName: entity.lastName,
+      phoneNumber: entity.phoneNumber,
+      email: entity.email,
+      preferredLang: entity.preferredLang,
+    };
+    return this.serviceApi.usersControllerCreateV1({ createUserDto });
   }
 
   update(): Observable<UserResponseDto> {

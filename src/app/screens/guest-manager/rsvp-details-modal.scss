@@ -191,3 +191,29 @@
   gap: t.$space-2;
   flex-wrap: wrap;
 }
+
+// Paired fields (first/last name, phone/email) — DS lays these out side by
+// side on the desktop overlay and stacked on the mobile sheet.
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-3;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+.field-error {
+  display: block;
+  margin-top: t.$space-1;
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+}
+
+.form-error {
+  margin: t.$space-4 0 0 0;
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+}
