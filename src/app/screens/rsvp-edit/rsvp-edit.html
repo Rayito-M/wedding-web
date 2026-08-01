@@ -25,7 +25,7 @@
             (click)="toggleOpen(card.key)"
             [attr.aria-expanded]="isOpen(card.key)"
           >
-            <span class="avatar" [class.you]="card.kind === 'you'">{{ initial(card) }}</span>
+            <app-avatar [size]="32" [accent]="card.kind === 'you'">{{ initial(card) }}</app-avatar>
             <span class="info">
               <span class="name-row">
                 <span class="name">{{ fullName(card) || ('rsvp.edit.person.newGuest' | translate) }}</span>

@@ -5,6 +5,7 @@ import { Pill } from '@app/shared/pill/pill';
 import { TextInput } from '@app/shared/input/input';
 import { Btn } from '@app/shared/button/button';
 import { DecorFish } from '@app/shared/decor/fish';
+import { Avatar } from '@app/shared/avatar/avatar';
 
 /**
  * Presentational scaffold only (T238). Per design reference `ScreenProfile.jsx`
@@ -61,7 +62,7 @@ const LANGS: readonly { readonly code: LangCode; readonly label: string }[] = [
 @Component({
   selector: 'app-profile',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Pill, TextInput, Btn, DecorFish, RouterLink],
+  imports: [Avatar, Pill, TextInput, Btn, DecorFish, RouterLink],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })

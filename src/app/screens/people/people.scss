@@ -146,27 +146,6 @@
   border-color: var(--brand-accent);
 }
 
-.avatar {
-  flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: var(--brand-accent-soft);
-  color: var(--text-body-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-serif);
-  font-size: 19px;
-  line-height: 1;
-  user-select: none;
-}
-
-.avatar.couple {
-  background: var(--brand-accent);
-  color: var(--on-accent);
-}
-
 .info {
   flex: 1;
   min-width: 0;

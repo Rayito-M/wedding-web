@@ -16,6 +16,7 @@ import { EntityNamesEnum, UserProfileDto } from '@app/core';
 
 import { Pill } from '@app/shared/pill/pill';
 import { TextInput } from '@app/shared/input/input';
+import { Avatar } from '@app/shared/avatar/avatar';
 
 /**
  * Presentational scaffold only (T237). Per design reference `ScreenPeople.jsx`
@@ -55,7 +56,7 @@ const FILTERS: readonly FilterOption[] = [
 @Component({
   selector: 'app-people',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Pill, TextInput, RouterLink, TranslatePipe],
+  imports: [Avatar, Pill, TextInput, RouterLink, TranslatePipe],
   templateUrl: './people.html',
   styleUrl: './people.scss',
 })

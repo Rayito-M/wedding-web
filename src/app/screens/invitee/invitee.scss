@@ -129,20 +129,20 @@
   text-transform: uppercase;
   padding: 2px 8px;
   border-radius: t.$radius-pill;
-  color: var(--sub);
-  border: 1px dashed var(--line);
+  color: var(--text-muted);
+  border: 1px dashed var(--border-hairline);
   white-space: nowrap;
 
   &.final {
-    background: var(--accent);
+    background: var(--status-final);
     color: var(--on-accent);
-    border: 1px solid var(--accent);
+    border: 1px solid var(--status-final);
   }
 
   &.provisional {
-    background: #b8862b;
+    background: var(--status-provisional);
     color: var(--chip);
-    border: 1px dashed var(--line);
+    border: 1px dashed var(--border-hairline);
     font-weight: bolder;
   }
 }

@@ -79,27 +79,6 @@ h2 {
   font-family: t.$font-sans;
 }
 
-.avatar {
-  flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--brand-accent-soft);
-  color: var(--text-body-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: t.$font-serif;
-  font-size: t.$text-body-lg;
-  line-height: 1;
-  user-select: none;
-}
-
-.avatar.you {
-  background: var(--brand-accent);
-  color: var(--on-accent);
-}
-
 .info {
   flex: 1;
   min-width: 0;

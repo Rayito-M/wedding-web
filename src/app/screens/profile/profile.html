@@ -8,7 +8,7 @@
         <div class="card identity">
           <app-decor-fish class="deco-fish" [w]="54" [flip]="true" />
           <div class="avatar-wrap">
-            <div class="avatar">{{ initials() }}</div>
+            <app-avatar [size]="66">{{ initials() }}</app-avatar>
             @if (editing()) {
               <button type="button" class="avatar-edit" title="Change photo" aria-label="Change photo">
                 ✎

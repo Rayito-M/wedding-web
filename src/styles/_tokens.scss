@@ -80,6 +80,9 @@
   --status-confirmed: var(--accent);
   --status-planned: var(--accent-3);
   --status-cancelled: var(--sub);
+  /* schedule-level status — deliberately outside the theme palette so "provisional" reads as a flag */
+  --status-provisional: #b8862b;
+  --status-final: var(--accent);
 }
 
 // ── Typography (tokens/typography.css) ──
