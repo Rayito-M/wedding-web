@@ -8,9 +8,9 @@
       <span class="date-badge-full">SAT &middot; 5 JUN 2027</span>
       <span class="date-badge-short">SAT &middot; 5 JUN</span>
     </span>
-    <span class="status-pill" [class.final]="isFinal()" [class.provisional]="!isFinal()">
+    <app-status-pill [variant]="isFinal() ? 'final' : 'provisional'">
       {{ (isFinal() ? 'schedule.status.final' : 'shared.scheduleStatus.provisional') | translate }}
-    </span>
+    </app-status-pill>
   </div>
 </div>
 

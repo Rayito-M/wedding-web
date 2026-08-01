@@ -22,6 +22,7 @@ import {
 import { DecorFish } from '../../shared/decor/fish';
 import { ProgressBar } from '../../shared/progress-bar/progress-bar';
 import { RsvpStatusTick } from '../../shared/rsvp-status-tick/rsvp-status-tick';
+import { StatusPill } from '../../shared/status-pill/status-pill';
 import { TimelineItem } from '../../shared/timeline-item/timeline-item';
 
 @Component({
@@ -35,6 +36,7 @@ import { TimelineItem } from '../../shared/timeline-item/timeline-item';
     RsvpStatusTick,
     PluralTranslatePipe,
     AgendaTimePipe,
+    StatusPill,
     TimelineItem,
   ],
   templateUrl: './invitee.html',

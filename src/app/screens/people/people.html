@@ -47,7 +47,7 @@
           (keydown.enter)="goToProfile(person)"
           (keydown.space)="goToProfile(person)"
         >
-          <div class="avatar" [class.couple]="isCouple(person)">{{ initials(person) }}</div>
+          <app-avatar [size]="42" [accent]="isCouple(person)">{{ initials(person) }}</app-avatar>
           <div class="info">
             <div class="name-row">
               <span class="name">{{ person.firstName }} {{ person.lastName }}</span>

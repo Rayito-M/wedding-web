@@ -1,0 +1,19 @@
+// Per design system components/core/Avatar.jsx
+:host {
+  display: inline-flex;
+  border-radius: 50%;
+  background: var(--brand-accent-soft);
+  color: var(--text-body-color);
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  line-height: 1;
+  overflow: hidden;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+:host(.accent) {
+  background: var(--brand-accent);
+  color: var(--on-accent);
+}

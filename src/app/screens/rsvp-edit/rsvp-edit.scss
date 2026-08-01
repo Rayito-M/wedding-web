@@ -1,4 +1,5 @@
 @use '../../../styles/tokens' as t;
+@use '../../../styles/primitives';
 
 :host {
   display: flex;
@@ -23,10 +24,7 @@
 }
 
 .eyebrow {
-  font-size: t.$text-label;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %eyebrow;
   margin-bottom: 10px;
 }
 
@@ -39,10 +37,7 @@ h2 {
 }
 
 .sub {
-  font-size: t.$text-body;
-  color: var(--text-muted);
-  line-height: 1.5;
-  margin: 0;
+  @extend %sub;
 }
 
 .check {
@@ -60,10 +55,7 @@ h2 {
 }
 
 .card {
-  border: 1px solid var(--border-hairline);
-  background: var(--surface-card);
-  border-radius: t.$radius-card;
-  overflow: hidden;
+  @extend %card-shell;
 }
 
 .card-head {
@@ -77,27 +69,6 @@ h2 {
   text-align: left;
   cursor: pointer;
   font-family: t.$font-sans;
-}
-
-.avatar {
-  flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--brand-accent-soft);
-  color: var(--text-body-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: t.$font-serif;
-  font-size: t.$text-body-lg;
-  line-height: 1;
-  user-select: none;
-}
-
-.avatar.you {
-  background: var(--brand-accent);
-  color: var(--on-accent);
 }
 
 .info {

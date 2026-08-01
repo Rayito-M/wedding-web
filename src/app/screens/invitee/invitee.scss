@@ -1,4 +1,5 @@
 @use '../../../styles/tokens' as t;
+@use '../../../styles/primitives';
 
 :host {
   display: block;
@@ -6,11 +7,10 @@
 }
 
 .greeting {
-  padding: 12px t.$space-6 0;
+  @extend %greeting-block;
 
   .hello {
-    font-size: t.$text-caption;
-    color: var(--sub);
+    @extend %greeting-hello;
   }
 
   h1 {
@@ -21,22 +21,17 @@
     margin-top: 4px;
 
     .accent {
-      color: var(--accent);
+      @extend %accent-marker;
     }
   }
 }
 
 .content {
-  padding: 14px t.$space-6 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  @extend %content-block;
 }
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: t.$radius-card;
+  @extend %card-shell;
 }
 
 .countdown {
@@ -45,10 +40,7 @@
   overflow: hidden;
 
   .deco-fish {
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    opacity: 0.7;
+    @extend %deco-fish-compact;
   }
 
   .venue {
@@ -65,7 +57,7 @@
 
   .caption {
     font-size: t.$text-label;
-    color: var(--sub);
+    color: var(--text-muted);
     margin-top: 4px;
     letter-spacing: 0.06em;
   }
@@ -89,12 +81,12 @@
 
   .rsvp-sub {
     font-size: t.$text-micro;
-    color: var(--sub);
+    color: var(--text-muted);
     margin-top: 2px;
   }
 
   .edit {
-    color: var(--accent);
+    color: var(--brand-accent);
     font-size: t.$text-micro;
     text-decoration: none;
   }
@@ -114,48 +106,21 @@
 
   .all {
     font-size: t.$text-micro;
-    color: var(--accent);
+    color: var(--brand-accent);
     text-decoration: none;
   }
 }
 
-// Hand-built status pill (Final / Provisional) — no equivalent DS component;
-// mirrors ScreenHome.jsx's inline `schedulePill`.
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: t.$radius-pill;
-  color: var(--sub);
-  border: 1px dashed var(--line);
-  white-space: nowrap;
-
-  &.final {
-    background: var(--accent);
-    color: var(--on-accent);
-    border: 1px solid var(--accent);
-  }
-
-  &.provisional {
-    background: #b8862b;
-    color: var(--chip);
-    border: 1px dashed var(--line);
-    font-weight: bolder;
-  }
-}
 
 .provisional-note {
   font-size: t.$text-label;
-  color: var(--sub);
+  color: var(--text-muted);
   margin-bottom: t.$space-2;
 }
 
 .no-events {
   font-size: t.$text-caption;
-  color: var(--sub);
+  color: var(--text-muted);
   padding: 8px 0;
 }
 
@@ -180,12 +145,12 @@
 
   .album-sub {
     font-size: t.$text-label;
-    color: var(--sub);
+    color: var(--text-muted);
     margin-top: 1px;
   }
 
   .arrow {
-    color: var(--accent);
+    color: var(--brand-accent);
     font-size: 16px;
   }
 }

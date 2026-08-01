@@ -20,6 +20,7 @@ import { Btn } from '@app/shared/button/button';
 import { Pill } from '@app/shared/pill/pill';
 import { TextInput } from '@app/shared/input/input';
 import { TextareaInput } from '@app/shared/textarea/textarea';
+import { Avatar } from '@app/shared/avatar/avatar';
 
 type PersonKind = 'you' | 'partner' | 'child';
 type PersonKey = 'partner1' | 'partner2' | `child:${number}`;
@@ -148,7 +149,7 @@ function fromEditDraft(draft: EditDraft): Partial<RsvpDto> {
 @Component({
   selector: 'app-rsvp-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Btn, Pill, TextInput, TextareaInput, TranslatePipe, PluralTranslatePipe],
+  imports: [Avatar, Btn, Pill, TextInput, TextareaInput, TranslatePipe, PluralTranslatePipe],
   templateUrl: './rsvp-edit.html',
   styleUrl: './rsvp-edit.scss',
 })

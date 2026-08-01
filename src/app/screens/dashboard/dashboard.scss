@@ -1,4 +1,5 @@
 @use '../../../styles/tokens' as t;
+@use '../../../styles/primitives';
 
 :host {
   display: block;
@@ -6,11 +7,10 @@
 }
 
 .greeting {
-  padding: 12px t.$space-6 0;
+  @extend %greeting-block;
 
   .hello {
-    font-size: t.$text-caption;
-    color: var(--sub);
+    @extend %greeting-hello;
   }
 
   h1 {
@@ -22,31 +22,25 @@
   }
 
   .accent {
-    color: var(--accent);
+    @extend %accent-marker;
   }
 }
 
 .content {
-  padding: 14px t.$space-6 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  @extend %content-block;
 }
 
 .stats-card {
   padding: 16px;
-  background: var(--surface);
+  background: var(--surface-card);
   border-radius: t.$radius-card;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border-hairline);
   position: relative;
   overflow: hidden;
 }
 
 .deco-fish {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  opacity: 0.85;
+  @extend %deco-fish-base;
 }
 
 .stats {
@@ -64,7 +58,7 @@
     color: var(--ink);
 
     &.accent {
-      color: var(--accent);
+      color: var(--brand-accent);
     }
   }
 
@@ -82,7 +76,7 @@
 
 .caption {
   font-size: t.$text-label;
-  color: var(--sub);
+  color: var(--text-muted);
   margin-top: 6px;
   letter-spacing: 0.06em;
 }
@@ -98,8 +92,8 @@
 }
 
 .manage-list {
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
   border-radius: t.$radius-card;
   overflow: hidden;
 }
@@ -116,7 +110,7 @@
   cursor: pointer;
 
   &:not(:last-child) {
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border-hairline);
   }
 }
 
@@ -134,12 +128,12 @@
 .manage-sub {
   display: block;
   font-size: t.$text-micro;
-  color: var(--sub);
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
 .manage-arrow {
-  color: var(--accent);
+  color: var(--brand-accent);
   font-size: 16px;
 }
 
@@ -151,7 +145,7 @@
 
   .see-all {
     font-size: t.$text-micro;
-    color: var(--accent);
+    color: var(--brand-accent);
   }
 }
 

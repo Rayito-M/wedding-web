@@ -32,7 +32,7 @@ header {
 
 .loc {
   font-size: t.$text-label;
-  color: var(--sub);
+  color: var(--text-muted);
   letter-spacing: 0.12em;
   flex-basis: 100%;
   text-align: center;
@@ -75,7 +75,7 @@ header {
   font-style: italic;
   font-weight: 400;
   font-size: 14px;
-  color: var(--accent);
+  color: var(--brand-accent);
   letter-spacing: 0;
   line-height: 1.35;
   padding: 0 10px;
@@ -93,7 +93,7 @@ header {
   font-size: t.$text-body-lg;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--sub);
+  color: var(--text-muted);
 }
 
 .date {
@@ -108,7 +108,7 @@ header {
   .rule {
     height: 1px;
     flex: 1;
-    background: var(--line);
+    background: var(--border-hairline);
   }
 
   .date-content {
@@ -159,7 +159,7 @@ header {
 .caption {
   text-align: center;
   font-size: t.$text-micro;
-  color: var(--sub);
+  color: var(--text-muted);
   letter-spacing: 0.08em;
 }
 
