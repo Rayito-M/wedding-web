@@ -519,7 +519,8 @@
     "seating": "Sara & Christophe · Seating plan",
     "invitee": "Sara & Christophe · Your day",
     "profile": "Sara & Christophe · My profile",
-    "people": "Sara & Christophe · Contacts"
+    "people": "Sara & Christophe · Contacts",
+    "privacyPolicy": "Sara & Christophe · Privacy policy"
   },
   "guest_manager": {
     "header": {
@@ -654,5 +655,30 @@
       "photography": "Photography"
     },
     "empty": "No one matches \"{{query}}\"."
+  },
+  "privacyPolicy": {
+    "title": "Privacy policy",
+    "intro": "This page explains how the site uses Google Analytics to understand overall visitor traffic.",
+    "analytics": {
+      "title": "Google Analytics",
+      "body": "We use Google Analytics to see aggregate traffic on this site — things like visits, page views, and general device and geographic trends. We do not track individual actions or set up custom event tracking."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "body": "Google Analytics sets cookies in your browser to help measure visits. These cookies are only set after you accept analytics below."
+    },
+    "ipAnonymization": {
+      "title": "IP anonymization",
+      "body": "Your IP address is anonymized before Google Analytics processes it, so it is not used to identify you individually."
+    },
+    "googlePolicy": {
+      "title": "Google's privacy policy",
+      "body": "For more detail on how Google handles data collected through Analytics, see",
+      "link": "Google's privacy policy"
+    },
+    "changeChoice": {
+      "title": "Changing your choice",
+      "body": "You can change your Accept/Decline choice at any time by clearing this site's data in your browser settings; you'll be asked again on your next visit."
+    }
   }
 }

@@ -514,7 +514,8 @@
     "seating": "Sara & Christophe · Plan de table",
     "invitee": "Sara & Christophe · Votre journée",
     "profile": "Sara & Christophe · Mon profil",
-    "people": "Sara & Christophe · Contacts"
+    "people": "Sara & Christophe · Contacts",
+    "privacyPolicy": "Sara & Christophe · Politique de confidentialité"
   },
   "guest_manager": {
     "header": {
@@ -649,5 +650,30 @@
       "photography": "Photographie"
     },
     "empty": "Personne ne correspond à \"{{query}}\"."
+  },
+  "privacyPolicy": {
+    "title": "Politique de confidentialité",
+    "intro": "Cette page explique comment le site utilise Google Analytics pour comprendre le trafic global des visiteurs.",
+    "analytics": {
+      "title": "Google Analytics",
+      "body": "Nous utilisons Google Analytics pour observer le trafic agrégé de ce site — visites, pages vues, et tendances générales d'appareil et de géographie. Nous ne suivons pas d'actions individuelles et ne configurons aucun suivi d'événement personnalisé."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "body": "Google Analytics place des cookies dans votre navigateur pour aider à mesurer les visites. Ces cookies ne sont déposés qu'après votre acceptation de l'analytique ci-dessous."
+    },
+    "ipAnonymization": {
+      "title": "Anonymisation de l'IP",
+      "body": "Votre adresse IP est anonymisée avant d'être traitée par Google Analytics ; elle n'est donc pas utilisée pour vous identifier individuellement."
+    },
+    "googlePolicy": {
+      "title": "Politique de confidentialité de Google",
+      "body": "Pour plus de détails sur la façon dont Google traite les données collectées via Analytics, consultez",
+      "link": "la politique de confidentialité de Google"
+    },
+    "changeChoice": {
+      "title": "Modifier votre choix",
+      "body": "Vous pouvez modifier votre choix Accepter/Refuser à tout moment en effaçant les données de ce site dans les paramètres de votre navigateur ; il vous sera à nouveau demandé lors de votre prochaine visite."
+    }
   }
 }
