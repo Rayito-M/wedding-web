@@ -31,6 +31,7 @@
           (click)="switchAuthMethod('phone')"
           type="button"
         >
+          <app-icon name="phone" [size]="16" />
           {{ 'login.tabs.phone' | translate }}
         </button>
         <button
@@ -38,6 +39,7 @@
           (click)="switchAuthMethod('email')"
           type="button"
         >
+          <app-icon name="mail" [size]="16" />
           {{ 'login.tabs.email' | translate }}
         </button>
       </div>

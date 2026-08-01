@@ -21,6 +21,7 @@ import { LanguageSelector } from '../../shared/language-selector/language-select
 import { CountryCodeSelect } from '../../shared/country-code-select/country-code-select';
 import { GoogleIcon } from '../../shared/icons/google-icon';
 import { AppleIcon } from '../../shared/icons/apple-icon';
+import { Icon } from '../../shared/icons/icon';
 import { Modal } from '../../shared/modal/modal';
 
 type AuthMethod = 'phone' | 'email';
@@ -43,6 +44,7 @@ type Step = 'request' | 'verify';
     CountryCodeSelect,
     GoogleIcon,
     AppleIcon,
+    Icon,
     Modal,
   ],
   templateUrl: './login.html',

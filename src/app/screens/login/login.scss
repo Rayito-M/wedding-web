@@ -57,6 +57,10 @@ header {
   gap: t.$space-2;
 
   button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: t.$space-2;
     flex: 1;
     padding: t.$space-3 0;
     background: transparent;
