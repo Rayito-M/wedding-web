@@ -5,13 +5,13 @@ import { HeaderService } from '../../core';
 import { DashboardService } from '../../core/dashboard.service';
 import { DecorFish } from '../../shared/decor/fish';
 import { ProgressBar } from '../../shared/progress-bar/progress-bar';
-import { StatTile } from '../../shared/stat-tile/stat-tile';
-import { TaskRow } from '../../shared/task-row/task-row';
+// import { StatTile } from '../../shared/stat-tile/stat-tile';
+// import { TaskRow } from '../../shared/task-row/task-row';
 
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecorFish, ProgressBar, StatTile, TaskRow, TranslatePipe, RouterLink],
+  imports: [DecorFish, ProgressBar, TranslatePipe, RouterLink],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })

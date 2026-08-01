@@ -1535,3 +1535,72 @@
   and a follow-up sweep replacing the ad-hoc `rgba()` scrims/shadows in the components listed above.
 - **Refs:** css-auditor B4; `../wedding-ui-design/tokens/spacing.css` (`--shadow-knob` only);
   `../wedding-architecture/.agent/authority.md`; CLAUDE.md ("When in doubt" / design-system escalation).
+
+## Phase G — Analytics consent (hub ADR-0027)
+
+> Hub ADR-0027 permits aggregate Google Analytics (GA4) traffic visibility (visits, page views,
+> basic device/geography), reversing the "no analytics" clause of ADR-0026, **conditional on** a
+> cookie consent banner gating GA load — this is a GDPR/ePrivacy requirement, not optional polish.
+> The DS shipped the reference component: `../wedding-ui-design/components/core/ConsentBanner.jsx`
+> (+ `.d.ts` + `.prompt.md`). Unlike the Phase — Visual refresh tasks above, this is **new product
+> behavior**, not a visual-only pass: real `.ts` logic (GA gating, persistence) and real i18n wiring
+> are both in scope and required — the "hardcode new copy" convention used in T219–T238 does **not**
+> apply here.
+
+### T250 — Cookie consent banner + gated GA4 loading
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** —
+- **Acceptance:**
+  - New standalone component `app-consent-banner` (`src/app/shared/consent-banner/`) mirrors DS
+    `ConsentBanner.jsx`: fixed bottom bar (`position: fixed; left/right: 0; bottom: 0`), `--surface`
+    fill, 1px `--line` top border only (no scrim/dim, never a center modal — matches the DS
+    `.prompt.md`: "never blocks the page behind it"), message + secondary note line, two equal-weight
+    full-width-on-mobile pill buttons (reuse the shared `app-button` component: Accept = primary,
+    Decline = secondary) — no pre-selected default.
+  - Persistence mirrors the DS reference 1:1: localStorage key `sc-analytics-consent`, values
+    `'accepted' | 'declined'`; a small `ConsentService` (or util) exposes `readConsent()` /
+    `writeConsent(value)` matching the DS `readConsent`/`writeConsent`/`CONSENT_KEY` naming so the
+    contract stays traceable back to the DS source.
+  - Copy is **real i18n**, not hardcoded: add `consentBanner.message` / `.note` / `.accept` /
+    `.decline` keys to all three `public/i18n/*.json` locales, seeded from the DS `CONSENT_COPY`
+    table (es/en/fr) as the wording source; bind via the existing `| translate` pipe convention.
+  - Mounted once at the app root (`AppComponent` template, or the top-level route outlet wrapper —
+    **not** inside `PrivateLayout`), so it appears on first visit regardless of auth state (the
+    public `/v1/config/public` teaser page and the signed-in app both count as "visits"). Visible only
+    when `readConsent()` returns null; hides permanently the moment a decision is persisted.
+  - **On Accept:** persist `'accepted'`, then dynamically inject GA4 (`gtag.js`) using a measurement
+    ID read from `environment.gaMeasurementId`, with `anonymize_ip: true` (ADR-0027). If the
+    measurement ID is blank (local/dev default), skip loading GA entirely — a no-op, not an error.
+  - **On Decline:** persist `'declined'`; no GA script is ever injected; app behavior is identical to
+    the accepted path minus tracking.
+  - **Hard invariant:** the GA script tag must never be present in the DOM before a decision exists —
+    no default-on / opt-out pattern, no pre-fetch "just in case."
+  - No custom `gtag('event', …)` calls anywhere in the app — GA is limited to its own automatic
+    pageview/session collection (ADR-0027 explicitly excludes custom event/funnel tracking).
+  - `environment.ts` / `environment.prod.ts` gain `gaMeasurementId` (blank string in non-prod).
+  - `pnpm typecheck && pnpm lint && pnpm build` green; manually verified in the browser (network tab)
+    that no `googletagmanager.com` request fires before a choice or after Decline, and fires only
+    after Accept.
+- **Refs:** hub ADR-0027; DS `components/core/ConsentBanner.jsx`, `ConsentBanner.d.ts`,
+  `ConsentBanner.prompt.md`; hub `ARCHITECTURE.md` Observability section; files:
+  `src/app/shared/consent-banner/`, `src/app/app.component.*` (or root route wrapper),
+  `src/environments/`, `public/i18n/*.json`.
+
+### T251 — Privacy policy disclosure for Google Analytics
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** T250
+- **Acceptance:**
+  - No privacy policy screen exists in this repo today (checked: no `privacy` references under
+    `src/`) — this task adds one, it is not an edit to an existing page.
+  - New minimal, localized (es/en/fr) privacy policy screen/route disclosing: that the app uses
+    Google Analytics for aggregate traffic visibility only, that it sets cookies, that IP addresses
+    are anonymized, a link to Google's own privacy policy, and that the guest's Accept/Decline choice
+    can be changed (see below).
+  - The consent banner's note line (T250) links to this new page.
+  - Out of scope: a full legal privacy policy covering guest data (phone/email/dietary/etc.) beyond
+    the GA disclosure — flag as a follow-up if the couple wants one; this task covers the GA
+    disclosure that ADR-0027 requires, nothing broader.
+  - `pnpm typecheck && pnpm lint && pnpm build` green.
+- **Refs:** hub ADR-0027; files: new `src/app/screens/privacy-policy/` (or equivalent), `public/i18n/*.json`.
