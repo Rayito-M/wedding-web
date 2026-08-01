@@ -480,6 +480,13 @@
       "final": "Definitivo"
     }
   },
+  "consentBanner": {
+    "message": "Nos gustaría usar un poco de analítica para ver cuántos invitados nos visitan — nada más.",
+    "note": "Sin publicidad, sin perfiles. Puedes cambiar de idea cuando quieras.",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "privacyLink": "Política de privacidad"
+  },
   "nav": {
     "home": "Inicio",
     "dashboard": "Panel",

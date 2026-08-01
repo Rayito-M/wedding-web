@@ -485,6 +485,13 @@
       "final": "Final"
     }
   },
+  "consentBanner": {
+    "message": "We'd like to use a little analytics to see how many guests are visiting — nothing more.",
+    "note": "No ads, no profiles. You can change your mind whenever you like.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "privacyLink": "Privacy policy"
+  },
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",

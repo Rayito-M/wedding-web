@@ -1,0 +1,15 @@
+@if (visible()) {
+  <div class="banner" role="region" [attr.aria-label]="'consentBanner.message' | translate">
+    <div class="copy">
+      <p class="message">{{ 'consentBanner.message' | translate }}</p>
+      <p class="note">
+        {{ 'consentBanner.note' | translate }}
+        <a class="privacy-link" routerLink="/privacy-policy">{{ 'consentBanner.privacyLink' | translate }}</a>
+      </p>
+    </div>
+    <div class="actions">
+      <button app-btn (click)="accept()">{{ 'consentBanner.accept' | translate }}</button>
+      <button app-btn [primary]="false" (click)="decline()">{{ 'consentBanner.decline' | translate }}</button>
+    </div>
+  </div>
+}
