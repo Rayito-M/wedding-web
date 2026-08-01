@@ -12,6 +12,7 @@ import {
 import { PhoneCountry, defaultCountryForLang } from '../../model';
 import { AuthHeading } from '../../shared/auth-heading/auth-heading';
 import { Btn } from '../../shared/button/button';
+import { BrideAnimation } from '../../shared/bride-animation/bride-animation';
 import { DecorAlhambra } from '../../shared/decor/alhambra';
 import { DecorFishPair } from '../../shared/decor/fish-pair';
 import { TextInput } from '../../shared/input/input';
@@ -27,11 +28,12 @@ type Step = 'request' | 'verify';
 
 @Component({
   selector: 'app-login',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     AuthHeading,
     Btn,
+    BrideAnimation,
     DecorAlhambra,
     DecorFishPair,
     TextInput,

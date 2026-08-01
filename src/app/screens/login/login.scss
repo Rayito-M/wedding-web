@@ -11,6 +11,14 @@
 // edge and there's no room for a background illustration.
 .alhambra-decor {
   display: none;
+  position: relative;
+
+  app-bride-animation {
+    position: absolute;
+    left: 60px;
+    bottom: 40px;
+    z-index: 1;
+  }
 }
 
 .card {
@@ -197,6 +205,14 @@ header {
     bottom: -8px;
     opacity: 0.4;
     pointer-events: none;
+
+    app-bride-animation {
+      position: absolute;
+      left: 90px;
+      bottom: 56px;
+      z-index: 1;
+      pointer-events: auto;
+    }
   }
 
   .card {

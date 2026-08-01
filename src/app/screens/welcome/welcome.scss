@@ -141,6 +141,13 @@ header {
   padding: 0 12px;
   display: flex;
   justify-content: center;
+
+  .bride {
+    position: absolute;
+    left: 62px;
+    bottom: 28px;
+    z-index: 1;
+  }
 }
 
 .cta {
@@ -207,6 +214,11 @@ header {
   .alhambra {
     margin: 0;
     padding: 0;
+
+    .bride {
+      left: 90px;
+      bottom: 56px;
+    }
   }
 
   .cta {

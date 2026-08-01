@@ -7,6 +7,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ConfigurationService, mediaSignal, TranslateLanguageService } from '../../core';
 
 import { Btn } from '../../shared/button/button';
+import { BrideAnimation } from '../../shared/bride-animation/bride-animation';
 import { DecorAlhambra } from '../../shared/decor/alhambra';
 import { DecorFishPair } from '../../shared/decor/fish-pair';
 import { DecorMotorcycleRider } from '../../shared/decor/motorcycle-rider/motorcycle-rider';
@@ -18,6 +19,7 @@ import { LanguageSelector } from '../../shared/language-selector/language-select
   selector: 'app-welcome',
   imports: [
     Btn,
+    BrideAnimation,
     Pill,
     DecorSun,
     DecorFishPair,

@@ -35,6 +35,12 @@
 
 <div class="bottom">
   <div class="alhambra">
+    <app-bride-animation
+      class="bride"
+      color="var(--brand-accent)"
+      accentColor="var(--brand-accent-soft)"
+      [width]="desktop() ? 147 : 110"
+    />
     <app-decor-alhambra [w]="desktop() ? 900 : 360" />
     <app-decor-motorcycle-rider
       mode="ridge"
