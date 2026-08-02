@@ -483,6 +483,14 @@
     "scheduleStatus": {
       "provisional": "Provisional",
       "final": "Final"
+    },
+    "adults": {
+      "singular": "adult",
+      "plural": "adults"
+    },
+    "children": {
+      "singular": "child",
+      "plural": "children"
     }
   },
   "consentBanner": {
@@ -525,10 +533,10 @@
   "guest_manager": {
     "header": {
       "meta": "Guest list",
-      "title": "Guest manager",
-      "headCount": "Head count"
+      "title": "Guest manager"
     },
     "status": {
+      "undefined": "Not Answered",
       "attending": "Attending",
       "pending": "Pending",
       "declined": "Declined"

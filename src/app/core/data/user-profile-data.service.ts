@@ -58,7 +58,7 @@ export class UserProfileDataService implements EntityCollectionDataService<UserP
       lastName: changes.lastName,
       preferredLang: changes.preferredLang,
       role: changes.role,
-      relation: changes.relation,
+      guestInfo: changes.guestInfo ? { relation: changes.guestInfo.relation } : undefined,
     };
     return this.serviceApi.profileControllerUpdateProfileByIdV1({
       id: update.id,

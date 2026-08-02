@@ -1,4 +1,4 @@
-@use '../../../styles/tokens' as t;
+@use '../../../../styles/tokens' as t;
 
 // Status shown as a colored dot + label (DS "StatusCell" pattern) rather than
 // a solid-fill badge — tokens only, no per-theme color overrides needed.

@@ -30,9 +30,7 @@ export class TimelineItem {
   readonly status = input<CreateWeddingConfigDtoAgendaItemsInner.StatusEnum>('confirmed');
   readonly showStatus = input(true);
 
-  protected readonly showBadge = computed(
-    () => this.showStatus() && this.status() !== 'confirmed',
-  );
+  protected readonly showBadge = computed(() => this.showStatus() && this.status() !== 'confirmed');
 
   protected readonly statusLabelKey = computed(() => `shared.agendaStatus.${this.status()}`);
 }

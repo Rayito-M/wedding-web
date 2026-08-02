@@ -4,22 +4,20 @@ import {
   signal,
   computed,
   inject,
-  OnInit,
+  effect,
   output,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
-import { map, switchMap } from 'rxjs';
 
 import {
   EntityNamesEnum,
   RsvpDto,
   RsvpDtoAdultsPartner1Options,
   UserProfileDto,
-  UserProfileDtoRelation,
-  UserDto,
+  ImportUserDtoGuestsInnerAnyOfRelation,
 } from '@app/core';
 import { Modal } from '@app/shared/modal/modal';
 import { Btn } from '@app/shared/button/button';
@@ -38,27 +36,18 @@ type RelationKind = 'family' | 'friends' | 'colleagues' | 'other';
   templateUrl: './rsvp-details-modal.html',
   styleUrl: './rsvp-details-modal.scss',
 })
-export class RsvpDetailsModal implements OnInit {
-  readonly rsvp = signal<RsvpDto | null>(null);
+export class RsvpDetailsModal {
   readonly isOpen = signal(false);
   readonly closeModal = output<void>();
   readonly saveComments = output<{ rsvpId: string; comments: string }>();
-  /** Emits the new guest's user id once account + profile + RSVP all exist. */
-  readonly guestCreated = output<string>();
 
   protected readonly relationKinds: RelationKind[] = ['family', 'friends', 'colleagues', 'other'];
 
-  /**
-   * `'profile'` — read-only guest info + RSVP summary; `'edit'` — profile-edit
-   * form; `'create'` — the DS "New guest" form (`ScreenGuestManager` opens the
-   * same overlay with a blank draft and a "Create guest" footer).
-   */
-  protected readonly viewMode = signal<'profile' | 'edit' | 'create'>('profile');
+  /** `'profile'` — read-only guest info + RSVP summary; `'edit'` — profile-edit form. */
+  protected readonly viewMode = signal<'profile' | 'edit'>('profile');
 
-  /** In-flight guard for the create chain — keeps the footer button disabled. */
-  protected readonly saving = signal(false);
-  protected readonly createFailed = signal(false);
-
+  /** Set by `open(userId)` — the RSVP's `id` equals its primary guest's user id. */
+  private readonly userId = signal<string | null>(null);
   private readonly commentsText = signal('');
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly translate = inject(TranslateService);
@@ -67,48 +56,44 @@ export class RsvpDetailsModal implements OnInit {
     EntityServices,
   ).getEntityCollectionService<UserProfileDto>(EntityNamesEnum.USER_PROFILE);
 
-  private readonly userCollection: EntityCollectionService<UserDto> = inject(
-    EntityServices,
-  ).getEntityCollectionService<UserDto>(EntityNamesEnum.USER);
-
   private readonly rsvpCollection: EntityCollectionService<RsvpDto> = inject(
     EntityServices,
   ).getEntityCollectionService<RsvpDto>(EntityNamesEnum.RSVP);
 
   /**
-   * Read-only lookup into the profiles `guest-manager.ts` already fetches
-   * (its constructor `effect()` calls `getByKey` for every RSVP's partners) —
-   * this modal never dispatches its own fetch, it only reads the shared cache.
+   * Read-only lookup into the profiles `guest-manager.ts` already bulk-loads
+   * — this modal never fetches profiles itself, it only reads the shared cache.
    */
   private readonly userProfiles = toSignal(this.userProfileCollection.entities$, {
     initialValue: [] as UserProfileDto[],
   });
 
-  /** Profile of the RSVP's primary guest (`adults.partner1`). */
+  /**
+   * The full RSVP for the guest `open()` was called with. `guest-manager.ts`
+   * only ever hands this modal a user id (the table row's list source is the
+   * lightweight `UserProfileDto.rsvp` summary, not full RSVPs), so this modal
+   * owns fetching the one record it needs by id.
+   */
+  private readonly rsvps = toSignal(this.rsvpCollection.entities$, {
+    initialValue: [] as RsvpDto[],
+  });
+
+  protected readonly rsvp = computed<RsvpDto | null>(() => {
+    const userId = this.userId();
+    if (!userId) return null;
+    return this.rsvps().find((r) => r.id === userId) ?? null;
+  });
+
+  /** Profile of the RSVP's primary guest — shares its id with the RSVP itself. */
   protected readonly partner1Profile = computed<UserProfileDto | undefined>(() => {
-    const rsvp = this.rsvp();
-    if (!rsvp) return undefined;
-    return this.userProfiles().find((p) => p.id === rsvp.adults.partner1.id);
+    const userId = this.userId();
+    if (!userId) return undefined;
+    return this.userProfiles().find((p) => p.id === userId);
   });
 
   protected readonly editForm = this.fb.group({
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
-    side: this.fb.control<RelationSide>('bride'),
-    kind: this.fb.control<RelationKind>('family'),
-  });
-
-  /**
-   * "New guest" form. `phoneNumber` is required and E.164-shaped because it is
-   * the guest's sign-in identity (ADR-0013: phone + SMS OTP) and `CreateUserDto`
-   * requires it; `email` is optional. The patterns mirror `CreateUserDto`'s so
-   * the form rejects what the API would reject.
-   */
-  protected readonly createForm = this.fb.group({
-    firstName: ['', Validators.required],
-    lastName: ['', Validators.required],
-    phoneNumber: ['', [Validators.required, Validators.pattern(/^\+[1-9]\d{6,14}$/)]],
-    email: ['', Validators.email],
     side: this.fb.control<RelationSide>('bride'),
     kind: this.fb.control<RelationKind>('family'),
   });
@@ -136,9 +121,6 @@ export class RsvpDetailsModal implements OnInit {
   protected readonly allergySummary = computed(() => this.preferenceSummary('allergy'));
 
   protected readonly modalTitle = computed(() => {
-    if (this.viewMode() === 'create') {
-      return this.translate.instant('guest_manager.modal.newGuest');
-    }
     const rsvp = this.rsvp();
     if (!rsvp) return '';
     return this.viewMode() === 'edit'
@@ -146,28 +128,19 @@ export class RsvpDetailsModal implements OnInit {
       : this.guestFullName(rsvp);
   });
 
-  ngOnInit(): void {
-    // Initialize comments from RSVP when modal opens
-    const currentRsvp = this.rsvp();
-    if (currentRsvp?.adults.partner1.options?.comments) {
-      this.commentsText.set(currentRsvp.adults.partner1.options.comments);
-    }
+  constructor() {
+    // `open()` sets `userId` before the fetch resolves, so the comments draft
+    // can't be seeded synchronously there — sync it whenever the RSVP lands.
+    effect(() => {
+      this.commentsText.set(this.rsvp()?.adults.partner1.options?.comments ?? '');
+    });
   }
 
-  open(rsvp: RsvpDto): void {
-    this.rsvp.set(rsvp);
-    this.commentsText.set(rsvp.adults.partner1.options?.comments || '');
+  /** Open the overlay for this guest and fetch their RSVP fresh. */
+  open(userId: string): void {
+    this.userId.set(userId);
+    this.rsvpCollection.getByKey(userId);
     this.viewMode.set('profile');
-    this.isOpen.set(true);
-  }
-
-  /** Open the overlay on a blank "New guest" draft (DS `addGuest`). */
-  openNew(): void {
-    this.rsvp.set(null);
-    this.createForm.reset();
-    this.createFailed.set(false);
-    this.saving.set(false);
-    this.viewMode.set('create');
     this.isOpen.set(true);
   }
 
@@ -207,8 +180,8 @@ export class RsvpDetailsModal implements OnInit {
     this.editForm.setValue({
       firstName: profile?.firstName ?? '',
       lastName: profile?.lastName ?? '',
-      side: (profile?.relation?.side as RelationSide | undefined) ?? 'bride',
-      kind: (profile?.relation?.kind as RelationKind | undefined) ?? 'family',
+      side: (profile?.guestInfo?.relation?.side as RelationSide | undefined) ?? 'bride',
+      kind: (profile?.guestInfo?.relation?.kind as RelationKind | undefined) ?? 'family',
     });
     this.viewMode.set('edit');
   }
@@ -242,106 +215,18 @@ export class RsvpDetailsModal implements OnInit {
     if (!profile) return;
 
     const { firstName, lastName, side, kind } = this.editForm.getRawValue();
-    const relation: UserProfileDtoRelation = {
+    const relation: ImportUserDtoGuestsInnerAnyOfRelation = {
       side,
       kind,
-      link: profile.relation?.link ?? '',
+      link: profile.guestInfo?.relation?.link ?? '',
     };
 
     this.userProfileCollection
-      .update({ id: profile.id, role: profile.role, firstName, lastName, relation })
+      .update({ id: profile.id, role: profile.role, firstName, lastName, guestInfo: { relation } })
       .subscribe({
         next: () => this.viewMode.set('profile'),
         error: (err: unknown) => console.error('Failed to save profile', err),
       });
-  }
-
-  /**
-   * Create the guest the DS "New guest" form describes. The API splits that
-   * single form across three calls, so they run in sequence:
-   *
-   * 1. `POST /v1/users` — the account (identity: names, phone, optional email).
-   * 2. `PATCH /v1/profile/{id}` — `relation` (side · group); `CreateUserDto`
-   *    has no field for it, and it is what the guest list groups on.
-   * 3. `POST /v1/rsvp/{id}` — the `pending` RSVP. The guest manager lists
-   *    RSVPs, so without this the new guest would not show up until they
-   *    signed in themselves. Admin-initiated creation is allowed here.
-   *
-   * A failure part-way leaves the earlier steps applied (there is no
-   * transaction across these endpoints); the guest is reported as not created
-   * and the form stays open so the admin can retry.
-   */
-  protected createGuest(): void {
-    if (this.saving()) return;
-    if (this.createForm.invalid) {
-      this.createForm.markAllAsTouched();
-      return;
-    }
-
-    const { firstName, lastName, phoneNumber, email, side, kind } = this.createForm.getRawValue();
-    this.saving.set(true);
-    this.createFailed.set(false);
-
-    // `id`/`version` are server-assigned — `UserDataService.add()` ignores both.
-    const draft: UserDto = {
-      id: '',
-      version: 1,
-      role: 'guest',
-      firstName,
-      lastName,
-      phoneNumber,
-      email: email || undefined,
-    };
-    const relation: UserProfileDtoRelation = { side, kind, link: '' };
-
-    // Both adds are pessimistic: @ngrx/data's optimistic default would insert
-    // `draft` (whose `id` is still the empty server-assigned placeholder) into
-    // the User collection and leave it there once the real entity arrives under
-    // its own id. Nothing is shown until all three calls succeed anyway.
-    this.userCollection
-      .add(draft, { isOptimistic: false })
-      .pipe(
-        switchMap((user) =>
-          this.userProfileCollection
-            .update({ id: user.id, role: 'guest', firstName, lastName, relation })
-            .pipe(map(() => user)),
-        ),
-        switchMap((user) =>
-          this.rsvpCollection
-            .add(this.blankRsvp(user), { isOptimistic: false })
-            .pipe(map(() => user.id)),
-        ),
-      )
-      .subscribe({
-        next: (userId) => {
-          this.saving.set(false);
-          this.guestCreated.emit(userId);
-          this.close();
-        },
-        error: (err: unknown) => {
-          this.saving.set(false);
-          this.createFailed.set(true);
-          console.error('Failed to create guest', err);
-        },
-      });
-  }
-
-  /**
-   * Minimal RSVP skeleton for `RsvpDataService.add()`, which only reads `id`
-   * (the guest the record is created for), `status`, `adults.partner2` and
-   * `children` — the server owns every other field.
-   */
-  private blankRsvp(user: UserDto): RsvpDto {
-    return {
-      id: user.id,
-      version: 1,
-      createdAt: '',
-      updatedAt: '',
-      status: 'pending',
-      adults: { partner1: { id: user.id, firstName: user.firstName, lastName: user.lastName } },
-      children: [],
-      submittedBy: '',
-    };
   }
 
   private collectOptions(rsvp: RsvpDto): RsvpDtoAdultsPartner1Options[] {

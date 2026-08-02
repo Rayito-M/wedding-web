@@ -62,11 +62,11 @@ export class ConfigurationService {
   }
 
   isProduction(): boolean {
-    return this.config.production;
+    return this.config.stage === 'production';
   }
 
   isDevelopment(): boolean {
-    return !this.config.production;
+    return this.config.stage === 'local' || this.config.stage === 'dev';
   }
 
   getApiBaseUrl(): string {

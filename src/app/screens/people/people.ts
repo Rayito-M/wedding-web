@@ -94,8 +94,8 @@ export class People {
     const filter = this.filter();
     return this.userProfileList().filter((person) => {
       const name = `${person.firstName} ${person.lastName}`.toLowerCase();
-      const rel = person.relation
-        ? this.translateService.instant(person.relation.link).toLowerCase()
+      const rel = person.guestInfo?.relation
+        ? this.translateService.instant(person.guestInfo.relation.link).toLowerCase()
         : '';
       if (query && !name.includes(query) && !rel.includes(query)) return false;
       if (filter === 'provider') return person.role === 'provider';
@@ -103,7 +103,7 @@ export class People {
         if (person.role === 'provider') return false;
         if (person.role === 'bride') return filter === 'bride';
         if (person.role === 'groom') return filter === 'groom';
-        return person.relation?.side === filter;
+        return person.guestInfo?.relation?.side === filter;
       }
       return true;
     });

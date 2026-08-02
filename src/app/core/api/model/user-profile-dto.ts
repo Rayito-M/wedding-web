@@ -7,7 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { UserProfileDtoRelation } from './user-profile-dto-relation';
+import { UserProfileDtoGuestInfo } from './user-profile-dto-guest-info';
 
 
 export interface UserProfileDto { 
@@ -18,7 +18,7 @@ export interface UserProfileDto {
     phoneNumber?: string;
     preferredLang?: UserProfileDto.PreferredLangEnum;
     role: UserProfileDto.RoleEnum;
-    relation?: UserProfileDtoRelation;
+    guestInfo?: UserProfileDtoGuestInfo;
 }
 export namespace UserProfileDto {
     export const PreferredLangEnum = {

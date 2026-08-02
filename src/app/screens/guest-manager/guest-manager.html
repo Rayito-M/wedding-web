@@ -14,27 +14,33 @@
 
     <div class="header-stats">
       <div class="stat-group">
-        <div class="stat-value accent">{{ count().attending }}</div>
+        <div class="stat-value accent">{{ count().rsvp.attending }}</div>
         <div class="stat-label">
           {{ 'guest_manager.status.attending' | translate }}
         </div>
       </div>
       <div class="stat-group">
-        <div class="stat-value">{{ count().pending }}</div>
+        <div class="stat-value">{{ count().rsvp.pending }}</div>
         <div class="stat-label">
           {{ 'guest_manager.status.pending' | translate }}
         </div>
       </div>
       <div class="stat-group">
-        <div class="stat-value">{{ count().declined }}</div>
+        <div class="stat-value">{{ count().rsvp.declined }}</div>
         <div class="stat-label">
           {{ 'guest_manager.status.declined' | translate }}
         </div>
       </div>
       <div class="stat-group divider">
-        <div class="stat-value">{{ count().total }}</div>
+        <div class="stat-value">{{ count().headCount.adults }}</div>
         <div class="stat-label">
-          {{ 'guest_manager.header.headCount' | translate }}
+          {{ 'shared.adults' | pluralTranslate: count().headCount.adults | translate }}
+        </div>
+      </div>
+      <div class="stat-group">
+        <div class="stat-value">{{ count().headCount.children }}</div>
+        <div class="stat-label">
+          {{ 'shared.children' | pluralTranslate: count().headCount.children | translate }}
         </div>
       </div>
     </div>
@@ -52,7 +58,7 @@
         (keydown.space)="setFilter('all')"
       >
         {{ 'guest_manager.filter.all' | translate }}
-        <span class="count">· {{ count().total }}</span>
+        <span class="count">· {{ count().rsvp.total }}</span>
       </button>
       <button
         type="button"
@@ -63,7 +69,7 @@
         (keydown.space)="setFilter('attending')"
       >
         {{ 'guest_manager.filter.attending' | translate }}
-        <span class="count">· {{ count().attending }}</span>
+        <span class="count">· {{ count().rsvp.attending }}</span>
       </button>
       <button
         type="button"
@@ -74,7 +80,7 @@
         (keydown.space)="setFilter('pending')"
       >
         {{ 'guest_manager.filter.pending' | translate }}
-        <span class="count">· {{ count().pending }}</span>
+        <span class="count">· {{ count().rsvp.pending }}</span>
       </button>
       <button
         type="button"
@@ -85,7 +91,18 @@
         (keydown.space)="setFilter('declined')"
       >
         {{ 'guest_manager.filter.declined' | translate }}
-        <span class="count">· {{ count().declined }}</span>
+        <span class="count">· {{ count().rsvp.declined }}</span>
+      </button>
+      <button
+        type="button"
+        class="filter-btn"
+        [class.active]="getFilter() === 'undefined'"
+        (click)="setFilter('undefined')"
+        (keydown.enter)="setFilter('undefined')"
+        (keydown.space)="setFilter('undefined')"
+      >
+        {{ 'guest_manager.filter.undefined' | translate }}
+        <span class="count">· {{ count().rsvp.undefined }}</span>
       </button>
     </div>
 
@@ -131,57 +148,51 @@
 
     <!-- Table body -->
     <div class="table-body">
-      @if (paginatedRsvps().length > 0) {
-        @for (rsvp of paginatedRsvps(); track rsvp.id) {
+      @if (paginatedGuests().length > 0) {
+        @for (profile of paginatedGuests(); track profile.id) {
           <div
             class="table-row"
             role="button"
             tabindex="0"
-            (click)="openRsvpModal(rsvp)"
-            (keydown.enter)="openRsvpModal(rsvp)"
-            (keydown.space)="openRsvpModal(rsvp)"
+            (click)="openRsvpModal(profile.id)"
+            (keydown.enter)="openRsvpModal(profile.id)"
+            (keydown.space)="openRsvpModal(profile.id)"
           >
             <div class="col-guest">
-              <div class="guest-name">
-                {{ rsvp.adults.partner1.firstName }} {{ rsvp.adults.partner1.lastName }}
-              </div>
-              @if (rsvp.adults.partner2) {
+              <div class="guest-name">{{ profile.firstName }} {{ profile.lastName }}</div>
+              @if (profile.guestInfo?.partner) {
                 <div class="guest-secondary">
-                  {{ rsvp.adults.partner2.firstName }} {{ rsvp.adults.partner2.lastName }}
+                  {{ profile.guestInfo?.partner.firstName }}
+                  {{ profile.guestInfo?.partner.lastName }}
                 </div>
               }
               <!-- Mobile-only count caption (DS mobile row pattern): "N participants · M children" -->
               <div class="guest-caption">
-                {{ (rsvp.adults.partner2 ? 2 : 1) + (rsvp.children?.length || 0) }}
+                {{ profile.guestInfo?.rsvp?.adults }}
                 {{ 'guest_manager.rsvp.participants' | translate }}
-                @if (rsvp.children && rsvp.children.length > 0) {
-                  · {{ rsvp.children.length }} {{ 'guest_manager.table.children' | translate }}
+                @if (profile.guestInfo?.rsvp?.children) {
+                  · {{ profile.guestInfo?.rsvp?.children }}
+                  {{ 'guest_manager.table.children' | translate }}
                 }
               </div>
             </div>
             <div class="col-status">
-              <span class="status-cell" [class]="'status-' + rsvp.status">
+              <span class="status-cell" [class]="'status-' + profile.guestInfo?.rsvp?.status">
                 <span class="status-dot"></span>
-                {{ 'guest_manager.status.' + rsvp.status | translate }}
+                {{ 'guest_manager.status.' + profile.guestInfo?.rsvp?.status | translate }}
               </span>
             </div>
             <div class="col-adults">
-              {{ rsvp.adults.partner2 ? 2 : 1 }}
+              {{ profile.guestInfo?.rsvp?.adults || '—' }}
             </div>
             <div class="col-children">
-              {{ rsvp.children?.length || 0 }}
+              {{ profile.guestInfo?.rsvp?.children || '—' }}
             </div>
             <div class="col-dietary">
-              <span class="dietary-badge">
-                @if (
-                  rsvp.adults.partner1.options?.dietaryPreferenceIds?.length ||
-                  rsvp.adults.partner1.options?.customDietaryPreferences?.length
-                ) {
-                  ✓
-                } @else {
-                  —
-                }
-              </span>
+              <!-- The list summary (`UserProfileDto.rsvp`) doesn't carry dietary
+                   data — that only comes back with the full RSVP the details
+                   modal fetches, so this column is a static placeholder here. -->
+              <span class="dietary-badge">—</span>
             </div>
             <div class="col-table">
               <span class="table-assignment">—</span>
@@ -199,11 +210,11 @@
   <!-- Pagination -->
   <div class="pagination">
     <div class="pagination-info">
-      @if (filteredRsvps().length > 0) {
+      @if (filteredGuests().length > 0) {
         {{ getCurrentPage() * 10 + 1 }} -
-        {{ Math.min((getCurrentPage() + 1) * 10, filteredRsvps().length) }}
+        {{ Math.min((getCurrentPage() + 1) * 10, filteredGuests().length) }}
         {{ 'guest_manager.pagination.of' | translate }}
-        {{ filteredRsvps().length }}
+        {{ filteredGuests().length }}
       } @else {
         {{ 'guest_manager.pagination.noResults' | translate }}
       }
@@ -233,8 +244,8 @@
   </div>
 
   <!-- RSVP Details Modal -->
-  <app-rsvp-details-modal
-    (saveComments)="onSaveComments($event)"
-    (guestCreated)="onGuestCreated($event)"
-  />
+  <app-rsvp-details-modal (saveComments)="onSaveComments($event)" />
+
+  <!-- Guest Create Modal -->
+  <app-guest-create-modal (guestCreated)="onGuestCreated($event)" />
 </div>

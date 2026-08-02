@@ -1,5 +1,5 @@
 @use '../../../styles/tokens' as t;
-@use 'status-cell' as *;
+@use './modal/status-cell' as *;
 
 :host {
   display: block;
@@ -204,7 +204,7 @@
   border-bottom: 1px solid var(--border-hairline);
 }
 
-.table-header > div {
+.table-header>div {
   font-size: t.$text-label;
   letter-spacing: 0.14em;
   text-transform: uppercase;

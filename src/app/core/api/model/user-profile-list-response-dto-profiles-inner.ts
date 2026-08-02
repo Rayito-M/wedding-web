@@ -7,7 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { ImportUserDtoGuestsInnerAnyOfRelation } from './import-user-dto-guests-inner-any-of-relation';
+import { UserProfileListResponseDtoProfilesInnerGuestInfo } from './user-profile-list-response-dto-profiles-inner-guest-info';
 
 
 export interface UserProfileListResponseDtoProfilesInner { 
@@ -18,7 +18,7 @@ export interface UserProfileListResponseDtoProfilesInner {
     phoneNumber?: string;
     preferredLang?: UserProfileListResponseDtoProfilesInner.PreferredLangEnum;
     role: UserProfileListResponseDtoProfilesInner.RoleEnum;
-    relation?: ImportUserDtoGuestsInnerAnyOfRelation;
+    guestInfo?: UserProfileListResponseDtoProfilesInnerGuestInfo;
 }
 export namespace UserProfileListResponseDtoProfilesInner {
     export const PreferredLangEnum = {

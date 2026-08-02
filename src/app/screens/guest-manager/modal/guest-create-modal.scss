@@ -1,0 +1,7 @@
+@use 'shared-modal-form' as *;
+
+// Dialog chrome (overlay, card, header, footer, buttons) is owned by the
+// shared `app-modal` (size="lg") + `app-btn` components — this file only
+// styles the content projected into the modal body. Form controls reuse the
+// shared `app-input`/`app-choice-card` components for their own chrome
+// (border, radius, focus state); only layout lives here.

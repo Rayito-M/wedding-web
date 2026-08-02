@@ -1,0 +1,98 @@
+<app-modal
+  [open]="isOpen()"
+  [size]="'lg'"
+  [title]="'guest_manager.modal.newGuest' | translate"
+  (close)="close()"
+>
+  <!-- Decorative header fish (DS ScreenGuestManager profile-overlay header) -->
+  <app-decor-fish class="modal-decor" [w]="54" [flip]="true" color="var(--brand-accent)" />
+
+  <!-- New guest — DS ScreenGuestManager "New guest" draft -->
+  <form [formGroup]="createForm" (ngSubmit)="createGuest()">
+    <div class="field-row">
+      <div class="field">
+        <span class="info-label">{{ 'guest_manager.form.firstName' | translate }}</span>
+        <input app-input type="text" formControlName="firstName" />
+      </div>
+
+      <div class="field">
+        <span class="info-label">{{ 'guest_manager.form.lastName' | translate }}</span>
+        <input app-input type="text" formControlName="lastName" />
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="info-label">{{ 'guest_manager.form.side' | translate }}</span>
+      <div class="choice-row">
+        <button
+          type="button"
+          app-choice-card
+          [selected]="createForm.controls.side.value === 'bride'"
+          (click)="selectSide('bride')"
+        >
+          {{ 'guest_manager.relation.side.bride' | translate }}
+        </button>
+        <button
+          type="button"
+          app-choice-card
+          [selected]="createForm.controls.side.value === 'groom'"
+          (click)="selectSide('groom')"
+        >
+          {{ 'guest_manager.relation.side.groom' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="info-label">{{ 'guest_manager.form.group' | translate }}</span>
+      <div class="choice-row">
+        @for (kind of relationKinds; track kind) {
+          <button
+            type="button"
+            app-choice-card
+            [selected]="createForm.controls.kind.value === kind"
+            (click)="selectKind(kind)"
+          >
+            {{ 'guest_manager.relation.kind.' + kind | translate }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <span class="info-label">{{ 'guest_manager.form.phone' | translate }}</span>
+        <input app-input type="tel" formControlName="phoneNumber" placeholder="+34 600 00 00 00" />
+        @if (createForm.controls.phoneNumber.touched && createForm.controls.phoneNumber.invalid) {
+          <span class="field-error">{{ 'guest_manager.form.phoneHint' | translate }}</span>
+        }
+      </div>
+
+      <div class="field">
+        <span class="info-label">{{ 'guest_manager.form.email' | translate }}</span>
+        <input app-input type="email" formControlName="email" placeholder="name@mail.com" />
+        @if (createForm.controls.email.touched && createForm.controls.email.invalid) {
+          <span class="field-error">{{ 'guest_manager.form.emailHint' | translate }}</span>
+        }
+      </div>
+    </div>
+
+    @if (createFailed()) {
+      <p class="form-error" role="alert">{{ 'guest_manager.form.createFailed' | translate }}</p>
+    }
+  </form>
+
+  <button
+    app-btn
+    modal-actions
+    [primary]="false"
+    type="button"
+    [disabled]="saving()"
+    (click)="close()"
+  >
+    {{ 'guest_manager.action.cancel' | translate }}
+  </button>
+  <button app-btn modal-actions type="button" [disabled]="saving()" (click)="createGuest()">
+    {{ 'guest_manager.action.createGuest' | translate }}
+  </button>
+</app-modal>

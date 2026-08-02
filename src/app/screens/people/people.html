@@ -59,11 +59,11 @@
               <app-pill [tone]="isCouple(person) ? 'accent' : 'soft'">{{
                 'roles.' + person.role | translate
               }}</app-pill>
-              @if (person.relation) {
+              @if (person.guestInfo?.relation) {
                 <app-pill>
-                  {{ person.relation.link | translate }}
-                  @if (person.relation.side) {
-                    · {{ 'roles.' + person.relation.side | translate }}
+                  {{ person.guestInfo.relation.link | translate }}
+                  @if (person.guestInfo.relation.side) {
+                    · {{ 'roles.' + person.guestInfo.relation.side | translate }}
                   }
                 </app-pill>
               }

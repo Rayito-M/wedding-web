@@ -1,24 +1,12 @@
-@use '../../../styles/tokens' as t;
+@use '../../../../styles/tokens' as t;
 @use 'status-cell' as *;
+@use 'shared-modal-form' as *;
 
 // Dialog chrome (overlay, card, header, footer, buttons) is owned by the
 // shared `app-modal` (size="lg") + `app-btn` components — this file only
 // styles the content projected into the modal body. Form controls reuse the
 // shared `app-input`/`app-textarea`/`app-choice-card` components for their
 // own chrome (border, radius, focus state); only layout lives here.
-
-// Decorative fish pinned to the top-right of the modal header (DS
-// ScreenGuestManager profile overlay). Projected into the modal body but
-// positioned against the shared `.modal-card` (its nearest positioned
-// ancestor), so it sits over the header. Offset clear of the close button and
-// made non-interactive so it never intercepts a dismiss click.
-.modal-decor {
-  position: absolute;
-  top: 12px;
-  right: 48px;
-  opacity: 0.85;
-  pointer-events: none;
-}
 
 .info-section {
   margin-bottom: t.$space-6;
@@ -139,52 +127,5 @@
   }
 }
 
-// Edit-profile form
-.field {
-  margin-bottom: t.$space-5;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  .info-label {
-    display: block;
-    font-size: t.$text-label;
-    color: var(--text-muted);
-    margin-bottom: t.$space-2;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-  }
-}
-
-.choice-row {
-  display: flex;
-  gap: t.$space-2;
-  flex-wrap: wrap;
-}
-
-// Paired fields (first/last name, phone/email) — DS lays these out side by
-// side on the desktop overlay and stacked on the mobile sheet.
-.field-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: t.$space-3;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-}
-
-.field-error {
-  display: block;
-  margin-top: t.$space-1;
-  font-size: t.$text-caption;
-  color: var(--text-muted);
-}
-
-.form-error {
-  margin: t.$space-4 0 0 0;
-  font-size: t.$text-caption;
-  color: var(--text-muted);
-}
+// Edit-profile form's `.field`/`.choice-row`/`.field-row` come from
+// `shared-modal-form` (shared with `guest-create-modal`).
