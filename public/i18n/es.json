@@ -478,6 +478,16 @@
     "scheduleStatus": {
       "provisional": "Provisional",
       "final": "Definitivo"
+    },
+    "adults": {
+      "none": "adulto",
+      "singular": "adulto",
+      "plural": "adultos"
+    },
+    "children": {
+      "none": "niño",
+      "singular": "niño",
+      "plural": "niños"
     }
   },
   "consentBanner": {
@@ -532,7 +542,8 @@
       "all": "Todos",
       "attending": "Confirmados",
       "pending": "Pendiente",
-      "declined": "Rechazados"
+      "declined": "Rechazados",
+      "undefined": "Sin respuesta"
     },
     "search": {
       "placeholder": "Buscar por nombre o grupo…"

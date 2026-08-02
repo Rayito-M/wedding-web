@@ -485,10 +485,12 @@
       "final": "Final"
     },
     "adults": {
+      "none": "adult",
       "singular": "adult",
       "plural": "adults"
     },
     "children": {
+      "none": "child",
       "singular": "child",
       "plural": "children"
     }
@@ -545,7 +547,8 @@
       "all": "All",
       "attending": "Attending",
       "pending": "Pending",
-      "declined": "Declined"
+      "declined": "Declined",
+      "undefined": "Not Answered"
     },
     "search": {
       "placeholder": "Search name or party…"
