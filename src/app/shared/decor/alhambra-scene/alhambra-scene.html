@@ -1,0 +1,30 @@
+<div class="scene" [style.width.px]="width()" [style.height.px]="height()">
+  <app-decor-alhambra
+    [w]="width()"
+    [color]="color()"
+    [accent]="accentColor()"
+    [mountain]="mountainColor()"
+  />
+
+  @if (bride()) {
+    <div class="bride" [style.left.px]="brideLeft()" [style.bottom.px]="brideBottom()">
+      <app-bride-animation
+        [color]="color()"
+        [accentColor]="accentColor()"
+        [width]="brideWidth()"
+        [greeting]="greeting()"
+      />
+    </div>
+  }
+
+  @if (rider()) {
+    <app-decor-motorcycle-rider
+      mode="ridge"
+      [color]="color()"
+      [accentColor]="accentColor()"
+      [width]="riderWidth()"
+      [bottom]="riderBottom()"
+      [zIndex]="1"
+    />
+  }
+</div>

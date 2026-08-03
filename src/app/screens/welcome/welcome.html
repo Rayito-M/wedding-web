@@ -35,20 +35,10 @@
 
 <div class="bottom">
   <div class="alhambra">
-    <app-bride-animation
-      class="bride"
-      color="var(--brand-accent)"
-      accentColor="var(--brand-accent-soft)"
-      [width]="desktop() ? 147 : 110"
-    />
-    <app-decor-alhambra [w]="desktop() ? 900 : 360" />
-    <app-decor-motorcycle-rider
-      mode="ridge"
-      color="var(--brand-accent)"
-      accentColor="var(--brand-accent-soft)"
-      [width]="desktop() ? 68 : 52"
-      [bottom]="desktop() ? 190 : 78"
-      [zIndex]="1"
+    <app-alhambra-scene
+      [width]="desktop() ? 640 : 360"
+      [lift]="desktop() ? 10 : 0"
+      [brideLift]="desktop() ? -2 : 0"
     />
   </div>
   <div class="cta">

@@ -1,0 +1,15 @@
+// DS components/motion/AlhambraScene — registers the bride and rider
+// animations to the skyline's own box so offsets never drift from the art.
+:host {
+  display: block;
+}
+
+.scene {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.bride {
+  position: absolute;
+  z-index: 2;
+}
