@@ -7,13 +7,13 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { ImportUserDtoGuestsInnerAnyOfRelation } from './import-user-dto-guests-inner-any-of-relation';
 import { UserProfileListResponseDtoProfilesInnerGuestInfoRsvp } from './user-profile-list-response-dto-profiles-inner-guest-info-rsvp';
+import { CreateUserDtoGuestInfoRelation } from './create-user-dto-guest-info-relation';
 import { UserProfileListResponseDtoProfilesInnerGuestInfoPartner } from './user-profile-list-response-dto-profiles-inner-guest-info-partner';
 
 
 export interface UserProfileListResponseDtoProfilesInnerGuestInfo { 
-    relation: ImportUserDtoGuestsInnerAnyOfRelation;
+    relation: CreateUserDtoGuestInfoRelation;
     partner?: UserProfileListResponseDtoProfilesInnerGuestInfoPartner;
     rsvp?: UserProfileListResponseDtoProfilesInnerGuestInfoRsvp;
 }

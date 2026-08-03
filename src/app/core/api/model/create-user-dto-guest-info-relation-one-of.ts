@@ -9,12 +9,12 @@
  */
 
 
-export interface ImportUserDtoGuestsInnerAnyOfRelationOneOf { 
-    side: ImportUserDtoGuestsInnerAnyOfRelationOneOf.SideEnum;
+export interface CreateUserDtoGuestInfoRelationOneOf { 
+    side: CreateUserDtoGuestInfoRelationOneOf.SideEnum;
     kind: string;
-    link: ImportUserDtoGuestsInnerAnyOfRelationOneOf.LinkEnum;
+    link: CreateUserDtoGuestInfoRelationOneOf.LinkEnum;
 }
-export namespace ImportUserDtoGuestsInnerAnyOfRelationOneOf {
+export namespace CreateUserDtoGuestInfoRelationOneOf {
     export const SideEnum = {
         BRIDE: 'bride',
         GROOM: 'groom'

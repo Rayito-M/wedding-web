@@ -16,7 +16,7 @@ export interface CreateGroomDto {
     googleSub?: string;
     appleSub?: string;
     phoneNumber: string;
-    preferredLang?: CreateGroomDto.PreferredLangEnum;
+    preferredLang: CreateGroomDto.PreferredLangEnum;
 }
 export namespace CreateGroomDto {
     export const PreferredLangEnum = {

@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { CreateUserDtoGuestInfo } from './create-user-dto-guest-info';
 
 
 export interface CreateUserDto { 
@@ -17,8 +18,9 @@ export interface CreateUserDto {
     appleSub?: string;
     phoneNumber: string;
     role: CreateUserDto.RoleEnum;
-    preferredLang?: CreateUserDto.PreferredLangEnum;
+    preferredLang: CreateUserDto.PreferredLangEnum;
     delegateTo?: Array<string>;
+    guestInfo?: CreateUserDtoGuestInfo;
 }
 export namespace CreateUserDto {
     export const RoleEnum = {

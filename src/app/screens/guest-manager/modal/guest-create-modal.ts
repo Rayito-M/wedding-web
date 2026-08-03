@@ -8,7 +8,7 @@ import {
   EntityNamesEnum,
   RsvpDto,
   UserProfileDto,
-  ImportUserDtoGuestsInnerAnyOfRelation,
+  CreateUserDtoGuestInfoRelation,
   UserDto,
 } from '@app/core';
 import { Modal } from '@app/shared/modal/modal';
@@ -130,9 +130,10 @@ export class GuestCreateModal {
       firstName,
       lastName,
       phoneNumber,
+      preferredLang: 'es',
       email: email || undefined,
     };
-    const relation: ImportUserDtoGuestsInnerAnyOfRelation = { side, kind, link: '' };
+    const relation: CreateUserDtoGuestInfoRelation = { side, kind, link: '' };
 
     // Both adds are pessimistic: @ngrx/data's optimistic default would insert
     // `draft` (whose `id` is still the empty server-assigned placeholder) into

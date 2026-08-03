@@ -19,7 +19,7 @@ export interface UserDto {
     appleSub?: string;
     phoneNumber: string;
     role: UserDto.RoleEnum;
-    preferredLang?: UserDto.PreferredLangEnum;
+    preferredLang: UserDto.PreferredLangEnum;
     delegateTo?: Array<string>;
 }
 export namespace UserDto {

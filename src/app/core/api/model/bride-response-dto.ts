@@ -18,7 +18,7 @@ export interface BrideResponseDto {
     googleSub?: string;
     appleSub?: string;
     phoneNumber: string;
-    preferredLang?: BrideResponseDto.PreferredLangEnum;
+    preferredLang: BrideResponseDto.PreferredLangEnum;
 }
 export namespace BrideResponseDto {
     export const PreferredLangEnum = {

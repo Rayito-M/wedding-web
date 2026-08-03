@@ -16,7 +16,7 @@ export interface CreateBrideDto {
     googleSub?: string;
     appleSub?: string;
     phoneNumber: string;
-    preferredLang?: CreateBrideDto.PreferredLangEnum;
+    preferredLang: CreateBrideDto.PreferredLangEnum;
 }
 export namespace CreateBrideDto {
     export const PreferredLangEnum = {

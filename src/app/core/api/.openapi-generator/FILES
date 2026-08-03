@@ -22,6 +22,10 @@ model/couple-response-dto-bride.ts
 model/couple-response-dto.ts
 model/create-bride-dto.ts
 model/create-groom-dto.ts
+model/create-user-dto-guest-info-relation-one-of.ts
+model/create-user-dto-guest-info-relation-one-of1.ts
+model/create-user-dto-guest-info-relation.ts
+model/create-user-dto-guest-info.ts
 model/create-user-dto.ts
 model/create-wedding-config-dto-agenda-items-inner-title.ts
 model/create-wedding-config-dto-agenda-items-inner.ts
@@ -38,9 +42,6 @@ model/health-check-response-dto-info-value.ts
 model/health-check-response-dto.ts
 model/health-controller-check503-response-info-value.ts
 model/health-controller-check503-response.ts
-model/import-user-dto-guests-inner-any-of-relation-one-of.ts
-model/import-user-dto-guests-inner-any-of-relation-one-of1.ts
-model/import-user-dto-guests-inner-any-of-relation.ts
 model/import-user-dto-guests-inner-any-of.ts
 model/import-user-dto-guests-inner-any-of1.ts
 model/import-user-dto-guests-inner.ts

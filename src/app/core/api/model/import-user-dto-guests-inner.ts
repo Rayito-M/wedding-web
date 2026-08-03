@@ -7,7 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { ImportUserDtoGuestsInnerAnyOfRelation } from './import-user-dto-guests-inner-any-of-relation';
+import { CreateUserDtoGuestInfoRelation } from './create-user-dto-guest-info-relation';
 import { ImportUserDtoGuestsInnerAnyOf } from './import-user-dto-guests-inner-any-of';
 import { ImportUserDtoGuestsInnerAnyOf1 } from './import-user-dto-guests-inner-any-of1';
 
@@ -19,6 +19,16 @@ export interface ImportUserDtoGuestsInner {
     email?: string;
     role: string;
     delegateTo?: Array<string>;
-    relation: ImportUserDtoGuestsInnerAnyOfRelation;
+    relation: CreateUserDtoGuestInfoRelation;
+    preferredLang: ImportUserDtoGuestsInner.PreferredLangEnum;
 }
+export namespace ImportUserDtoGuestsInner {
+    export const PreferredLangEnum = {
+        ES: 'es',
+        EN: 'en',
+        FR: 'fr'
+    } as const;
+    export type PreferredLangEnum = typeof PreferredLangEnum[keyof typeof PreferredLangEnum];
+}
+
 

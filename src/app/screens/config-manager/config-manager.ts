@@ -235,6 +235,7 @@ export class ConfigManager implements OnInit {
     lastName: '',
     email: '',
     phoneNumber: '',
+    preferredLang: 'es',
   });
   protected readonly createModalLoading = signal(false);
   protected readonly createModalError = signal<string | null>(null);
@@ -371,6 +372,7 @@ export class ConfigManager implements OnInit {
       lastName: '',
       email: '',
       phoneNumber: '',
+      preferredLang: 'es',
     });
     this.createModalFieldErrors.set({
       firstName: null,
@@ -394,6 +396,7 @@ export class ConfigManager implements OnInit {
       lastName: '',
       email: '',
       phoneNumber: '',
+      preferredLang: 'es',
     });
     this.createModalError.set(null);
     this.createModalLoading.set(false);
@@ -453,6 +456,7 @@ export class ConfigManager implements OnInit {
       lastName: data.lastName.trim(),
       email: data.email?.trim() || undefined,
       phoneNumber: data.phoneNumber?.trim() || '',
+      preferredLang: data.preferredLang,
     };
 
     this.userCollection.add(newPerson).subscribe({

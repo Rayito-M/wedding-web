@@ -17,7 +17,7 @@ import {
   RsvpDto,
   RsvpDtoAdultsPartner1Options,
   UserProfileDto,
-  ImportUserDtoGuestsInnerAnyOfRelation,
+  CreateUserDtoGuestInfoRelation,
 } from '@app/core';
 import { Modal } from '@app/shared/modal/modal';
 import { Btn } from '@app/shared/button/button';
@@ -215,7 +215,7 @@ export class RsvpDetailsModal {
     if (!profile) return;
 
     const { firstName, lastName, side, kind } = this.editForm.getRawValue();
-    const relation: ImportUserDtoGuestsInnerAnyOfRelation = {
+    const relation: CreateUserDtoGuestInfoRelation = {
       side,
       kind,
       link: profile.guestInfo?.relation?.link ?? '',

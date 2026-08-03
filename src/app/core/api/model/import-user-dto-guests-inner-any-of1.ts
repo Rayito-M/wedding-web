@@ -15,5 +15,15 @@ export interface ImportUserDtoGuestsInnerAnyOf1 {
     phoneNumber: string;
     email?: string;
     role: string;
+    preferredLang: ImportUserDtoGuestsInnerAnyOf1.PreferredLangEnum;
 }
+export namespace ImportUserDtoGuestsInnerAnyOf1 {
+    export const PreferredLangEnum = {
+        ES: 'es',
+        EN: 'en',
+        FR: 'fr'
+    } as const;
+    export type PreferredLangEnum = typeof PreferredLangEnum[keyof typeof PreferredLangEnum];
+}
+
 

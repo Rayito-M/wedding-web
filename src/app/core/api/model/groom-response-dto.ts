@@ -18,7 +18,7 @@ export interface GroomResponseDto {
     googleSub?: string;
     appleSub?: string;
     phoneNumber: string;
-    preferredLang?: GroomResponseDto.PreferredLangEnum;
+    preferredLang: GroomResponseDto.PreferredLangEnum;
 }
 export namespace GroomResponseDto {
     export const PreferredLangEnum = {

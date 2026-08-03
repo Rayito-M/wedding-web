@@ -19,7 +19,7 @@ export interface UserListResponseDtoItemsInner {
     appleSub?: string;
     phoneNumber: string;
     role: UserListResponseDtoItemsInner.RoleEnum;
-    preferredLang?: UserListResponseDtoItemsInner.PreferredLangEnum;
+    preferredLang: UserListResponseDtoItemsInner.PreferredLangEnum;
     delegateTo?: Array<string>;
 }
 export namespace UserListResponseDtoItemsInner {
