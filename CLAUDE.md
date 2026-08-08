@@ -71,6 +71,7 @@ Angular 22 single-page app. Standalone components, signals-first, zoneless (no c
 12. **No third-party UI libraries** (Material, Bootstrap, etc.) — the design system is the single source; components are hand-built per spec.
 13. **Images:** no raster photography; use `PhotoPlaceholder` component (from design system) or inline SVG illustrations. All images responsive and optimized.
 14. **Accessibility:** WCAG 2.1 AA minimum. Semantic HTML, `aria-label` where needed, keyboard navigation on all interactive elements.
+15. **Never recreate generated API types.** The generated client in `src/app/core/api/` is the single source of truth for API models. Local `type`/`interface`/`enum`/string-union redeclarations of anything that maps to an API model (DTO fields, enums like side/kind/status/role/lang, request/response shapes) are prohibited — import the generated type instead. Before declaring such a type, grep `src/app/core/api/model/` for an existing definition. Hand-copied types silently drift when the client is regenerated (`pnpm gen:api`). A genuine exception (the generated type is truly unsuitable for a specific UI concern) requires stopping to ask the user for approval first, with a clear synthetic explanation: which API type exists, why it can't be used, and the proposed local type. Never create the parallel type silently.
 
 ## Conventions
 
@@ -79,7 +80,7 @@ Angular 22 single-page app. Standalone components, signals-first, zoneless (no c
 - **CSS organization:** one `.scss` file per component; all styling there, never `style` attributes or inline `ngStyle`.
 - **Imports:** absolute via `@/` alias mapped to `src/app/`; no `../../..`.
 - **Signals usage:** prefer `input()` for props, `output()` for events, `effect()` for side effects.
-- **API integration:** auto-generated models from OpenAPI; never duplicate type definitions.
+- **API integration:** auto-generated models from OpenAPI. Never redeclare an API type locally — see Hard rule 15.
 - **i18n keys:** hierarchical kebab-case (e.g., `auth.otp.request-code`, `rsvp.step-1.title`).
 - **Event names:** `(myEvent)` in templates, `output<MyEventPayload>()` in code.
 - **Async operations:** use `async` pipe in templates where possible; manual subscription only for complex flows.

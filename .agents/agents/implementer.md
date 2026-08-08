@@ -26,6 +26,7 @@ You take one task from `TASKS.md` and produce code that satisfies its acceptance
 - **TypeScript strict;** no `any` unless commented `// reason: …`.
 - **All styling from the design system:** never invent colors, spacing, or radii. Use CSS custom properties from `src/styles/_tokens.scss`. **Always use the semantic token aliases** (`--surface-card`, `--text-muted`, `--brand-accent`, `--border-hairline`, `--on-accent`…) — never raw role tokens (`--surface`, `--sub`, `--accent`, `--line`) and never a hardcoded hex/rgb. If the value you need has no token, it's a DS/token gap — stop and flag it, don't hardcode it.
 - **Reuse before you re-declare:** before writing a new CSS class or a one-off styled element, grep `src/app/shared/**/*.scss` and `src/app/screens/**/*.scss` for the same class name or visual pattern and reuse/extend the existing shared component or class instead of duplicating it (see step 6 above).
+- **Never recreate generated API types:** anything in `src/app/core/api/` is the single source of truth for API models. Before declaring a local `type`/`interface`/`enum`/string-union for anything that maps to an API model (DTO fields, enums like side/kind/status/role/lang, request/response shapes), grep `src/app/core/api/model/` for an existing definition — if it exists, import and use it, never hand-copy it. Local copies silently drift when the client is regenerated (`pnpm gen:api`): real incident — `type RelationSide = 'bride' | 'groom' | 'both'` duplicated `CreateUserDtoGuestInfoRelationOneOf.SideEnum` and had to be edited by hand when `both` was added to the contract.
 - **i18n is mandatory:** mark all user-facing text with `i18n="@@key"` or the `translate` pipe. No hardcoded text in any language.
 - **Forms validate on blur;** errors appear on submit or focus-out, not in real-time.
 - **No third-party UI libraries.** Components are hand-built per design spec.
@@ -48,6 +49,7 @@ Run through `.agent/checks.md`. Every applicable box must be ticked.
 - You'd need a new component from the design system that doesn't exist yet
 - You'd need to break a hard rule in `CLAUDE.md`
 - The design spec is ambiguous or missing
+- You believe you need a local type that duplicates or diverges from a type in `src/app/core/api/` (e.g. the generated type is genuinely unsuitable for a specific UI concern). Do **not** silently create the parallel type — stop and ask the user for approval first, with a clear but synthetic explanation: (a) which API type already exists, (b) why it can't be used directly, (c) what the proposed local type would be.
 
 ## Anti-patterns
 
@@ -59,4 +61,5 @@ Run through `.agent/checks.md`. Every applicable box must be ticked.
 - ❌ "The component is simple enough for `template:`."
 - ❌ "I'll just re-declare `.status-pill` here — I don't know if another screen already has it." (Grep first; reuse or extend, never duplicate.)
 - ❌ "I'll use `--sub`/`--accent`/`--line` (raw roles) or drop in `#b8862b` directly." (Semantic aliases only; no hardcoded hex.)
+- ❌ "I'll just declare `type RelationSide = 'bride' | 'groom' | 'both'` / `type RelationKind = …` locally." (These duplicate the generated `CreateUserDtoGuestInfoRelationOneOf` enums in `src/app/core/api/model/` — import them; a hand-copied union drifts the moment the contract changes.)
 - ❌ Using a third-party component library instead of building per spec.
