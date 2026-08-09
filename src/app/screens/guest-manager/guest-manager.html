@@ -154,9 +154,9 @@
             class="table-row"
             role="button"
             tabindex="0"
-            (click)="openRsvpModal(profile.id)"
-            (keydown.enter)="openRsvpModal(profile.id)"
-            (keydown.space)="openRsvpModal(profile.id)"
+            (click)="openGuestProfile(profile.id)"
+            (keydown.enter)="openGuestProfile(profile.id)"
+            (keydown.space)="openGuestProfile(profile.id)"
           >
             <div class="col-guest">
               <div class="guest-name">{{ profile.firstName }} {{ profile.lastName }}</div>
@@ -243,8 +243,11 @@
     </div>
   </div>
 
-  <!-- RSVP Details Modal -->
-  <app-rsvp-details-modal (saveComments)="onSaveComments($event)" />
+  <!-- Guest profile Modal — opened by a row click -->
+  <app-guest-profile-modal (manageRsvp)="openManageRsvp($event)" />
+
+  <!-- Manage RSVP Modal — opened from the profile, returns to it on "Back" -->
+  <app-manage-rsvp-modal (back)="openGuestProfile($event)" (rsvpSaved)="onRsvpSaved($event)" />
 
   <!-- Guest Create Modal -->
   <app-guest-create-modal (guestCreated)="onGuestCreated($event)" />

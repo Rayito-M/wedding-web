@@ -47,6 +47,16 @@
       border-radius: var(--radius-card) var(--radius-card) 0 0;
     }
   }
+
+  // ── size="xl" — same structure as "lg", wider (DS `ScreenGuestManager`
+  // guest profile overlay, 580px vs. "lg"'s 520px elsewhere).
+  &.xl {
+    max-width: 580px;
+
+    @media (max-width: 640px) {
+      max-width: none;
+    }
+  }
 }
 
 .modal-drag-handle {
@@ -91,6 +101,15 @@
   justify-content: space-between;
   gap: t.$space-3;
   margin-bottom: t.$space-3;
+}
+
+// Title, plus an optional eyebrow line projected above it (DS
+// `ScreenGuestManager` guest overlay: "New guest · Bride · Family").
+.modal-heading {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+  min-width: 0;
 }
 
 .modal-card.lg .modal-header {

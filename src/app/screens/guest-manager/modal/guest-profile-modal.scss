@@ -1,0 +1,184 @@
+@use '../../../../styles/tokens' as t;
+@use 'status-cell' as *;
+@use 'shared-modal-form' as *;
+
+// Dialog chrome (overlay, card, header, footer, buttons) is owned by the
+// shared `app-modal` (size="xl") + `app-btn` components — this file only
+// styles the content projected into the modal body. Form controls reuse the
+// shared `app-input` components and this folder's local `app-guest-seg` (see
+// `guest-seg/`) for their own chrome (border, radius, focus state); only
+// layout lives here.
+
+.info-section {
+  margin-bottom: t.$space-6;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.section-title {
+  font-size: t.$text-label;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 t.$space-3 0;
+}
+
+// Two columns, as the DS profile overlay lays its `Info` pairs out.
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-4 t.$space-3;
+}
+
+.readonly-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-3;
+  margin-top: t.$space-2;
+}
+
+.info-item {
+  .info-label {
+    display: block;
+    font-size: t.$text-label;
+    color: var(--text-muted);
+    margin-bottom: t.$space-1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+}
+
+.value {
+  font-size: t.$text-body;
+  color: var(--text-body-color);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+
+  &.muted {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+}
+
+// RSVP summary — the DS's clickable "resume card": a button that hands the
+// guest over to `app-manage-rsvp-modal`, with the accent border on hover the
+// DS gives it.
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  width: 100%;
+  text-align: left;
+  padding: t.$space-4;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  // The page ground, not `--surface-chip`: the DS sets this card to
+  // `--surface` against a `--bg` overlay body, and our modal body is already
+  // `--surface-card`, so the inset tone is what preserves that relationship.
+  // Same surface as the other pressable inserts in this folder
+  // (`.invite-option`, `.candidate`, `.seg-row`).
+  background: var(--surface-page);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  appearance: none;
+  transition: border-color var(--transition-fast);
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--brand-accent);
+  }
+}
+
+.summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+}
+
+.summary-manage {
+  font-size: t.$text-micro;
+  letter-spacing: 0.04em;
+  color: var(--brand-accent);
+}
+
+.mini-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: t.$space-3;
+}
+
+.mini-stat {
+  display: block;
+}
+
+.mini-stat-value {
+  display: block;
+  font-family: t.$font-serif;
+  font-size: t.$text-display-sm;
+  line-height: 1;
+  color: var(--text-body-color);
+}
+
+.mini-stat-label {
+  display: block;
+  font-size: t.$text-label;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: t.$space-1;
+}
+
+.summary-line {
+  display: block;
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+}
+
+// The guest's own words, set in the book face like the DS's italic note.
+.summary-note {
+  display: block;
+  font-family: t.$font-book;
+  font-style: italic;
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+}
+
+// A guest who never replied has no RSVP record to manage (the API creates it
+// on the guest's first visit) — say so instead of showing an empty card.
+.summary-empty {
+  margin: 0;
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+}
+
+// Footer for the profile view: "Edit profile" on the left, Close/Manage RSVP
+// on the right — projected as a single [modal-actions] element so it can use
+// its own internal layout inside the shared Modal's actions slot.
+.actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: t.$space-3;
+
+  @media (max-width: 640px) {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+.actions-group {
+  display: flex;
+  gap: t.$space-3;
+
+  @media (max-width: 640px) {
+    flex-direction: column-reverse;
+  }
+}
+
+// Edit-profile form's `.field`/`.seg-row`/`.field-row` come from
+// `shared-modal-form` (shared with `guest-create-modal`).

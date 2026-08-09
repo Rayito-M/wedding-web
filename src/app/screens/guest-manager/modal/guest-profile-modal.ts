@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  signal,
-  computed,
-  inject,
-  effect,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, computed, inject, output } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -22,25 +14,39 @@ import {
 import { Modal } from '@app/shared/modal/modal';
 import { Btn } from '@app/shared/button/button';
 import { TextInput } from '@app/shared/input/input';
-import { ChoiceCard } from '@app/shared/choice-card/choice-card';
 import { DecorFish } from '@app/shared/decor/fish';
+import { GuestSeg } from './guest-seg/guest-seg';
 
-type RelationSide = 'bride' | 'groom';
+type RelationSide = 'bride' | 'groom' | 'both';
 type RelationKind = 'family' | 'friends' | 'colleagues' | 'other';
 
+/**
+ * Guest profile overlay — what a row click in the guest-manager table opens
+ * (DS `ScreenGuestManager.jsx`, the `selId != null && !draft && !profDraft`
+ * branch of the profile overlay).
+ *
+ * Read-only contact/relation facts plus an RSVP *summary* card. The summary
+ * is a button, not a form: editing the reply itself is the sibling
+ * `app-manage-rsvp-modal`'s job, reached through `(manageRsvp)` — matching
+ * the DS, where the resume card and the footer's "Manage RSVP" both open the
+ * RSVP editor. The only thing edited in place here is the guest's own profile
+ * (`viewMode === 'edit'`).
+ */
 @Component({
-  selector: 'app-rsvp-details-modal',
+  selector: 'app-guest-profile-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [TranslatePipe, Modal, Btn, ReactiveFormsModule, TextInput, ChoiceCard, DecorFish],
-  templateUrl: './rsvp-details-modal.html',
-  styleUrl: './rsvp-details-modal.scss',
+  imports: [TranslatePipe, Modal, Btn, ReactiveFormsModule, TextInput, GuestSeg, DecorFish],
+  templateUrl: './guest-profile-modal.html',
+  styleUrl: './guest-profile-modal.scss',
 })
-export class RsvpDetailsModal {
+export class GuestProfileModal {
   readonly isOpen = signal(false);
   readonly closeModal = output<void>();
-  readonly saveComments = output<{ rsvpId: string; comments: string }>();
+  /** "Manage RSVP" / the summary card — emits the guest's user id. */
+  readonly manageRsvp = output<string>();
 
+  protected readonly relationSides: RelationSide[] = ['bride', 'groom', 'both'];
   protected readonly relationKinds: RelationKind[] = ['family', 'friends', 'colleagues', 'other'];
 
   /** `'profile'` — read-only guest info + RSVP summary; `'edit'` — profile-edit form. */
@@ -48,7 +54,6 @@ export class RsvpDetailsModal {
 
   /** Set by `open(userId)` — the RSVP's `id` equals its primary guest's user id. */
   private readonly userId = signal<string | null>(null);
-  private readonly commentsText = signal('');
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly translate = inject(TranslateService);
 
@@ -73,6 +78,9 @@ export class RsvpDetailsModal {
    * only ever hands this modal a user id (the table row's list source is the
    * lightweight `UserProfileDto.rsvp` summary, not full RSVPs), so this modal
    * owns fetching the one record it needs by id.
+   *
+   * Stays `null` for a guest who has never replied — the profile still
+   * renders, only the summary card is swapped for an empty line.
    */
   private readonly rsvps = toSignal(this.rsvpCollection.entities$, {
     initialValue: [] as RsvpDto[],
@@ -84,8 +92,8 @@ export class RsvpDetailsModal {
     return this.rsvps().find((r) => r.id === userId) ?? null;
   });
 
-  /** Profile of the RSVP's primary guest — shares its id with the RSVP itself. */
-  protected readonly partner1Profile = computed<UserProfileDto | undefined>(() => {
+  /** Profile of the guest this overlay is about — shares its id with the RSVP. */
+  protected readonly guestProfile = computed<UserProfileDto | undefined>(() => {
     const userId = this.userId();
     if (!userId) return undefined;
     return this.userProfiles().find((p) => p.id === userId);
@@ -120,26 +128,45 @@ export class RsvpDetailsModal {
   protected readonly dietarySummary = computed(() => this.preferenceSummary('dietary'));
   protected readonly allergySummary = computed(() => this.preferenceSummary('allergy'));
 
-  protected readonly modalTitle = computed(() => {
-    const rsvp = this.rsvp();
-    if (!rsvp) return '';
-    return this.viewMode() === 'edit'
-      ? this.translate.instant('guest_manager.modal.editProfile')
-      : this.guestFullName(rsvp);
+  /** Free-text note the guest left with their reply (partner1's comments). */
+  protected readonly guestNote = computed<string | null>(
+    () => this.rsvp()?.adults.partner1.options?.comments || null,
+  );
+
+  protected readonly guestFullName = computed(() => {
+    const profile = this.guestProfile();
+    return profile ? `${profile.firstName} ${profile.lastName}`.trim() : '';
   });
 
-  constructor() {
-    // `open()` sets `userId` before the fetch resolves, so the comments draft
-    // can't be seeded synchronously there — sync it whenever the RSVP lands.
-    effect(() => {
-      this.commentsText.set(this.rsvp()?.adults.partner1.options?.comments ?? '');
-    });
-  }
+  /**
+   * `relation.link` is a catalog key for `family` (rendered through
+   * `guest_manager.relation.link.*`, as `guest-create-modal` writes it) and
+   * free text for every other kind — so only the family case is translated.
+   */
+  protected readonly relationLinkLabel = computed<string | null>(() => {
+    const relation = this.guestProfile()?.guestInfo?.relation;
+    if (!relation?.link) return null;
+    return relation.kind === 'family'
+      ? this.translate.instant(`guest_manager.relation.link.${relation.link}`)
+      : relation.link;
+  });
 
-  /** Open the overlay for this guest and fetch their RSVP fresh. */
+  protected readonly modalTitle = computed(() =>
+    this.viewMode() === 'edit'
+      ? this.translate.instant('guest_manager.modal.editProfile')
+      : this.guestFullName() || this.translate.instant('guest_manager.modal.guestPlaceholder'),
+  );
+
+  /**
+   * Open the overlay for this guest and fetch their RSVP fresh — but only if
+   * the profile says there is one: `GET /v1/rsvp/{id}` answers 204 for a guest
+   * who never replied, which @ngrx/data can only report as a failed query.
+   */
   open(userId: string): void {
     this.userId.set(userId);
-    this.rsvpCollection.getByKey(userId);
+    if (this.userProfiles().find((p) => p.id === userId)?.guestInfo?.rsvp) {
+      this.rsvpCollection.getByKey(userId);
+    }
     this.viewMode.set('profile');
     this.isOpen.set(true);
   }
@@ -150,33 +177,17 @@ export class RsvpDetailsModal {
     this.closeModal.emit();
   }
 
-  onSave(): void {
-    const currentRsvp = this.rsvp();
-    if (currentRsvp) {
-      this.saveComments.emit({
-        rsvpId: currentRsvp.id,
-        comments: this.commentsText(),
-      });
-    }
-    this.close();
-  }
-
-  getCommentsText(): string {
-    return this.commentsText();
-  }
-
-  updateComments(text: string): void {
-    this.commentsText.set(text);
-  }
-
-  /** Full name used as the modal title. */
-  guestFullName(rsvp: RsvpDto): string {
-    return `${rsvp.adults.partner1.firstName} ${rsvp.adults.partner1.lastName}`;
+  /** Hand the guest over to `app-manage-rsvp-modal` (the parent swaps them). */
+  protected openRsvp(): void {
+    const userId = this.userId();
+    if (!userId) return;
+    this.isOpen.set(false);
+    this.manageRsvp.emit(userId);
   }
 
   /** Enter the profile-edit view, seeded from the currently loaded profile. */
   protected startEdit(): void {
-    const profile = this.partner1Profile();
+    const profile = this.guestProfile();
     this.editForm.setValue({
       firstName: profile?.firstName ?? '',
       lastName: profile?.lastName ?? '',
@@ -211,7 +222,7 @@ export class RsvpDetailsModal {
       this.editForm.markAllAsTouched();
       return;
     }
-    const profile = this.partner1Profile();
+    const profile = this.guestProfile();
     if (!profile) return;
 
     const { firstName, lastName, side, kind } = this.editForm.getRawValue();

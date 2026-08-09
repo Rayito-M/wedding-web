@@ -1,7 +1,88 @@
+@use '../../../../styles/tokens' as t;
 @use 'shared-modal-form' as *;
 
 // Dialog chrome (overlay, card, header, footer, buttons) is owned by the
 // shared `app-modal` (size="lg") + `app-btn` components — this file only
 // styles the content projected into the modal body. Form controls reuse the
-// shared `app-input`/`app-choice-card` components for their own chrome
-// (border, radius, focus state); only layout lives here.
+// shared `app-input` component and this folder's local `app-guest-seg`
+// (see `guest-seg/`) for their own chrome (border, radius, focus state);
+// only layout lives here.
+
+// Partner section (DS `ScreenGuestManager.jsx` `partnerDraft` block). Local to
+// this modal rather than `_shared-modal-form.scss`: `guest-profile-modal` has
+// no partner picker, and component styles are scoped, so sharing would only
+// ship dead CSS there. Move it up if that modal ever grows the same section.
+.partner-section {
+  margin-top: t.$space-5;
+  padding-top: t.$space-4;
+  border-top: 1px solid var(--border-hairline);
+}
+
+// Sub-card holding the existing-guest picker while the switch is on (DS `pcard`).
+.partner-card {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  margin-top: t.$space-3;
+  padding: t.$space-3 t.$space-4;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+
+  // The card spaces its rows with `gap`; the outer form's per-field bottom
+  // margin would stack on top of it.
+  .field {
+    margin-bottom: 0;
+  }
+}
+
+// Existing-guest picker (DS candidate list) — scrolls inside the card so the
+// modal body keeps its own scroll position.
+.candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  max-height: 156px;
+  overflow-y: auto;
+}
+
+.candidate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+  padding: t.$space-2 t.$space-3;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-input);
+  background: var(--surface-page);
+  color: var(--text-body-color);
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+
+  &.on {
+    border-color: var(--brand-accent);
+    background: var(--brand-accent);
+    color: var(--on-accent);
+  }
+}
+
+.candidate-name {
+  font-size: t.$text-body;
+}
+
+.candidate-meta {
+  font-size: t.$text-micro;
+  opacity: 0.7;
+}
+
+.candidate-empty,
+.partner-hint {
+  margin: 0;
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+}
+
+.candidate-empty {
+  padding: t.$space-1 2px;
+}

@@ -1,7 +1,8 @@
 @use '../../../../styles/tokens' as t;
 
-// Shared between `rsvp-details-modal` (edit view) and `guest-create-modal`
-// (create form) — both project a form into the shared `app-modal` body.
+// Shared by the three guest-manager overlays — `guest-profile-modal` (edit
+// view), `manage-rsvp-modal` and `guest-create-modal` — which all project a
+// form into the shared `app-modal` body.
 
 // Decorative fish pinned to the top-right of the modal header (DS
 // ScreenGuestManager profile overlay). Projected into the modal body but
@@ -14,6 +15,16 @@
   right: 48px;
   opacity: 0.85;
   pointer-events: none;
+}
+
+// Eyebrow label projected above the modal title (DS ScreenGuestManager guest
+// overlay: "New guest · Bride · Family"). Same treatment as `.info-label`.
+.modal-eyebrow {
+  display: block;
+  font-size: t.$text-label;
+  color: var(--text-muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .field {
@@ -39,6 +50,21 @@
   flex-wrap: wrap;
 }
 
+// Segmented-pill row (DS `ScreenGuestManager.jsx` local `GuestSeg` helper,
+// commit d670a1d) — a single joined pill container holding borderless
+// `app-guest-seg` option buttons, used for Side/Group/Preferred-language.
+// Visually distinct from `.choice-row` (individually-bordered, gapped
+// `app-choice-card`s): one hairline border around the whole row, no gap
+// between options, corners clipped so the selected option's accent fill
+// follows the pill shape.
+.seg-row {
+  display: flex;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--surface-page);
+}
+
 // Paired fields (first/last name, phone/email) — DS lays these out side by
 // side on the desktop overlay and stacked on the mobile sheet.
 .field-row {
@@ -57,6 +83,24 @@
   margin-top: t.$space-1;
   font-size: t.$text-caption;
   color: var(--text-muted);
+}
+
+// Hand-built native select — no Select component exists in the design system
+// yet; styled to match app-input's hairline/radius/token language, same
+// treatment as `.select-native` in `config-manager.scss`/`seating-plan.scss`
+// (no shared home for this pattern yet — flagged for a DS consolidation task).
+.select-native {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-input);
+  font-family: var(--font-sans);
+  font-size: var(--text-body-lg);
+  color: var(--text-body-color);
+  appearance: none;
+  cursor: pointer;
 }
 
 .form-error {

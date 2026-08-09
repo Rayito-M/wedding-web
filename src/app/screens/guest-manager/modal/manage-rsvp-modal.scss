@@ -1,0 +1,163 @@
+@use '../../../../styles/tokens' as t;
+@use 'shared-modal-form' as *;
+
+// Dialog chrome (overlay, card, header, footer, buttons) is owned by the
+// shared `app-modal` (size="xl") + `app-btn` components; the attendance
+// answer uses `app-choice-card` and the name/age fields `app-input` — this
+// file only lays out what is projected into the modal body.
+
+.rsvp-section {
+  margin-bottom: t.$space-6;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: t.$space-3;
+}
+
+.section-title {
+  font-size: t.$text-label;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 t.$space-3 0;
+}
+
+.section-count {
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+}
+
+// "You" / "Partner" / "Children" — accent-toned group headings between the
+// participant cards (DS `ScreenGuestManager` manage-RSVP body).
+.group-label {
+  font-size: t.$text-label;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-accent);
+  margin: t.$space-4 0 t.$space-2;
+}
+
+.person-card {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+  padding: t.$space-4;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+}
+
+.person-head {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+}
+
+.person-name {
+  font-size: t.$text-body;
+  font-weight: 500;
+  color: var(--text-body-color);
+}
+
+.person-role {
+  margin-left: auto;
+  font-size: t.$text-label;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+// Editable participant: two text fields plus the remove control.
+.person-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr 32px;
+  gap: t.$space-2;
+}
+
+.child-fields {
+  grid-template-columns: 1fr 88px 32px;
+}
+
+.remove-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: t.$text-body-lg;
+  line-height: 1;
+  cursor: pointer;
+  appearance: none;
+}
+
+// Text-only "+ Add partner / + Add child" affordances (DS `addbtn`).
+.add-link {
+  align-self: flex-start;
+  padding: t.$space-1 0;
+  border: none;
+  background: transparent;
+  color: var(--brand-accent);
+  font-family: var(--font-sans);
+  font-size: t.$text-micro;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  appearance: none;
+}
+
+.pill-label {
+  font-size: t.$text-label;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: t.$space-2;
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-1;
+}
+
+// Multi-select chip (DS `Pills` helper) — hairline pill that fills with the
+// accent when on. Distinct from the read-only `app-pill` display chip and
+// from `app-guest-seg` (a joined single-choice segmented row).
+.pill-toggle {
+  padding: 5px 11px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-body-color);
+  font-family: var(--font-sans);
+  font-size: t.$text-micro;
+  cursor: pointer;
+  appearance: none;
+  transition: background var(--transition-fast);
+
+  &.on {
+    border-color: var(--brand-accent);
+    background: var(--brand-accent);
+    color: var(--on-accent);
+  }
+}
+
+.pill-empty {
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+}
+
+// Shown when the guest has no RSVP record yet (nothing to edit).
+.summary-empty {
+  margin: 0;
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+}

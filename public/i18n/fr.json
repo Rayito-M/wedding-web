@@ -591,7 +591,8 @@
       "commentsPlaceholder": "Ajoutez vos notes ou demandes spéciales…",
       "cancel": "Annuler",
       "save": "Enregistrer les modifications",
-      "newGuest": "Nouvel invité"
+      "newGuest": "Nouvel invité",
+      "guestPlaceholder": "Invité"
     },
     "profile": {
       "sideGroup": "Côté · Groupe",
@@ -602,13 +603,49 @@
     "relation": {
       "side": {
         "bride": "Mariée",
-        "groom": "Marié"
+        "groom": "Marié",
+        "both": "Les deux"
       },
       "kind": {
         "family": "Famille",
         "friends": "Amis",
         "colleagues": "Collègues",
         "other": "Autre"
+      },
+      "link": {
+        "aunt": "Tante",
+        "aunt-in-law": "Tante par alliance",
+        "brother": "Frère",
+        "brother-in-law": "Beau-frère",
+        "cousin": "Cousin(e)",
+        "cousin-in-law": "Cousin(e) par alliance",
+        "daughter": "Fille",
+        "father": "Père",
+        "father-in-law": "Beau-père",
+        "grandfather": "Grand-père",
+        "grandfather-in-law": "Grand-père par alliance",
+        "grandmother": "Grand-mère",
+        "grandmother-in-law": "Grand-mère par alliance",
+        "mother": "Mère",
+        "mother-in-law": "Belle-mère",
+        "nephew": "Neveu",
+        "niece": "Nièce",
+        "sister": "Sœur",
+        "sister-in-law": "Belle-sœur",
+        "son": "Fils",
+        "stepaunt": "Tante par alliance (remariage)",
+        "stepbrother": "Demi-frère",
+        "stepcousin": "Cousin(e) par alliance (remariage)",
+        "stepdaughter": "Belle-fille",
+        "stepfather": "Beau-père (remariage)",
+        "stepgrandfather": "Grand-père par alliance (remariage)",
+        "stepgrandmother": "Grand-mère par alliance (remariage)",
+        "stepmother": "Belle-mère (remariage)",
+        "stepsister": "Demi-sœur",
+        "stepson": "Beau-fils",
+        "stepuncle": "Oncle par alliance (remariage)",
+        "uncle": "Oncle",
+        "uncle-in-law": "Oncle par alliance"
       }
     },
     "rsvp": {
@@ -619,7 +656,17 @@
       "dietary": "Régime",
       "attending": "Assistera?",
       "you": "Vous",
-      "partner": "Partenaire"
+      "partner": "Partenaire",
+      "choice": {
+        "attending": "Avec joie",
+        "pending": "En attente",
+        "declined": "Hélas non"
+      },
+      "participantsSection": "Participants · régime & allergies",
+      "total": "Total : {{count}}",
+      "mainGuest": "Invité principal",
+      "none": "Cet invité n'a pas encore répondu — il n'y a pas de RSVP à gérer.",
+      "saveFailed": "Le RSVP n'a pas pu être enregistré. Veuillez réessayer."
     },
     "form": {
       "name": "Nom complet",
@@ -634,7 +681,24 @@
       "notes": "Note de l'invité",
       "phoneHint": "Format international, par ex. +33600000000",
       "emailHint": "Saisissez une adresse e-mail valide",
-      "createFailed": "L’invité n’a pas pu être créé. Vérifiez les informations et réessayez."
+      "createFailed": "L’invité n’a pas pu être créé. Vérifiez les informations et réessayez.",
+      "preferredLang": "Langue préférée",
+      "link": "Lien de parenté",
+      "linkSelectPlaceholder": "Sélectionnez le lien…",
+      "linkHint": "Ce champ est obligatoire",
+      "linkPlaceholder": {
+        "friends": "p. ex. Ami(e) d'enfance de Grenade",
+        "colleagues": "p. ex. Avons travaillé ensemble chez Novatek",
+        "other": "p. ex. Ami(e) de la famille"
+      },
+      "partner": {
+        "linkLabel": "Lier au partenaire de l’invité",
+        "searchPlaceholder": "Rechercher parmi les invités…",
+        "noCandidates": "Aucun invité correspondant.",
+        "existingHint": "Le partenaire doit déjà figurer sur la liste des invités. Créez-le d’abord comme invité, puis liez-le. Le lien conserve les deux invitations — le couple est placé et compté ensemble."
+      },
+      "childName": "Prénom de l'enfant",
+      "age": "Âge"
     },
     "empty": "Aucun invité. Ajoutez votre premier invité pour commencer."
   },

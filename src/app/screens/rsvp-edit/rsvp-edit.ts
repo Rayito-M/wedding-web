@@ -5,16 +5,19 @@ import { EntityCollectionService, EntityServices } from '@ngrx/data';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
+  EMPTY_RSVP_DRAFT,
   EntityNamesEnum,
   HeaderService,
+  PersonKey,
+  RsvpDraft,
   RsvpDto,
-  RsvpDtoAdultsPartner1,
   RsvpDtoAdultsPartner1Options,
-  RsvpDtoAdultsPartner2,
-  RsvpDtoChildrenInner,
   TranslateLanguageService,
   WeddingConfigResponseDto,
   PluralTranslatePipe,
+  fromRsvpDraft,
+  toRsvpDraft,
+  withPersonOptions,
 } from '@app/core';
 import { Btn } from '@app/shared/button/button';
 import { Pill } from '@app/shared/pill/pill';
@@ -23,34 +26,6 @@ import { TextareaInput } from '@app/shared/textarea/textarea';
 import { Avatar } from '@app/shared/avatar/avatar';
 
 type PersonKind = 'you' | 'partner' | 'child';
-type PersonKey = 'partner1' | 'partner2' | `child:${number}`;
-
-/** Editable draft shape for one adult (partner1 or partner2). `id` is only
- *  ever known for `partner1` (self) or a `partner2` who already has an
- *  account (server-linked on `create`) — never edited here, only carried
- *  forward so we don't silently drop an existing account link on save. */
-interface AdultDraft {
-  readonly id?: string;
-  firstName: string;
-  lastName: string;
-  options: RsvpDtoAdultsPartner1Options;
-}
-
-/** Age kept as free text while editing (mirrors `rsvp-create`'s child draft)
- *  so an empty field reads as empty, not `0`; parsed to a number on save. */
-interface ChildDraft {
-  firstName: string;
-  age: string;
-  options: RsvpDtoAdultsPartner1Options;
-}
-
-interface EditDraft {
-  readonly status: RsvpDto.StatusEnum;
-  readonly version: number;
-  partner1: AdultDraft;
-  partner2?: AdultDraft;
-  children: ChildDraft[];
-}
 
 interface PersonCard {
   readonly key: PersonKey;
@@ -60,75 +35,6 @@ interface PersonCard {
   /** `null` for adults — children only. */
   readonly age: string | null;
   readonly options: RsvpDtoAdultsPartner1Options;
-}
-
-/** Construction-time placeholder — replaced synchronously by the
- *  constructor's `effect()` before the first render is visible (see the
- *  `draft` field for why this can't just read the `rsvp` input directly). */
-const EMPTY_DRAFT: EditDraft = {
-  status: RsvpDto.StatusEnum.PENDING,
-  version: 0,
-  partner1: { id: '', firstName: '', lastName: '', options: {} },
-  children: [],
-};
-
-function toEditDraft(rsvp: RsvpDto): EditDraft {
-  return {
-    status: rsvp.status,
-    version: rsvp.version,
-    partner1: {
-      id: rsvp.adults.partner1.id,
-      firstName: rsvp.adults.partner1.firstName,
-      lastName: rsvp.adults.partner1.lastName,
-      options: rsvp.adults.partner1.options ?? {},
-    },
-    partner2: rsvp.adults.partner2
-      ? {
-          id: rsvp.adults.partner2.id,
-          firstName: rsvp.adults.partner2.firstName,
-          lastName: rsvp.adults.partner2.lastName,
-          options: rsvp.adults.partner2.options ?? {},
-        }
-      : undefined,
-    children: (rsvp.children ?? []).map((c) => ({
-      firstName: c.firstName,
-      age: String(c.age),
-      options: c.options ?? {},
-    })),
-  };
-}
-
-function fromEditDraft(draft: EditDraft): Partial<RsvpDto> {
-  const partner1: RsvpDtoAdultsPartner1 = {
-    id: draft.partner1.id as string,
-    firstName: draft.partner1.firstName.trim(),
-    lastName: draft.partner1.lastName.trim(),
-    options: draft.partner1.options,
-  };
-  const partner2: RsvpDtoAdultsPartner2 | undefined = draft.partner2
-    ? // reason: the generated `RsvpDtoAdultsPartner2` type incorrectly requires
-      // `id` (an OpenAPI `anyOf`-merge artifact); the API's Zod schema
-      // (`RsvpParticipantSchema`, wedding-api rsvp.ts) allows partner2 without
-      // an id for a party member with no account — `id` is only included here
-      // when one was already known (carried forward, never editable in this UI).
-      ({
-        ...(draft.partner2.id ? { id: draft.partner2.id } : {}),
-        firstName: draft.partner2.firstName.trim(),
-        lastName: draft.partner2.lastName.trim(),
-        options: draft.partner2.options,
-      } as unknown as RsvpDtoAdultsPartner2)
-    : undefined;
-  const children: RsvpDtoChildrenInner[] = draft.children.map((c) => ({
-    firstName: c.firstName.trim(),
-    age: Number(c.age) || 0,
-    options: c.options,
-  }));
-  return {
-    status: draft.status,
-    version: draft.version,
-    adults: { partner1, partner2 },
-    children,
-  };
 }
 
 /**
@@ -178,7 +84,7 @@ export class RsvpEdit {
   // time is flagged by the Angular compiler (NG8118) even though the value
   // is available; the effect runs once immediately after construction, well
   // before the initial render is visible.
-  protected readonly draft = signal<EditDraft>(EMPTY_DRAFT);
+  protected readonly draft = signal<RsvpDraft>(EMPTY_RSVP_DRAFT);
   protected readonly openKey = signal<PersonKey | null>('partner1');
   protected readonly dirty = signal(false);
   protected readonly saving = signal(false);
@@ -251,7 +157,7 @@ export class RsvpEdit {
     // (e.g. after our own successful save round-trips through the cache).
     effect(() => {
       const rsvp = this.rsvp();
-      this.draft.set(toEditDraft(rsvp));
+      this.draft.set(toRsvpDraft(rsvp));
       this.dirty.set(false);
       this.saveFailed.set(false);
     });
@@ -395,7 +301,7 @@ export class RsvpEdit {
     if (this.saving() || !this.dirty()) return;
     this.saving.set(true);
     this.saveFailed.set(false);
-    const changes = fromEditDraft(this.draft());
+    const changes = fromRsvpDraft(this.draft());
     try {
       // `EntityCollectionService.update()` takes a flat `Partial<T>` (must
       // include `id`) — it's the underlying `EntityCollectionDataService`
@@ -404,7 +310,7 @@ export class RsvpEdit {
       const updated = await firstValueFrom(
         this.rsvpCollection.update({ id: this.rsvp().id, ...changes }),
       );
-      this.draft.set(toEditDraft(updated));
+      this.draft.set(toRsvpDraft(updated));
       this.dirty.set(false);
     } catch {
       this.saveFailed.set(true);
@@ -421,22 +327,7 @@ export class RsvpEdit {
     key: PersonKey,
     mutate: (opts: RsvpDtoAdultsPartner1Options) => RsvpDtoAdultsPartner1Options,
   ): void {
-    this.draft.update((d) => {
-      if (key === 'partner1') {
-        return { ...d, partner1: { ...d.partner1, options: mutate(d.partner1.options) } };
-      }
-      if (key === 'partner2' && d.partner2) {
-        return { ...d, partner2: { ...d.partner2, options: mutate(d.partner2.options) } };
-      }
-      if (key.startsWith('child:')) {
-        const index = Number(key.slice('child:'.length));
-        return {
-          ...d,
-          children: d.children.map((c, i) => (i === index ? { ...c, options: mutate(c.options) } : c)),
-        };
-      }
-      return d;
-    });
+    this.draft.update((d) => withPersonOptions(d, key, mutate));
     this.markDirty();
   }
 

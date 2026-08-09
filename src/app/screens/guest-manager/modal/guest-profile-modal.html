@@ -1,0 +1,203 @@
+<app-modal [open]="isOpen()" [size]="'xl'" [title]="modalTitle()" (close)="close()">
+  <!-- Eyebrow above the title (DS ScreenGuestManager header:
+       "Guest profile · {side} · {group}") -->
+  <span modal-eyebrow class="modal-eyebrow">
+    @if (viewMode() === 'edit') {
+      {{ 'guest_manager.modal.editProfile' | translate }}
+    } @else {
+      {{ 'guest_manager.modal.viewProfile' | translate }}
+    }
+    @if (guestProfile()?.guestInfo?.relation; as relation) {
+      · {{ 'guest_manager.relation.side.' + relation.side | translate }} ·
+      {{ 'guest_manager.relation.kind.' + relation.kind | translate }}
+    }
+  </span>
+
+  <!-- Decorative header fish (DS ScreenGuestManager profile-overlay header) -->
+  <app-decor-fish class="modal-decor" [w]="54" [flip]="true" color="var(--brand-accent)" />
+
+  @switch (viewMode()) {
+    @case ('profile') {
+      <ng-container>
+        <!-- Guest information -->
+        <div class="info-section">
+          <h3 class="section-title">{{ 'guest_manager.modal.guestInfo' | translate }}</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">{{ 'guest_manager.profile.sideGroup' | translate }}</span>
+              @if (guestProfile()?.guestInfo?.relation; as relation) {
+                <div class="value">
+                  {{ 'guest_manager.relation.side.' + relation.side | translate }} ·
+                  {{ 'guest_manager.relation.kind.' + relation.kind | translate }}
+                </div>
+              } @else {
+                <div class="value muted">—</div>
+              }
+            </div>
+            <div class="info-item">
+              <span class="info-label">{{ 'guest_manager.form.link' | translate }}</span>
+              @if (relationLinkLabel(); as link) {
+                <div class="value">{{ link }}</div>
+              } @else {
+                <div class="value muted">—</div>
+              }
+            </div>
+            <div class="info-item">
+              <span class="info-label">{{ 'guest_manager.profile.email' | translate }}</span>
+              <div class="value">{{ guestProfile()?.email || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <span class="info-label">{{ 'guest_manager.profile.phone' | translate }}</span>
+              <div class="value">{{ guestProfile()?.phoneNumber || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <span class="info-label">{{ 'guest_manager.profile.table' | translate }}</span>
+              <div class="value muted">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RSVP summary — the DS's clickable "resume card": opens the
+             manage-RSVP overlay, same as the footer's "Manage RSVP". -->
+        <div class="info-section">
+          <h3 class="section-title">{{ 'guest_manager.rsvp.summary' | translate }}</h3>
+          @if (rsvp(); as rsvp) {
+            <button type="button" class="summary-card" (click)="openRsvp()">
+              <span class="summary-head">
+                <span class="status-cell" [class]="'status-' + rsvp.status">
+                  <span class="status-dot"></span>
+                  {{ 'guest_manager.status.' + rsvp.status | translate }}
+                </span>
+                <span class="summary-manage">{{ 'guest_manager.rsvp.manage' | translate }}</span>
+              </span>
+
+              <span class="mini-stats">
+                <span class="mini-stat">
+                  <span class="mini-stat-value">{{ participantsCount() }}</span>
+                  <span class="mini-stat-label">
+                    {{ 'guest_manager.rsvp.participants' | translate }}
+                  </span>
+                </span>
+                <span class="mini-stat">
+                  <span class="mini-stat-value">{{ childrenCount() || '—' }}</span>
+                  <span class="mini-stat-label">
+                    {{ 'guest_manager.rsvp.children' | translate }}
+                  </span>
+                </span>
+                <span class="mini-stat">
+                  <span class="mini-stat-value">{{ dietaryPeopleCount() || '—' }}</span>
+                  <span class="mini-stat-label">
+                    {{ 'guest_manager.rsvp.dietary' | translate }}
+                  </span>
+                </span>
+              </span>
+
+              @if (childrenNamesSummary(); as names) {
+                <span class="summary-line">
+                  {{ 'guest_manager.modal.childrenSummary' | translate: { names } }}
+                </span>
+              }
+              @if (dietarySummary(); as diet) {
+                <span class="summary-line">
+                  {{ 'guest_manager.modal.dietarySummary' | translate: { items: diet } }}
+                </span>
+              }
+              @if (allergySummary(); as allergies) {
+                <span class="summary-line">
+                  {{ 'guest_manager.modal.allergySummary' | translate: { items: allergies } }}
+                </span>
+              }
+              @if (guestNote(); as note) {
+                <span class="summary-note">“{{ note }}”</span>
+              }
+            </button>
+          } @else {
+            <p class="summary-empty">{{ 'guest_manager.rsvp.none' | translate }}</p>
+          }
+        </div>
+
+        <div class="actions-row" modal-actions>
+          <button app-btn [primary]="false" type="button" (click)="startEdit()">
+            {{ 'guest_manager.action.editProfile' | translate }}
+          </button>
+          <div class="actions-group">
+            <button app-btn [primary]="false" type="button" (click)="close()">
+              {{ 'guest_manager.action.close' | translate }}
+            </button>
+            @if (rsvp()) {
+              <button app-btn type="button" (click)="openRsvp()">
+                {{ 'guest_manager.action.manageRsvp' | translate }}
+              </button>
+            }
+          </div>
+        </div>
+      </ng-container>
+    }
+    @case ('edit') {
+      <ng-container>
+        <!-- Edit profile -->
+        <form [formGroup]="editForm" (ngSubmit)="saveProfile()">
+          <div class="field">
+            <span class="info-label">{{ 'guest_manager.form.firstName' | translate }}</span>
+            <input app-input type="text" formControlName="firstName" />
+          </div>
+
+          <div class="field">
+            <span class="info-label">{{ 'guest_manager.form.lastName' | translate }}</span>
+            <input app-input type="text" formControlName="lastName" />
+          </div>
+
+          <div class="field">
+            <span class="info-label">{{ 'guest_manager.form.side' | translate }}</span>
+            <div class="seg-row">
+              @for (side of relationSides; track side) {
+                <button
+                  type="button"
+                  app-guest-seg
+                  [selected]="editForm.controls.side.value === side"
+                  (click)="selectSide(side)"
+                >
+                  {{ 'guest_manager.relation.side.' + side | translate }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="info-label">{{ 'guest_manager.form.group' | translate }}</span>
+            <div class="seg-row">
+              @for (kind of relationKinds; track kind) {
+                <button
+                  type="button"
+                  app-guest-seg
+                  [selected]="editForm.controls.kind.value === kind"
+                  (click)="selectKind(kind)"
+                >
+                  {{ 'guest_manager.relation.kind.' + kind | translate }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="readonly-grid">
+            <div class="info-item">
+              <span class="info-label">{{ 'guest_manager.profile.email' | translate }}</span>
+              <div class="value muted">{{ guestProfile()?.email || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <span class="info-label">{{ 'guest_manager.profile.phone' | translate }}</span>
+              <div class="value muted">{{ guestProfile()?.phoneNumber || '—' }}</div>
+            </div>
+          </div>
+        </form>
+
+        <button app-btn modal-actions [primary]="false" type="button" (click)="cancelEdit()">
+          {{ 'guest_manager.action.cancel' | translate }}
+        </button>
+        <button app-btn modal-actions type="button" (click)="saveProfile()">
+          {{ 'guest_manager.action.saveProfile' | translate }}
+        </button>
+      </ng-container>
+    }
+  }
+</app-modal>

@@ -17,7 +17,8 @@ export interface CreateUserDtoGuestInfoRelationOneOf {
 export namespace CreateUserDtoGuestInfoRelationOneOf {
     export const SideEnum = {
         BRIDE: 'bride',
-        GROOM: 'groom'
+        GROOM: 'groom',
+        BOTH: 'both'
     } as const;
     export type SideEnum = typeof SideEnum[keyof typeof SideEnum];
     export const LinkEnum = {

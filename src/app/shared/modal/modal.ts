@@ -20,8 +20,10 @@ export class Modal {
    * `sm` (default) — compact ~360px confirm dialog, unchanged legacy behaviour.
    * `lg` — ~520px dialog with a bordered header/scrollable body/bordered footer;
    * becomes a full-width bottom sheet with a drag handle on mobile.
+   * `xl` — same layout as `lg` but ~580px wide (DS `ScreenGuestManager` guest
+   * profile overlay, which is wider than the `lg` dialogs elsewhere).
    */
-  readonly size = input<'sm' | 'lg'>('sm');
+  readonly size = input<'sm' | 'lg' | 'xl'>('sm');
   readonly close = output<void>();
 
   protected onBackdrop(): void {

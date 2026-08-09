@@ -14,20 +14,28 @@ import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
 import { EntityNamesEnum, UserProfileDto, PluralTranslatePipe } from '@app/core';
 import { Btn } from '@app/shared/button/button';
-import { RsvpDetailsModal, GuestCreateModal } from './modal';
+import { GuestProfileModal, ManageRsvpModal, GuestCreateModal } from './modal';
 
 @Component({
   selector: 'app-guest-manager',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Btn, TranslatePipe, PluralTranslatePipe, RsvpDetailsModal, GuestCreateModal],
+  imports: [
+    Btn,
+    TranslatePipe,
+    PluralTranslatePipe,
+    GuestProfileModal,
+    ManageRsvpModal,
+    GuestCreateModal,
+  ],
   templateUrl: './guest-manager.html',
   styleUrl: './guest-manager.scss',
 })
 export class GuestManager {
   protected readonly Math = Math;
 
-  @ViewChild(RsvpDetailsModal) rsvpModal!: RsvpDetailsModal;
+  @ViewChild(GuestProfileModal) profileModal!: GuestProfileModal;
+  @ViewChild(ManageRsvpModal) manageRsvpModal!: ManageRsvpModal;
   @ViewChild(GuestCreateModal) createModal!: GuestCreateModal;
 
   private readonly userProfileCollection: EntityCollectionService<UserProfileDto> = inject(
@@ -172,10 +180,9 @@ export class GuestManager {
   }
 
   /**
-   * A guest was just created: the modal's own `update()` call already merged
-   * `firstName`/`lastName`/`relation` into the profile cache, but not the
-   * `rsvp` summary the new pending RSVP produces — re-fetch so the row shows
-   * the same status/count columns as any other guest.
+   * A guest was just created: the modal writes to the User collection, not
+   * this Profile one, and only the profile carries the `relation` and `rsvp`
+   * summary the row renders — so fetch it rather than deriving a row locally.
    */
   onGuestCreated(userId: string): void {
     this.userProfileCollection.getByKey(userId);
@@ -196,14 +203,30 @@ export class GuestManager {
     return this.currentPage();
   }
 
-  /** Open the RSVP details modal — it owns fetching the full RSVP for this guest. */
-  openRsvpModal(userId: string): void {
-    this.rsvpModal.open(userId);
+  /**
+   * A row click opens the guest profile overlay — it owns fetching the full
+   * RSVP behind the summary card it shows.
+   */
+  openGuestProfile(userId: string): void {
+    this.profileModal.open(userId);
   }
 
-  /** Handle comment save from modal */
-  onSaveComments(event: { rsvpId: string; comments: string }): void {
-    // TODO: Call API to update RSVP comments
-    console.log('Save comments:', event);
+  /**
+   * "Manage RSVP" / the profile's summary card. The two overlays are swapped
+   * rather than stacked (the DS shows one dialog at a time); the profile modal
+   * has already closed itself by the time this fires, and `(back)` on the RSVP
+   * editor calls `openGuestProfile` to return here.
+   */
+  openManageRsvp(userId: string): void {
+    this.manageRsvpModal.open(userId);
+  }
+
+  /**
+   * The RSVP was saved: the table row renders the `UserProfileDto.guestInfo.rsvp`
+   * summary, which lives in the Profile collection the RSVP write doesn't
+   * touch — so refetch that profile to pick up the new status/head count.
+   */
+  onRsvpSaved(userId: string): void {
+    this.userProfileCollection.getByKey(userId);
   }
 }

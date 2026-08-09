@@ -1,0 +1,197 @@
+<app-modal [open]="isOpen()" [size]="'xl'" [title]="modalTitle()" (close)="close()">
+  <!-- Eyebrow above the title (DS ScreenGuestManager header: "Manage RSVP") -->
+  <span modal-eyebrow class="modal-eyebrow">
+    {{ 'guest_manager.modal.manageRsvp' | translate }}
+  </span>
+
+  <!-- Decorative header fish (DS ScreenGuestManager profile-overlay header) -->
+  <app-decor-fish class="modal-decor" [w]="54" [flip]="true" color="var(--brand-accent)" />
+
+  @if (rsvp()) {
+    <!-- Attendance answer -->
+    <div class="rsvp-section">
+      <h3 class="section-title">{{ 'guest_manager.rsvp.attending' | translate }}</h3>
+      <div class="choice-row">
+        @for (status of statuses; track status) {
+          <button
+            type="button"
+            app-choice-card
+            [selected]="isStatus(status)"
+            (click)="setStatus(status)"
+          >
+            {{ 'guest_manager.rsvp.choice.' + status | translate }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Participants · dietary & allergies -->
+    <div class="rsvp-section">
+      <div class="section-head">
+        <h3 class="section-title">{{ 'guest_manager.rsvp.participantsSection' | translate }}</h3>
+        <span class="section-count">
+          {{ 'guest_manager.rsvp.total' | translate: { count: participantsCount() } }}
+        </span>
+      </div>
+
+      <!-- Main guest -->
+      <div class="group-label">{{ 'guest_manager.rsvp.you' | translate }}</div>
+      @if (mainCard(); as card) {
+        <div class="person-card">
+          <div class="person-head">
+            <span class="person-name">
+              {{ card.firstName }} {{ card.lastName }}
+            </span>
+            <span class="person-role">{{ 'guest_manager.rsvp.mainGuest' | translate }}</span>
+          </div>
+          <ng-container
+            *ngTemplateOutlet="pillGroups; context: { $implicit: card }"
+          ></ng-container>
+        </div>
+      }
+
+      <!-- Partner -->
+      <div class="group-label">{{ 'guest_manager.rsvp.partner' | translate }}</div>
+      @if (partnerCard(); as card) {
+        <div class="person-card">
+          <div class="person-head person-fields">
+            <input
+              app-input
+              type="text"
+              [value]="card.firstName"
+              [placeholder]="'guest_manager.form.firstName' | translate"
+              (input)="setAdultFirstName(card.key, inputValue($event))"
+            />
+            <input
+              app-input
+              type="text"
+              [value]="card.lastName"
+              [placeholder]="'guest_manager.form.lastName' | translate"
+              (input)="setAdultLastName(card.key, inputValue($event))"
+            />
+            <button
+              type="button"
+              class="remove-btn"
+              [attr.aria-label]="'shared.remove' | translate"
+              (click)="removePartner()"
+            >
+              ×
+            </button>
+          </div>
+          <ng-container
+            *ngTemplateOutlet="pillGroups; context: { $implicit: card }"
+          ></ng-container>
+        </div>
+      } @else {
+        <button type="button" class="add-link" (click)="addPartner()">
+          + {{ 'guest_manager.action.addPartner' | translate }}
+        </button>
+      }
+
+      <!-- Children -->
+      <div class="group-label">{{ 'guest_manager.rsvp.children' | translate }}</div>
+      @for (card of childCards(); track card.key) {
+        <div class="person-card">
+          <div class="person-head person-fields child-fields">
+            <input
+              app-input
+              type="text"
+              [value]="card.firstName"
+              [placeholder]="'guest_manager.form.childName' | translate"
+              (input)="setChildFirstName(childIndex(card.key), inputValue($event))"
+            />
+            <input
+              app-input
+              type="text"
+              inputmode="numeric"
+              [value]="card.age"
+              [placeholder]="'guest_manager.form.age' | translate"
+              (input)="setChildAge(childIndex(card.key), inputValue($event))"
+            />
+            <button
+              type="button"
+              class="remove-btn"
+              [attr.aria-label]="'shared.remove' | translate"
+              (click)="removeChild(childIndex(card.key))"
+            >
+              ×
+            </button>
+          </div>
+          <ng-container
+            *ngTemplateOutlet="pillGroups; context: { $implicit: card }"
+          ></ng-container>
+        </div>
+      }
+      <button type="button" class="add-link" (click)="addChild()">
+        + {{ 'guest_manager.action.addChild' | translate }}
+      </button>
+    </div>
+
+    <!-- Note left with the reply (partner1's comments) -->
+    <div class="rsvp-section">
+      <h3 class="section-title">{{ 'guest_manager.form.notes' | translate }}</h3>
+      <textarea
+        app-textarea
+        rows="3"
+        [value]="noteText()"
+        [attr.placeholder]="'guest_manager.modal.commentsPlaceholder' | translate"
+        (input)="setNote(inputValue($event))"
+      ></textarea>
+    </div>
+
+    @if (saveFailed()) {
+      <p class="form-error" role="alert">{{ 'guest_manager.rsvp.saveFailed' | translate }}</p>
+    }
+  } @else {
+    <p class="summary-empty">{{ 'guest_manager.rsvp.none' | translate }}</p>
+  }
+
+  <button app-btn modal-actions [primary]="false" type="button" [disabled]="saving()" (click)="goBack()">
+    {{ 'guest_manager.action.back' | translate }}
+  </button>
+  <button app-btn modal-actions type="button" [disabled]="saving() || !rsvp()" (click)="save()">
+    {{ 'guest_manager.action.saveChanges' | translate }}
+  </button>
+</app-modal>
+
+<!-- Dietary + allergy pill rows, identical for every participant (DS `Pills`
+     helper); the options come from the wedding's configured catalogs. -->
+<ng-template #pillGroups let-card>
+  <div class="pill-group">
+    <div class="pill-label">{{ 'guest_manager.form.dietary' | translate }}</div>
+    <div class="pill-row">
+      @for (diet of dietaryOptions(); track diet.id) {
+        <button
+          type="button"
+          class="pill-toggle"
+          [class.on]="card.dietaryPreferenceIds.includes(diet.id)"
+          [attr.aria-pressed]="card.dietaryPreferenceIds.includes(diet.id)"
+          (click)="toggleDiet(card.key, diet.id)"
+        >
+          {{ diet.label }}
+        </button>
+      } @empty {
+        <span class="pill-empty">—</span>
+      }
+    </div>
+  </div>
+
+  <div class="pill-group">
+    <div class="pill-label">{{ 'guest_manager.form.allergies' | translate }}</div>
+    <div class="pill-row">
+      @for (allergy of allergyOptions(); track allergy.id) {
+        <button
+          type="button"
+          class="pill-toggle"
+          [class.on]="card.allergyIds.includes(allergy.id)"
+          [attr.aria-pressed]="card.allergyIds.includes(allergy.id)"
+          (click)="toggleAllergy(card.key, allergy.id)"
+        >
+          {{ allergy.label }}
+        </button>
+      } @empty {
+        <span class="pill-empty">—</span>
+      }
+    </div>
+  </div>
+</ng-template>

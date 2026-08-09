@@ -1,0 +1,21 @@
+// Per DS `ScreenGuestManager.jsx` local `GuestSeg` helper — the option button
+// half of the pattern; the pill container (border, radius-pill, overflow
+// hidden) is `.seg-row` in `../_shared-modal-form.scss`.
+:host {
+  flex: 1;
+  padding: 8px 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-body-color);
+  font-family: var(--font-sans);
+  font-size: var(--text-micro);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+}
+
+:host(.on) {
+  background: var(--brand-accent);
+  color: var(--on-accent);
+}

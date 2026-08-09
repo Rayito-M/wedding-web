@@ -10,7 +10,7 @@
   align-items: center;
   gap: 7px;
   font-size: t.$text-caption;
-  color: var(--ink);
+  color: var(--text-body-color);
   white-space: nowrap;
 
   &.status-declined {

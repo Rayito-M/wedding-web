@@ -1,9 +1,17 @@
 <app-modal
   [open]="isOpen()"
-  [size]="'lg'"
-  [title]="'guest_manager.modal.newGuest' | translate"
+  [size]="'xl'"
+  [title]="guestDisplayName() || ('guest_manager.modal.guestPlaceholder' | translate)"
   (close)="close()"
 >
+  <!-- Eyebrow above the title (DS ScreenGuestManager header:
+       "New guest · {side} · {group}") -->
+  <span modal-eyebrow class="modal-eyebrow">
+    {{ 'guest_manager.modal.newGuest' | translate }} ·
+    {{ 'guest_manager.relation.side.' + createForm.controls.side.value | translate }} ·
+    {{ 'guest_manager.relation.kind.' + createForm.controls.kind.value | translate }}
+  </span>
+
   <!-- Decorative header fish (DS ScreenGuestManager profile-overlay header) -->
   <app-decor-fish class="modal-decor" [w]="54" [flip]="true" color="var(--brand-accent)" />
 
@@ -21,53 +29,7 @@
       </div>
     </div>
 
-    <div class="field">
-      <span class="info-label">{{ 'guest_manager.form.side' | translate }}</span>
-      <div class="choice-row">
-        <button
-          type="button"
-          app-choice-card
-          [selected]="createForm.controls.side.value === 'bride'"
-          (click)="selectSide('bride')"
-        >
-          {{ 'guest_manager.relation.side.bride' | translate }}
-        </button>
-        <button
-          type="button"
-          app-choice-card
-          [selected]="createForm.controls.side.value === 'groom'"
-          (click)="selectSide('groom')"
-        >
-          {{ 'guest_manager.relation.side.groom' | translate }}
-        </button>
-      </div>
-    </div>
-
-    <div class="field">
-      <span class="info-label">{{ 'guest_manager.form.group' | translate }}</span>
-      <div class="choice-row">
-        @for (kind of relationKinds; track kind) {
-          <button
-            type="button"
-            app-choice-card
-            [selected]="createForm.controls.kind.value === kind"
-            (click)="selectKind(kind)"
-          >
-            {{ 'guest_manager.relation.kind.' + kind | translate }}
-          </button>
-        }
-      </div>
-    </div>
-
     <div class="field-row">
-      <div class="field">
-        <span class="info-label">{{ 'guest_manager.form.phone' | translate }}</span>
-        <input app-input type="tel" formControlName="phoneNumber" placeholder="+34 600 00 00 00" />
-        @if (createForm.controls.phoneNumber.touched && createForm.controls.phoneNumber.invalid) {
-          <span class="field-error">{{ 'guest_manager.form.phoneHint' | translate }}</span>
-        }
-      </div>
-
       <div class="field">
         <span class="info-label">{{ 'guest_manager.form.email' | translate }}</span>
         <input app-input type="email" formControlName="email" placeholder="name@mail.com" />
@@ -75,7 +37,144 @@
           <span class="field-error">{{ 'guest_manager.form.emailHint' | translate }}</span>
         }
       </div>
+
+      <div class="field">
+        <span class="info-label">{{ 'guest_manager.form.phone' | translate }}</span>
+        <input app-input type="tel" formControlName="phoneNumber" placeholder="+34 600 00 00 00" />
+        @if (createForm.controls.phoneNumber.touched && createForm.controls.phoneNumber.invalid) {
+          <span class="field-error">{{ 'guest_manager.form.phoneHint' | translate }}</span>
+        }
+      </div>
     </div>
+
+    <div class="field-row">
+      <div class="field">
+        <span class="info-label">{{ 'guest_manager.form.side' | translate }}</span>
+        <div class="seg-row">
+          @for (side of relationSides; track side) {
+            <button
+              type="button"
+              app-guest-seg
+              [selected]="createForm.controls.side.value === side"
+              (click)="selectSide(side)"
+            >
+              {{ 'guest_manager.relation.side.' + side | translate }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="info-label">{{ 'guest_manager.form.preferredLang' | translate }}</span>
+        <div class="seg-row">
+          @for (lang of preferredLangs; track lang) {
+            <button
+              type="button"
+              app-guest-seg
+              [selected]="createForm.controls.preferredLang.value === lang"
+              (click)="selectPreferredLang(lang)"
+            >
+              {{ langDescription[lang] }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <span class="info-label">{{ 'guest_manager.form.group' | translate }}</span>
+        <div class="seg-row">
+          @for (kind of relationKinds; track kind) {
+            <button
+              type="button"
+              app-guest-seg
+              [selected]="createForm.controls.kind.value === kind"
+              (click)="selectKind(kind)"
+            >
+              {{ 'guest_manager.relation.kind.' + kind | translate }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="info-label">
+          {{ 'guest_manager.form.link' | translate }} ·
+          {{ 'guest_manager.relation.kind.' + createForm.controls.kind.value | translate }}
+        </span>
+        @if (createForm.controls.kind.value === 'family') {
+          <select class="select-native" formControlName="link">
+            <option value="" disabled>
+              {{ 'guest_manager.form.linkSelectPlaceholder' | translate }}
+            </option>
+            @for (relation of familyRelations; track relation) {
+              <option [value]="relation">
+                {{ 'guest_manager.relation.link.' + relation | translate }}
+              </option>
+            }
+          </select>
+        } @else {
+          <input
+            app-input
+            type="text"
+            formControlName="link"
+            [placeholder]="linkPlaceholderKey() | translate"
+          />
+        }
+        @if (createForm.controls.link.touched && createForm.controls.link.invalid) {
+          <span class="field-error">{{ 'guest_manager.form.linkHint' | translate }}</span>
+        }
+      </div>
+    </div>
+
+    <!-- Partner — DS ScreenGuestManager `partnerDraft` section: a switch over a
+         single choice, since a partner must already be on the guest list. -->
+    <section class="partner-section" formGroupName="partner">
+      <button
+        type="button"
+        app-toggle
+        [checked]="isPartnerLinked()"
+        (toggled)="setPartnerLinked($event)"
+      >
+        {{ 'guest_manager.form.partner.linkLabel' | translate }}
+      </button>
+
+      @if (isPartnerLinked()) {
+        <div class="partner-card">
+          <input
+            app-input
+            type="search"
+            formControlName="search"
+            [placeholder]="'guest_manager.form.partner.searchPlaceholder' | translate"
+          />
+
+          <div class="candidate-list">
+            @for (candidate of partnerCandidates(); track candidate.id) {
+              <button
+                type="button"
+                class="candidate"
+                [class.on]="isCandidateSelected(candidate.id)"
+                [attr.aria-pressed]="isCandidateSelected(candidate.id)"
+                (click)="selectCandidate(candidate.id)"
+              >
+                <span class="candidate-name">{{ candidate.name }}</span>
+                <span class="candidate-meta">
+                  {{ 'guest_manager.relation.side.' + candidate.side | translate }} ·
+                  {{ 'guest_manager.relation.kind.' + candidate.kind | translate }}
+                </span>
+              </button>
+            } @empty {
+              <p class="candidate-empty">
+                {{ 'guest_manager.form.partner.noCandidates' | translate }}
+              </p>
+            }
+          </div>
+
+          <p class="partner-hint">{{ 'guest_manager.form.partner.existingHint' | translate }}</p>
+        </div>
+      }
+    </section>
 
     @if (createFailed()) {
       <p class="form-error" role="alert">{{ 'guest_manager.form.createFailed' | translate }}</p>

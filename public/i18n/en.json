@@ -596,7 +596,8 @@
       "commentsPlaceholder": "Add any notes or special requests…",
       "cancel": "Cancel",
       "save": "Save changes",
-      "newGuest": "New guest"
+      "newGuest": "New guest",
+      "guestPlaceholder": "Guest"
     },
     "profile": {
       "sideGroup": "Side · Group",
@@ -607,13 +608,49 @@
     "relation": {
       "side": {
         "bride": "Bride",
-        "groom": "Groom"
+        "groom": "Groom",
+        "both": "Both"
       },
       "kind": {
         "family": "Family",
         "friends": "Friends",
         "colleagues": "Colleagues",
         "other": "Other"
+      },
+      "link": {
+        "aunt": "Aunt",
+        "aunt-in-law": "Aunt-in-law",
+        "brother": "Brother",
+        "brother-in-law": "Brother-in-law",
+        "cousin": "Cousin",
+        "cousin-in-law": "Cousin-in-law",
+        "daughter": "Daughter",
+        "father": "Father",
+        "father-in-law": "Father-in-law",
+        "grandfather": "Grandfather",
+        "grandfather-in-law": "Grandfather-in-law",
+        "grandmother": "Grandmother",
+        "grandmother-in-law": "Grandmother-in-law",
+        "mother": "Mother",
+        "mother-in-law": "Mother-in-law",
+        "nephew": "Nephew",
+        "niece": "Niece",
+        "sister": "Sister",
+        "sister-in-law": "Sister-in-law",
+        "son": "Son",
+        "stepaunt": "Step-aunt",
+        "stepbrother": "Stepbrother",
+        "stepcousin": "Step-cousin",
+        "stepdaughter": "Stepdaughter",
+        "stepfather": "Stepfather",
+        "stepgrandfather": "Step-grandfather",
+        "stepgrandmother": "Step-grandmother",
+        "stepmother": "Stepmother",
+        "stepsister": "Stepsister",
+        "stepson": "Stepson",
+        "stepuncle": "Step-uncle",
+        "uncle": "Uncle",
+        "uncle-in-law": "Uncle-in-law"
       }
     },
     "rsvp": {
@@ -624,7 +661,17 @@
       "dietary": "Dietary",
       "attending": "Attending?",
       "you": "You",
-      "partner": "Partner"
+      "partner": "Partner",
+      "choice": {
+        "attending": "With joy",
+        "pending": "Pending",
+        "declined": "Sadly no"
+      },
+      "participantsSection": "Participants · dietary & allergies",
+      "total": "Total: {{count}}",
+      "mainGuest": "Main guest",
+      "none": "This guest has not replied yet — there is no RSVP to manage.",
+      "saveFailed": "The RSVP could not be saved. Please try again."
     },
     "form": {
       "name": "Full name",
@@ -639,7 +686,24 @@
       "notes": "Note from guest",
       "phoneHint": "International format, e.g. +34600000000",
       "emailHint": "Enter a valid email address",
-      "createFailed": "The guest could not be created. Please check the details and try again."
+      "createFailed": "The guest could not be created. Please check the details and try again.",
+      "preferredLang": "Preferred language",
+      "link": "Relationship link",
+      "linkSelectPlaceholder": "Select relationship…",
+      "linkHint": "This field is required",
+      "linkPlaceholder": {
+        "friends": "e.g. Childhood friend from Girona",
+        "colleagues": "e.g. Worked together at Novatek",
+        "other": "e.g. Family friend"
+      },
+      "partner": {
+        "linkLabel": "Link to the guest partner",
+        "searchPlaceholder": "Search existing guests…",
+        "noCandidates": "No matching guests.",
+        "existingHint": "Partners must already be on the guest list. Add them as a guest first, then link. Linking keeps both invitations — the pair is seated and counted together."
+      },
+      "childName": "Child name",
+      "age": "Age"
     },
     "empty": "No guests to display. Add your first guest to get started."
   },
