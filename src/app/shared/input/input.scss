@@ -11,3 +11,11 @@
   outline: none;
   box-sizing: border-box;
 }
+
+// Locked field: filled chip, muted text, hairline border unchanged (DS Input `disabled`).
+:host(:disabled),
+:host([readonly]) {
+  background: var(--surface-chip);
+  color: var(--text-muted);
+  cursor: default;
+}
