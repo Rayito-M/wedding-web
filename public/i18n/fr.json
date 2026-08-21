@@ -154,6 +154,7 @@
         "title": "Votre groupe",
         "subtitle": "Juste les noms pour l'instant, pour inscrire tout le monde sur la liste.",
         "partnerLabel": "Votre partenaire",
+        "partnerLinkedHint": "Lié à son compte invité — le nom provient de la liste des invités.",
         "firstName": "Prénom",
         "lastName": "Nom",
         "childrenLabel": "Enfants",
@@ -207,7 +208,12 @@
       },
       "footer": {
         "saved": "Modifications enregistrées ✓",
-        "unsaved": "Modifications non enregistrées"
+        "unsaved": "Modifications non enregistrées",
+        "unnamed": {
+          "none": "Aucun invité n'a besoin d'un prénom et d'un nom",
+          "singular": "{{count}} invité a besoin d'un prénom et d'un nom",
+          "plural": "{{count}} invités ont besoin d'un prénom et d'un nom"
+        }
       },
       "error": "Une erreur est survenue lors de l'enregistrement de vos modifications. Veuillez réessayer."
     }
@@ -489,6 +495,11 @@
       "none": "enfant",
       "singular": "enfant",
       "plural": "enfants"
+    },
+    "partner": {
+      "ownAccount": "compte invité personnel",
+      "plusOne": "accompagnant",
+      "nameManaged": "Le nom est géré par son propre compte invité."
     }
   },
   "consentBanner": {
@@ -602,7 +613,8 @@
       "sideGroup": "Côté · Groupe",
       "email": "E-mail",
       "phone": "Téléphone",
-      "table": "Table"
+      "table": "Table",
+      "partner": "Partenaire"
     },
     "relation": {
       "side": {
@@ -670,7 +682,8 @@
       "total": "Total : {{count}}",
       "mainGuest": "Invité principal",
       "none": "Cet invité n'a pas encore répondu — il n'y a pas de RSVP à gérer.",
-      "saveFailed": "Le RSVP n'a pas pu être enregistré. Veuillez réessayer."
+      "saveFailed": "Le RSVP n'a pas pu être enregistré. Veuillez réessayer.",
+      "partnerNameRequired": "Le partenaire doit avoir un prénom et un nom."
     },
     "form": {
       "name": "Nom complet",

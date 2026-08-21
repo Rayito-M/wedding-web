@@ -157,6 +157,7 @@
         "title": "Your party",
         "subtitle": "Just names for now, so we can put everyone on the list.",
         "partnerLabel": "Your partner",
+        "partnerLinkedHint": "Linked to their guest account — the name comes from the guest list.",
         "firstName": "First name",
         "lastName": "Last name",
         "childrenLabel": "Children",
@@ -210,7 +211,12 @@
       },
       "footer": {
         "saved": "Changes saved ✓",
-        "unsaved": "Unsaved changes"
+        "unsaved": "Unsaved changes",
+        "unnamed": {
+          "none": "No guest needs a first and last name",
+          "singular": "{{count}} guest needs a first and last name",
+          "plural": "{{count}} guests need a first and last name"
+        }
       },
       "error": "Something went wrong saving your changes. Please try again."
     }
@@ -494,6 +500,11 @@
       "none": "child",
       "singular": "child",
       "plural": "children"
+    },
+    "partner": {
+      "ownAccount": "own guest account",
+      "plusOne": "plus-one",
+      "nameManaged": "Name managed by their own guest account."
     }
   },
   "consentBanner": {
@@ -606,7 +617,8 @@
       "sideGroup": "Side · Group",
       "email": "Email",
       "phone": "Phone",
-      "table": "Table"
+      "table": "Table",
+      "partner": "Partner"
     },
     "relation": {
       "side": {
@@ -674,7 +686,8 @@
       "total": "Total: {{count}}",
       "mainGuest": "Main guest",
       "none": "This guest has not replied yet — there is no RSVP to manage.",
-      "saveFailed": "The RSVP could not be saved. Please try again."
+      "saveFailed": "The RSVP could not be saved. Please try again.",
+      "partnerNameRequired": "The partner needs a first and last name."
     },
     "form": {
       "name": "Full name",

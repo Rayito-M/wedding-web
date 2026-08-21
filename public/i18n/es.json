@@ -154,6 +154,7 @@
         "title": "Tu grupo",
         "subtitle": "Solo los nombres por ahora, para añadir a todos a la lista.",
         "partnerLabel": "Tu pareja",
+        "partnerLinkedHint": "Vinculada a su cuenta de invitado: el nombre proviene de la lista de invitados.",
         "firstName": "Nombre",
         "lastName": "Apellido",
         "childrenLabel": "Niños",
@@ -207,7 +208,12 @@
       },
       "footer": {
         "saved": "Cambios guardados ✓",
-        "unsaved": "Cambios sin guardar"
+        "unsaved": "Cambios sin guardar",
+        "unnamed": {
+          "none": "Ningún invitado necesita nombre y apellido",
+          "singular": "{{count}} invitado necesita nombre y apellido",
+          "plural": "{{count}} invitados necesitan nombre y apellido"
+        }
       },
       "error": "Algo salió mal al guardar tus cambios. Inténtalo de nuevo."
     }
@@ -489,6 +495,11 @@
       "none": "niño",
       "singular": "niño",
       "plural": "niños"
+    },
+    "partner": {
+      "ownAccount": "cuenta de invitado propia",
+      "plusOne": "acompañante",
+      "nameManaged": "El nombre lo gestiona su propia cuenta de invitado."
     }
   },
   "consentBanner": {
@@ -602,7 +613,8 @@
       "sideGroup": "Lado · Grupo",
       "email": "Correo electrónico",
       "phone": "Teléfono",
-      "table": "Mesa"
+      "table": "Mesa",
+      "partner": "Pareja"
     },
     "relation": {
       "side": {
@@ -670,7 +682,8 @@
       "total": "Total: {{count}}",
       "mainGuest": "Invitado principal",
       "none": "Este invitado aún no ha respondido: no hay RSVP que gestionar.",
-      "saveFailed": "No se ha podido guardar el RSVP. Inténtalo de nuevo."
+      "saveFailed": "No se ha podido guardar el RSVP. Inténtalo de nuevo.",
+      "partnerNameRequired": "La pareja necesita nombre y apellido."
     },
     "form": {
       "name": "Nombre completo",
