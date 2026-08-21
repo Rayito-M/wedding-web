@@ -7,17 +7,17 @@ export interface DashboardTask {
   done: boolean;
 }
 
-/** Couple dashboard aggregates: RSVP stats, budget, vendors, task list. */
+/**
+ * Couple dashboard aggregates: countdown, budget, vendors, task list.
+ *
+ * RSVP counts are not here — they come from `StatisticService`, which derives
+ * them from the real `UserProfile` collection and is shared with the guest
+ * manager. Everything below is still mock data.
+ */
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
-  readonly rsvp = signal({ yes: 142, pending: 18, no: 12, total: 172 });
   readonly budget = signal({ spent: '€18.4k', total: 'of €22k' });
   readonly vendors = signal({ value: '9/11', sub: 'confirmed' });
-
-  readonly repliedPct = computed(() => {
-    const { yes, no, total } = this.rsvp();
-    return Math.round(((yes + no) / total) * 100);
-  });
 
   readonly daysToGo = computed(() => daysUntilWedding());
 

@@ -14,6 +14,12 @@
 
     <div class="header-stats">
       <div class="stat-group">
+        <div class="stat-value">{{ count().rsvp.total }}</div>
+        <div class="stat-label">
+          {{ 'guest_manager.status.total' | translate }}
+        </div>
+      </div>
+      <div class="stat-group divider">
         <div class="stat-value accent">{{ count().rsvp.attending }}</div>
         <div class="stat-label">
           {{ 'guest_manager.status.attending' | translate }}

@@ -12,7 +12,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
-import { EntityNamesEnum, UserProfileDto, PluralTranslatePipe } from '@app/core';
+import { EntityNamesEnum, UserProfileDto, PluralTranslatePipe, StatisticService } from '@app/core';
 import { Btn } from '@app/shared/button/button';
 import { GuestProfileModal, ManageRsvpModal, GuestCreateModal } from './modal';
 
@@ -48,55 +48,13 @@ export class GuestManager {
     },
   );
 
-  /**
-   * A profile is a guest-list row only if it owns the RSVP it points to
-   * (`rsvp.id === profile.id`) — a partner with their own account carries the
-   * same shared `guestInfo.rsvp`, but not its id, so this keeps couples to a
-   * single row instead of one per account holder.
-   */
-  private ownRsvp(
-    profile: UserProfileDto,
-  ): NonNullable<UserProfileDto['guestInfo']>['rsvp'] | undefined {
-    const rsvp = profile.guestInfo?.rsvp;
-    return rsvp && rsvp.id === profile.id ? rsvp : undefined;
-  }
+  private readonly statistics = inject(StatisticService);
 
   /**
-   * Table rows are guest profiles, not RSVPs: `UserProfileDto.rsvp` already
-   * carries the status/adults/children summary the list needs, so there is no
-   * separate RSVP collection to fetch or join here. Bride/groom/provider
-   * profiles have no `rsvp` and are filtered out below.
+   * Header counts come from the shared {@link StatisticService} so this table
+   * and the couple dashboard cannot drift apart.
    */
-  protected readonly count = computed(() => {
-    const profiles = this.userProfileList();
-    const counts = {
-      rsvp: { attending: 0, declined: 0, pending: 0, undefined: 0, total: 0 },
-      headCount: { adults: 0, children: 0 },
-    };
-
-    for (const profile of profiles) {
-      const rsvp = this.ownRsvp(profile);
-      if (!rsvp) {
-        counts.rsvp.undefined++;
-        continue;
-      }
-      switch (rsvp.status) {
-        case 'attending':
-          counts.rsvp.attending++;
-          counts.headCount.adults += rsvp.adults;
-          counts.headCount.children += rsvp.children ?? 0;
-          break;
-        case 'declined':
-          counts.rsvp.declined++;
-          break;
-        case 'pending':
-          counts.rsvp.pending++;
-          break;
-      }
-    }
-    counts.rsvp.total = counts.rsvp.attending + counts.rsvp.declined + counts.rsvp.pending;
-    return counts;
-  });
+  protected readonly count = this.statistics.guestStatistics;
 
   private readonly filter = signal<'all' | 'attending' | 'pending' | 'declined' | 'undefined'>(
     'all',
@@ -106,29 +64,28 @@ export class GuestManager {
   private readonly pageSize = 10;
 
   protected readonly filteredGuests = computed(() => {
-    const profiles = this.userProfileList();
     const filterValue = this.filter();
     const searchValue = this.searchQuery().toLowerCase();
 
-    return profiles.filter((profile) => {
+    return this.userProfileList().filter((profile) => {
       if (profile.role !== 'guest') return false;
+
       const guestName = `${profile.firstName} ${profile.lastName}`.toLowerCase();
-      let matchesSearch = !searchValue || guestName.includes(searchValue);
+      if (searchValue && !guestName.includes(searchValue)) return false;
 
-      if (!profile.guestInfo?.rsvp) {
-        if (filterValue !== 'undefined' && filterValue !== 'all') return false;
-        return matchesSearch;
+      const rsvp = profile.guestInfo?.rsvp;
+      if (!rsvp) {
+        // No RSVP record at all. "Pending" covers these alongside the rows
+        // sitting at `status: 'pending'` — both are guests who still owe a
+        // reply, which is how StatisticService counts them too.
+        return filterValue === 'all' || filterValue === 'pending' || filterValue === 'undefined';
       }
 
-      if (profile.guestInfo?.rsvp) {
-        if (profile.guestInfo.rsvp.id !== profile.id) return false;
-        const matchesFilter =
-          filterValue === 'all' || profile.guestInfo.rsvp.status === filterValue;
-        matchesSearch = matchesSearch && matchesFilter;
-      }
-      // const rsvp = this.ownRsvp(profile);
-      // const matchesFilter = filterValue === 'all' || rsvp.status === filterValue;
-      return matchesSearch;
+      // A partner with their own account carries the couple's shared RSVP but
+      // not its id; the owning profile is already the row for that couple.
+      if (rsvp.id !== profile.id) return false;
+
+      return filterValue === 'all' || rsvp.status === filterValue;
     });
   });
 
@@ -145,11 +102,7 @@ export class GuestManager {
   });
 
   constructor() {
-    this.userProfileCollection.loaded$.subscribe((loaded) => {
-      if (!loaded) {
-        this.userProfileCollection.getAll(); // Only fetches if cache is empty
-      }
-    });
+    this.statistics.load(); // Only fetches if cache is empty
   }
 
   /** Set the active filter and reset pagination */

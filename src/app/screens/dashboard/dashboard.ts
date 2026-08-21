@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { HeaderService } from '../../core';
+import { HeaderService, StatisticService } from '../../core';
 import { DashboardService } from '../../core/dashboard.service';
 import { DecorFish } from '../../shared/decor/fish';
 import { ProgressBar } from '../../shared/progress-bar/progress-bar';
@@ -19,8 +19,12 @@ export class Dashboard {
   protected readonly dash = inject(DashboardService);
   protected readonly translate = inject(TranslateService);
 
+  /** Same RSVP aggregates the guest manager header shows. */
+  protected readonly statistics = inject(StatisticService);
+
   constructor() {
     inject(HeaderService).set(inject(TranslateService).instant('shared.couple'));
+    this.statistics.load();
   }
 
   daysTranslationKey() {

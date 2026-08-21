@@ -12,21 +12,32 @@
 
     <div class="stats">
       <div class="stat">
-        <div class="value accent">??</div>
+        <div class="value">{{ statistics.guestStatistics().rsvp.total }}</div>
+        <div class="label stat-label">{{ 'dashboard.rsvp.total' | translate }}</div>
+      </div>
+      <div class="stat">
+        <div class="value accent">{{ statistics.guestStatistics().rsvp.attending }}</div>
         <div class="label stat-label">{{ 'dashboard.rsvp.attending' | translate }}</div>
       </div>
       <div class="stat">
-        <div class="value">??</div>
+        <div class="value">{{ statistics.guestStatistics().rsvp.pending }}</div>
         <div class="label stat-label">{{ 'dashboard.rsvp.pending' | translate }}</div>
       </div>
       <div class="stat">
-        <div class="value">??</div>
+        <div class="value">{{ statistics.guestStatistics().rsvp.declined }}</div>
         <div class="label stat-label">{{ 'dashboard.rsvp.declined' | translate }}</div>
       </div>
     </div>
-    <app-progress-bar class="progress" [percent]="0" />
+    <app-progress-bar class="progress" [percent]="statistics.repliedPercent()" />
     <div class="caption">
-      {{ 'dashboard.rsvp.progress' | translate: { percent: 0, total: 80 } }}
+      {{
+        'dashboard.rsvp.progress'
+          | translate
+            : {
+                percent: statistics.repliedPercent(),
+                total: statistics.guestStatistics().rsvp.total,
+              }
+      }}
     </div>
   </div>
 

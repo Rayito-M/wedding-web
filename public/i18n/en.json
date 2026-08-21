@@ -223,6 +223,7 @@
       "attending": "Attending",
       "pending": "Pending",
       "declined": "Declined",
+      "total": "Total",
       "progress": "{{percent}}% of {{total}} guests have replied"
     },
     "budget": "Budget",
@@ -538,6 +539,7 @@
       "title": "Guest manager"
     },
     "status": {
+      "total": "Total",
       "undefined": "Not Answered",
       "attending": "Attending",
       "pending": "Pending",

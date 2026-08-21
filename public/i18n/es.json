@@ -220,6 +220,7 @@
       "attending": "Confirmados",
       "pending": "Pendiente",
       "declined": "Rechazados",
+      "total": "Total",
       "progress": "{{percent}}% de {{total}} invitados han respondido"
     },
     "budget": "Presupuesto",
@@ -534,6 +535,8 @@
       "headCount": "Total de asistentes"
     },
     "status": {
+      "total": "Total",
+      "undefined": "Sin respuesta",
       "attending": "Confirmados",
       "pending": "Pendiente",
       "declined": "Rechazados"
