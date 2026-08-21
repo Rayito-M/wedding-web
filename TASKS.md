@@ -2110,7 +2110,14 @@
   `src/app/screens/rsvp-create/rsvp-create.{ts,html,scss}`
 
 ### T262 — Repair `app.spec.ts` TestBed: missing `EntityServices` provider (unblocks Phase J)
-- **Status:** todo
+- **Status:** done. `pnpm test` is green again (`13 passed`, 0 failed). Fixed with the **real**
+  ngrx/data wiring mirroring `app.config.ts:64–69`, not a stub, so `App` keeps exercising the
+  actual `ConfigurationService` loading/error signals. `provideHttpClientTesting()` was added
+  alongside: wiring the real effects means the constructor's `load()` now genuinely reaches
+  `HttpClient`, and without a testing backend jsdom would fire a live XHR at
+  `environment.apiBaseUrl` during unit tests. Note for future specs: this repo had **no**
+  prior TestBed pattern for store-backed services — `app.spec.ts` is now the reference.
+  T257–T261 are unblocked.
 - **Owner:** agent (implementer)
 - **Depends on:** —
 - **Context:** `pnpm test` is **red at HEAD** and has been since `36b937b` (the `StatisticService`
