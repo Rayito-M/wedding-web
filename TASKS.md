@@ -1853,7 +1853,15 @@
 > `public/i18n/*.json` and cannot conflict there.
 
 ### T255 — `app-input`: disabled/read-only visual state (DS `core/Input`)
-- **Status:** todo
+- **Status:** done (`265a5d6`) — **one criterion deferred, not met:** the WCAG 2.1 AA contrast
+  check fails. `--text-muted` on `--surface-chip` computes to 4.08:1 (terracotta), 3.86:1
+  (mauve), 3.99:1 (verdeagua) against a 4.5:1 threshold (the field's 18px regular serif is not
+  WCAG "large text"). Inherent to the token pair §Decision.4 prescribes, not to the rule as
+  written — any implementation fails identically. `:host(:disabled)` is plausibly covered by
+  WCAG 1.4.3's inactive-UI-component exemption; `:host([readonly])` is **not** (still focusable,
+  still tab-ordered) and the DS applies `readOnly` for exactly the Phase J lock case. Resolving
+  it needs a darker on-chip alias in `../wedding-ui-design` — a DS-side change, out of scope
+  here. Unresolved.
 - **Owner:** agent (implementer)
 - **Depends on:** —
 - **Context:** DS `components/core/Input.jsx` now takes a `disabled` prop and renders
@@ -1880,7 +1888,10 @@
   `src/app/shared/input/{input.ts,input.scss}`; `src/styles/_tokens.scss` (`--surface-chip`)
 
 ### T256 — Shared `partnerHasAccount()` helper + all Phase J i18n keys
-- **Status:** todo
+- **Status:** done (`ecd863d`). All acceptance criteria met except the `pnpm test` green gate,
+  which is blocked by a pre-existing HEAD failure — see T262. es `partnerLinkedHint` uses
+  feminine "Vinculada" (agrees with "Tu pareja"); fr `plusOne` is "accompagnant". Both flagged
+  for a native-speaker pass.
 - **Owner:** agent (implementer)
 - **Depends on:** —
 - **Context:** The app must answer "does this partner have their own guest account?" in five
@@ -2098,6 +2109,41 @@
   (`nameLocked`), L68–76 (disabled inputs + "Linked to their guest account…" hint);
   `src/app/screens/rsvp-create/rsvp-create.{ts,html,scss}`
 
+### T262 — Repair `app.spec.ts` TestBed: missing `EntityServices` provider (unblocks Phase J)
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** —
+- **Context:** `pnpm test` is **red at HEAD** and has been since `36b937b` (the `StatisticService`
+  landing). That commit made `ConfigurationService` inject `EntityServices` from `@ngrx/data`
+  (`src/app/core/service/configuration.service.ts:20`); `src/app/app.spec.ts`'s TestBed provides
+  no ngrx/data store, so both of its cases fail:
+  ```
+  FAIL src/app/app.spec.ts > App > should create the app
+  FAIL src/app/app.spec.ts > App > should apply the active theme to <html>
+  ɵNotFound: NG0201: No provider found for `EntityServices`.
+  Path: _ConfigurationService -> EntityServices
+  ```
+  Verified pre-existing by running `ng test` in a detached worktree at `847a25a` — same two
+  failures, none of Phase J's edits present. **Every Phase J task carries a `pnpm test` green
+  gate, so this blocks T257–T261.** Do this one first.
+- **Acceptance:**
+  - `src/app/app.spec.ts` resolves `EntityServices` — either by providing the real ngrx/data
+    setup the app uses, or by supplying a minimal stub whose
+    `getEntityCollectionService()` returns what `ConfigurationService` reads. Prefer whichever
+    matches how other specs in this repo already handle store-backed services; grep first, do not
+    invent a third pattern.
+  - Both `app.spec.ts` cases pass. `pnpm test` is fully green — `0 failed`.
+  - **No production code changes.** `configuration.service.ts` and `statistic.service.ts` are
+    correct as written; this is a test-harness gap, not a service bug. If the fix appears to
+    require touching a service, stop and report instead.
+  - No new `type`/`interface` redeclaring an API model (Hard rule 15) — a test stub is not an
+    exception to it.
+  - `pnpm typecheck && pnpm lint` green (lint: the known pre-existing `shared/modal/` errors
+    only, unchanged).
+- **Refs:** `src/app/app.spec.ts`; `src/app/core/service/configuration.service.ts:20`;
+  `src/app/core/service/statistic.service.ts:50`; breaking commit `36b937b`; `@ngrx/data`
+  `EntityServices` / `provideEntityData`
+
 > **Phase J open questions — answer before starting T258/T259, they are not blockers for
 > T255–T257, T260–T261.**
 >
@@ -2106,8 +2152,8 @@
 >    i.e. an admin can link/relink/unlink an *existing* guest's partner. The web only has that UI in
 >    `app-guest-create-modal` (create-time). The endpoints exist (`PUT`/`DELETE
 >    /v1/guests/{id}/partner…`, incl. the "already linked to a third guest" 409). Do we want this in
->    `GuestProfileModal`'s edit mode? It is a separate task (~T262) if yes — deliberately **not**
->    written yet.
+>    `GuestProfileModal`'s edit mode? It is a separate task (next free number — T262 has since been
+>    taken by the `app.spec.ts` repair) if yes — deliberately **not** written yet.
 > 2. **Preferred language on the profile view.** DS shows a "Preferred language" `Info` row and a
 >    segmented control in the edit form; `UserProfileDto.preferredLang` exists and
 >    `GuestCreateModal` already sets it, but `GuestProfileModal` shows/edits neither. Unrelated to
