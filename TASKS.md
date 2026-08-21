@@ -1827,3 +1827,293 @@
   vs. `src/app/{screens,shared,core}/**/*.ts`; seed files:
   `src/app/screens/guest-manager/modal/guest-create-modal.ts`,
   `src/app/screens/guest-manager/modal/rsvp-details-modal.ts`.
+
+## Phase J — Partner: "own guest account" vs. "plus-one" (DS re-sync, in-repo ADR W-0002)
+
+> The design system reworked partner handling across `ScreenGuestManager`,
+> `ScreenGuestManagerMobile`, `ScreenRSVPCreate` and `ScreenRSVPEdit` (DS commits `9e44df2`,
+> `2aef7de`, `f161a34`, `19005e7`, `f26c721`). One idea runs through all four: a partner either
+> **has their own guest account** — name owned by that account, shown read-only and tinted
+> `--accent` — or is a **plus-one** on someone else's invitation — name typed, shown muted.
+> `GLOSSARY.md` §Plus-one and hub ADR-0024 already define this; the contract already carries it
+> (`anyOf` where the presence of `id` is the only discriminator). **No hub escalation, no contract
+> change, no `pnpm gen:api` needed.** In-repo ADR W-0002 pins the rule and the Hard-rule-15-safe
+> way to read it. Read `docs/decisions/W-0002-partner-account-vs-plus-one.md` first.
+>
+> **Baseline warning:** at the time of writing, `guest-manager.{ts,html}`, `dashboard.{ts,html}`,
+> `core/dashboard.service.ts`, `core/service/index.ts`, `core/service/statistic.service.ts` and all
+> three `public/i18n/*.json` have **uncommitted in-flight work** (the shared `StatisticService`).
+> Branch from that working tree, do not revert it. In particular `StatisticService.ownRsvp()` and
+> `GuestManager.filteredGuests()` already implement "a partner with their own account carries the
+> couple's shared RSVP but does not own it, so they get no second row" — Phase J builds on that and
+> must not re-derive or contradict it.
+>
+> T255 and T256 are the foundation; T257–T261 each consume them and are otherwise independent.
+> T256 lands **all** new i18n keys in one commit so the five consumer tasks never touch
+> `public/i18n/*.json` and cannot conflict there.
+
+### T255 — `app-input`: disabled/read-only visual state (DS `core/Input`)
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** —
+- **Context:** DS `components/core/Input.jsx` now takes a `disabled` prop and renders
+  `disabled` + `readOnly` with `background: var(--chip)`, `color: var(--sub)`,
+  `cursor: default`. The web's `input[app-input]` (`src/app/shared/input/input.scss`) has no
+  disabled state at all, so a natively-disabled field is indistinguishable from an editable one.
+  Every Phase J lock UI depends on this. Pure styling — the component stays a bare attribute
+  component with no new inputs (native `[disabled]`/`readonly` is what callers use).
+- **Acceptance:**
+  - `src/app/shared/input/input.scss` gains `:host(:disabled), :host([readonly])` rules using
+    **semantic aliases only**: `background: var(--surface-chip)`, `color: var(--text-muted)`,
+    `cursor: default`. No new hex, no raw-role token (`--chip`/`--sub`), no
+    `@media (prefers-color-scheme: …)`.
+  - The border stays `var(--border-hairline)` — the DS keeps the same 1px hairline when disabled;
+    do not add a shadow (CLAUDE.md rule 3: in-flow elements stay flat).
+  - `TextInput` in `src/app/shared/input/input.ts` gains **no** `input()` signal — no API change,
+    no template change beyond what the selector already supports.
+  - Verified visually in all three themes (`data-theme` = terracotta / mauve / verdeagua) that the
+    disabled fill reads as a filled chip and the text still meets WCAG 2.1 AA contrast against it.
+  - Component validates against the design spec (`../wedding-ui-design/components/core/Input.jsx`,
+    `Input.prompt.md`).
+  - `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** in-repo ADR W-0002 §Decision.4; DS `components/core/Input.jsx`;
+  `src/app/shared/input/{input.ts,input.scss}`; `src/styles/_tokens.scss` (`--surface-chip`)
+
+### T256 — Shared `partnerHasAccount()` helper + all Phase J i18n keys
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** —
+- **Context:** The app must answer "does this partner have their own guest account?" in five
+  places. The contract's only discriminator is the presence of `id` on the `anyOf` variant —
+  `UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf1` and
+  `RsvpDtoAdultsPartner2AnyOf1` have it, `…AnyOf` (plus-one) does not. **Do not declare a local
+  partner/plus-one type or union** (Hard rule 15): openapi-generator flattens each `anyOf` into
+  one merged interface where `id` is wrongly typed as required `string`, and the sanctioned
+  workaround is a `boolean` helper over the generated types, not a parallel model. The repo
+  already carries two `// reason:`-annotated `as unknown as RsvpDtoAdultsPartner2` casts for the
+  same artifact (`core/helper/rsvp-draft.ts`, `screens/rsvp-create/rsvp-create.ts`) — leave those
+  in place, this task does not refactor them.
+- **Acceptance:**
+  - New `src/app/core/helper/partner-account.ts` exporting exactly one function:
+    `partnerHasAccount(partner): boolean`, accepting
+    `UserProfileListResponseDtoProfilesInnerGuestInfoPartner | RsvpDtoAdultsPartner2 | AdultDraft | null | undefined`
+    (all imported — the first two from `src/app/core/api`, `AdultDraft` from
+    `src/app/core/helper/rsvp-draft.ts`) and returning `!!partner?.id` (trim-safe: an empty-string
+    `id` counts as **no** account). Exported from `src/app/core/helper/index.ts`.
+  - **No** new `type`/`interface`/`enum`/string-union is declared anywhere in this task. Not a
+    type predicate (`partner is …AnyOf1`) — a plain `boolean`; the ADR explains why.
+  - Unit spec `partner-account.spec.ts` covering: `undefined`, `null`, `{firstName,lastName}` →
+    `false`; `{id:'…',firstName,lastName}` → `true`; `{id:''}` → `false`.
+  - New i18n keys added to **all three** of `public/i18n/{en,es,fr}.json`, keeping the existing
+    hierarchical kebab/camel key style and each file's key ordering:
+    - `shared.partner.ownAccount` — en "own guest account"
+    - `shared.partner.plusOne` — en "plus-one"
+    - `shared.partner.nameManaged` — en "Name managed by their own guest account."
+    - `guest_manager.profile.partner` — en "Partner"
+    - `guest_manager.rsvp.partnerNameRequired` — en "The partner needs a first and last name."
+    - `rsvp.create.party.partnerLinkedHint` — en "Linked to their guest account — the name comes
+      from the guest list."
+    - `rsvp.edit.footer.unnamed.{none,singular,plural}` — plural set for `PluralTranslatePipe`
+      (`none` unused but required by the pipe's key contract); en singular "{{count}} guest needs
+      a first and last name", plural "{{count}} guests need a first and last name"
+  - es/fr translations are real translations, not English placeholders; the three files stay
+    structurally identical (same key set).
+  - No component/template changes in this task — keys land unused, consumed by T257–T261.
+  - `pnpm typecheck && pnpm lint && pnpm test` green; `pnpm gen:api:check` still clean.
+- **Refs:** in-repo ADR W-0002 §Decision.1–2; CLAUDE.md Hard rule 15 + hard rule 8; hub
+  `GLOSSARY.md` §Plus-one; generated types
+  `src/app/core/api/model/user-profile-list-response-dto-profiles-inner-guest-info-partner*.ts`,
+  `src/app/core/api/model/rsvp-dto-adults-partner2*.ts`;
+  `src/app/core/helper/{index.ts,rsvp-draft.ts}`; `src/app/core/pipe/plural-translate.pipe.ts`
+
+### T257 — Guest manager row: partner line reads account vs. plus-one, on mobile too
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** T256
+- **Context:** DS `PartnerLine` / `GmPartnerLine` render the partner under the guest name as a
+  small dot + name, **tinted `--accent` and 500-weight when the partner has an account**, muted
+  (`--sub`, 400) when they are a plus-one — and the mobile screen shows the same line. The web
+  row (`guest-manager.html` `.guest-secondary`) prints `partner.firstName partner.lastName` with
+  no distinction at all, and `guest-manager.scss` hides it entirely below the desktop tier
+  (`display: none`, flipped to `block` only in the desktop block). Touches the same two files as
+  the in-flight `StatisticService` work — rebase, don't revert.
+- **Acceptance:**
+  - The partner line renders on **all** viewport tiers (remove the mobile `display: none` /
+    desktop-only `display: block` pairing for `.guest-secondary`), matching
+    `ScreenGuestManagerMobile`.
+  - The line is a leading dot + the partner's full name, using `partnerHasAccount()` (T256) to
+    pick between two classes — e.g. `[class.has-account]="…"`. Account: dot and text
+    `var(--brand-accent)`, font-weight 500. Plus-one: dot `var(--brand-accent-tertiary)` (the
+    semantic alias for the DS's `--accent-3`, already mirrored in `src/styles/_tokens.scss` L77),
+    text `var(--text-muted)`, font-weight 400. Semantic aliases only — no raw `--accent`/`--sub`,
+    no new token (a new token would be a DS escalation).
+  - Name truncates with ellipsis on one line (DS: `whiteSpace: nowrap; overflow: hidden;
+    textOverflow: ellipsis`) so a long name cannot reflow the row.
+  - Account status is **not** conveyed by colour alone (WCAG 2.1 AA / CLAUDE.md rule 14): the line
+    carries an `aria-label` or visually-hidden suffix built from
+    `shared.partner.ownAccount` / `shared.partner.plusOne`.
+  - No new local types; no hardcoded colours; no new breakpoint (reuse the tiers documented by
+    T248).
+  - Existing row behaviour unchanged: still one row per couple (a partner with their own account
+    is still filtered out by `filteredGuests()`), counts still come from `StatisticService`.
+  - `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** in-repo ADR W-0002; DS `ui_kits/wedding-app/ScreenGuestManager.jsx` (`PartnerLine`,
+  L35–43) and `ScreenGuestManagerMobile.jsx` (`GmPartnerLine`, L33–41);
+  `src/app/screens/guest-manager/guest-manager.html` (`.col-guest` block),
+  `src/app/screens/guest-manager/guest-manager.scss` (`.guest-secondary`, ~L280 and ~L510);
+  `src/app/core/service/statistic.service.ts`
+
+### T258 — Guest profile modal: "Partner" info row with account / plus-one suffix
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** T256
+- **Context:** DS `ScreenGuestManager` profile view now shows
+  `Info label="Partner" value="{name} · own guest account"` or `"{name} · plus-one"`, and `—`
+  when there is no partner. `guest-profile-modal.html`'s `.info-grid` has Side·Group,
+  Relationship link, Email, Phone and Table — **no Partner row at all**, so an admin cannot tell
+  from the profile whether the partner can sign in.
+- **Acceptance:**
+  - A "Partner" `.info-item` is added to the `@case ('profile')` `.info-grid`, after Phone and
+    before Table (DS ordering), labelled `guest_manager.profile.partner`.
+  - Value: `{firstName} {lastName} · {suffix}` where `suffix` is `shared.partner.ownAccount` or
+    `shared.partner.plusOne`, chosen by `partnerHasAccount(guestProfile()?.guestInfo?.partner)`
+    (T256). Renders the muted `—` placeholder when `guestInfo.partner` is absent, exactly like the
+    existing Table row.
+  - The composed string is assembled in the template or in a small `computed()` on
+    `guest-profile-modal.ts` — no new type, no `any`, and no re-reading of `partner.id` outside
+    the helper.
+  - All three languages already have the keys (T256); no `public/i18n/*.json` edit in this PR.
+  - The `@case ('edit')` branch is untouched — linking/unlinking a partner from the profile
+    editor is **not** in scope (see Open questions in the Phase J note below).
+  - Component validates against the design spec; no inline styles, no new colours.
+  - `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** in-repo ADR W-0002; DS `ScreenGuestManager.jsx` L294 (`Info label="Partner"`);
+  `src/app/screens/guest-manager/modal/guest-profile-modal.{ts,html}`
+
+### T259 — Manage-RSVP modal (admin): lock a linked partner's name + require first/last name
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** T255, T256
+- **Context:** Two DS behaviours are missing from the admin RSVP editor.
+  (a) `partnerLocked = draft.partner != null && partnerHasAccount(draft.partner)` — when true the
+  DS renders the partner's name as **plain text** (`fontSize: 14, fontWeight: 500`) instead of an
+  input, because the name belongs to that guest's own account. `manage-rsvp-modal.html` currently
+  renders two always-editable inputs, so an admin can rename another guest's account from inside a
+  third party's RSVP.
+  (b) `partnerNameOk` — a partner must have **both** a first and a last name; the DS disables
+  "Save changes" and shows "The partner needs a first and last name." in the footer. The web has
+  no such gate, so an empty-named partner can be saved.
+  `AdultDraft.id` in `core/helper/rsvp-draft.ts` already carries the linked id forward on save —
+  no mapping change is needed, only UI.
+- **Acceptance:**
+  - `PersonCard` gains a `hasAccount` field populated from `partnerHasAccount(d.partner2)` (T256).
+    `PersonCard` is an existing local **view-model** for rendering, not an API-model
+    redeclaration — extending it is fine; do not add an API-shaped type next to it.
+  - When the partner has an account, the partner card renders the name as static text
+    (`{{firstName}} {{lastName}}`) plus the hint `shared.partner.nameManaged`, and **the remove
+    (`×`) button is still shown** (the DS keeps `removePartner` available in this branch) — the
+    two name `<input app-input>` elements are not rendered.
+  - When the partner is a plus-one, the current two-input layout is unchanged.
+  - Save gate: "Save changes" is `[disabled]` when a partner exists and either trimmed name is
+    empty; the footer shows `guest_manager.rsvp.partnerNameRequired` in that state, replacing the
+    existing spacer/no-message. Existing `saving()`/`!rsvp()` disable conditions still apply.
+  - Adding a partner via "+ Add partner" still produces an editable (plus-one) card — a new
+    partner never has an account.
+  - `setAdultFirstName`/`setAdultLastName` are not reachable for `partner2` when it has an
+    account (guard in the component, not only in the template).
+  - No i18n edits (T256 landed the keys); no new colours; component validates against the design
+    spec.
+  - `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** in-repo ADR W-0002 §Decision.3; DS `ScreenGuestManager.jsx` L107–109 (`partnerLocked`,
+  `partnerNameOk`, `saveEdit`), L349–361 (locked branch), L386 (footer message) and the mirrored
+  `ScreenGuestManagerMobile.jsx` L81–83, L253–265;
+  `src/app/screens/guest-manager/modal/manage-rsvp-modal.{ts,html,scss}`;
+  `src/app/core/helper/rsvp-draft.ts` (`AdultDraft.id`)
+
+### T260 — RSVP edit (guest): lock a linked partner's name + "needs a first and last name" gate
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** T255, T256
+- **Context:** DS `ScreenRSVPEdit` gained `nameLocked(p) = !!p.linked && !!p.firstName`: the
+  first/last-name `Input`s are rendered `disabled` and the hint "Name managed by their own guest
+  account." appears under them. It also gained an `unnamed` gate — every adult in the party needs
+  both names, the Save button is disabled and the footer reads "N guests need a first and last
+  name" (the DS's sibling `incomplete`/phone-number gate belongs to the account-provisioning
+  sub-flow that stays out of scope, see W-0002). `rsvp-edit.html` today lets the guest retype a
+  linked partner's name and offers no name gate at all.
+- **Acceptance:**
+  - `PersonCard` (local view-model in `rsvp-edit.ts`) gains `hasAccount`, from
+    `partnerHasAccount(d.partner2)` (T256), for the `partner` card only (`you` / `child` cards
+    keep their current behaviour — `partner1` is the signed-in guest editing their own name).
+  - When the partner card has an account: both name inputs render with the native `[disabled]`
+    attribute (styled by T255) and a hint paragraph shows `shared.partner.nameManaged` beneath the
+    row. Values still display; the remove (`×`) button stays available as it is today.
+  - New `unnamed` gate: a `computed()` counting adult cards (`you`, `partner`) whose trimmed
+    first **or** last name is empty. When > 0, the Save button is `[disabled]` and the footer
+    `.status` shows
+    `'rsvp.edit.footer.unnamed' | pluralTranslate: unnamedCount() | translate: { count: … }`,
+    taking priority over the `saveFailed` / `dirty` / `saved` messages in that order:
+    error → unnamed → unsaved → saved.
+  - A disabled (account-owned) partner name never counts as `unnamed` — it is by definition
+    already set — so the gate can never deadlock the guest.
+  - `setPartner2FirstName`/`setPartner2LastName` are guarded in the component so a programmatic
+    call cannot bypass the lock.
+  - No i18n edits; no new colours; component validates against the design spec.
+  - `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** in-repo ADR W-0002; DS `ui_kits/wedding-app/ScreenRSVPEdit.jsx` L22–26 (`unnamed`,
+  `nameLocked`), L62–70 (disabled inputs + hint), L129–130 (footer + Save gate);
+  `src/app/screens/rsvp-edit/rsvp-edit.{ts,html,scss}`;
+  `src/app/core/pipe/plural-translate.pipe.ts`
+
+### T261 — RSVP create (guest): stop accepting edits to a linked partner's name (silent-discard bug)
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** T255, T256
+- **Context:** **This is a real bug, not only a visual gap.** `rsvp-create.ts` already computes
+  `hasLinkedPartner()` (`!!this.rsvp().adults.partner2?.id`) and, on submit, deliberately ignores
+  anything typed into the partner name fields — `typedPartner` is `undefined` when
+  `hasLinkedPartner()` is true, and `rsvp.adults.partner2` is carried forward verbatim (L278–298).
+  But `rsvp-create.html` L72–85 still renders two fully editable inputs bound to
+  `setPartnerFirstName`/`setPartnerLastName`. A guest can type a correction, see it accepted, press
+  Continue, and have it silently thrown away. DS `ScreenRSVPCreate` renders those inputs
+  `disabled={nameLocked}` with the hint "Linked to their guest account — the name comes from the
+  guest list."
+- **Acceptance:**
+  - When `hasLinkedPartner()` is true, both party-step partner inputs render with the native
+    `[disabled]` attribute (styled by T255) and a hint paragraph shows
+    `rsvp.create.party.partnerLinkedHint` beneath the row.
+  - `setPartnerFirstName`/`setPartnerLastName` return early when `hasLinkedPartner()` — the draft
+    can no longer diverge from what will actually be submitted.
+  - The submit path (`typedPartner` / `partner2` carry-forward) is **unchanged** — this task only
+    stops the UI from lying about it. No change to the two existing `// reason:`-annotated
+    `as unknown as RsvpDtoAdultsPartner2` casts.
+  - `partnerReady` still gates Continue correctly for the plus-one case (both names required) and
+    is trivially satisfied for the linked case.
+  - The step-0 toggle already labels itself with the linked partner's name — leave that as is.
+  - Use `partnerHasAccount()` (T256) rather than the inline `!!…partner2?.id`, so the rule lives in
+    one place; `hasLinkedPartner` keeps its name and doc comment.
+  - No i18n edits; no new colours; component validates against the design spec.
+  - `pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e` green.
+- **Refs:** in-repo ADR W-0002 §Decision.3; DS `ui_kits/wedding-app/ScreenRSVPCreate.jsx` L26
+  (`nameLocked`), L68–76 (disabled inputs + "Linked to their guest account…" hint);
+  `src/app/screens/rsvp-create/rsvp-create.{ts,html,scss}`
+
+> **Phase J open questions — answer before starting T258/T259, they are not blockers for
+> T255–T257, T260–T261.**
+>
+> 1. **Partner linking from the profile editor.** The DS `editProfile` branch now carries the whole
+>    "Link to the guest partner" switch + candidate picker (`ScreenGuestManager.jsx` L254–276),
+>    i.e. an admin can link/relink/unlink an *existing* guest's partner. The web only has that UI in
+>    `app-guest-create-modal` (create-time). The endpoints exist (`PUT`/`DELETE
+>    /v1/guests/{id}/partner…`, incl. the "already linked to a third guest" 409). Do we want this in
+>    `GuestProfileModal`'s edit mode? It is a separate task (~T262) if yes — deliberately **not**
+>    written yet.
+> 2. **Preferred language on the profile view.** DS shows a "Preferred language" `Info` row and a
+>    segmented control in the edit form; `UserProfileDto.preferredLang` exists and
+>    `GuestCreateModal` already sets it, but `GuestProfileModal` shows/edits neither. Unrelated to
+>    partners — flagging it as a drift found while surveying, not scheduled.
+> 3. **Two account-holding guests, neither with an RSVP yet.** `filteredGuests()` /
+>    `StatisticService` de-duplicate a couple by `rsvp.id === profile.id`; with no RSVP record at
+>    all both profiles show as separate "Not Answered" rows even when `guestInfo.partner` links
+>    them. Intended, or should the partner link de-duplicate too? Affects counts, so worth a
+>    decision before more numbers are built on it.
