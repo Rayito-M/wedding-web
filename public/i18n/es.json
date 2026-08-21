@@ -559,7 +559,8 @@
       "back": "Atrás",
       "saveProfile": "Guardar perfil",
       "saveChanges": "Guardar cambios",
-      "createGuest": "Crear invitado"
+      "createGuest": "Crear invitado",
+      "retryPartnerLink": "Reintentar la vinculación"
     },
     "table": {
       "guest": "Invitado",
@@ -695,7 +696,8 @@
         "linkLabel": "Vincular con la pareja del invitado",
         "searchPlaceholder": "Buscar invitados existentes…",
         "noCandidates": "No hay invitados que coincidan.",
-        "existingHint": "La pareja ya debe estar en la lista de invitados. Créala primero como invitada y luego vincúlala. Al vincularlas se mantienen ambas invitaciones: la pareja se sienta y se cuenta junta."
+        "existingHint": "La pareja ya debe estar en la lista de invitados. Créala primero como invitada y luego vincúlala. Al vincularlas se mantienen ambas invitaciones: la pareja se sienta y se cuenta junta.",
+        "linkFailed": "El invitado se ha creado, pero no se ha podido vincular la pareja. Puede que ya esté vinculada a otra persona: elige otro invitado o inténtalo de nuevo."
       },
       "childName": "Nombre del niño/a",
       "age": "Edad"

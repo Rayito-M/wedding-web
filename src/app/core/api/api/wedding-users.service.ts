@@ -19,10 +19,6 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 // @ts-ignore
 import { CreateUserDto } from '../model/create-user-dto';
 // @ts-ignore
-import { ImportUserDto } from '../model/import-user-dto';
-// @ts-ignore
-import { ImportUserResultDto } from '../model/import-user-result-dto';
-// @ts-ignore
 import { UpdateUserDto } from '../model/update-user-dto';
 // @ts-ignore
 import { UserDto } from '../model/user-dto';
@@ -42,14 +38,6 @@ export interface UsersControllerCreateV1RequestParams {
 export interface UsersControllerGetV1RequestParams {
     /** User ULID, or the literal &#x60;me&#x60; for the authenticated user */
     id: string;
-}
-
-export interface UsersControllerImportCsvV1RequestParams {
-    body: string;
-}
-
-export interface UsersControllerImportJsonV1RequestParams {
-    importUserDto: ImportUserDto;
 }
 
 export interface UsersControllerListV1RequestParams {
@@ -84,6 +72,7 @@ export class WeddingUsersService extends BaseService {
 
     /**
      * Create a user (admin)
+     * Bride, groom, or provider. Guests are created through POST /v1/guests.
      * @endpoint post /v1/users
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -214,148 +203,6 @@ export class WeddingUsersService extends BaseService {
     }
 
     /**
-     * Bulk import users
-     * Import multiple users at once. Accepts CSV array of user objects. Required fields: firstName, lastName, phoneNumber. Optional: email. Skips duplicates by phone; returns created + failed with errors.
-     * @endpoint post /v1/users/import/csv
-     * @param requestParameters
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public usersControllerImportCsvV1(requestParameters: UsersControllerImportCsvV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ImportUserResultDto>;
-    public usersControllerImportCsvV1(requestParameters: UsersControllerImportCsvV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ImportUserResultDto>>;
-    public usersControllerImportCsvV1(requestParameters: UsersControllerImportCsvV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ImportUserResultDto>>;
-    public usersControllerImportCsvV1(requestParameters: UsersControllerImportCsvV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        const body = requestParameters?.body;
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling usersControllerImportCsvV1.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (bearer) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-            'application/json'
-        ];
-        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
-        if (httpContentTypeSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
-        }
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/v1/users/import/csv`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<ImportUserResultDto>('post', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                body: body,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * Bulk import users
-     * Import multiple users at once. Accepts JSON array of user objects. Required fields: firstName, lastName, phoneNumber. Optional: email. Skips duplicates by phone; returns created + failed with errors.
-     * @endpoint post /v1/users/import/json
-     * @param requestParameters
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public usersControllerImportJsonV1(requestParameters: UsersControllerImportJsonV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ImportUserResultDto>;
-    public usersControllerImportJsonV1(requestParameters: UsersControllerImportJsonV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ImportUserResultDto>>;
-    public usersControllerImportJsonV1(requestParameters: UsersControllerImportJsonV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ImportUserResultDto>>;
-    public usersControllerImportJsonV1(requestParameters: UsersControllerImportJsonV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        const importUserDto = requestParameters?.importUserDto;
-        if (importUserDto === null || importUserDto === undefined) {
-            throw new Error('Required parameter importUserDto was null or undefined when calling usersControllerImportJsonV1.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (bearer) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('bearer', 'Authorization', localVarHeaders, 'Bearer ');
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-            'application/json'
-        ];
-        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
-        if (httpContentTypeSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
-        }
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/v1/users/import/json`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<ImportUserResultDto>('post', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                body: importUserDto,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
      * List all users (admin)
      * @endpoint get /v1/users
      * @param requestParameters
@@ -446,6 +293,7 @@ export class WeddingUsersService extends BaseService {
 
     /**
      * Delete a user (admin)
+     * Guests are deleted through DELETE /v1/guests/{id}.
      * @endpoint delete /v1/users/{id}
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

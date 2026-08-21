@@ -564,7 +564,8 @@
       "back": "Back",
       "saveProfile": "Save profile",
       "saveChanges": "Save changes",
-      "createGuest": "Create guest"
+      "createGuest": "Create guest",
+      "retryPartnerLink": "Retry partner link"
     },
     "table": {
       "guest": "Guest",
@@ -700,7 +701,8 @@
         "linkLabel": "Link to the guest partner",
         "searchPlaceholder": "Search existing guests…",
         "noCandidates": "No matching guests.",
-        "existingHint": "Partners must already be on the guest list. Add them as a guest first, then link. Linking keeps both invitations — the pair is seated and counted together."
+        "existingHint": "Partners must already be on the guest list. Add them as a guest first, then link. Linking keeps both invitations — the pair is seated and counted together.",
+        "linkFailed": "The guest was created, but linking the partner failed. The partner may already be linked to someone else — pick another guest, or try again."
       },
       "childName": "Child name",
       "age": "Age"

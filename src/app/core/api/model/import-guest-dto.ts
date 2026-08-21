@@ -7,13 +7,10 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { ImportGuestDtoGuestsInner } from './import-guest-dto-guests-inner';
 
 
-export interface ImportUserResultDtoFailedInner { 
-    row: number;
-    firstName: string;
-    lastName: string;
-    error: string;
-    delegateTo?: Array<string>;
+export interface ImportGuestDto { 
+    guests: Array<ImportGuestDtoGuestsInner>;
 }
 

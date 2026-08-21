@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, signal, computed, inject, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  computed,
+  inject,
+  output,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -9,7 +16,7 @@ import {
   RsvpDto,
   RsvpDtoAdultsPartner1Options,
   UserProfileDto,
-  CreateUserDtoGuestInfoRelation,
+  CreateGuestDtoRelation,
 } from '@app/core';
 import { Modal } from '@app/shared/modal/modal';
 import { Btn } from '@app/shared/button/button';
@@ -226,7 +233,7 @@ export class GuestProfileModal {
     if (!profile) return;
 
     const { firstName, lastName, side, kind } = this.editForm.getRawValue();
-    const relation: CreateUserDtoGuestInfoRelation = {
+    const relation: CreateGuestDtoRelation = {
       side,
       kind,
       link: profile.guestInfo?.relation?.link ?? '',

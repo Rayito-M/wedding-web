@@ -559,7 +559,8 @@
       "back": "Retour",
       "saveProfile": "Enregistrer le profil",
       "saveChanges": "Enregistrer les modifications",
-      "createGuest": "Créer l’invité"
+      "createGuest": "Créer l’invité",
+      "retryPartnerLink": "Réessayer la liaison"
     },
     "table": {
       "guest": "Invité",
@@ -695,7 +696,8 @@
         "linkLabel": "Lier au partenaire de l’invité",
         "searchPlaceholder": "Rechercher parmi les invités…",
         "noCandidates": "Aucun invité correspondant.",
-        "existingHint": "Le partenaire doit déjà figurer sur la liste des invités. Créez-le d’abord comme invité, puis liez-le. Le lien conserve les deux invitations — le couple est placé et compté ensemble."
+        "existingHint": "Le partenaire doit déjà figurer sur la liste des invités. Créez-le d’abord comme invité, puis liez-le. Le lien conserve les deux invitations — le couple est placé et compté ensemble.",
+        "linkFailed": "L’invité a bien été créé, mais la liaison avec le partenaire a échoué. Le partenaire est peut-être déjà lié à quelqu’un d’autre — choisissez un autre invité ou réessayez."
       },
       "childName": "Prénom de l'enfant",
       "age": "Âge"

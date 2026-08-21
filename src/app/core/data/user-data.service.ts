@@ -35,12 +35,13 @@ export class UserDataService implements EntityCollectionDataService<UserDto> {
   }
 
   /**
-   * `POST /v1/users` (admin) — creates the guest account the guest manager's
-   * "Add guest" flow needs. `entity.id`/`entity.version` are ignored (the
-   * server assigns both); pass a `UserDraft` so the guest's `guestInfo`
-   * (`relation`, and `partnerId` when the guest is created linked to a
-   * partner account) travels with the create — it is the only request that
-   * accepts either field.
+   * `POST /v1/users` (admin) — creates a plain account (the config manager's
+   * bride/groom entries). `entity.id`/`entity.version` are ignored: the server
+   * assigns both.
+   *
+   * Guests do **not** come through here: a guest carries a `relation`, which
+   * only `POST /v1/guests` accepts (`WeddingGuestsService`), and their partner
+   * link is a separate route again.
    */
   add(entity: UserDto): Observable<UserDto> {
     const createUserDto: CreateUserDto = {
@@ -50,7 +51,6 @@ export class UserDataService implements EntityCollectionDataService<UserDto> {
       phoneNumber: entity.phoneNumber,
       email: entity.email,
       preferredLang: entity.preferredLang,
-      guestInfo: (entity as CreateUserDto).guestInfo,
     };
     return this.serviceApi.usersControllerCreateV1({ createUserDto });
   }

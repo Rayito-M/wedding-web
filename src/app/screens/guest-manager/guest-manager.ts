@@ -180,9 +180,11 @@ export class GuestManager {
   }
 
   /**
-   * A guest was just created: the modal writes to the User collection, not
-   * this Profile one, and only the profile carries the `relation` and `rsvp`
-   * summary the row renders — so fetch it rather than deriving a row locally.
+   * A guest was just created: the modal writes through `/v1/guests`, not this
+   * Profile collection, and only the profile carries the `relation`, `partner`
+   * and `rsvp` summary the row renders — so fetch it rather than deriving a row
+   * locally. Also emitted when the partner link failed after the account was
+   * created, in which case the row simply shows the guest unlinked.
    */
   onGuestCreated(userId: string): void {
     this.userProfileCollection.getByKey(userId);

@@ -7,7 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { RsvpDtoAdultsPartner1 } from './rsvp-dto-adults-partner1';
+import { RsvpDtoAdultsPartner2AnyOf1 } from './rsvp-dto-adults-partner2-any-of1';
 import { RsvpDtoAdultsPartner1Options } from './rsvp-dto-adults-partner1-options';
 import { RsvpDtoAdultsPartner2AnyOf } from './rsvp-dto-adults-partner2-any-of';
 
@@ -17,5 +17,6 @@ export interface RsvpDtoAdultsPartner2 {
     lastName: string;
     options?: RsvpDtoAdultsPartner1Options;
     id: string;
+    attending?: boolean;
 }
 

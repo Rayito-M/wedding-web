@@ -7,11 +7,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { RsvpDtoAdultsPartner1Options } from './rsvp-dto-adults-partner1-options';
 
 
-export interface ImportUserResultDtoCreatedInner { 
+export interface RsvpDtoAdultsPartner2AnyOf1 { 
     id: string;
     firstName: string;
     lastName: string;
+    attending?: boolean;
+    options?: RsvpDtoAdultsPartner1Options;
 }
 

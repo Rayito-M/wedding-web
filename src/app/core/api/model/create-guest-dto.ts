@@ -7,27 +7,19 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { CreateGuestDtoRelation } from './create-guest-dto-relation';
 
 
-export interface CreateUserDto { 
+export interface CreateGuestDto { 
     firstName: string;
     lastName: string;
     email?: string;
-    googleSub?: string;
-    appleSub?: string;
     phoneNumber: string;
-    role: CreateUserDto.RoleEnum;
-    preferredLang: CreateUserDto.PreferredLangEnum;
+    preferredLang: CreateGuestDto.PreferredLangEnum;
     delegateTo?: Array<string>;
+    relation: CreateGuestDtoRelation;
 }
-export namespace CreateUserDto {
-    export const RoleEnum = {
-        BRIDE: 'bride',
-        GROOM: 'groom',
-        GUEST: 'guest',
-        PROVIDER: 'provider'
-    } as const;
-    export type RoleEnum = typeof RoleEnum[keyof typeof RoleEnum];
+export namespace CreateGuestDto {
     export const PreferredLangEnum = {
         ES: 'es',
         EN: 'en',

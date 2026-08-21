@@ -7,11 +7,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf1 } from './user-profile-list-response-dto-profiles-inner-guest-info-partner-any-of1';
+import { UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf } from './user-profile-list-response-dto-profiles-inner-guest-info-partner-any-of';
 
 
 export interface UserProfileListResponseDtoProfilesInnerGuestInfoPartner { 
-    id: string;
     firstName: string;
     lastName: string;
+    id: string;
+    attending?: boolean;
 }
 

@@ -9,9 +9,8 @@
  */
 
 
-export interface ImportUserResultDtoSummary { 
-    total: number;
-    created: number;
-    failed: number;
+export interface UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf { 
+    firstName: string;
+    lastName: string;
 }
 

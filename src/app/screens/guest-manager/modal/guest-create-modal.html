@@ -179,6 +179,13 @@
     @if (createFailed()) {
       <p class="form-error" role="alert">{{ 'guest_manager.form.createFailed' | translate }}</p>
     }
+    <!-- The guest was created but the partner link was refused: the footer
+         button now retries the link alone (see `GuestCreateModal`). -->
+    @if (partnerLinkFailed()) {
+      <p class="form-error" role="alert">
+        {{ 'guest_manager.form.partner.linkFailed' | translate }}
+      </p>
+    }
   </form>
 
   <button
@@ -192,6 +199,11 @@
     {{ 'guest_manager.action.cancel' | translate }}
   </button>
   <button app-btn modal-actions type="button" [disabled]="saving()" (click)="createGuest()">
-    {{ 'guest_manager.action.createGuest' | translate }}
+    {{
+      (partnerLinkFailed()
+        ? 'guest_manager.action.retryPartnerLink'
+        : 'guest_manager.action.createGuest'
+      ) | translate
+    }}
   </button>
 </app-modal>

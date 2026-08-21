@@ -11,15 +11,14 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
-import { map } from 'rxjs';
 
 import {
   EntityNamesEnum,
   UserProfileDto,
-  CreateUserDto,
-  CreateUserDtoGuestInfoRelation,
-  CreateUserDtoGuestInfoRelationOneOf,
-  UserDto,
+  CreateGuestDto,
+  CreateGuestDtoRelation,
+  GuestListResponseDtoItemsInnerRelationOneOf,
+  WeddingGuestsService,
 } from '@app/core';
 import { langDescription } from '@app/model';
 import { Modal } from '@app/shared/modal/modal';
@@ -41,8 +40,12 @@ interface PartnerCandidate {
   kind: RelationKind;
 }
 
-/** E.164, mirroring `CreateUserDto.phoneNumber` — the guest's sign-in identity. */
+/** E.164, mirroring `CreateGuestDto.phoneNumber` — the guest's sign-in identity. */
 const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
+
+/** The family variant of `CreateGuestDtoRelation`, whose `link` is the closed
+ *  relationship enum (the other variants take free text). */
+type FamilyRelation = GuestListResponseDtoItemsInnerRelationOneOf;
 
 /**
  * Standalone "New guest" overlay (DS `ScreenGuestManager`/`ScreenGuestManagerMobile`
@@ -58,8 +61,14 @@ const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
  *
  * The DS partner section ("Link to the guest partner") is a switch over one
  * choice: a partner must already be on the guest list, so the section only ever
- * picks an existing guest and stores them as `guestInfo.partnerId`. Adding a
- * couple means creating each of the two guests, then linking from the second.
+ * picks an existing guest. Adding a couple means creating each of the two
+ * guests, then linking from the second.
+ *
+ * Creating and linking are two API calls, in that order: `POST /v1/guests`
+ * makes the account, then `POST /v1/guests/{id}/partner/{partnerId}` links it —
+ * `CreateGuestDto` has no partner field. So the link can fail on its own after
+ * the guest already exists; `createdGuestId` records that, and pressing the
+ * footer button again retries only the link instead of creating a duplicate.
  */
 @Component({
   selector: 'app-guest-create-modal',
@@ -72,7 +81,9 @@ const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 export class GuestCreateModal {
   readonly isOpen = signal(false);
   readonly closeModal = output<void>();
-  /** Emits the new guest's user id once their account and partner link exist. */
+  /** Emits the new guest's user id once the account exists — after the partner
+   *  link when one was asked for, but also when that link failed, since the
+   *  guest is on the list either way. */
   readonly guestCreated = output<string>();
 
   protected readonly relationSides: RelationSide[] = ['bride', 'groom', 'both'];
@@ -84,24 +95,32 @@ export class GuestCreateModal {
    * `app.config.ts`, also `TranslateLanguageService`'s browser-detect fallback
    * and `<html lang="en">`), not the 'es' the DS mock happens to default to.
    */
-  protected readonly preferredLangs: CreateUserDto.PreferredLangEnum[] = [
-    CreateUserDto.PreferredLangEnum.EN,
-    CreateUserDto.PreferredLangEnum.ES,
-    CreateUserDto.PreferredLangEnum.FR,
+  protected readonly preferredLangs: CreateGuestDto.PreferredLangEnum[] = [
+    CreateGuestDto.PreferredLangEnum.EN,
+    CreateGuestDto.PreferredLangEnum.ES,
+    CreateGuestDto.PreferredLangEnum.FR,
   ];
 
   /** Native language names (DS `LANG_OPTS`) — not translated: a language's own
    *  name doesn't change with the admin's UI language. */
   protected readonly langDescription = langDescription;
 
-  /** Full API enum (`CreateUserDtoGuestInfoRelationOneOf.LinkEnum`) — richer
-   *  than the DS mock's shortened `FAMILY_RELATIONS` list. */
-  protected readonly familyRelations: CreateUserDtoGuestInfoRelationOneOf.LinkEnum[] =
-    Object.values(CreateUserDtoGuestInfoRelationOneOf.LinkEnum);
+  /** Full API enum (the family relation's `LinkEnum`) — richer than the DS
+   *  mock's shortened `FAMILY_RELATIONS` list. */
+  protected readonly familyRelations: FamilyRelation['link'][] = Object.values(
+    GuestListResponseDtoItemsInnerRelationOneOf.LinkEnum,
+  );
 
   /** In-flight guard for the create chain — keeps the footer button disabled. */
   protected readonly saving = signal(false);
   protected readonly createFailed = signal(false);
+  /** The guest exists but `POST .../partner/...` was refused — the form stays
+   *  open on a link-only retry (see the class doc). */
+  protected readonly partnerLinkFailed = signal(false);
+
+  /** Set once `POST /v1/guests` has succeeded, so a retry after a failed
+   *  partner link never creates a second account. */
+  private readonly createdGuestId = signal<string | null>(null);
 
   private readonly fb = inject(NonNullableFormBuilder);
 
@@ -117,14 +136,15 @@ export class GuestCreateModal {
     { initialValue: [] },
   );
 
-  private readonly userCollection: EntityCollectionService<UserDto> = inject(
-    EntityServices,
-  ).getEntityCollectionService<UserDto>(EntityNamesEnum.USER);
+  /** Guests are their own resource (`/v1/guests`), and the partner link is a
+   *  sub-resource route rather than a field — neither maps onto an @ngrx/data
+   *  collection write, so both go straight through the generated client. */
+  private readonly guestsApi = inject(WeddingGuestsService);
 
   /**
    * `phoneNumber` is required and E.164-shaped because it is the guest's
-   * sign-in identity (ADR-0013: phone + SMS OTP) and `CreateUserDto` requires
-   * it; `email` is optional. The patterns mirror `CreateUserDto`'s so the
+   * sign-in identity (ADR-0013: phone + SMS OTP) and `CreateGuestDto` requires
+   * it; `email` is optional. The patterns mirror `CreateGuestDto`'s so the
    * form rejects what the API would reject.
    */
   protected readonly createForm = this.fb.group({
@@ -134,14 +154,14 @@ export class GuestCreateModal {
     email: ['', Validators.email],
     side: this.fb.control<RelationSide>('bride'),
     kind: this.fb.control<RelationKind>('family'),
-    preferredLang: this.fb.control<CreateUserDto.PreferredLangEnum>(
-      CreateUserDto.PreferredLangEnum.EN,
+    preferredLang: this.fb.control<CreateGuestDto.PreferredLangEnum>(
+      CreateGuestDto.PreferredLangEnum.EN,
     ),
     /**
-     * A select value (`CreateUserDtoGuestInfoRelationOneOf.LinkEnum` member)
-     * when `kind === 'family'`, free text otherwise — `createGuest()` shapes
-     * whichever `CreateUserDtoGuestInfoRelation` variant matches. Required
-     * because both API variants require a non-empty `link`.
+     * A select value (a family `LinkEnum` member) when `kind === 'family'`,
+     * free text otherwise — `createGuest()` shapes whichever
+     * `CreateGuestDtoRelation` variant matches. Required because both API
+     * variants require a non-empty `link`.
      */
     link: ['', Validators.required],
 
@@ -204,6 +224,8 @@ export class GuestCreateModal {
     // partner switch left behind.
     this.syncPartnerControls();
     this.createFailed.set(false);
+    this.partnerLinkFailed.set(false);
+    this.createdGuestId.set(null);
     this.saving.set(false);
     this.isOpen.set(true);
   }
@@ -225,7 +247,7 @@ export class GuestCreateModal {
     this.createForm.controls.link.setValue('');
   }
 
-  protected selectPreferredLang(lang: CreateUserDto.PreferredLangEnum): void {
+  protected selectPreferredLang(lang: CreateGuestDto.PreferredLangEnum): void {
     this.createForm.controls.preferredLang.setValue(lang);
   }
 
@@ -290,92 +312,115 @@ export class GuestCreateModal {
   }
 
   /**
-   * Create the guest the DS "New guest" form describes: one `POST /v1/users`
-   * carrying `guestInfo` (`relation`, plus `partnerId` when the partner switch
-   * picked an existing guest). No RSVP, and no second account — the partner is
-   * a guest who already exists.
+   * Create the guest the DS "New guest" form describes, then link the partner
+   * the switch picked — `POST /v1/guests` followed by
+   * `POST /v1/guests/{id}/partner/{partnerId}`. No RSVP, and no second account:
+   * the partner is a guest who already exists.
    *
-   * `partnerId` has to ride along on the create: neither `PATCH /v1/users` nor
-   * `PATCH /v1/profile/{id}` accepts it. On failure the form stays open with
-   * nothing written, so the admin can fix the details and retry.
+   * The two calls fail independently. A create failure leaves nothing written,
+   * so the admin fixes the details and presses again; a link failure (400 —
+   * partner gone or not a guest, 409 — one of them linked meanwhile) leaves
+   * the guest created, so pressing again retries only the link.
    */
   protected createGuest(): void {
     if (this.saving()) return;
-    if (this.createForm.invalid) {
+
+    const createdId = this.createdGuestId();
+    if (!createdId && this.createForm.invalid) {
       // TODO: show why the form is invalid
       console.warn('Guest create form invalid', this.createForm.invalid, this.createForm.errors);
       this.createForm.markAllAsTouched();
       return;
     }
 
-    const { firstName, lastName, phoneNumber, email, side, kind, preferredLang, link } =
-      this.createForm.getRawValue();
     this.saving.set(true);
     this.createFailed.set(false);
+    this.partnerLinkFailed.set(false);
 
-    // `CreateUserDtoGuestInfoRelation` is a union: the family variant's `link`
-    // is the strict `LinkEnum` (the `<select>` only ever assigns one of its
-    // members), the other variants take free text.
-    const relation: CreateUserDtoGuestInfoRelation =
-      kind === 'family'
-        ? { side, kind, link: link as CreateUserDtoGuestInfoRelationOneOf.LinkEnum }
-        : { side, kind, link };
+    // The guest already exists — this press is a retry of the link alone.
+    if (createdId) {
+      this.linkPartner(createdId);
+      return;
+    }
 
-    const partner = this.createForm.controls.partner.getRawValue();
-    const partnerId = partner.linked ? partner.existingId : undefined;
-
-    // The add is pessimistic: @ngrx/data's optimistic default would insert the
-    // draft (whose `id` is still the empty server-assigned placeholder) into
-    // the collection and leave it there once the real entity arrives under its
-    // own id. Nothing is shown until the create succeeds anyway.
-    this.userCollection
-      .add(
-        this.guestDraft(
-          { firstName, lastName, phoneNumber, email, preferredLang },
-          { relation, partnerId },
-        ),
-        { isOptimistic: false },
-      )
-      .pipe(map((user) => user.id))
-      .subscribe({
-        next: (userId) => {
-          this.saving.set(false);
-          this.guestCreated.emit(userId);
-          this.close();
-        },
-        error: (err: unknown) => {
-          this.saving.set(false);
-          this.createFailed.set(true);
-          console.error('Failed to create guest', err);
-        },
-      });
+    this.guestsApi.guestsControllerCreateV1({ createGuestDto: this.guestDraft() }).subscribe({
+      next: (guest) => {
+        this.createdGuestId.set(guest.id);
+        this.linkPartner(guest.id);
+      },
+      error: (err: unknown) => {
+        this.saving.set(false);
+        this.createFailed.set(true);
+        console.error('Failed to create guest', err);
+      },
+    });
   }
 
   /**
-   * A guest account for `POST /v1/users`.
+   * Second half of the create flow: point the new guest at the partner picked
+   * in the DS partner section. `addPartner` (POST) is the right verb here —
+   * both guests are unlinked by construction (the candidate list drops anyone
+   * who already has a partner), so a 409 means the guest list moved under the
+   * admin and replacing a stranger's link silently would be wrong.
    *
-   * Only the new guest points at the partner; the partner does not point back,
-   * because `partnerId` is create-only and can no longer be set on the guest
-   * who already exists. The pair is resolved through this one link.
+   * `guestCreated` is emitted on every outcome that leaves a guest behind,
+   * including a failed link: the account is on the list either way, and the
+   * parent needs to fetch its profile to render the row.
    */
-  private guestDraft(
-    identity: {
-      firstName: string;
-      lastName: string;
-      phoneNumber: string;
-      email: string;
-      preferredLang: CreateUserDto.PreferredLangEnum;
-    },
-    guestInfo: { relation: CreateUserDtoGuestInfoRelation; partnerId?: string },
-  ): CreateUserDto {
+  private linkPartner(guestId: string): void {
+    const partner = this.createForm.controls.partner.getRawValue();
+    const partnerId = partner.linked ? partner.existingId : '';
+
+    if (!partnerId) {
+      this.saving.set(false);
+      this.guestCreated.emit(guestId);
+      this.close();
+      return;
+    }
+
+    this.guestsApi.guestsControllerAddPartnerV1({ id: guestId, partnerId }).subscribe({
+      next: () => {
+        this.saving.set(false);
+        // The link points both ways, so the partner's cached profile is now
+        // stale — and a stale one still looks free to `partnerCandidates`,
+        // which would offer them for the next guest and earn a 409. The parent
+        // refetches the new guest; only this component knows about the partner.
+        this.userProfileCollection.getByKey(partnerId);
+        this.guestCreated.emit(guestId);
+        this.close();
+      },
+      error: (err: unknown) => {
+        this.saving.set(false);
+        this.partnerLinkFailed.set(true);
+        // The guest exists — surface it now so the list shows them unlinked
+        // even if the admin gives up on the link and closes the modal.
+        this.guestCreated.emit(guestId);
+        console.error('Failed to link guest partner', err);
+      },
+    });
+  }
+
+  /** The form as `POST /v1/guests` takes it — identity, language and relation.
+   *  The partner is not part of this payload; it is its own route. */
+  private guestDraft(): CreateGuestDto {
+    const { firstName, lastName, phoneNumber, email, side, kind, preferredLang, link } =
+      this.createForm.getRawValue();
+
+    // `CreateGuestDtoRelation` is a union: the family variant's `link` is the
+    // strict `LinkEnum` (the `<select>` only ever assigns one of its members),
+    // the other variants take free text.
+    const relation: CreateGuestDtoRelation =
+      kind === 'family'
+        ? { side, kind, link: link as FamilyRelation['link'] }
+        : { side, kind, link };
+
     return {
-      role: 'guest',
-      firstName: identity.firstName,
-      lastName: identity.lastName,
-      phoneNumber: identity.phoneNumber,
-      preferredLang: identity.preferredLang,
-      email: identity.email || undefined,
-      guestInfo,
+      firstName,
+      lastName,
+      phoneNumber,
+      preferredLang,
+      email: email || undefined,
+      relation,
     };
   }
 }

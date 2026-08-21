@@ -8,12 +8,12 @@
  * Do not edit the class manually.
  */
 import { UserProfileListResponseDtoProfilesInnerGuestInfoRsvp } from './user-profile-list-response-dto-profiles-inner-guest-info-rsvp';
-import { CreateUserDtoGuestInfoRelation } from './create-user-dto-guest-info-relation';
+import { GuestListResponseDtoItemsInnerRelation } from './guest-list-response-dto-items-inner-relation';
 import { UserProfileListResponseDtoProfilesInnerGuestInfoPartner } from './user-profile-list-response-dto-profiles-inner-guest-info-partner';
 
 
 export interface UserProfileListResponseDtoProfilesInnerGuestInfo { 
-    relation: CreateUserDtoGuestInfoRelation;
+    relation: GuestListResponseDtoItemsInnerRelation;
     partner?: UserProfileListResponseDtoProfilesInnerGuestInfoPartner;
     rsvp?: UserProfileListResponseDtoProfilesInnerGuestInfoRsvp;
 }
