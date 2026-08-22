@@ -74,6 +74,7 @@
               type="text"
               [value]="draft().partner.firstName"
               [placeholder]="'rsvp.create.party.firstName' | translate"
+              [disabled]="hasLinkedPartner()"
               (input)="setPartnerFirstName(inputValue($event))"
             />
             <input
@@ -81,9 +82,13 @@
               type="text"
               [value]="draft().partner.lastName"
               [placeholder]="'rsvp.create.party.lastName' | translate"
+              [disabled]="hasLinkedPartner()"
               (input)="setPartnerLastName(inputValue($event))"
             />
           </div>
+          @if (hasLinkedPartner()) {
+            <p class="hint">{{ 'rsvp.create.party.partnerLinkedHint' | translate }}</p>
+          }
         </div>
       }
 

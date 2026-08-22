@@ -15,6 +15,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   EntityNamesEnum,
   HeaderService,
+  partnerHasAccount,
   RsvpDto,
   RsvpDtoAdultsPartner2,
   RsvpDtoChildrenInner,
@@ -168,7 +169,9 @@ export class RsvpCreate {
 
   /** A partner account already linked server-side (`guest.partnerId`) isn't
    *  something this screen can unlink — the toggle is locked on in that case. */
-  protected readonly hasLinkedPartner = computed(() => !!this.rsvp().adults.partner2?.id);
+  protected readonly hasLinkedPartner = computed(() =>
+    partnerHasAccount(this.rsvp().adults.partner2),
+  );
 
   constructor() {
     // Resync the draft whenever the orchestrator hands us a fresh entity
@@ -212,10 +215,15 @@ export class RsvpCreate {
   }
 
   protected setPartnerFirstName(value: string): void {
+    // A linked partner's name is owned by their own guest account and is
+    // carried forward verbatim on submit — never let the draft diverge from
+    // what will actually be sent (ADR W-0002 §Decision.3).
+    if (this.hasLinkedPartner()) return;
     this.draft.update((d) => ({ ...d, partner: { ...d.partner, firstName: value } }));
   }
 
   protected setPartnerLastName(value: string): void {
+    if (this.hasLinkedPartner()) return;
     this.draft.update((d) => ({ ...d, partner: { ...d.partner, lastName: value } }));
   }
 
