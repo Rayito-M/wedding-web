@@ -1981,7 +1981,14 @@
   `src/app/core/service/statistic.service.ts`
 
 ### T258 — Guest profile modal: "Partner" info row with account / plus-one suffix
-- **Status:** todo
+- **Status:** done (`0c01a25`). Two discrepancies found and **flagged rather than decided**:
+  (a) **this task's own text is wrong about the DS** — it says "after Phone and before Table
+  (DS ordering)", but `ScreenGuestManager.jsx` L294 puts Partner *after* Table. The task text was
+  followed as authoritative; flip it if DS fidelity matters more. (b) The DS renders `'Unnamed'`
+  for a partner with no name; no such i18n key exists and this task forbade adding one, so a
+  nameless partner currently renders as `" · plus-one"` with a leading space. Cosmetic, real.
+  Also noted in passing: `guest-profile-modal.ts` L27–28 carries the local `RelationSide` /
+  `RelationKind` unions — already the seed instances tracked by **T254**, left alone.
 - **Owner:** agent (implementer)
 - **Depends on:** T256
 - **Context:** DS `ScreenGuestManager` profile view now shows
@@ -2008,7 +2015,18 @@
   `src/app/screens/guest-manager/modal/guest-profile-modal.{ts,html}`
 
 ### T259 — Manage-RSVP modal (admin): lock a linked partner's name + require first/last name
-- **Status:** todo
+- **Status:** done (`154378e`). Closes the permissions leak: an admin editing one guest's RSVP
+  could rename a *different* guest's account. Three notes, all flagged rather than decided:
+  (a) **`partnerNameOk` deliberately does not exempt an account-holding partner, unlike T260's
+  `unnamedCount`.** This task's text and the DS both gate on "a partner exists and either trimmed
+  name is empty". Consequence: an account-holding partner with a blank name would present a gate
+  the admin cannot satisfy from this screen, since the inputs are gone. Harmless if account
+  creation always requires both names — worth confirming, and worth harmonising the two screens
+  deliberately rather than by accident. (b) DS specifies `fontSize: 14` for the locked name; no
+  14px token exists (`--text-body` 13, `--text-body-lg` 15), so the existing `.person-name`
+  (13px/500) was reused rather than hardcoding or inventing a token. 1px off the mock.
+  (c) `.name-hint` is now declared in both `rsvp-edit.scss` (T260) and here with identical rules
+  — see the consolidation note on T260.
 - **Owner:** agent (implementer)
 - **Depends on:** T255, T256
 - **Context:** Two DS behaviours are missing from the admin RSVP editor.
