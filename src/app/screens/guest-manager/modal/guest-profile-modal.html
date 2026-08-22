@@ -50,6 +50,25 @@
               <span class="info-label">{{ 'guest_manager.profile.phone' | translate }}</span>
               <div class="value">{{ guestProfile()?.phoneNumber || '—' }}</div>
             </div>
+            <!-- Partner (DS `Info label="Partner"`): the name plus the account
+                 status, so an admin can tell from the profile whether the
+                 partner can sign in themselves or is a plus-one (ADR W-0002). -->
+            <div class="info-item">
+              <span class="info-label">{{ 'guest_manager.profile.partner' | translate }}</span>
+              @if (guestProfile()?.guestInfo?.partner; as partner) {
+                <div class="value">
+                  {{ partner.firstName }} {{ partner.lastName }} ·
+                  {{
+                    (partnerHasAccount(partner)
+                      ? 'shared.partner.ownAccount'
+                      : 'shared.partner.plusOne'
+                    ) | translate
+                  }}
+                </div>
+              } @else {
+                <div class="value muted">—</div>
+              }
+            </div>
             <div class="info-item">
               <span class="info-label">{{ 'guest_manager.profile.table' | translate }}</span>
               <div class="value muted">—</div>

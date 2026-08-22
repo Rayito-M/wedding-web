@@ -17,6 +17,7 @@ import {
   RsvpDtoAdultsPartner1Options,
   UserProfileDto,
   CreateGuestDtoRelation,
+  partnerHasAccount,
 } from '@app/core';
 import { Modal } from '@app/shared/modal/modal';
 import { Btn } from '@app/shared/button/button';
@@ -52,6 +53,12 @@ export class GuestProfileModal {
   readonly closeModal = output<void>();
   /** "Manage RSVP" / the summary card — emits the guest's user id. */
   readonly manageRsvp = output<string>();
+
+  /**
+   * Shared predicate (ADR W-0002 §Decision.2) exposed to the profile template,
+   * which suffixes the partner's name with "own guest account" or "plus-one".
+   */
+  protected readonly partnerHasAccount = partnerHasAccount;
 
   protected readonly relationSides: RelationSide[] = ['bride', 'groom', 'both'];
   protected readonly relationKinds: RelationKind[] = ['family', 'friends', 'colleagues', 'other'];
