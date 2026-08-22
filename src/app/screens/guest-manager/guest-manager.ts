@@ -12,7 +12,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
-import { EntityNamesEnum, UserProfileDto, PluralTranslatePipe, StatisticService } from '@app/core';
+import {
+  EntityNamesEnum,
+  UserProfileDto,
+  PluralTranslatePipe,
+  StatisticService,
+  partnerHasAccount,
+} from '@app/core';
 import { Btn } from '@app/shared/button/button';
 import { GuestProfileModal, ManageRsvpModal, GuestCreateModal } from './modal';
 
@@ -33,6 +39,12 @@ import { GuestProfileModal, ManageRsvpModal, GuestCreateModal } from './modal';
 })
 export class GuestManager {
   protected readonly Math = Math;
+
+  /**
+   * Shared predicate (ADR W-0002 §Decision.2) exposed to the row template, which
+   * renders a partner with their own guest account differently from a plus-one.
+   */
+  protected readonly partnerHasAccount = partnerHasAccount;
 
   @ViewChild(GuestProfileModal) profileModal!: GuestProfileModal;
   @ViewChild(ManageRsvpModal) manageRsvpModal!: ManageRsvpModal;

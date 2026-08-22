@@ -166,10 +166,21 @@
           >
             <div class="col-guest">
               <div class="guest-name">{{ profile.firstName }} {{ profile.lastName }}</div>
-              @if (profile.guestInfo?.partner) {
-                <div class="guest-secondary">
-                  {{ profile.guestInfo?.partner.firstName }}
-                  {{ profile.guestInfo?.partner.lastName }}
+              <!-- Partner line (DS `PartnerLine` / `GmPartnerLine`): a leading dot
+                   plus the partner's name, tinted when that partner has their own
+                   guest account and muted when they are a plus-one (ADR W-0002).
+                   The colour alone must not carry that meaning, so the status is
+                   repeated as a screen-reader-only suffix. -->
+              @if (profile.guestInfo?.partner; as partner) {
+                <div class="guest-secondary" [class.has-account]="partnerHasAccount(partner)">
+                  <span class="partner-dot" aria-hidden="true"></span>
+                  <span class="partner-name">{{ partner.firstName }} {{ partner.lastName }}</span>
+                  <span class="partner-account-note">{{
+                    (partnerHasAccount(partner)
+                      ? 'shared.partner.ownAccount'
+                      : 'shared.partner.plusOne'
+                    ) | translate
+                  }}</span>
                 </div>
               }
               <!-- Mobile-only count caption (DS mobile row pattern): "N participants · M children" -->

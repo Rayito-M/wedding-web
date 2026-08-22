@@ -277,11 +277,56 @@
   font-weight: 500;
 }
 
+// Partner line (DS `PartnerLine` / `GmPartnerLine`) — shown on every tier, the
+// mobile row carries it too. A partner with their own guest account reads in the
+// accent colour at 500; a plus-one stays muted with a tertiary-accent dot.
 .guest-secondary {
-  display: none;
-  font-size: t.$text-body;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: t.$text-caption;
   color: var(--text-muted);
-  margin-top: 4px;
+  font-weight: 400;
+  margin-top: 3px;
+
+  &.has-account {
+    color: var(--brand-accent);
+    font-weight: 500;
+
+    .partner-dot {
+      background-color: var(--brand-accent);
+    }
+  }
+}
+
+.partner-dot {
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--brand-accent-tertiary);
+}
+
+// A long partner name truncates rather than reflowing the row.
+.partner-name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Account status is also announced, never colour-only (WCAG 2.1 AA / rule 14).
+.partner-account-note {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 // Count caption ("N participants · M children") — only shown in the mobile
@@ -505,10 +550,6 @@
 
   .guest-name {
     font-size: t.$text-body;
-  }
-
-  .guest-secondary {
-    display: block;
   }
 
   .guest-caption {
