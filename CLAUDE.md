@@ -29,7 +29,10 @@ Angular 22 single-page app. Standalone components, signals-first, zoneless (no c
 - **i18n:** `ngx-translate` (ESP default, ENG/FRA switchable at runtime)
 - **HTTP:** Angular `HttpClient`; token sent as `Authorization: Bearer` header (set by an HTTP interceptor)
 - **Auth guard:** route guard checks for a valid session token; `/login` is the fallback
-- **Testing:** Jasmine (unit), Playwright (e2e)
+- **Testing:** Vitest (unit, via `ng test` — Angular 22's default builder; there is no Jasmine or
+  Karma dependency). **No e2e suite exists yet** — Playwright is intended but has never been set
+  up (no dependency, no config, no `e2e/` directory). See TASKS.md T263. Do not write acceptance
+  criteria that gate on `pnpm test:e2e` until it exists.
 - **Build:** `ng build` produces a static SPA for S3 + CloudFront (hub ADR-0012)
 
 ## Commands
@@ -39,7 +42,7 @@ Angular 22 single-page app. Standalone components, signals-first, zoneless (no c
 - Typecheck: `pnpm typecheck`
 - Lint: `pnpm lint`
 - Test (unit): `pnpm test`
-- Test (e2e): `pnpm test:e2e`
+- Test (e2e): _not available — no such script; see T263_
 - Build: `pnpm build` (production static build → `dist/`)
 - **Regenerate API client** → `pnpm gen:api` (from `../wedding-architecture/contracts/openapi.json`, override via `OPENAPI_SOURCE`; committed, never hand-edited; requires a JVM — see README)
 - **API client drift check** → `pnpm gen:api:check` (regenerates to a temp dir, diffs against `src/app/core/api/`)
@@ -67,7 +70,10 @@ Angular 22 single-page app. Standalone components, signals-first, zoneless (no c
 8. **i18n is mandatory for all user-facing text.** Mark strings in the template via `i18n="@@key"` and `i18n-title`, or use the `translate` pipe. No hardcoded Spanish/English/French mixed.
 9. **Forms validate on blur, submit on Enter or button click.** No real-time validation feedback noise; errors appear on submit or focus-out.
 10. **Authentication state is in a signals-based auth service,** not localStorage. Session tokens are held in memory; reload clears them (acceptable for v1, low-stakes data).
-11. **Before merging:** `pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e` all pass.
+11. **Before merging:** `pnpm typecheck && pnpm lint && pnpm test` all pass. (`pnpm test:e2e` will
+    join this list once T263 stands Playwright up; it does not exist today. Known exception: 4
+    pre-existing lint errors in `src/app/shared/modal/` — leave them unchanged unless the task is
+    to fix them.)
 12. **No third-party UI libraries** (Material, Bootstrap, etc.) — the design system is the single source; components are hand-built per spec.
 13. **Images:** no raster photography; use `PhotoPlaceholder` component (from design system) or inline SVG illustrations. All images responsive and optimized.
 14. **Accessibility:** WCAG 2.1 AA minimum. Semantic HTML, `aria-label` where needed, keyboard navigation on all interactive elements.

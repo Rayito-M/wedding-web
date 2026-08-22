@@ -1938,7 +1938,13 @@
   `src/app/core/helper/{index.ts,rsvp-draft.ts}`; `src/app/core/pipe/plural-translate.pipe.ts`
 
 ### T257 — Guest manager row: partner line reads account vs. plus-one, on mobile too
-- **Status:** todo
+- **Status:** done (`18c12c1`) — **ships a known WCAG 2.1 AA violation, accepted by the user.**
+  The account-partner name uses `--brand-accent` on `--surface-card` at 12px/500: 3.51:1
+  (terracotta), 3.05:1 (mauve), **2.50:1 (verdeagua)** against the 4.5:1 threshold. Inherent to
+  the token pairing this task and ADR W-0002 prescribe — any implementation fails identically —
+  and it contradicts CLAUDE.md Hard rule 14. No exemption argument applies (unlike T255's
+  `:disabled` half). Real fix is a darker accent-on-surface alias in `../wedding-ui-design`.
+  Tracked, unresolved. The colour-alone criterion (1.4.1) **is** satisfied via an sr-only suffix.
 - **Owner:** agent (implementer)
 - **Depends on:** T256
 - **Context:** DS `PartnerLine` / `GmPartnerLine` render the partner under the guest name as a
@@ -2042,7 +2048,10 @@
   `src/app/core/helper/rsvp-draft.ts` (`AdultDraft.id`)
 
 ### T260 — RSVP edit (guest): lock a linked partner's name + "needs a first and last name" gate
-- **Status:** todo
+- **Status:** done (`bab91fe`). All criteria met. Note: `.name-hint` is now the **5th** local copy
+  of the hint pattern (`rsvp-create.scss`, `config-manager.scss`, `album.scss`,
+  `guest-create-modal.scss` `.partner-hint`) — there is no `%hint` primitive in
+  `src/styles/_primitives.scss`. Consolidation candidate; a `web-css-auditor` sweep would find it.
 - **Owner:** agent (implementer)
 - **Depends on:** T255, T256
 - **Context:** DS `ScreenRSVPEdit` gained `nameLocked(p) = !!p.linked && !!p.firstName`: the
@@ -2077,7 +2086,9 @@
   `src/app/core/pipe/plural-translate.pipe.ts`
 
 ### T261 — RSVP create (guest): stop accepting edits to a linked partner's name (silent-discard bug)
-- **Status:** todo
+- **Status:** done (`1892d5a`). The silent-discard bug is fixed. Reused the existing `.hint` class
+  rather than adding a sixth copy. The `pnpm test:e2e` criterion was dropped as unmeetable — see
+  T263.
 - **Owner:** agent (implementer)
 - **Depends on:** T255, T256
 - **Context:** **This is a real bug, not only a visual gap.** `rsvp-create.ts` already computes
@@ -2104,7 +2115,8 @@
   - Use `partnerHasAccount()` (T256) rather than the inline `!!…partner2?.id`, so the rule lives in
     one place; `hasLinkedPartner` keeps its name and doc comment.
   - No i18n edits; no new colours; component validates against the design spec.
-  - `pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e` green.
+  - `pnpm typecheck && pnpm lint && pnpm test` green. (This criterion originally also demanded
+    `pnpm test:e2e`; that script has never existed in this repo — see T263. Dropped as unmeetable.)
 - **Refs:** in-repo ADR W-0002 §Decision.3; DS `ui_kits/wedding-app/ScreenRSVPCreate.jsx` L26
   (`nameLocked`), L68–76 (disabled inputs + "Linked to their guest account…" hint);
   `src/app/screens/rsvp-create/rsvp-create.{ts,html,scss}`
@@ -2150,6 +2162,38 @@
 - **Refs:** `src/app/app.spec.ts`; `src/app/core/service/configuration.service.ts:20`;
   `src/app/core/service/statistic.service.ts:50`; breaking commit `36b937b`; `@ngrx/data`
   `EntityServices` / `provideEntityData`
+
+### T263 — Stand up the Playwright e2e suite (the gate CLAUDE.md has always promised)
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** —
+- **Context:** CLAUDE.md listed Playwright under **Testing** and Hard rule 11 required
+  `pnpm test:e2e` to pass before merging — but the suite has never existed: no `test:e2e` script
+  in `package.json`, no `@playwright/test` dependency, no `playwright.config.*`, no `e2e/`
+  directory. Every task written against that rule inherited an unmeetable criterion (caught on
+  T261, which met every other criterion). CLAUDE.md has since been corrected to say the suite
+  does not exist and to point here; this task makes the promise true. The unit runner, for the
+  record, is **Vitest** via `ng test` — CLAUDE.md previously said Jasmine, also wrong, also fixed.
+- **Acceptance:**
+  - `@playwright/test` added as a dev dependency; `playwright.config.ts` at the repo root;
+    `"test:e2e": "playwright test"` in `package.json`.
+  - Config starts the app itself (`webServer` running `pnpm start`) so the suite is one command
+    from a cold checkout, and targets the browsers CLAUDE.md rule 4 names: mobile Safari (iPhone
+    SE / 12 / 14 viewports) and current Chrome Android, mobile-first.
+  - At least one **real** smoke spec that would fail if the app were broken — e.g. the app boots,
+    the welcome screen renders, and the language switcher changes rendered copy. No placeholder
+    or always-true assertions.
+  - The suite must not depend on a live `wedding-api`: either stub network at the Playwright
+    layer (`page.route`) or document precisely what must be running. A suite that only passes on
+    the author's machine is worse than none.
+  - `pnpm test:e2e` passes from a clean checkout after `pnpm install`.
+  - CI note: if no CI workflow runs it yet, say so explicitly in the PR rather than implying
+    coverage that does not exist.
+  - Once green, restore `pnpm test:e2e` to CLAUDE.md Hard rule 11 and the Commands list in the
+    **same** commit.
+  - `pnpm typecheck && pnpm lint && pnpm test` still green.
+- **Refs:** CLAUDE.md Hard rule 11 + Testing/Commands (both amended by this task's sibling commit);
+  CLAUDE.md rule 4 (target browsers); `package.json`; T261's report (where the gap surfaced)
 
 > **Phase J open questions — answer before starting T258/T259, they are not blockers for
 > T255–T257, T260–T261.**
