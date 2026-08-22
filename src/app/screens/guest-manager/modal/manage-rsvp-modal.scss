@@ -87,6 +87,21 @@
   grid-template-columns: 1fr 88px 32px;
 }
 
+// Partner whose name is owned by their own guest account: the two name fields
+// collapse to static text, the remove control stays (DS `ScreenGuestManager`
+// `partnerLocked` branch).
+.locked-fields {
+  grid-template-columns: 1fr 32px;
+}
+
+// "Name managed by their own guest account." beneath a locked partner's name.
+.name-hint {
+  margin: t.$space-2 0 0;
+  font-size: t.$text-micro;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 .remove-btn {
   width: 32px;
   height: 32px;
@@ -151,6 +166,16 @@
 }
 
 .pill-empty {
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+}
+
+// Footer note projected alongside the action buttons, explaining why "Save
+// changes" is unavailable (DS `ScreenGuestManager` footer span). `margin-right:
+// auto` pushes it to the left of the right-aligned buttons.
+.footer-note {
+  margin-right: auto;
+  align-self: center;
   font-size: t.$text-micro;
   color: var(--text-muted);
 }

@@ -23,6 +23,7 @@ import {
   UserProfileDto,
   WeddingConfigResponseDto,
   fromRsvpDraft,
+  partnerHasAccount,
   toRsvpDraft,
   toggleOptionId,
   withPersonOptions,
@@ -43,6 +44,14 @@ interface PersonCard {
   readonly lastName: string;
   /** `null` for adults — children only. */
   readonly age: string | null;
+  /**
+   * The `partner` card only: this partner has their own guest account, so
+   * their name belongs to that account and is rendered as static text here
+   * rather than as editable fields (ADR W-0002 §Decision.3) — an admin
+   * editing this RSVP must not be able to rename another guest's account.
+   * Always `false` for `you` (the RSVP's own primary guest) and `child`.
+   */
+  readonly hasAccount: boolean;
   readonly dietaryPreferenceIds: readonly string[];
   readonly allergyIds: readonly string[];
 }
@@ -161,6 +170,7 @@ export class ManageRsvpModal {
         firstName: d.partner1.firstName,
         lastName: d.partner1.lastName,
         age: null,
+        hasAccount: false,
         dietaryPreferenceIds: d.partner1.options.dietaryPreferenceIds ?? [],
         allergyIds: d.partner1.options.allergyIds ?? [],
       },
@@ -172,6 +182,7 @@ export class ManageRsvpModal {
         firstName: d.partner2.firstName,
         lastName: d.partner2.lastName,
         age: null,
+        hasAccount: partnerHasAccount(d.partner2),
         dietaryPreferenceIds: d.partner2.options.dietaryPreferenceIds ?? [],
         allergyIds: d.partner2.options.allergyIds ?? [],
       });
@@ -183,6 +194,7 @@ export class ManageRsvpModal {
         firstName: child.firstName,
         lastName: '',
         age: child.age,
+        hasAccount: false,
         dietaryPreferenceIds: child.options.dietaryPreferenceIds ?? [],
         allergyIds: child.options.allergyIds ?? [],
       });
@@ -198,6 +210,17 @@ export class ManageRsvpModal {
   );
   protected readonly mainCard = computed(() => this.cards()[0]);
   protected readonly participantsCount = computed(() => this.cards().length);
+
+  /**
+   * A partner goes on the guest list under a full name, so both names are
+   * required before the reply can be saved (DS `ScreenGuestManager.jsx`
+   * `partnerNameOk`). Trivially true when the party has no partner.
+   */
+  protected readonly partnerNameOk = computed(() => {
+    const partner = this.draft().partner2;
+    if (!partner) return true;
+    return !!partner.firstName.trim() && !!partner.lastName.trim();
+  });
 
   protected readonly noteText = computed(() => this.draft().partner1.options.comments ?? '');
 
@@ -263,6 +286,7 @@ export class ManageRsvpModal {
     if (key === 'partner1') {
       this.draft.update((d) => ({ ...d, partner1: { ...d.partner1, firstName: value } }));
     } else if (key === 'partner2') {
+      if (this.partner2NameLocked()) return;
       this.draft.update((d) => (d.partner2 ? { ...d, partner2: { ...d.partner2, firstName: value } } : d));
     }
   }
@@ -271,8 +295,16 @@ export class ManageRsvpModal {
     if (key === 'partner1') {
       this.draft.update((d) => ({ ...d, partner1: { ...d.partner1, lastName: value } }));
     } else if (key === 'partner2') {
+      if (this.partner2NameLocked()) return;
       this.draft.update((d) => (d.partner2 ? { ...d, partner2: { ...d.partner2, lastName: value } } : d));
     }
+  }
+
+  /** The template renders a locked partner's name as static text instead of
+   *  inputs; this backs that up so a programmatic call cannot rename another
+   *  guest's account from inside this RSVP (ADR W-0002 §Decision.3). */
+  private partner2NameLocked(): boolean {
+    return partnerHasAccount(this.draft().partner2);
   }
 
   protected setChildFirstName(index: number, value: string): void {
@@ -308,6 +340,8 @@ export class ManageRsvpModal {
     );
   }
 
+  /** A partner added here is always a plus-one: no `id`, so
+   *  `partnerHasAccount()` is false and the card stays editable. */
   protected addPartner(): void {
     this.draft.update((d) =>
       d.partner2 ? d : { ...d, partner2: { firstName: '', lastName: '', options: {} } },
@@ -335,7 +369,7 @@ export class ManageRsvpModal {
 
   protected async save(): Promise<void> {
     const userId = this.userId();
-    if (!userId || !this.rsvp() || this.saving()) return;
+    if (!userId || !this.rsvp() || this.saving() || !this.partnerNameOk()) return;
     this.saving.set(true);
     this.saveFailed.set(false);
     try {

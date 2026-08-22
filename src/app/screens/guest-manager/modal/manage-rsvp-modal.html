@@ -54,30 +54,48 @@
       <div class="group-label">{{ 'guest_manager.rsvp.partner' | translate }}</div>
       @if (partnerCard(); as card) {
         <div class="person-card">
-          <div class="person-head person-fields">
-            <input
-              app-input
-              type="text"
-              [value]="card.firstName"
-              [placeholder]="'guest_manager.form.firstName' | translate"
-              (input)="setAdultFirstName(card.key, inputValue($event))"
-            />
-            <input
-              app-input
-              type="text"
-              [value]="card.lastName"
-              [placeholder]="'guest_manager.form.lastName' | translate"
-              (input)="setAdultLastName(card.key, inputValue($event))"
-            />
-            <button
-              type="button"
-              class="remove-btn"
-              [attr.aria-label]="'shared.remove' | translate"
-              (click)="removePartner()"
-            >
-              ×
-            </button>
-          </div>
+          @if (card.hasAccount) {
+            <!-- The partner has their own guest account, which owns their
+                 name: show it, don't offer to edit it (ADR W-0002
+                 §Decision.3). Removing them from this party is still allowed. -->
+            <div class="person-head person-fields locked-fields">
+              <span class="person-name">{{ card.firstName }} {{ card.lastName }}</span>
+              <button
+                type="button"
+                class="remove-btn"
+                [attr.aria-label]="'shared.remove' | translate"
+                (click)="removePartner()"
+              >
+                ×
+              </button>
+            </div>
+            <p class="name-hint">{{ 'shared.partner.nameManaged' | translate }}</p>
+          } @else {
+            <div class="person-head person-fields">
+              <input
+                app-input
+                type="text"
+                [value]="card.firstName"
+                [placeholder]="'guest_manager.form.firstName' | translate"
+                (input)="setAdultFirstName(card.key, inputValue($event))"
+              />
+              <input
+                app-input
+                type="text"
+                [value]="card.lastName"
+                [placeholder]="'guest_manager.form.lastName' | translate"
+                (input)="setAdultLastName(card.key, inputValue($event))"
+              />
+              <button
+                type="button"
+                class="remove-btn"
+                [attr.aria-label]="'shared.remove' | translate"
+                (click)="removePartner()"
+              >
+                ×
+              </button>
+            </div>
+          }
           <ng-container
             *ngTemplateOutlet="pillGroups; context: { $implicit: card }"
           ></ng-container>
@@ -146,10 +164,24 @@
     <p class="summary-empty">{{ 'guest_manager.rsvp.none' | translate }}</p>
   }
 
+  <!-- Why "Save changes" is unavailable (DS ScreenGuestManager footer note).
+       Always rendered — empty it doubles as the DS's leading spacer, and a
+       live region has to exist before its text lands to be announced. -->
+  <span modal-actions class="footer-note" role="status">
+    @if (rsvp() && !partnerNameOk()) {
+      {{ 'guest_manager.rsvp.partnerNameRequired' | translate }}
+    }
+  </span>
   <button app-btn modal-actions [primary]="false" type="button" [disabled]="saving()" (click)="goBack()">
     {{ 'guest_manager.action.back' | translate }}
   </button>
-  <button app-btn modal-actions type="button" [disabled]="saving() || !rsvp()" (click)="save()">
+  <button
+    app-btn
+    modal-actions
+    type="button"
+    [disabled]="saving() || !rsvp() || !partnerNameOk()"
+    (click)="save()"
+  >
     {{ 'guest_manager.action.saveChanges' | translate }}
   </button>
 </app-modal>
