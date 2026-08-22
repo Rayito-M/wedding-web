@@ -137,6 +137,15 @@ h2 {
   }
 }
 
+// "Name managed by their own guest account." under a locked partner's name
+// row (DS ScreenRSVPEdit.jsx L70: 11px, --sub, lh 1.5, margin '8px 0 0').
+.name-hint {
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+
 .remove-btn {
   flex: 0 0 auto;
   width: 38px;

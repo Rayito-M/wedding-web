@@ -16,6 +16,7 @@ import {
   WeddingConfigResponseDto,
   PluralTranslatePipe,
   fromRsvpDraft,
+  partnerHasAccount,
   toRsvpDraft,
   withPersonOptions,
 } from '@app/core';
@@ -34,6 +35,13 @@ interface PersonCard {
   readonly lastName: string;
   /** `null` for adults — children only. */
   readonly age: string | null;
+  /**
+   * The `partner` card only: this partner has their own guest account, so the
+   * name belongs to that account and is rendered read-only here (ADR W-0002
+   * §Decision.3). Always `false` for `you` (the signed-in guest editing their
+   * own name) and `child`.
+   */
+  readonly hasAccount: boolean;
   readonly options: RsvpDtoAdultsPartner1Options;
 }
 
@@ -117,6 +125,7 @@ export class RsvpEdit {
         firstName: d.partner1.firstName,
         lastName: d.partner1.lastName,
         age: null,
+        hasAccount: false,
         options: d.partner1.options,
       },
     ];
@@ -127,6 +136,7 @@ export class RsvpEdit {
         firstName: d.partner2.firstName,
         lastName: d.partner2.lastName,
         age: null,
+        hasAccount: partnerHasAccount(d.partner2),
         options: d.partner2.options,
       });
     }
@@ -137,6 +147,7 @@ export class RsvpEdit {
         firstName: c.firstName,
         lastName: '',
         age: c.age,
+        hasAccount: false,
         options: c.options,
       });
     });
@@ -144,6 +155,23 @@ export class RsvpEdit {
   });
 
   protected readonly seatsHeld = computed(() => this.cards().length);
+
+  /**
+   * Every adult in the party goes on the guest list under a full name, so both
+   * names are required before a save is allowed (DS `ScreenRSVPEdit.jsx`
+   * `unnamed`). A partner whose name is owned by their own guest account is
+   * excluded: that name is read-only here, so counting it would leave the guest
+   * with a gate they have no way to satisfy.
+   */
+  protected readonly unnamedCount = computed(
+    () =>
+      this.cards().filter(
+        (card) =>
+          card.kind !== 'child' &&
+          !card.hasAccount &&
+          (!card.firstName.trim() || !card.lastName.trim()),
+      ).length,
+  );
 
   constructor() {
     this.weddingConfigCollection.getByKey(''); // Singleton resource, only fetches if cache is empty
@@ -216,13 +244,21 @@ export class RsvpEdit {
   }
 
   protected setPartner2FirstName(value: string): void {
+    if (this.partner2NameLocked()) return;
     this.draft.update((d) => (d.partner2 ? { ...d, partner2: { ...d.partner2, firstName: value } } : d));
     this.markDirty();
   }
 
   protected setPartner2LastName(value: string): void {
+    if (this.partner2NameLocked()) return;
     this.draft.update((d) => (d.partner2 ? { ...d, partner2: { ...d.partner2, lastName: value } } : d));
     this.markDirty();
+  }
+
+  /** The template disables both inputs; this backs it up so a programmatic
+   *  call cannot rename another guest's account (ADR W-0002 §Decision.3). */
+  private partner2NameLocked(): boolean {
+    return partnerHasAccount(this.draft().partner2);
   }
 
   protected setChildFirstName(index: number, value: string): void {
