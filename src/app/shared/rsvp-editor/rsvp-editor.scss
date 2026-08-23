@@ -1,0 +1,298 @@
+@use '../../../styles/tokens' as t;
+@use '../../../styles/primitives';
+
+// The editable body of an RSVP. Chrome (page header, modal shell, footer,
+// save button) belongs to the host, so this file styles only what the editor
+// itself renders. Chip markup stays here by design — ADR W-0003 §Decision.8:
+// no shared `app-chip-toggle`. Flat throughout: 1px hairlines, no shadow.
+
+:host {
+  display: block;
+}
+
+.label {
+  @extend %eyebrow-wide;
+}
+
+// Borderless accent text button — the DS renders these as anchors, but they
+// act on the page rather than navigating, so they are real buttons here.
+%accent-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--brand-accent);
+  font-family: t.$font-sans;
+  cursor: pointer;
+  appearance: none;
+}
+
+// ── Attendance answer ────────────────────────────────────────────────────
+
+.status-section {
+  margin-bottom: 18px;
+}
+
+.status-section .label {
+  margin-bottom: t.$space-2;
+}
+
+.choice-row {
+  display: flex;
+  gap: t.$space-2;
+}
+
+// ── Party heading + meta line ────────────────────────────────────────────
+
+.party-title {
+  font-family: t.$font-serif;
+  font-weight: 400;
+  font-size: t.$text-display-sm;
+  line-height: 1.1;
+  margin: 0 0 t.$space-3;
+}
+
+.party-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: t.$space-3;
+  margin-bottom: 10px;
+}
+
+.total {
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+// ── Participant cards ────────────────────────────────────────────────────
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  @extend %card-shell;
+}
+
+.card-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  padding: 13px 14px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: t.$font-sans;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+}
+
+.name {
+  font-size: t.$text-heading;
+  font-weight: 600;
+  color: var(--text-body-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary {
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Chevron built from two borders (rotates open/closed), same precedent as
+// `shared/tab-bar`'s "More" chevron.
+.chevron {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--text-muted);
+  border-bottom: 1.5px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform var(--transition-fast);
+}
+
+.chevron.open {
+  transform: rotate(225deg);
+}
+
+.card-body {
+  padding: 4px 14px 16px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.name-fields {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  margin-top: 14px;
+
+  input[app-input] {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .age {
+    flex: 0 0 78px;
+  }
+}
+
+// A partner whose name is owned by their own guest account.
+.locked-name {
+  flex: 1;
+  min-width: 0;
+  font-size: t.$text-body-lg;
+  font-weight: 500;
+  color: var(--text-body-color);
+}
+
+.name-hint {
+  margin: t.$space-2 0 0;
+  font-size: t.$text-micro;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+// "Open their profile", inline at the end of the hint — couple perspective
+// only. Inherits the hint's size so it reads as part of the sentence.
+.profile-link {
+  @extend %accent-link;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.remove-btn {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: t.$radius-pill;
+  border: 1px solid var(--border-hairline);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: t.$text-body-lg;
+  line-height: 1;
+  cursor: pointer;
+  appearance: none;
+  transition: opacity var(--transition-fast);
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+// ── Diet / allergy chips ─────────────────────────────────────────────────
+
+.options-label {
+  margin: 18px 0 t.$space-2;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+}
+
+// Catalog chip: a hairline pill that fills with the accent when on.
+.chip {
+  padding: 7px 13px;
+  border: 1px solid var(--border-hairline);
+  border-radius: t.$radius-pill;
+  background: transparent;
+  color: var(--text-body-color);
+  font-family: t.$font-sans;
+  font-size: t.$text-caption;
+  cursor: pointer;
+  appearance: none;
+  transition: opacity var(--transition-fast);
+
+  &:hover {
+    opacity: 0.85;
+  }
+
+  &.on {
+    border-color: var(--brand-accent);
+    background: var(--brand-accent);
+    color: var(--on-accent);
+  }
+}
+
+.custom-chips {
+  margin-bottom: t.$space-2;
+}
+
+// Guest-typed allergy: not a toggle but a removable entry, so it reads as a
+// filled tag with a dismiss glyph rather than an on/off pill.
+.chip-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-color: var(--brand-accent-soft);
+  background: var(--surface-chip);
+}
+
+.chip-x {
+  color: var(--text-muted);
+  font-size: t.$text-body;
+  line-height: 1;
+}
+
+.chip-empty {
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+}
+
+// ── Add links ────────────────────────────────────────────────────────────
+
+.add-row {
+  display: flex;
+  gap: 18px;
+  margin-top: t.$space-3;
+}
+
+.add-link {
+  @extend %accent-link;
+  font-size: t.$text-caption;
+}
+
+// ── Note ─────────────────────────────────────────────────────────────────
+
+.note-label {
+  margin: 26px 0 6px;
+}
+
+.note-text {
+  margin: 0;
+  font-size: t.$text-body;
+  line-height: 1.5;
+  color: var(--text-body-color);
+  white-space: pre-wrap;
+}
+
+.note-empty {
+  color: var(--text-muted);
+}
+
+textarea[app-textarea] {
+  margin-top: 0;
+}

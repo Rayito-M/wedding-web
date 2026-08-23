@@ -179,43 +179,74 @@
     },
     "edit": {
       "eyebrow": "CONFIRMADO",
-      "titleAttending": "Tu grupo",
-      "titleDeclined": "Tu respuesta",
+      "title": "Tu respuesta",
       "seatsHeld": {
         "none": "Aún no hay asientos reservados. Edita lo que quieras hasta el 1 de mayo.",
         "singular": "{{count}} asiento reservado. Edita lo que quieras hasta el 1 de mayo.",
         "plural": "{{count}} asientos reservados. Edita lo que quieras hasta el 1 de mayo."
       },
       "declinedSub": "Nos dijiste que no podrás venir. Puedes cambiar de opinión hasta el 1 de mayo.",
-      "addPartner": "+ Añadir pareja",
-      "addChild": "+ Añadir niño",
-      "noteLabel": "Un mensaje para nosotros (opcional)",
-      "notePlaceholder": "Una canción para bailar, un recuerdo…",
       "changeAnswer": "Cambiar mi respuesta",
+      "footer": {
+        "saved": "Cambios guardados ✓",
+        "unsaved": "Cambios sin guardar"
+      },
+      "error": "Algo salió mal al guardar tus cambios. Inténtalo de nuevo."
+    },
+    "editor": {
+      "attendingLabel": "¿Asistirá?",
+      "choice": {
+        "attending": "Con alegría",
+        "pending": "Pendiente",
+        "declined": "Lamentablemente no"
+      },
+      "total": "Total: {{count}}",
       "kind": {
-        "you": "Tú",
         "partner": "Pareja",
         "child": "Niño"
       },
       "person": {
         "newGuest": "Nuevo invitado",
         "meal": "Comida",
-        "allergies": "Alergias",
-        "allergiesPlaceholder": "Frutos secos, marisco, sésamo…",
+        "allergies": "Alergias e intolerancias",
         "noMealDetails": "Sin detalles de comida todavía",
         "yearsOld": "{{age}} años",
-        "allergiesSummary": "Alergias: {{list}}"
-      },
-      "footer": {
-        "saved": "Cambios guardados ✓",
-        "unsaved": "Cambios sin guardar",
-        "unnamed": {
-          "none": "Ningún invitado necesita nombre y apellido",
-          "singular": "{{count}} invitado necesita nombre y apellido",
-          "plural": "{{count}} invitados necesitan nombre y apellido"
+        "allergiesSummary": "Alergias: {{list}}",
+        "firstNamePlaceholder": "Nombre",
+        "lastNamePlaceholder": "Apellido",
+        "agePlaceholder": "Edad",
+        "openProfile": "Abrir su perfil",
+        "customAllergy": {
+          "label": "¿Algo más?",
+          "placeholder": "Escribe una alergia y pulsa Enter…",
+          "remove": "Quitar {{name}}"
         }
       },
-      "error": "Algo salió mal al guardar tus cambios. Inténtalo de nuevo."
+      "unnamed": {
+        "none": "Ningún invitado necesita nombre y apellido",
+        "singular": "{{count}} invitado necesita nombre y apellido",
+        "plural": "{{count}} invitados necesitan nombre y apellido"
+      },
+      "perspective": {
+        "owner": {
+          "party": "Tu grupo",
+          "primaryHint": "Tú",
+          "partyMeta": "Grupo · dieta y alergias",
+          "note": "Un mensaje para nosotros (opcional)",
+          "notePlaceholder": "Una canción para bailar, un recuerdo…",
+          "addPartner": "+ Añadir mi pareja",
+          "addChild": "+ Añadir niño"
+        },
+        "couple": {
+          "party": "El grupo",
+          "primaryHint": "Invitado principal",
+          "partyMeta": "Participantes · dieta y alergias",
+          "note": "Nota del invitado",
+          "notePlaceholder": "No ha dejado ninguna nota.",
+          "addPartner": "+ Añadir pareja",
+          "addChild": "+ Añadir niño"
+        }
+      }
     }
   },
   "dashboard": {
@@ -670,20 +701,8 @@
       "participants": "Participantes",
       "children": "Niños",
       "dietary": "Dieta",
-      "attending": "¿Asistirá?",
-      "you": "Tú",
-      "partner": "Pareja",
-      "choice": {
-        "attending": "Con alegría",
-        "pending": "Pendiente",
-        "declined": "Lamentablemente no"
-      },
-      "participantsSection": "Participantes · dieta y alergias",
-      "total": "Total: {{count}}",
-      "mainGuest": "Invitado principal",
       "none": "Este invitado aún no ha respondido: no hay RSVP que gestionar.",
-      "saveFailed": "No se ha podido guardar el RSVP. Inténtalo de nuevo.",
-      "partnerNameRequired": "La pareja necesita nombre y apellido."
+      "saveFailed": "No se ha podido guardar el RSVP. Inténtalo de nuevo."
     },
     "form": {
       "name": "Nombre completo",

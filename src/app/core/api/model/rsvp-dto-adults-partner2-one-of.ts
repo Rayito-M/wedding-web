@@ -10,11 +10,21 @@
 import { RsvpDtoAdultsPartner1Options } from './rsvp-dto-adults-partner1-options';
 
 
-export interface RsvpDtoAdultsPartner2AnyOf1 { 
+export interface RsvpDtoAdultsPartner2OneOf { 
     id: string;
     firstName: string;
     lastName: string;
+    kind: RsvpDtoAdultsPartner2OneOf.KindEnum;
     attending?: boolean;
     options?: RsvpDtoAdultsPartner1Options;
 }
+export namespace RsvpDtoAdultsPartner2OneOf {
+    export const KindEnum = {
+        GUEST: 'guest',
+        PLUS_ONE: 'plus-one',
+        CHILD: 'child'
+    } as const;
+    export type KindEnum = typeof KindEnum[keyof typeof KindEnum];
+}
+
 

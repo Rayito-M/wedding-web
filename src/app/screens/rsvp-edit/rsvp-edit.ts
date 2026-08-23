@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { firstValueFrom, map } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
@@ -8,78 +7,46 @@ import {
   EMPTY_RSVP_DRAFT,
   EntityNamesEnum,
   HeaderService,
-  PersonKey,
   RsvpDraft,
   RsvpDto,
-  RsvpDtoAdultsPartner1Options,
-  TranslateLanguageService,
-  WeddingConfigResponseDto,
   PluralTranslatePipe,
   fromRsvpDraft,
-  partnerHasAccount,
   toRsvpDraft,
-  withPersonOptions,
+  unnamedAdultCount,
 } from '@app/core';
 import { Btn } from '@app/shared/button/button';
-import { Pill } from '@app/shared/pill/pill';
-import { TextInput } from '@app/shared/input/input';
-import { TextareaInput } from '@app/shared/textarea/textarea';
-import { Avatar } from '@app/shared/avatar/avatar';
-
-type PersonKind = 'you' | 'partner' | 'child';
-
-interface PersonCard {
-  readonly key: PersonKey;
-  readonly kind: PersonKind;
-  readonly firstName: string;
-  readonly lastName: string;
-  /** `null` for adults — children only. */
-  readonly age: string | null;
-  /**
-   * The `partner` card only: this partner has their own guest account, so the
-   * name belongs to that account and is rendered read-only here (ADR W-0002
-   * §Decision.3). Always `false` for `you` (the signed-in guest editing their
-   * own name) and `child`.
-   */
-  readonly hasAccount: boolean;
-  readonly options: RsvpDtoAdultsPartner1Options;
-}
+import { RsvpEditor } from '@app/shared/rsvp-editor/rsvp-editor';
 
 /**
- * The RSVP once it exists (design system `ScreenRSVPEdit.jsx`, commit
- * 9e44df2): expandable per-person cards for the party, a shared note, and
- * "Change my answer" back to `app-rsvp-create`.
+ * The RSVP once it exists (design system `ScreenRSVPEdit.jsx`): the page
+ * header, the shared `app-rsvp-editor` in `owner` perspective, "Change my
+ * answer" back to `app-rsvp-create`, and the save footer.
  *
- * Simplified vs. the reference, matching `app-rsvp-create`: no "own guest
- * account / phone number" sub-flow for adults (out of scope — no
- * guest-search API, and provisioning accounts needs a hub-level ADR), so
- * there is also no "N guests need a phone number" footer state. The DS's
- * flat `reply.people[]` (kind `you`/`partner`/`guest`/`child`) doesn't exist
- * in the real API — this renders one card each for `adults.partner1`
- * (always), `adults.partner2` (if present) and `children[]`, and repurposes
- * the DS's "+ Add a guest" as "+ Add a partner" (the only other adult slot
- * the real model has; shown only while `partner2` is absent).
+ * This screen is chrome, persistence and gating only (ADR W-0003
+ * §Decision.2). The editable body — participant cards, name lock, diet and
+ * allergy chips, add/remove, the note — lives in `app-rsvp-editor` and is
+ * shared with the couple's manage-RSVP modal.
+ *
+ * Two headings, two owners: this host says *which record this is* ("Your
+ * reply", `rsvp.edit.title`, one string for both the attending and the
+ * declined state — the eyebrow and the subtitle carry the status), while the
+ * editor labels the list below it ("Your party") from its own perspective
+ * namespace (ADR W-0003 §Decision.9).
  */
 @Component({
   selector: 'app-rsvp-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Avatar, Btn, Pill, TextInput, TextareaInput, TranslatePipe, PluralTranslatePipe],
+  imports: [Btn, RsvpEditor, TranslatePipe, PluralTranslatePipe],
   templateUrl: './rsvp-edit.html',
   styleUrl: './rsvp-edit.scss',
 })
 export class RsvpEdit {
-  private readonly translate = inject(TranslateLanguageService);
   private readonly translateService = inject(TranslateService);
   private readonly header = inject(HeaderService);
 
   private readonly rsvpCollection: EntityCollectionService<RsvpDto> = inject(
     EntityServices,
   ).getEntityCollectionService<RsvpDto>(EntityNamesEnum.RSVP);
-
-  private readonly weddingConfigCollection: EntityCollectionService<WeddingConfigResponseDto> =
-    inject(EntityServices).getEntityCollectionService<WeddingConfigResponseDto>(
-      EntityNamesEnum.WEDDING_CONFIG,
-    );
 
   /** The current guest's RSVP, as read by the orchestrator. */
   readonly rsvp = input.required<RsvpDto>();
@@ -93,89 +60,20 @@ export class RsvpEdit {
   // is available; the effect runs once immediately after construction, well
   // before the initial render is visible.
   protected readonly draft = signal<RsvpDraft>(EMPTY_RSVP_DRAFT);
-  protected readonly openKey = signal<PersonKey | null>('partner1');
   protected readonly dirty = signal(false);
   protected readonly saving = signal(false);
   protected readonly saveFailed = signal(false);
 
-  /** Singleton resource: at most one document in the collection (mirrors
-   *  `invitee.ts`). `GET /v1/config` (no `@Roles` restriction beyond being
-   *  signed in) is guest-readable — confirmed by `invitee.ts` already
-   *  reading this same collection successfully for the guest role — so the
-   *  dietary-preference catalog is sourced from here, not a placeholder. */
-  protected readonly weddingConfig = toSignal(
-    this.weddingConfigCollection.entities$.pipe(map((configs) => configs[0])),
-    { initialValue: undefined },
-  );
-
-  protected readonly dietaryOptions = computed(() => {
-    const lang = this.translate.currentLang();
-    return (this.weddingConfig()?.dietaryPreferences ?? []).map((d) => ({
-      id: d.id,
-      label: d.label[lang],
-    }));
+  /** Seats held: the primary guest, their partner if any, and the children. */
+  protected readonly seatsHeld = computed(() => {
+    const draft = this.draft();
+    return 1 + (draft.partner2 ? 1 : 0) + draft.children.length;
   });
 
-  protected readonly cards = computed<PersonCard[]>(() => {
-    const d = this.draft();
-    const list: PersonCard[] = [
-      {
-        key: 'partner1',
-        kind: 'you',
-        firstName: d.partner1.firstName,
-        lastName: d.partner1.lastName,
-        age: null,
-        hasAccount: false,
-        options: d.partner1.options,
-      },
-    ];
-    if (d.partner2) {
-      list.push({
-        key: 'partner2',
-        kind: 'partner',
-        firstName: d.partner2.firstName,
-        lastName: d.partner2.lastName,
-        age: null,
-        hasAccount: partnerHasAccount(d.partner2),
-        options: d.partner2.options,
-      });
-    }
-    d.children.forEach((c, i) => {
-      list.push({
-        key: `child:${i}`,
-        kind: 'child',
-        firstName: c.firstName,
-        lastName: '',
-        age: c.age,
-        hasAccount: false,
-        options: c.options,
-      });
-    });
-    return list;
-  });
-
-  protected readonly seatsHeld = computed(() => this.cards().length);
-
-  /**
-   * Every adult in the party goes on the guest list under a full name, so both
-   * names are required before a save is allowed (DS `ScreenRSVPEdit.jsx`
-   * `unnamed`). A partner whose name is owned by their own guest account is
-   * excluded: that name is read-only here, so counting it would leave the guest
-   * with a gate they have no way to satisfy.
-   */
-  protected readonly unnamedCount = computed(
-    () =>
-      this.cards().filter(
-        (card) =>
-          card.kind !== 'child' &&
-          !card.hasAccount &&
-          (!card.firstName.trim() || !card.lastName.trim()),
-      ).length,
-  );
+  /** The save gate, shared with the couple's editor (ADR W-0003 §Decision.7). */
+  protected readonly unnamedCount = computed(() => unnamedAdultCount(this.draft()));
 
   constructor() {
-    this.weddingConfigCollection.getByKey(''); // Singleton resource, only fetches if cache is empty
-
     effect(() => {
       const header = this.translateService.instant('rsvp.header');
       this.header.set(`${header} · ${this.translateService.instant('rsvp.edit.eyebrow')}`);
@@ -191,146 +89,11 @@ export class RsvpEdit {
     });
   }
 
-  protected isOpen(key: PersonKey): boolean {
-    return this.openKey() === key;
-  }
-
-  protected toggleOpen(key: PersonKey): void {
-    this.openKey.update((current) => (current === key ? null : key));
-  }
-
-  protected kindLabelKey(kind: PersonKind): string {
-    return `rsvp.edit.kind.${kind}`;
-  }
-
-  protected fullName(card: PersonCard): string {
-    return `${card.firstName} ${card.lastName}`.trim();
-  }
-
-  protected initial(card: PersonCard): string {
-    return (this.fullName(card) || '?').charAt(0).toUpperCase();
-  }
-
-  protected dietLabel(id: string): string {
-    return this.dietaryOptions().find((d) => d.id === id)?.label ?? id;
-  }
-
-  protected allergiesText(card: PersonCard): string {
-    return card.options.customAllergies?.[0] ?? '';
-  }
-
-  protected summaryFor(card: PersonCard): string {
-    const bits: string[] = [];
-    if (card.kind === 'child' && card.age) {
-      bits.push(this.translateService.instant('rsvp.edit.person.yearsOld', { age: card.age }));
-    }
-    const dietLabels = (card.options.dietaryPreferenceIds ?? []).map((id) => this.dietLabel(id));
-    if (dietLabels.length) bits.push(dietLabels.join(', '));
-    const allergies = this.allergiesText(card).trim();
-    if (allergies) {
-      bits.push(this.translateService.instant('rsvp.edit.person.allergiesSummary', { list: allergies }));
-    }
-    return bits.length ? bits.join(' · ') : this.translateService.instant('rsvp.edit.person.noMealDetails');
-  }
-
-  protected setPartner1FirstName(value: string): void {
-    this.draft.update((d) => ({ ...d, partner1: { ...d.partner1, firstName: value } }));
-    this.markDirty();
-  }
-
-  protected setPartner1LastName(value: string): void {
-    this.draft.update((d) => ({ ...d, partner1: { ...d.partner1, lastName: value } }));
-    this.markDirty();
-  }
-
-  protected setPartner2FirstName(value: string): void {
-    if (this.partner2NameLocked()) return;
-    this.draft.update((d) => (d.partner2 ? { ...d, partner2: { ...d.partner2, firstName: value } } : d));
-    this.markDirty();
-  }
-
-  protected setPartner2LastName(value: string): void {
-    if (this.partner2NameLocked()) return;
-    this.draft.update((d) => (d.partner2 ? { ...d, partner2: { ...d.partner2, lastName: value } } : d));
-    this.markDirty();
-  }
-
-  /** The template disables both inputs; this backs it up so a programmatic
-   *  call cannot rename another guest's account (ADR W-0002 §Decision.3). */
-  private partner2NameLocked(): boolean {
-    return partnerHasAccount(this.draft().partner2);
-  }
-
-  protected setChildFirstName(index: number, value: string): void {
-    this.draft.update((d) => ({
-      ...d,
-      children: d.children.map((c, i) => (i === index ? { ...c, firstName: value } : c)),
-    }));
-    this.markDirty();
-  }
-
-  protected setChildAge(index: number, value: string): void {
-    const digits = value.replace(/\D/g, '').slice(0, 2);
-    this.draft.update((d) => ({
-      ...d,
-      children: d.children.map((c, i) => (i === index ? { ...c, age: digits } : c)),
-    }));
-    this.markDirty();
-  }
-
-  protected toggleDiet(key: PersonKey, dietId: string): void {
-    this.updateOptions(key, (opts) => {
-      const current = opts.dietaryPreferenceIds ?? [];
-      return {
-        ...opts,
-        dietaryPreferenceIds: current.includes(dietId)
-          ? current.filter((id) => id !== dietId)
-          : [...current, dietId],
-      };
-    });
-  }
-
-  protected setAllergies(key: PersonKey, value: string): void {
-    this.updateOptions(key, (opts) => ({
-      ...opts,
-      customAllergies: value.trim() ? [value.trim()] : [],
-    }));
-  }
-
-  protected setNote(value: string): void {
-    this.updateOptions('partner1', (opts) => ({ ...opts, comments: value || null }));
-  }
-
-  protected readonly noteText = computed(() => this.draft().partner1.options.comments ?? '');
-
-  protected canAddPartner(): boolean {
-    return !this.draft().partner2;
-  }
-
-  protected addPartner(): void {
-    if (!this.canAddPartner()) return;
-    this.draft.update((d) => ({ ...d, partner2: { firstName: '', lastName: '', options: {} } }));
-    this.openKey.set('partner2');
-    this.markDirty();
-  }
-
-  protected addChild(): void {
-    this.draft.update((d) => ({ ...d, children: [...d.children, { firstName: '', age: '', options: {} }] }));
-    this.openKey.set(`child:${this.draft().children.length - 1}`);
-    this.markDirty();
-  }
-
-  protected removePerson(key: PersonKey): void {
-    if (key === 'partner2') {
-      this.draft.update((d) => ({ ...d, partner2: undefined }));
-    } else if (key.startsWith('child:')) {
-      const index = Number(key.slice('child:'.length));
-      this.draft.update((d) => ({ ...d, children: d.children.filter((_, i) => i !== index) }));
-    } else {
-      return;
-    }
-    if (this.openKey() === key) this.openKey.set(null);
-    this.markDirty();
+  /** The editor is controlled: it never mutates, it hands back a new draft. */
+  protected onDraftChange(draft: RsvpDraft): void {
+    this.draft.set(draft);
+    this.dirty.set(true);
+    this.saveFailed.set(false);
   }
 
   protected async save(): Promise<void> {
@@ -357,26 +120,5 @@ export class RsvpEdit {
 
   protected onChangeAnswer(): void {
     this.changeAnswer.emit();
-  }
-
-  private updateOptions(
-    key: PersonKey,
-    mutate: (opts: RsvpDtoAdultsPartner1Options) => RsvpDtoAdultsPartner1Options,
-  ): void {
-    this.draft.update((d) => withPersonOptions(d, key, mutate));
-    this.markDirty();
-  }
-
-  private markDirty(): void {
-    this.dirty.set(true);
-    this.saveFailed.set(false);
-  }
-
-  protected inputValue(event: Event): string {
-    return (event.target as HTMLInputElement | HTMLTextAreaElement).value;
-  }
-
-  protected childIndex(key: PersonKey): number {
-    return Number(key.slice('child:'.length));
   }
 }

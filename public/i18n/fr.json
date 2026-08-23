@@ -179,43 +179,74 @@
     },
     "edit": {
       "eyebrow": "CONFIRMÉ",
-      "titleAttending": "Votre groupe",
-      "titleDeclined": "Votre réponse",
+      "title": "Votre réponse",
       "seatsHeld": {
         "none": "Aucune place réservée pour l'instant. Modifiez tout ce que vous voulez jusqu'au 1er mai.",
         "singular": "{{count}} place réservée. Modifiez tout ce que vous voulez jusqu'au 1er mai.",
         "plural": "{{count}} places réservées. Modifiez tout ce que vous voulez jusqu'au 1er mai."
       },
       "declinedSub": "Vous nous avez dit que vous ne pourrez pas venir. Vous pouvez changer d'avis jusqu'au 1er mai.",
-      "addPartner": "+ Ajouter un partenaire",
-      "addChild": "+ Ajouter un enfant",
-      "noteLabel": "Un message pour nous (optionnel)",
-      "notePlaceholder": "Une chanson à danser, un souvenir…",
       "changeAnswer": "Modifier ma réponse",
+      "footer": {
+        "saved": "Modifications enregistrées ✓",
+        "unsaved": "Modifications non enregistrées"
+      },
+      "error": "Une erreur est survenue lors de l'enregistrement de vos modifications. Veuillez réessayer."
+    },
+    "editor": {
+      "attendingLabel": "Assistera?",
+      "choice": {
+        "attending": "Avec joie",
+        "pending": "En attente",
+        "declined": "Hélas non"
+      },
+      "total": "Total : {{count}}",
       "kind": {
-        "you": "Vous",
         "partner": "Partenaire",
         "child": "Enfant"
       },
       "person": {
         "newGuest": "Nouvel invité",
         "meal": "Repas",
-        "allergies": "Allergies",
-        "allergiesPlaceholder": "Fruits à coque, crustacés, sésame…",
+        "allergies": "Allergies et intolérances",
         "noMealDetails": "Pas encore de détails de repas",
         "yearsOld": "{{age}} ans",
-        "allergiesSummary": "Allergies : {{list}}"
-      },
-      "footer": {
-        "saved": "Modifications enregistrées ✓",
-        "unsaved": "Modifications non enregistrées",
-        "unnamed": {
-          "none": "Aucun invité n'a besoin d'un prénom et d'un nom",
-          "singular": "{{count}} invité a besoin d'un prénom et d'un nom",
-          "plural": "{{count}} invités ont besoin d'un prénom et d'un nom"
+        "allergiesSummary": "Allergies : {{list}}",
+        "firstNamePlaceholder": "Prénom",
+        "lastNamePlaceholder": "Nom",
+        "agePlaceholder": "Âge",
+        "openProfile": "Ouvrir son profil",
+        "customAllergy": {
+          "label": "Autre chose ?",
+          "placeholder": "Saisissez une allergie et appuyez sur Entrée…",
+          "remove": "Retirer {{name}}"
         }
       },
-      "error": "Une erreur est survenue lors de l'enregistrement de vos modifications. Veuillez réessayer."
+      "unnamed": {
+        "none": "Aucun invité n'a besoin d'un prénom et d'un nom",
+        "singular": "{{count}} invité a besoin d'un prénom et d'un nom",
+        "plural": "{{count}} invités ont besoin d'un prénom et d'un nom"
+      },
+      "perspective": {
+        "owner": {
+          "party": "Votre groupe",
+          "primaryHint": "Vous",
+          "partyMeta": "Groupe · régime & allergies",
+          "note": "Un message pour nous (optionnel)",
+          "notePlaceholder": "Une chanson à danser, un souvenir…",
+          "addPartner": "+ Ajouter mon partenaire",
+          "addChild": "+ Ajouter un enfant"
+        },
+        "couple": {
+          "party": "Le groupe",
+          "primaryHint": "Invité principal",
+          "partyMeta": "Participants · régime & allergies",
+          "note": "Note de l'invité",
+          "notePlaceholder": "Aucune note laissée.",
+          "addPartner": "+ Ajouter un partenaire",
+          "addChild": "+ Ajouter un enfant"
+        }
+      }
     }
   },
   "dashboard": {
@@ -670,20 +701,8 @@
       "participants": "Participants",
       "children": "Enfants",
       "dietary": "Régime",
-      "attending": "Assistera?",
-      "you": "Vous",
-      "partner": "Partenaire",
-      "choice": {
-        "attending": "Avec joie",
-        "pending": "En attente",
-        "declined": "Hélas non"
-      },
-      "participantsSection": "Participants · régime & allergies",
-      "total": "Total : {{count}}",
-      "mainGuest": "Invité principal",
       "none": "Cet invité n'a pas encore répondu — il n'y a pas de RSVP à gérer.",
-      "saveFailed": "Le RSVP n'a pas pu être enregistré. Veuillez réessayer.",
-      "partnerNameRequired": "Le partenaire doit avoir un prénom et un nom."
+      "saveFailed": "Le RSVP n'a pas pu être enregistré. Veuillez réessayer."
     },
     "form": {
       "name": "Nom complet",

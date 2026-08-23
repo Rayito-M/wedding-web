@@ -7,16 +7,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { RsvpDtoAdultsPartner2AnyOf1 } from './rsvp-dto-adults-partner2-any-of1';
+import { RsvpDtoAdultsPartner2OneOf1 } from './rsvp-dto-adults-partner2-one-of1';
 import { RsvpDtoAdultsPartner1Options } from './rsvp-dto-adults-partner1-options';
-import { RsvpDtoAdultsPartner2AnyOf } from './rsvp-dto-adults-partner2-any-of';
+import { RsvpDtoAdultsPartner2OneOf } from './rsvp-dto-adults-partner2-one-of';
 
 
-export interface RsvpDtoAdultsPartner2 { 
-    firstName: string;
-    lastName: string;
-    options?: RsvpDtoAdultsPartner1Options;
-    id: string;
-    attending?: boolean;
-}
+/**
+ * @type RsvpDtoAdultsPartner2
+ * @export
+ */
+export type RsvpDtoAdultsPartner2 = RsvpDtoAdultsPartner2OneOf | RsvpDtoAdultsPartner2OneOf1;
 

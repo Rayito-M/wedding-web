@@ -172,7 +172,9 @@ export class GuestManager {
 
   /**
    * A row click opens the guest profile overlay — it owns fetching the full
-   * RSVP behind the summary card it shows.
+   * RSVP behind the summary card it shows. The same entry point serves the
+   * manage-RSVP overlay's "Back" and its "Open their profile" jump from a
+   * linked partner's locked name (T269): one swap, one code path.
    */
   openGuestProfile(userId: string): void {
     this.profileModal.open(userId);

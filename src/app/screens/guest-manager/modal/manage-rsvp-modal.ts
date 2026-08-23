@@ -7,90 +7,49 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { firstValueFrom, map } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
 import {
   EMPTY_RSVP_DRAFT,
   EntityNamesEnum,
-  PersonKey,
+  PluralTranslatePipe,
   RsvpDraft,
   RsvpDto,
-  TranslateLanguageService,
   UserProfileDto,
-  WeddingConfigResponseDto,
   fromRsvpDraft,
-  partnerHasAccount,
   toRsvpDraft,
-  toggleOptionId,
-  withPersonOptions,
+  unnamedAdultCount,
 } from '@app/core';
 import { Modal } from '@app/shared/modal/modal';
 import { Btn } from '@app/shared/button/button';
-import { ChoiceCard } from '@app/shared/choice-card/choice-card';
-import { TextInput } from '@app/shared/input/input';
-import { TextareaInput } from '@app/shared/textarea/textarea';
 import { DecorFish } from '@app/shared/decor/fish';
-
-type PersonKind = 'you' | 'partner' | 'child';
-
-interface PersonCard {
-  readonly key: PersonKey;
-  readonly kind: PersonKind;
-  readonly firstName: string;
-  readonly lastName: string;
-  /** `null` for adults — children only. */
-  readonly age: string | null;
-  /**
-   * The `partner` card only: this partner has their own guest account, so
-   * their name belongs to that account and is rendered as static text here
-   * rather than as editable fields (ADR W-0002 §Decision.3) — an admin
-   * editing this RSVP must not be able to rename another guest's account.
-   * Always `false` for `you` (the RSVP's own primary guest) and `child`.
-   */
-  readonly hasAccount: boolean;
-  readonly dietaryPreferenceIds: readonly string[];
-  readonly allergyIds: readonly string[];
-}
-
-interface CatalogOption {
-  readonly id: string;
-  readonly label: string;
-}
+import { RsvpEditor } from '@app/shared/rsvp-editor/rsvp-editor';
 
 /**
- * Manage-RSVP overlay — the admin's editor for a guest's reply (DS
- * `ScreenGuestManager.jsx`, the `draft != null` branch of the profile
- * overlay): attendance answer, one card per participant with dietary and
- * allergy pills, and the note left with the reply.
+ * Manage-RSVP overlay — the couple's editor for a guest's reply (DS
+ * `ScreenGuestManager.jsx` / `ScreenGuestManagerMobile.jsx`, the `draft != null`
+ * branch of the profile overlay). One responsive modal covers both DS screens.
+ *
+ * The editable body is the shared `app-rsvp-editor` in its `couple`
+ * perspective (in-repo ADR W-0003): attendance answer (`showStatus`),
+ * accordion participant cards with diet/allergy chips and free-text allergy
+ * entries, add/remove, and the note — read-only here (`noteReadonly`), because
+ * the couple must never overwrite words a guest wrote to them. This modal
+ * keeps only the chrome: header, footer, the draft it owns, and the write.
  *
  * Opened from `app-guest-profile-modal`'s summary card or its "Manage RSVP"
  * button; "Back" returns there (the parent swaps the two overlays). Writes go
  * through the same `PATCH /v1/rsvp/{id}` the guest's own `app-rsvp-edit`
  * screen uses, sharing its draft mapping (`core/helper/rsvp-draft`).
- *
- * Deviation from the DS mock: dietary and allergy options are the wedding's
- * configured catalogs (`WeddingConfigResponseDto.dietaryPreferences` /
- * `.allergies`, stored as ids on the RSVP), not the mock's hard-coded English
- * label lists.
  */
 @Component({
   selector: 'app-manage-rsvp-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [
-    NgTemplateOutlet,
-    TranslatePipe,
-    Modal,
-    Btn,
-    ChoiceCard,
-    TextInput,
-    TextareaInput,
-    DecorFish,
-  ],
+  imports: [TranslatePipe, PluralTranslatePipe, Modal, Btn, DecorFish, RsvpEditor],
   templateUrl: './manage-rsvp-modal.html',
   styleUrl: './manage-rsvp-modal.scss',
 })
@@ -101,14 +60,13 @@ export class ManageRsvpModal {
   readonly closeModal = output<void>();
   /** A successful save — emits the guest's user id so the list row can refresh. */
   readonly rsvpSaved = output<string>();
+  /**
+   * "Open their profile" on a partner whose name is locked to their own guest
+   * account (T269) — emits *that partner's* user id, not the primary guest's,
+   * so the parent can swap this overlay for `app-guest-profile-modal` on them.
+   */
+  readonly openProfile = output<string>();
 
-  protected readonly statuses: RsvpDto.StatusEnum[] = [
-    RsvpDto.StatusEnum.ATTENDING,
-    RsvpDto.StatusEnum.PENDING,
-    RsvpDto.StatusEnum.DECLINED,
-  ];
-
-  private readonly lang = inject(TranslateLanguageService);
   private readonly translate = inject(TranslateService);
 
   private readonly rsvpCollection: EntityCollectionService<RsvpDto> = inject(
@@ -118,11 +76,6 @@ export class ManageRsvpModal {
   private readonly userProfileCollection: EntityCollectionService<UserProfileDto> = inject(
     EntityServices,
   ).getEntityCollectionService<UserProfileDto>(EntityNamesEnum.USER_PROFILE);
-
-  private readonly weddingConfigCollection: EntityCollectionService<WeddingConfigResponseDto> =
-    inject(EntityServices).getEntityCollectionService<WeddingConfigResponseDto>(
-      EntityNamesEnum.WEDDING_CONFIG,
-    );
 
   /** Set by `open(userId)` — the RSVP's `id` equals its primary guest's user id. */
   private readonly userId = signal<string | null>(null);
@@ -146,83 +99,13 @@ export class ManageRsvpModal {
     return this.rsvps().find((r) => r.id === userId) ?? null;
   });
 
-  /** Singleton resource: at most one document in the collection — the source
-   *  of the dietary/allergy catalogs (same read as `app-rsvp-edit`). */
-  private readonly weddingConfig = toSignal(
-    this.weddingConfigCollection.entities$.pipe(map((configs) => configs[0])),
-    { initialValue: undefined },
-  );
-
-  protected readonly dietaryOptions = computed<CatalogOption[]>(() =>
-    this.toCatalog(this.weddingConfig()?.dietaryPreferences),
-  );
-
-  protected readonly allergyOptions = computed<CatalogOption[]>(() =>
-    this.toCatalog(this.weddingConfig()?.allergies),
-  );
-
-  protected readonly cards = computed<PersonCard[]>(() => {
-    const d = this.draft();
-    const cards: PersonCard[] = [
-      {
-        key: 'partner1',
-        kind: 'you',
-        firstName: d.partner1.firstName,
-        lastName: d.partner1.lastName,
-        age: null,
-        hasAccount: false,
-        dietaryPreferenceIds: d.partner1.options.dietaryPreferenceIds ?? [],
-        allergyIds: d.partner1.options.allergyIds ?? [],
-      },
-    ];
-    if (d.partner2) {
-      cards.push({
-        key: 'partner2',
-        kind: 'partner',
-        firstName: d.partner2.firstName,
-        lastName: d.partner2.lastName,
-        age: null,
-        hasAccount: partnerHasAccount(d.partner2),
-        dietaryPreferenceIds: d.partner2.options.dietaryPreferenceIds ?? [],
-        allergyIds: d.partner2.options.allergyIds ?? [],
-      });
-    }
-    d.children.forEach((child, index) => {
-      cards.push({
-        key: `child:${index}`,
-        kind: 'child',
-        firstName: child.firstName,
-        lastName: '',
-        age: child.age,
-        hasAccount: false,
-        dietaryPreferenceIds: child.options.dietaryPreferenceIds ?? [],
-        allergyIds: child.options.allergyIds ?? [],
-      });
-    });
-    return cards;
-  });
-
-  protected readonly partnerCard = computed(() =>
-    this.cards().find((card) => card.kind === 'partner'),
-  );
-  protected readonly childCards = computed(() =>
-    this.cards().filter((card) => card.kind === 'child'),
-  );
-  protected readonly mainCard = computed(() => this.cards()[0]);
-  protected readonly participantsCount = computed(() => this.cards().length);
-
   /**
-   * A partner goes on the guest list under a full name, so both names are
-   * required before the reply can be saved (DS `ScreenGuestManager.jsx`
-   * `partnerNameOk`). Trivially true when the party has no partner.
+   * Everyone still owed a first and last name — the same gate the guest's own
+   * screen uses (ADR W-0003 §Decision.7). A partner who has their own guest
+   * account is excluded: their name is read-only here, so blocking on it would
+   * be a gate nobody can satisfy.
    */
-  protected readonly partnerNameOk = computed(() => {
-    const partner = this.draft().partner2;
-    if (!partner) return true;
-    return !!partner.firstName.trim() && !!partner.lastName.trim();
-  });
-
-  protected readonly noteText = computed(() => this.draft().partner1.options.comments ?? '');
+  protected readonly unnamedCount = computed(() => unnamedAdultCount(this.draft()));
 
   protected readonly guestFullName = computed(() => {
     const userId = this.userId();
@@ -237,8 +120,6 @@ export class ManageRsvpModal {
   );
 
   constructor() {
-    this.weddingConfigCollection.getByKey(''); // Singleton resource, only fetches if cache is empty
-
     // `open()` sets `userId` before the fetch resolves, so the draft can't be
     // seeded synchronously there — resync it whenever the RSVP lands (and
     // again after a save round-trips through the cache).
@@ -274,102 +155,30 @@ export class ManageRsvpModal {
     if (userId) this.back.emit(userId);
   }
 
-  protected setStatus(status: RsvpDto.StatusEnum): void {
-    this.draft.update((d) => ({ ...d, status }));
+  /** The editor is controlled: it never mutates, it hands back a fresh draft. */
+  protected onDraftChange(draft: RsvpDraft): void {
+    this.draft.set(draft);
   }
 
-  protected isStatus(status: RsvpDto.StatusEnum): boolean {
-    return this.draft().status === status;
-  }
-
-  protected setAdultFirstName(key: PersonKey, value: string): void {
-    if (key === 'partner1') {
-      this.draft.update((d) => ({ ...d, partner1: { ...d.partner1, firstName: value } }));
-    } else if (key === 'partner2') {
-      if (this.partner2NameLocked()) return;
-      this.draft.update((d) => (d.partner2 ? { ...d, partner2: { ...d.partner2, firstName: value } } : d));
-    }
-  }
-
-  protected setAdultLastName(key: PersonKey, value: string): void {
-    if (key === 'partner1') {
-      this.draft.update((d) => ({ ...d, partner1: { ...d.partner1, lastName: value } }));
-    } else if (key === 'partner2') {
-      if (this.partner2NameLocked()) return;
-      this.draft.update((d) => (d.partner2 ? { ...d, partner2: { ...d.partner2, lastName: value } } : d));
-    }
-  }
-
-  /** The template renders a locked partner's name as static text instead of
-   *  inputs; this backs that up so a programmatic call cannot rename another
-   *  guest's account from inside this RSVP (ADR W-0002 §Decision.3). */
-  private partner2NameLocked(): boolean {
-    return partnerHasAccount(this.draft().partner2);
-  }
-
-  protected setChildFirstName(index: number, value: string): void {
-    this.draft.update((d) => ({
-      ...d,
-      children: d.children.map((c, i) => (i === index ? { ...c, firstName: value } : c)),
-    }));
-  }
-
-  protected setChildAge(index: number, value: string): void {
-    const digits = value.replace(/\D/g, '').slice(0, 2);
-    this.draft.update((d) => ({
-      ...d,
-      children: d.children.map((c, i) => (i === index ? { ...c, age: digits } : c)),
-    }));
-  }
-
-  protected toggleDiet(key: PersonKey, dietId: string): void {
-    this.draft.update((d) =>
-      withPersonOptions(d, key, (opts) => toggleOptionId(opts, 'dietaryPreferenceIds', dietId)),
-    );
-  }
-
-  protected toggleAllergy(key: PersonKey, allergyId: string): void {
-    this.draft.update((d) =>
-      withPersonOptions(d, key, (opts) => toggleOptionId(opts, 'allergyIds', allergyId)),
-    );
-  }
-
-  protected setNote(value: string): void {
-    this.draft.update((d) =>
-      withPersonOptions(d, 'partner1', (opts) => ({ ...opts, comments: value || null })),
-    );
-  }
-
-  /** A partner added here is always a plus-one: no `id`, so
-   *  `partnerHasAccount()` is false and the card stays editable. */
-  protected addPartner(): void {
-    this.draft.update((d) =>
-      d.partner2 ? d : { ...d, partner2: { firstName: '', lastName: '', options: {} } },
-    );
-  }
-
-  protected removePartner(): void {
-    this.draft.update((d) => ({ ...d, partner2: undefined }));
-  }
-
-  protected addChild(): void {
-    this.draft.update((d) => ({
-      ...d,
-      children: [...d.children, { firstName: '', age: '', options: {} }],
-    }));
-  }
-
-  protected removeChild(index: number): void {
-    this.draft.update((d) => ({ ...d, children: d.children.filter((_, i) => i !== index) }));
-  }
-
-  protected childIndex(key: PersonKey): number {
-    return Number(key.slice('child:'.length));
+  /**
+   * The couple followed a linked partner's name to that partner's own profile.
+   * Unsaved edits are **discarded**, deliberately and exactly as the "Back"
+   * button beside it already discards them: this is the same overlay swap, and
+   * the alternative — blocking the jump while the draft is dirty — would need
+   * a disabled state nobody can explain without new copy. The draft is reset
+   * from the cached record here so the discard is real rather than incidental
+   * on the next `open()` refetch.
+   */
+  protected onOpenProfile(partnerUserId: string): void {
+    const rsvp = this.rsvp();
+    this.draft.set(rsvp ? toRsvpDraft(rsvp) : EMPTY_RSVP_DRAFT);
+    this.isOpen.set(false);
+    this.openProfile.emit(partnerUserId);
   }
 
   protected async save(): Promise<void> {
     const userId = this.userId();
-    if (!userId || !this.rsvp() || this.saving() || !this.partnerNameOk()) return;
+    if (!userId || !this.rsvp() || this.saving() || this.unnamedCount() > 0) return;
     this.saving.set(true);
     this.saveFailed.set(false);
     try {
@@ -384,16 +193,5 @@ export class ManageRsvpModal {
     } finally {
       this.saving.set(false);
     }
-  }
-
-  protected inputValue(event: Event): string {
-    return (event.target as HTMLInputElement | HTMLTextAreaElement).value;
-  }
-
-  private toCatalog(
-    entries: WeddingConfigResponseDto['dietaryPreferences'] | undefined,
-  ): CatalogOption[] {
-    const lang = this.lang.currentLang();
-    return (entries ?? []).map((entry) => ({ id: entry.id, label: entry.label[lang] }));
   }
 }

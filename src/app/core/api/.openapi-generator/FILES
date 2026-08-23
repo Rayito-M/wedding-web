@@ -62,8 +62,8 @@ model/otp-requested-dto.ts
 model/otp-verify-dto.ts
 model/rsvp-dto-adults-partner1-options.ts
 model/rsvp-dto-adults-partner1.ts
-model/rsvp-dto-adults-partner2-any-of.ts
-model/rsvp-dto-adults-partner2-any-of1.ts
+model/rsvp-dto-adults-partner2-one-of.ts
+model/rsvp-dto-adults-partner2-one-of1.ts
 model/rsvp-dto-adults-partner2.ts
 model/rsvp-dto-adults.ts
 model/rsvp-dto-children-inner.ts

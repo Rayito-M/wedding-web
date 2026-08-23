@@ -5,13 +5,14 @@ import {
   RsvpDtoAdultsPartner2,
   RsvpDtoChildrenInner,
 } from '../api';
+import { partnerHasAccount } from './partner-account';
 
 /**
- * Editable in-memory shape of an RSVP, shared by the two editors that exist
- * for it: the guest's own `app-rsvp-edit` screen and the admin's
- * `app-manage-rsvp-modal` in the guest manager. Both edit the same record
- * through the same `PATCH`, so the draft ⇄ DTO mapping lives here rather than
- * being written twice.
+ * Editable in-memory shape of an RSVP. Its one editor is the shared
+ * `app-rsvp-editor` (in-repo ADR W-0003), mounted by the guest's own
+ * `app-rsvp-edit` screen and by the couple's `app-manage-rsvp-modal` in the
+ * guest manager. Those two hosts own the draft signal and the `PATCH`; the
+ * draft ⇄ DTO mapping lives here so it is written once for both.
  */
 
 /** Addressable slot in a party — `partner1` is always the primary guest. */
@@ -147,4 +148,25 @@ export function toggleOptionId(
     ...options,
     [field]: current.includes(id) ? current.filter((x) => x !== id) : [...current, id],
   };
+}
+
+/**
+ * How many adults in the party are still missing a first or last name?
+ *
+ * Every adult goes on the guest list under a full name, so both hosts of the
+ * shared RSVP editor gate their save on this count (ADR W-0003 §Decision.7 —
+ * one rule, replacing `RsvpEdit.unnamedCount` and `ManageRsvpModal.partnerNameOk`).
+ * Children are never counted: they are listed by first name and age.
+ *
+ * A `partner2` whose name is owned by their own guest account is excluded —
+ * that name is read-only in this UI (ADR W-0002 §Decision.3), so counting it
+ * would leave the editor with a gate nobody can satisfy. `partner1` is always
+ * counted: they are the signed-in guest themself, so they always carry an `id`
+ * and the account-lock never applies to them (this mirrors `RsvpEdit`, which
+ * hard-codes `hasAccount: false` for the primary card).
+ */
+export function unnamedAdultCount(draft: RsvpDraft): number {
+  const adults: AdultDraft[] = [draft.partner1];
+  if (draft.partner2 && !partnerHasAccount(draft.partner2)) adults.push(draft.partner2);
+  return adults.filter((a) => !a.firstName.trim() || !a.lastName.trim()).length;
 }

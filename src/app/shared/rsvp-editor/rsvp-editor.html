@@ -1,0 +1,214 @@
+<!-- Attendance answer — the couple's editor only (`showStatus`). -->
+@if (showStatus()) {
+  <div class="status-section">
+    <div class="label">{{ 'rsvp.editor.attendingLabel' | translate }}</div>
+    <div class="choice-row">
+      @for (status of statuses; track status) {
+        <button
+          type="button"
+          app-choice-card
+          [selected]="isStatus(status)"
+          (click)="setStatus(status)"
+        >
+          {{ 'rsvp.editor.choice.' + status | translate }}
+        </button>
+      }
+    </div>
+  </div>
+}
+
+<!-- The party: its section heading, then the meta line and the running total. -->
+<h3 class="party-title">{{ perspectiveKey('party') | translate }}</h3>
+
+<div class="party-meta">
+  <span class="label">{{ perspectiveKey('partyMeta') | translate }}</span>
+  <span class="total">{{ 'rsvp.editor.total' | translate: { count: total() } }}</span>
+</div>
+
+<div class="cards">
+  @for (card of cards(); track card.key) {
+    <div class="card">
+      <button
+        type="button"
+        class="card-head"
+        [attr.aria-expanded]="isOpen(card.key)"
+        (click)="toggleOpen(card.key)"
+      >
+        <app-avatar [size]="32" [accent]="card.role === 'primary'">{{ initial(card) }}</app-avatar>
+        <span class="info">
+          <span class="name-row">
+            <span class="name">{{ fullName(card) || ('rsvp.editor.person.newGuest' | translate) }}</span>
+            <app-pill [tone]="card.role === 'primary' ? 'accent' : 'soft'">
+              {{ card.roleKey | translate }}
+            </app-pill>
+          </span>
+          <span class="summary">{{ summaryFor(card) }}</span>
+        </span>
+        <span class="chevron" [class.open]="isOpen(card.key)" aria-hidden="true"></span>
+      </button>
+
+      @if (isOpen(card.key)) {
+        <div class="card-body">
+          <div class="name-fields">
+            @if (card.nameLocked) {
+              <!-- Their own guest account owns this name: show it, never offer
+                   to edit it (ADR W-0002 §Decision.3). Remove stays allowed. -->
+              <span class="locked-name">{{ fullName(card) }}</span>
+            } @else if (card.role === 'child') {
+              <input
+                app-input
+                type="text"
+                [value]="card.firstName"
+                [placeholder]="'rsvp.editor.person.firstNamePlaceholder' | translate"
+                (input)="setChildFirstName(childIndex(card.key), inputValue($event))"
+              />
+              <input
+                app-input
+                type="text"
+                class="age"
+                inputmode="numeric"
+                maxlength="2"
+                [value]="card.age"
+                [placeholder]="'rsvp.editor.person.agePlaceholder' | translate"
+                (input)="setChildAge(childIndex(card.key), inputValue($event))"
+              />
+            } @else {
+              <input
+                app-input
+                type="text"
+                [value]="card.firstName"
+                [placeholder]="'rsvp.editor.person.firstNamePlaceholder' | translate"
+                (input)="setAdultFirstName(card.key, inputValue($event))"
+              />
+              <input
+                app-input
+                type="text"
+                [value]="card.lastName"
+                [placeholder]="'rsvp.editor.person.lastNamePlaceholder' | translate"
+                (input)="setAdultLastName(card.key, inputValue($event))"
+              />
+            }
+            @if (card.role !== 'primary') {
+              <button
+                type="button"
+                class="remove-btn"
+                [attr.aria-label]="'shared.remove' | translate"
+                (click)="removePerson(card.key)"
+              >
+                ×
+              </button>
+            }
+          </div>
+
+          @if (card.nameLocked) {
+            <!-- The hint, and — for the couple only — the jump to that guest's
+                 own profile (DS `RSVPEditor.jsx` L166). -->
+            <p class="name-hint">
+              {{ 'shared.partner.nameManaged' | translate }}
+              @if (canOpenProfile(card)) {
+                <button type="button" class="profile-link" (click)="requestProfile(card)">
+                  {{ 'rsvp.editor.person.openProfile' | translate }}
+                </button>
+              }
+            </p>
+          }
+
+          <div class="label options-label">{{ 'rsvp.editor.person.meal' | translate }}</div>
+          <div class="chip-row">
+            @for (diet of dietaryOptions(); track diet.id) {
+              <button
+                type="button"
+                class="chip"
+                [class.on]="isSelected(card, 'dietaryPreferenceIds', diet.id)"
+                [attr.aria-pressed]="isSelected(card, 'dietaryPreferenceIds', diet.id)"
+                (click)="toggleDiet(card.key, diet.id)"
+              >
+                {{ diet.label }}
+              </button>
+            } @empty {
+              <span class="chip-empty">—</span>
+            }
+          </div>
+
+          <div class="label options-label">{{ 'rsvp.editor.person.allergies' | translate }}</div>
+          <div class="chip-row">
+            @for (allergy of allergyOptions(); track allergy.id) {
+              <button
+                type="button"
+                class="chip"
+                [class.on]="isSelected(card, 'allergyIds', allergy.id)"
+                [attr.aria-pressed]="isSelected(card, 'allergyIds', allergy.id)"
+                (click)="toggleAllergy(card.key, allergy.id)"
+              >
+                {{ allergy.label }}
+              </button>
+            } @empty {
+              <span class="chip-empty">—</span>
+            }
+          </div>
+
+          <!-- Anything the catalog doesn't cover: each entry commits to its own
+               removable chip, so `options.customAllergies` is a real list. -->
+          <div class="label options-label">
+            {{ 'rsvp.editor.person.customAllergy.label' | translate }}
+          </div>
+          @if (card.options.customAllergies?.length) {
+            <div class="chip-row custom-chips">
+              @for (entry of card.options.customAllergies; track $index) {
+                <button
+                  type="button"
+                  class="chip chip-custom"
+                  [attr.aria-label]="
+                    'rsvp.editor.person.customAllergy.remove' | translate: { name: entry }
+                  "
+                  (click)="removeCustomAllergy(card.key, $index)"
+                >
+                  {{ entry }}<span class="chip-x" aria-hidden="true">×</span>
+                </button>
+              }
+            </div>
+          }
+          <input
+            app-input
+            type="text"
+            [value]="customEntry(card.key)"
+            [placeholder]="'rsvp.editor.person.customAllergy.placeholder' | translate"
+            (input)="setCustomEntry(card.key, inputValue($event))"
+            (keydown.enter)="commitCustomAllergy(card, $event)"
+            (blur)="commitCustomAllergy(card, $event)"
+          />
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<div class="add-row">
+  @if (canAddPartner()) {
+    <button type="button" class="add-link" (click)="addPartner()">
+      {{ perspectiveKey('addPartner') | translate }}
+    </button>
+  }
+  <button type="button" class="add-link" (click)="addChild()">
+    {{ perspectiveKey('addChild') | translate }}
+  </button>
+</div>
+
+<!-- The note the guest left with their reply. Read-only for the couple: they
+     always see it, they never overwrite it (deliberate deviation from the DS). -->
+<div class="label note-label">{{ perspectiveKey('note') | translate }}</div>
+@if (noteReadonly()) {
+  @if (noteText()) {
+    <p class="note-text">{{ noteText() }}</p>
+  } @else {
+    <p class="note-text note-empty">{{ perspectiveKey('notePlaceholder') | translate }}</p>
+  }
+} @else {
+  <textarea
+    app-textarea
+    rows="3"
+    [value]="noteText()"
+    [placeholder]="perspectiveKey('notePlaceholder') | translate"
+    (input)="setNote(inputValue($event))"
+  ></textarea>
+}

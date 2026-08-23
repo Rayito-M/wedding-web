@@ -12,5 +12,15 @@
 export interface UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf { 
     firstName: string;
     lastName: string;
+    kind: UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf.KindEnum;
 }
+export namespace UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf {
+    export const KindEnum = {
+        GUEST: 'guest',
+        PLUS_ONE: 'plus-one',
+        CHILD: 'child'
+    } as const;
+    export type KindEnum = typeof KindEnum[keyof typeof KindEnum];
+}
+
 

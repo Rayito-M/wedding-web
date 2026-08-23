@@ -2,11 +2,10 @@
   <div class="head">
     <div class="head-text">
       <div class="eyebrow">{{ 'rsvp.header' | translate }} · {{ 'rsvp.edit.eyebrow' | translate }}</div>
+      <h2>{{ 'rsvp.edit.title' | translate }}</h2>
       @if (draft().status === 'declined') {
-        <h2>{{ 'rsvp.edit.titleDeclined' | translate }}</h2>
         <p class="sub">{{ 'rsvp.edit.declinedSub' | translate }}</p>
       } @else {
-        <h2>{{ 'rsvp.edit.titleAttending' | translate }}</h2>
         <p class="sub">
           {{ 'rsvp.edit.seatsHeld' | pluralTranslate: seatsHeld() | translate: { count: seatsHeld() } }}
         </p>
@@ -15,136 +14,13 @@
     <span class="check" aria-hidden="true">✓</span>
   </div>
 
+  <!-- A declined RSVP has no party to edit — a host decision, not the editor's. -->
   @if (draft().status !== 'declined') {
-    <div class="cards">
-      @for (card of cards(); track card.key) {
-        <div class="card">
-          <button
-            type="button"
-            class="card-head"
-            (click)="toggleOpen(card.key)"
-            [attr.aria-expanded]="isOpen(card.key)"
-          >
-            <app-avatar [size]="32" [accent]="card.kind === 'you'">{{ initial(card) }}</app-avatar>
-            <span class="info">
-              <span class="name-row">
-                <span class="name">{{ fullName(card) || ('rsvp.edit.person.newGuest' | translate) }}</span>
-                <app-pill [tone]="card.kind === 'you' ? 'accent' : 'soft'">
-                  {{ kindLabelKey(card.kind) | translate }}
-                </app-pill>
-              </span>
-              <span class="summary">{{ summaryFor(card) }}</span>
-            </span>
-            <span class="chevron" [class.open]="isOpen(card.key)" aria-hidden="true"></span>
-          </button>
-
-          @if (isOpen(card.key)) {
-            <div class="card-body">
-              <div class="row">
-                @if (card.kind !== 'child') {
-                  <input
-                    app-input
-                    type="text"
-                    [value]="card.firstName"
-                    [disabled]="card.hasAccount"
-                    [placeholder]="'rsvp.create.party.firstName' | translate"
-                    (input)="
-                      card.kind === 'you'
-                        ? setPartner1FirstName(inputValue($event))
-                        : setPartner2FirstName(inputValue($event))
-                    "
-                  />
-                  <input
-                    app-input
-                    type="text"
-                    [value]="card.lastName"
-                    [disabled]="card.hasAccount"
-                    [placeholder]="'rsvp.create.party.lastName' | translate"
-                    (input)="
-                      card.kind === 'you'
-                        ? setPartner1LastName(inputValue($event))
-                        : setPartner2LastName(inputValue($event))
-                    "
-                  />
-                } @else {
-                  <input
-                    app-input
-                    type="text"
-                    [value]="card.firstName"
-                    [placeholder]="'rsvp.create.party.childFirstName' | translate: { index: childIndex(card.key) + 1 }"
-                    (input)="setChildFirstName(childIndex(card.key), inputValue($event))"
-                  />
-                  <input
-                    app-input
-                    type="text"
-                    class="age"
-                    [value]="card.age"
-                    [placeholder]="'rsvp.create.party.age' | translate"
-                    (input)="setChildAge(childIndex(card.key), inputValue($event))"
-                  />
-                }
-                @if (card.kind !== 'you') {
-                  <button
-                    type="button"
-                    class="remove-btn"
-                    [attr.aria-label]="'shared.remove' | translate"
-                    (click)="removePerson(card.key)"
-                  >
-                    ×
-                  </button>
-                }
-              </div>
-
-              @if (card.hasAccount) {
-                <p class="name-hint">{{ 'shared.partner.nameManaged' | translate }}</p>
-              }
-
-              <div class="label options-label">{{ 'rsvp.edit.person.meal' | translate }}</div>
-              <div class="diet-chips">
-                @for (diet of dietaryOptions(); track diet.id) {
-                  <button
-                    type="button"
-                    class="chip"
-                    [class.on]="(card.options.dietaryPreferenceIds ?? []).includes(diet.id)"
-                    (click)="toggleDiet(card.key, diet.id)"
-                  >
-                    {{ diet.label }}
-                  </button>
-                }
-              </div>
-
-              <div class="label options-label">{{ 'rsvp.edit.person.allergies' | translate }}</div>
-              <input
-                app-input
-                type="text"
-                [value]="allergiesText(card)"
-                [placeholder]="'rsvp.edit.person.allergiesPlaceholder' | translate"
-                (input)="setAllergies(card.key, inputValue($event))"
-              />
-            </div>
-          }
-        </div>
-      }
-    </div>
-
-    <div class="add-row">
-      @if (canAddPartner()) {
-        <button type="button" class="add-link" (click)="addPartner()">
-          {{ 'rsvp.edit.addPartner' | translate }}
-        </button>
-      }
-      <button type="button" class="add-link" (click)="addChild()">
-        {{ 'rsvp.edit.addChild' | translate }}
-      </button>
-    </div>
-
-    <div class="label note-label">{{ 'rsvp.edit.noteLabel' | translate }}</div>
-    <textarea
-      app-textarea
-      [value]="noteText()"
-      [placeholder]="'rsvp.edit.notePlaceholder' | translate"
-      (input)="setNote(inputValue($event))"
-    ></textarea>
+    <app-rsvp-editor
+      [draft]="draft()"
+      perspective="owner"
+      (draftChange)="onDraftChange($event)"
+    />
   }
 
   <button type="button" class="change-answer" (click)="onChangeAnswer()">
@@ -158,7 +34,7 @@
       {{ 'rsvp.edit.error' | translate }}
     } @else if (unnamedCount() > 0) {
       {{
-        'rsvp.edit.footer.unnamed'
+        'rsvp.editor.unnamed'
           | pluralTranslate: unnamedCount()
           | translate: { count: unnamedCount() }
       }}

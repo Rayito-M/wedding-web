@@ -44,19 +44,13 @@
   }
 }
 
-.choice-row {
-  display: flex;
-  gap: t.$space-2;
-  flex-wrap: wrap;
-}
-
 // Segmented-pill row (DS `ScreenGuestManager.jsx` local `GuestSeg` helper,
 // commit d670a1d) — a single joined pill container holding borderless
 // `app-guest-seg` option buttons, used for Side/Group/Preferred-language.
-// Visually distinct from `.choice-row` (individually-bordered, gapped
-// `app-choice-card`s): one hairline border around the whole row, no gap
-// between options, corners clipped so the selected option's accent fill
-// follows the pill shape.
+// Visually distinct from a row of individually-bordered, gapped
+// `app-choice-card`s (see `.choice-row` in `shared/rsvp-editor`): one hairline
+// border around the whole row, no gap between options, corners clipped so the
+// selected option's accent fill follows the pill shape.
 .seg-row {
   display: flex;
   border: 1px solid var(--border-hairline);

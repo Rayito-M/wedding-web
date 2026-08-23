@@ -264,7 +264,11 @@
   <app-guest-profile-modal (manageRsvp)="openManageRsvp($event)" />
 
   <!-- Manage RSVP Modal — opened from the profile, returns to it on "Back" -->
-  <app-manage-rsvp-modal (back)="openGuestProfile($event)" (rsvpSaved)="onRsvpSaved($event)" />
+  <app-manage-rsvp-modal
+    (back)="openGuestProfile($event)"
+    (openProfile)="openGuestProfile($event)"
+    (rsvpSaved)="onRsvpSaved($event)"
+  />
 
   <!-- Guest Create Modal -->
   <app-guest-create-modal (guestCreated)="onGuestCreated($event)" />

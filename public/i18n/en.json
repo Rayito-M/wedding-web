@@ -182,43 +182,74 @@
     },
     "edit": {
       "eyebrow": "CONFIRMED",
-      "titleAttending": "Your party",
-      "titleDeclined": "Your reply",
+      "title": "Your reply",
       "seatsHeld": {
         "none": "No seats held yet. Edit anything until 1 May.",
         "singular": "{{count}} seat held. Edit anything until 1 May.",
         "plural": "{{count}} seats held. Edit anything until 1 May."
       },
       "declinedSub": "You told us you can't make it. You can change your mind until 1 May.",
-      "addPartner": "+ Add a partner",
-      "addChild": "+ Add a child",
-      "noteLabel": "A note for us (optional)",
-      "notePlaceholder": "A song to dance to, a memory…",
       "changeAnswer": "Change my answer",
+      "footer": {
+        "saved": "Changes saved ✓",
+        "unsaved": "Unsaved changes"
+      },
+      "error": "Something went wrong saving your changes. Please try again."
+    },
+    "editor": {
+      "attendingLabel": "Attending?",
+      "choice": {
+        "attending": "With joy",
+        "pending": "Pending",
+        "declined": "Sadly no"
+      },
+      "total": "Total: {{count}}",
       "kind": {
-        "you": "You",
         "partner": "Partner",
         "child": "Child"
       },
       "person": {
         "newGuest": "New guest",
         "meal": "Meal",
-        "allergies": "Allergies",
-        "allergiesPlaceholder": "Nuts, shellfish, sesame…",
+        "allergies": "Allergies & intolerances",
         "noMealDetails": "No meal details yet",
         "yearsOld": "{{age}} years old",
-        "allergiesSummary": "Allergies: {{list}}"
-      },
-      "footer": {
-        "saved": "Changes saved ✓",
-        "unsaved": "Unsaved changes",
-        "unnamed": {
-          "none": "No guest needs a first and last name",
-          "singular": "{{count}} guest needs a first and last name",
-          "plural": "{{count}} guests need a first and last name"
+        "allergiesSummary": "Allergies: {{list}}",
+        "firstNamePlaceholder": "First name",
+        "lastNamePlaceholder": "Last name",
+        "agePlaceholder": "Age",
+        "openProfile": "Open their profile",
+        "customAllergy": {
+          "label": "Anything else?",
+          "placeholder": "Type an allergy and press Enter…",
+          "remove": "Remove {{name}}"
         }
       },
-      "error": "Something went wrong saving your changes. Please try again."
+      "unnamed": {
+        "none": "No guest needs a first and last name",
+        "singular": "{{count}} guest needs a first and last name",
+        "plural": "{{count}} guests need a first and last name"
+      },
+      "perspective": {
+        "owner": {
+          "party": "Your party",
+          "primaryHint": "You",
+          "partyMeta": "Party · dietary & allergies",
+          "note": "A note for us (optional)",
+          "notePlaceholder": "A song to dance to, a memory…",
+          "addPartner": "+ Add my partner",
+          "addChild": "+ Add a child"
+        },
+        "couple": {
+          "party": "The party",
+          "primaryHint": "Main guest",
+          "partyMeta": "Participants · dietary & allergies",
+          "note": "Note from guest",
+          "notePlaceholder": "No note left.",
+          "addPartner": "+ Add partner",
+          "addChild": "+ Add child"
+        }
+      }
     }
   },
   "dashboard": {
@@ -674,20 +705,8 @@
       "participants": "Participants",
       "children": "Children",
       "dietary": "Dietary",
-      "attending": "Attending?",
-      "you": "You",
-      "partner": "Partner",
-      "choice": {
-        "attending": "With joy",
-        "pending": "Pending",
-        "declined": "Sadly no"
-      },
-      "participantsSection": "Participants · dietary & allergies",
-      "total": "Total: {{count}}",
-      "mainGuest": "Main guest",
       "none": "This guest has not replied yet — there is no RSVP to manage.",
-      "saveFailed": "The RSVP could not be saved. Please try again.",
-      "partnerNameRequired": "The partner needs a first and last name."
+      "saveFailed": "The RSVP could not be saved. Please try again."
     },
     "form": {
       "name": "Full name",
