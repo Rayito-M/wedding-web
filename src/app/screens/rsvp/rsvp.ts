@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   OnInit,
   signal,
@@ -80,6 +81,33 @@ export class Rsvp implements OnInit {
     return status === RsvpDto.StatusEnum.ATTENDING || status === RsvpDto.StatusEnum.DECLINED;
   });
 
+  /** Latched while the first-time reply flow owns the screen. `app-rsvp-create`
+   *  now sends the reply *before* it shows its confirmation receipt, so the
+   *  record is already `attending`/`declined` while that receipt is on
+   *  screen — without this latch the editor would swap in underneath the
+   *  guest the instant they replied, and they would never see it. Released
+   *  when the create screen says it is done (`submitted`). */
+  private readonly replying = signal(false);
+
+  protected readonly showCreate = computed(
+    () => !!this.rsvp() && (!this.isDecided() || this.replying()),
+  );
+
+  constructor() {
+    // A `pending` record can only become decided through the create screen's
+    // own PATCH, so latching here (rather than on mount) is enough to keep it
+    // mounted across that transition.
+    effect(() => {
+      if (this.rsvp()?.status === RsvpDto.StatusEnum.PENDING) this.replying.set(true);
+    });
+  }
+
+  /** The guest has left the confirmation receipt — hand them the standing
+   *  record editor (meals, allergies, note). */
+  protected onReplyFlowDone(): void {
+    this.replying.set(false);
+  }
+
   async ngOnInit(): Promise<void> {
     const currentUser = this.login.currentUserClaims();
     if (!currentUser) {
@@ -90,9 +118,7 @@ export class Rsvp implements OnInit {
     let rsvp = await firstValueFrom(this.rsvpApi.rsvpControllerGetV1({ id: currentUser.sub }));
     if (!rsvp) {
       try {
-        rsvp = await firstValueFrom(
-          this.rsvpApi.rsvpControllerCreateV1({ id: currentUser.sub }),
-        );
+        rsvp = await firstValueFrom(this.rsvpApi.rsvpControllerCreateV1({ id: currentUser.sub }));
       } catch {
         // Lost a create race (e.g. two tabs open at once) — it exists now, re-read it.
         rsvp = await firstValueFrom(this.rsvpApi.rsvpControllerGetV1({ id: currentUser.sub }));

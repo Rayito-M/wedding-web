@@ -7,6 +7,7 @@ import {
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
@@ -126,6 +127,12 @@ export class RsvpCreate {
   protected readonly submitting = signal(false);
   protected readonly submitFailed = signal(false);
 
+  /** True once the PATCH has actually landed on the server. The confirmation
+   *  step is a receipt, not a form step: it is only ever reached *after* a
+   *  successful save, so "See you in June" can never be shown for a reply
+   *  that was not sent. */
+  protected readonly sent = signal(false);
+
   protected readonly needsDetails = computed(() => {
     const d = this.draft();
     return d.attending === 'yes' && (d.withPartner || d.withChildren);
@@ -149,24 +156,27 @@ export class RsvpCreate {
     );
   });
 
-  protected readonly isFinalStep = computed(() => this.step() === this.steps() - 1);
   protected readonly isPartyStep = computed(() => this.step() === 1 && this.needsDetails());
+
+  /** The step whose primary action sends the reply — the party step when
+   *  there is a party to name, otherwise the very first step (a guest coming
+   *  alone answers and is done; ADR W-0004 §Decision.6). */
+  protected readonly isLastDataStep = computed(() => this.step() === (this.needsDetails() ? 1 : 0));
 
   protected readonly continueDisabled = computed(() => {
     if (this.submitting()) return true;
+    if (this.sent()) return false;
     if (this.step() === 0) return this.draft().attending === null;
     if (this.step() === 1) return !(this.partnerReady() && this.childrenReady());
     return false;
   });
 
   protected readonly continueLabelKey = computed(() => {
-    if (!this.isFinalStep())
-      return this.step() === 0 && !this.needsDetails()
-        ? 'rsvp.create.actions.send'
-        : 'shared.continue';
-    return this.draft().attending === 'yes'
-      ? 'rsvp.create.actions.addMeals'
-      : 'rsvp.create.actions.done';
+    if (this.sent())
+      return this.draft().attending === 'yes'
+        ? 'rsvp.create.actions.addMeals'
+        : 'rsvp.create.actions.done';
+    return this.isLastDataStep() ? 'rsvp.create.actions.send' : 'shared.continue';
   });
 
   /** A partner account already linked server-side (`guest.partnerId`) isn't
@@ -180,7 +190,12 @@ export class RsvpCreate {
     // (e.g. the auto-provisioned pending record, or a prior answer when
     // re-entering via "change my answer").
     effect(() => {
-      this.draft.set(toCreateDraft(this.rsvp()));
+      const rsvp = this.rsvp();
+      // Our own PATCH feeds a fresh entity back through this input; resyncing
+      // on it would rewind the guest off their confirmation receipt and back
+      // to step 1.
+      if (untracked(this.sent)) return;
+      this.draft.set(toCreateDraft(rsvp));
       this.step.set(0);
     });
 
@@ -261,16 +276,22 @@ export class RsvpCreate {
   }
 
   protected async continue(): Promise<void> {
+    // On the confirmation receipt the reply is already saved; the button only
+    // hands the guest on to the standing record editor (meals & allergies).
+    if (this.sent()) {
+      this.submitted.emit();
+      return;
+    }
     if (this.step() === 0) {
       if (this.draft().attending === null) return;
-      this.step.set(this.needsDetails() ? 1 : this.steps() - 1);
+      if (this.needsDetails()) {
+        this.step.set(1);
+        return;
+      }
+      await this.submit();
       return;
     }
-    if (this.step() === 1) {
-      if (!(this.partnerReady() && this.childrenReady())) return;
-      this.step.set(this.steps() - 1);
-      return;
-    }
+    if (!(this.partnerReady() && this.childrenReady())) return;
     await this.submit();
   }
 
@@ -335,7 +356,8 @@ export class RsvpCreate {
           children,
         }),
       );
-      this.submitted.emit();
+      this.sent.set(true);
+      this.step.set(this.steps() - 1);
     } catch {
       this.submitFailed.set(true);
     } finally {

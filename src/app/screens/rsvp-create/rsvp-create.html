@@ -135,7 +135,7 @@
     </div>
   }
 
-  @if (isFinalStep()) {
+  @if (sent()) {
     <div class="step confirmation">
       <app-decor-fish-pair [size]="120" />
       @if (draft().attending === 'yes') {
@@ -145,15 +145,16 @@
         <h2>{{ 'rsvp.create.confirm.noTitle' | translate }}</h2>
         <p class="sub outro">{{ 'rsvp.create.confirm.noMessage' | translate }}</p>
       }
-      @if (submitFailed()) {
-        <p class="error">{{ 'rsvp.create.error' | translate }}</p>
-      }
     </div>
+  }
+
+  @if (submitFailed()) {
+    <p class="error">{{ 'rsvp.create.error' | translate }}</p>
   }
 </div>
 
 <footer>
-  @if (step() > 0 && !isFinalStep()) {
+  @if (step() > 0 && !sent()) {
     <button app-btn [primary]="false" (click)="back()">{{ 'shared.back' | translate }}</button>
   }
   <button app-btn [full]="true" [disabled]="continueDisabled()" (click)="continue()">

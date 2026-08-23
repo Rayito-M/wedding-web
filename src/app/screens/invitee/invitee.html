@@ -53,9 +53,12 @@
           {{ 'invitee.rsvp.status.declined' | translate }}
         }
       </div>
-      @if (rsvpStatus() === 'attending' && (adultsCount() > 0 || childrenCount() > 0)) {
+      @if (rsvpStatus() === 'attending' && (adultsCount() > 1 || childrenCount() > 0)) {
         <div class="rsvp-sub">
-          {{ 'shared.you' | translate }} - {{ partner2FirstName() }}
+          {{ 'shared.you' | translate }}
+          @if (partner2FirstName()) {
+            - {{ partner2FirstName() }}
+          }
           @if (childrenCount() > 0) {
             - {{ childrenFirstNames() }}
           }

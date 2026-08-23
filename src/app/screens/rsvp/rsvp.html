@@ -1,7 +1,7 @@
 @if (!loaded()) {
   <app-loading />
-} @else if (rsvp() && isDecided()) {
-  <app-rsvp-edit [rsvp]="rsvp()!" />
+} @else if (showCreate()) {
+  <app-rsvp-create [rsvp]="rsvp()!" (submitted)="onReplyFlowDone()" />
 } @else if (rsvp()) {
-  <app-rsvp-create [rsvp]="rsvp()!" />
+  <app-rsvp-edit [rsvp]="rsvp()!" />
 }
