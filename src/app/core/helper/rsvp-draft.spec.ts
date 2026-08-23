@@ -59,7 +59,14 @@ describe('unnamedAdultCount', () => {
   });
 
   it('does not count a partner whose name is owned by their own guest account', () => {
-    const value = draft({ partner2: adult({ id: 'usr_partner', firstName: '', lastName: '' }) });
+    const value = draft({
+      partner2: adult({
+        id: 'usr_partner',
+        firstName: '',
+        lastName: '',
+        kind: RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST,
+      }),
+    });
     expect(unnamedAdultCount(value)).toBe(0);
   });
 

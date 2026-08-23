@@ -10,6 +10,7 @@ import {
   EntityNamesEnum,
   RsvpDraft,
   RsvpDto,
+  RsvpDtoAdultsPartner2OneOf,
   WeddingConfigResponseDto,
   entityConfig,
   provideEntityDataServices,
@@ -173,7 +174,15 @@ describe('RsvpEditor', () => {
 
   it('renders no name input for a partner who has their own guest account', async () => {
     await create(
-      draftWith({ partner2: { id: 'guest-2', firstName: 'Grace', lastName: 'Hopper', options: {} } }),
+      draftWith({
+        partner2: {
+          id: 'guest-2',
+          firstName: 'Grace',
+          lastName: 'Hopper',
+          options: {},
+          kind: RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST,
+        },
+      }),
     );
     // Expand the partner's card (the first one is open by default).
     queryAll<HTMLButtonElement>('.card-head')[1].click();
@@ -188,7 +197,15 @@ describe('RsvpEditor', () => {
 
   it('keeps a locked partner name unchanged when a setter is called programmatically', async () => {
     await create(
-      draftWith({ partner2: { id: 'guest-2', firstName: 'Grace', lastName: 'Hopper', options: {} } }),
+      draftWith({
+        partner2: {
+          id: 'guest-2',
+          firstName: 'Grace',
+          lastName: 'Hopper',
+          options: {},
+          kind: RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST,
+        },
+      }),
     );
     // reason: `setAdultFirstName` is `protected` — the guard it backs (ADR
     // W-0002 §Decision.3) exists precisely for callers that bypass the template.
@@ -203,10 +220,23 @@ describe('RsvpEditor', () => {
 
   describe('"Open their profile" (couple perspective only)', () => {
     const linkedPartner = {
-      partner2: { id: 'guest-2', firstName: 'Grace', lastName: 'Hopper', options: {} },
+      partner2: {
+        id: 'guest-2',
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        options: {},
+        kind: RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST,
+      },
     };
-    /** Plus-one: no account, so no id and no locked name (ADR W-0002). */
-    const plusOnePartner = { partner2: { firstName: 'Grace', lastName: 'Hopper', options: {} } };
+    /** Plus-one: no account, so `kind: 'plus-one'` and no locked name (ADR W-0004). */
+    const plusOnePartner = {
+      partner2: {
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        options: {},
+        kind: RsvpDtoAdultsPartner2OneOf.KindEnum.PLUS_ONE,
+      },
+    };
 
     /** Expand the partner's card — the primary one is open by default. */
     async function openPartnerCard(): Promise<void> {
