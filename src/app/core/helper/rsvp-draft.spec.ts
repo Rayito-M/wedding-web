@@ -1,4 +1,4 @@
-import { RsvpDto, RsvpDtoAdultsPartner2OneOf } from '../api';
+import { RsvpDto } from '../api';
 import {
   AdultDraft,
   ChildDraft,
@@ -64,7 +64,7 @@ describe('unnamedAdultCount', () => {
         id: 'usr_partner',
         firstName: '',
         lastName: '',
-        kind: RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST,
+        kind: 'guest',
       }),
     });
     expect(unnamedAdultCount(value)).toBe(0);
@@ -86,7 +86,7 @@ describe('partner2.kind (ADR W-0004)', () => {
           firstName: 'Grace',
           lastName: 'Hopper',
           options: {},
-          kind: RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST,
+          kind: 'guest',
         },
       },
     });

@@ -10,7 +10,6 @@ import {
   EntityNamesEnum,
   RsvpDraft,
   RsvpDto,
-  RsvpDtoAdultsPartner2OneOf,
   WeddingConfigResponseDto,
   entityConfig,
   provideEntityDataServices,
@@ -181,7 +180,7 @@ describe('RsvpEditor', () => {
           firstName: 'Grace',
           lastName: 'Hopper',
           options: {},
-          kind: RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST,
+          kind: 'guest',
         },
       }),
     );
@@ -204,7 +203,7 @@ describe('RsvpEditor', () => {
           firstName: 'Grace',
           lastName: 'Hopper',
           options: {},
-          kind: RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST,
+          kind: 'guest',
         },
       }),
     );
@@ -226,7 +225,7 @@ describe('RsvpEditor', () => {
         firstName: 'Grace',
         lastName: 'Hopper',
         options: {},
-        kind: RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST,
+        kind: 'guest',
       },
     };
     /** Plus-one: no account, so `kind: 'plus-one'` and no locked name (ADR W-0004). */
@@ -235,7 +234,7 @@ describe('RsvpEditor', () => {
         firstName: 'Grace',
         lastName: 'Hopper',
         options: {},
-        kind: RsvpDtoAdultsPartner2OneOf.KindEnum.PLUS_ONE,
+        kind: 'plus-one',
       },
     };
 

@@ -18,7 +18,6 @@ import {
   partnerHasAccount,
   RsvpDto,
   RsvpDtoAdultsPartner2,
-  RsvpDtoAdultsPartner2OneOf,
   RsvpDtoChildrenInner,
 } from '@app/core';
 import { Btn } from '@app/shared/button/button';
@@ -62,7 +61,7 @@ const EMPTY_DRAFT: CreateDraft = {
   withChildren: false,
   // A partner typed into this screen is always a plus-one — this app cannot
   // provision an account (ADR W-0004 §Decision.3, W-0002 §Decision.5).
-  partner: { firstName: '', lastName: '', kind: RsvpDtoAdultsPartner2OneOf.KindEnum.PLUS_ONE },
+  partner: { firstName: '', lastName: '', kind: 'plus-one' },
   children: [],
 };
 
@@ -79,7 +78,7 @@ function toCreateDraft(rsvp: RsvpDto): CreateDraft {
     withChildren: (rsvp.children?.length ?? 0) > 0,
     partner: partner2
       ? { firstName: partner2.firstName, lastName: partner2.lastName, kind: partner2.kind }
-      : { firstName: '', lastName: '', kind: RsvpDtoAdultsPartner2OneOf.KindEnum.PLUS_ONE },
+      : { firstName: '', lastName: '', kind: 'plus-one' },
     children: (rsvp.children ?? []).map((c) => ({ firstName: c.firstName, age: String(c.age) })),
   };
 }
@@ -298,7 +297,7 @@ export class RsvpCreate {
           {
             firstName: d.partner.firstName.trim(),
             lastName: d.partner.lastName.trim(),
-            kind: RsvpDtoAdultsPartner2OneOf.KindEnum.PLUS_ONE,
+            kind: 'plus-one',
           }
         : undefined;
 

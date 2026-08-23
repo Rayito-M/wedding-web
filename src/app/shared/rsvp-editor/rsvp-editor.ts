@@ -18,7 +18,6 @@ import {
   RsvpDraft,
   RsvpDto,
   RsvpDtoAdultsPartner1Options,
-  RsvpDtoAdultsPartner2OneOf,
   TranslateLanguageService,
   WeddingConfigResponseDto,
   partnerHasAccount,
@@ -439,7 +438,7 @@ export class RsvpEditor {
         firstName: '',
         lastName: '',
         options: {},
-        kind: RsvpDtoAdultsPartner2OneOf.KindEnum.PLUS_ONE,
+        kind: 'plus-one',
       },
     });
   }

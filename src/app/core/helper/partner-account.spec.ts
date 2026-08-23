@@ -1,7 +1,4 @@
-import {
-  RsvpDtoAdultsPartner2OneOf,
-  UserProfileListResponseDtoProfilesInnerGuestInfoPartner,
-} from '../api';
+import { UserProfileListResponseDtoProfilesInnerGuestInfoPartner } from '../api';
 import { partnerHasAccount } from './partner-account';
 import { AdultDraft } from './rsvp-draft';
 
@@ -16,7 +13,7 @@ describe('partnerHasAccount', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
       options: {},
-      kind: RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST,
+      kind: 'guest',
     };
     expect(partnerHasAccount(linked)).toBe(true);
   });
@@ -27,7 +24,7 @@ describe('partnerHasAccount', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
       options: {},
-      kind: RsvpDtoAdultsPartner2OneOf.KindEnum.PLUS_ONE,
+      kind: 'plus-one',
     };
     expect(partnerHasAccount(stale)).toBe(false);
   });
@@ -49,7 +46,7 @@ describe('partnerHasAccount', () => {
       id: 'usr_123',
       firstName: 'Ada',
       lastName: 'Lovelace',
-      kind: UserProfileListResponseDtoProfilesInnerGuestInfoPartner.KindEnum.GUEST,
+      kind: 'guest',
     };
     expect(partnerHasAccount(linked)).toBe(true);
   });

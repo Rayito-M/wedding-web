@@ -1,6 +1,5 @@
 import {
   RsvpDtoAdultsPartner2,
-  RsvpDtoAdultsPartner2OneOf,
   UserProfileListResponseDtoProfilesInnerGuestInfoPartner,
 } from '../api';
 import { AdultDraft } from './rsvp-draft';
@@ -19,14 +18,16 @@ import { AdultDraft } from './rsvp-draft';
  * `partner1` today and none may start to (ADR W-0004 §Decision.4).
  *
  * Returns a plain `boolean`, not a `partner is …OneOf` type predicate, for
- * two independent reasons (ADR W-0004 §Decision.4): (a) openapi-generator
- * gives *both* `RsvpDtoAdultsPartner2` union members the same full
- * three-value `KindEnum`, so neither has a unit-typed discriminator —
- * `kind === 'guest'` narrows nothing and eliminates neither member, so a
- * type predicate would be an unchecked assertion, not a narrowing; (b) this
- * helper also accepts `AdultDraft` and the profile partner type, so
- * narrowing either of those to a generated API interface would be unsound
- * at their call sites.
+ * two independent reasons (ADR W-0004 §Decision.4, amended 2026-08-23): (a)
+ * the upstream Zod fix gave each `RsvpDtoAdultsPartner2` union member its own
+ * `kind` literal, but openapi-generator has no code path that emits a type —
+ * enum or literal — for a JSON Schema `const`, so the generated `kind` field
+ * degrades to plain `string` on both members and the `KindEnum` namespace is
+ * gone entirely; there is no generated discriminator of any kind left to
+ * narrow on, so a type predicate would be an unchecked assertion, not a
+ * narrowing; (b) this helper also accepts `AdultDraft` and the profile
+ * partner type, so narrowing either of those to a generated API interface
+ * would be unsound at their call sites.
  */
 export function partnerHasAccount(
   partner:
@@ -36,5 +37,5 @@ export function partnerHasAccount(
     | null
     | undefined,
 ): boolean {
-  return partner?.kind === RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST;
+  return partner?.kind === 'guest';
 }

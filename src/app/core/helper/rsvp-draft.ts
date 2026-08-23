@@ -3,7 +3,6 @@ import {
   RsvpDtoAdultsPartner1,
   RsvpDtoAdultsPartner1Options,
   RsvpDtoAdultsPartner2,
-  RsvpDtoAdultsPartner2OneOf,
   RsvpDtoChildrenInner,
 } from '../api';
 import { partnerHasAccount } from './partner-account';
@@ -31,13 +30,16 @@ export interface AdultDraft {
   lastName: string;
   options: RsvpDtoAdultsPartner1Options;
   /**
-   * `partner2`'s discriminated-union tag on the wire — typed with the
-   * **generated** `RsvpDtoAdultsPartner2OneOf.KindEnum`, never a hand-written
+   * `partner2`'s discriminated-union tag on the wire — typed plain `string`,
+   * the same type the generated `RsvpDtoAdultsPartner2OneOf`/`…OneOf1`
+   * interfaces themselves give the field (the upstream Zod fix turned `kind`
+   * into a per-variant `z.literal(...)`, which openapi-generator has no code
+   * path to emit a type for; see ADR W-0004's amendment). Not a hand-written
    * union (CLAUDE.md Hard rule 15). Optional because this one type also
    * backs `partner1`, which never carries `kind`: `partner1` never has one
    * and `fromRsvpDraft` never emits one for it (ADR W-0004 §Decision.2).
    */
-  kind?: RsvpDtoAdultsPartner2OneOf.KindEnum;
+  kind?: string;
 }
 
 /** Age is kept as free text while editing so an empty field reads as empty,
@@ -106,13 +108,13 @@ export function fromRsvpDraft(draft: RsvpDraft): Partial<RsvpDto> {
           firstName: draft.partner2.firstName.trim(),
           lastName: draft.partner2.lastName.trim(),
           options: draft.partner2.options,
-          kind: draft.partner2.kind as RsvpDtoAdultsPartner2OneOf.KindEnum,
+          kind: draft.partner2.kind as string,
         }
       : {
           firstName: draft.partner2.firstName.trim(),
           lastName: draft.partner2.lastName.trim(),
           options: draft.partner2.options,
-          kind: draft.partner2.kind as RsvpDtoAdultsPartner2OneOf.KindEnum,
+          kind: draft.partner2.kind as string,
         }
     : undefined;
   const children: RsvpDtoChildrenInner[] = draft.children.map((c) => ({
