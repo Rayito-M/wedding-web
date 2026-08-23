@@ -227,6 +227,14 @@
           "remove": "Remove {{name}}"
         }
       },
+      "remove": {
+        "titlePartner": "Remove the partner?",
+        "titleChild": "Remove this child?",
+        "message": "{{name}} will be taken off the RSVP, along with their meal and allergy details. This cannot be undone once saved.",
+        "fallbackPartner": "This partner",
+        "fallbackChild": "This child",
+        "keep": "Keep"
+      },
       "unnamed": {
         "none": "No guest needs a first and last name",
         "singular": "{{count}} guest needs a first and last name",

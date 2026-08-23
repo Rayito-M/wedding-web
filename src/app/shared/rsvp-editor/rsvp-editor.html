@@ -20,8 +20,10 @@
   </div>
 }
 
-<!-- The party: its section heading, then the meta line and the running total. -->
-<h3 class="party-title">{{ perspectiveKey('party') | translate }}</h3>
+<!-- The party: its section heading, then the meta line and the running total.
+     `tabindex="-1"` keeps it out of the tab order; it only receives focus
+     programmatically, after a confirmed removal (T278). -->
+<h3 class="party-title" #partyTitle tabindex="-1">{{ perspectiveKey('party') | translate }}</h3>
 
 <div class="party-meta">
   <span class="label">{{ perspectiveKey('partyMeta') | translate }}</span>
@@ -96,7 +98,7 @@
                 type="button"
                 class="remove-btn"
                 [attr.aria-label]="'shared.remove' | translate"
-                (click)="removePerson(card.key)"
+                (click)="requestRemove(card.key)"
               >
                 ×
               </button>
@@ -215,3 +217,16 @@
     (input)="setNote(inputValue($event))"
   ></textarea>
 }
+
+<!-- Renders once, driven by `pendingRemoval()`; its panel is fixed-position
+     so its position in the template is immaterial (Phase M decision 2). -->
+<app-confirm-dialog
+  [open]="pendingRemoval() !== null"
+  tone="danger"
+  [title]="removeDialogTitleKey() | translate"
+  [message]="removeDialogMessage()"
+  [confirmLabel]="'shared.remove' | translate"
+  [cancelLabel]="'rsvp.editor.remove.keep' | translate"
+  (confirm)="confirmRemove()"
+  (cancel)="cancelRemove()"
+/>

@@ -83,6 +83,14 @@
   /* schedule-level status — deliberately outside the theme palette so "provisional" reads as a flag */
   --status-provisional: #b8862b;
   --status-final: var(--accent);
+  /* destructive actions — theme-invariant, and deliberately NOT a --status-*
+     colour (that group labels a data state on a chip; this one paints an
+     interactive affordance the user is about to trigger). One value clears
+     all three themes on purpose — a danger that harmonised with the palette
+     would read decorative. No --warning/--success sibling — single token
+     by design (DS `ccea99a`, tokens/colors.css:62–72). */
+  --danger: #a8443c;
+  --on-danger: var(--surface);
 }
 
 // ── Typography (tokens/typography.css) ──

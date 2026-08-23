@@ -34,6 +34,15 @@ const TRANSLATIONS = {
         openProfile: 'Open their profile',
         customAllergy: { label: 'Anything else?', placeholder: 'Type an allergy…', remove: 'Remove {{name}}' },
       },
+      remove: {
+        titlePartner: 'Remove the partner?',
+        titleChild: 'Remove this child?',
+        message:
+          '{{name}} will be taken off the RSVP, along with their meal and allergy details. This cannot be undone once saved.',
+        fallbackPartner: 'This partner',
+        fallbackChild: 'This child',
+        keep: 'Keep',
+      },
       perspective: {
         owner: { party: 'Your party', primaryHint: 'You', partyMeta: 'Party · dietary & allergies', note: 'A note for us (optional)', notePlaceholder: 'A song to dance to, a memory…', addPartner: '+ Add my partner', addChild: '+ Add a child', declinedHint: 'Your party and meal details are kept — switch back any time and nothing is lost.' },
         couple: { party: 'The party', primaryHint: 'Main guest', partyMeta: 'Participants · dietary & allergies', note: 'Note from guest', notePlaceholder: 'No note left.', addPartner: '+ Add partner', addChild: '+ Add child', declinedHint: 'Party and meal details are kept — switching back changes nothing else.' },
@@ -439,5 +448,176 @@ describe('RsvpEditor', () => {
     customAllergyInput().dispatchEvent(enter);
     await fixture.whenStable();
     expect(enter.defaultPrevented).toBe(true);
+  });
+
+  describe('confirmed removal (T278)', () => {
+    const withPartnerAndChild = (): RsvpDraft =>
+      draftWith({
+        partner2: { firstName: 'Grace', lastName: 'Hopper', options: {}, kind: 'plus-one' },
+        children: [{ firstName: 'Kit', age: '7', options: { allergyIds: ['nuts'] } }],
+      });
+
+    /** primary(0), partner(1), child(2) — the accordion's default order. */
+    async function openCard(index: number): Promise<void> {
+      queryAll<HTMLButtonElement>('.card-head')[index].click();
+      await fixture.whenStable();
+    }
+
+    function confirmDialogButtons(): HTMLButtonElement[] {
+      return queryAll<HTMLButtonElement>('app-confirm-dialog .action');
+    }
+
+    it('clicking .remove-btn on a child emits no draftChange and renders app-confirm-dialog', async () => {
+      await create(withPartnerAndChild());
+      await openCard(2);
+
+      expect(query('app-confirm-dialog [role="dialog"]')).toBeNull();
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+
+      expect(emitted.length).toBe(0);
+      expect(query('app-confirm-dialog [role="dialog"]')).not.toBeNull();
+    });
+
+    it('confirming removes the child, emits exactly one draftChange, and leaves the partner intact', async () => {
+      await create(withPartnerAndChild());
+      await openCard(2);
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+
+      const [, confirmBtn] = confirmDialogButtons();
+      confirmBtn.click();
+      await fixture.whenStable();
+
+      expect(emitted.length).toBe(1);
+      expect(emitted[0].children).toEqual([]);
+      expect(emitted[0].partner2?.firstName).toBe('Grace');
+      expect(query('app-confirm-dialog [role="dialog"]')).toBeNull();
+    });
+
+    it('cancelling a child removal emits nothing and leaves the party unchanged', async () => {
+      const draft = withPartnerAndChild();
+      await create(draft);
+      await openCard(2);
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+
+      const [cancelBtn] = confirmDialogButtons();
+      cancelBtn.click();
+      await fixture.whenStable();
+
+      expect(emitted.length).toBe(0);
+      expect(query('app-confirm-dialog [role="dialog"]')).toBeNull();
+      expect(queryAll('.card').length).toBe(3);
+    });
+
+    it('clicking .remove-btn on the partner emits no draftChange and renders app-confirm-dialog', async () => {
+      await create(withPartnerAndChild());
+      await openCard(1);
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+
+      expect(emitted.length).toBe(0);
+      expect(query('app-confirm-dialog [role="dialog"]')).not.toBeNull();
+    });
+
+    it('confirming removes the partner, emits exactly one draftChange, and leaves the child intact', async () => {
+      await create(withPartnerAndChild());
+      await openCard(1);
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+
+      const [, confirmBtn] = confirmDialogButtons();
+      confirmBtn.click();
+      await fixture.whenStable();
+
+      expect(emitted.length).toBe(1);
+      expect(emitted[0].partner2).toBeUndefined();
+      expect(emitted[0].children.length).toBe(1);
+      expect(emitted[0].children[0].firstName).toBe('Kit');
+    });
+
+    it('cancelling a partner removal emits nothing and leaves the party unchanged', async () => {
+      await create(withPartnerAndChild());
+      await openCard(1);
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+
+      const [cancelBtn] = confirmDialogButtons();
+      cancelBtn.click();
+      await fixture.whenStable();
+
+      expect(emitted.length).toBe(0);
+      expect(queryAll('.card').length).toBe(3);
+    });
+
+    it('resets openKey when confirming removal of the currently-open card', async () => {
+      await create(withPartnerAndChild());
+      await openCard(2); // opens the child, closing the primary card
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+
+      const [, confirmBtn] = confirmDialogButtons();
+      confirmBtn.click();
+      await fixture.whenStable();
+
+      expect(queryAll('.card-body').length).toBe(0);
+    });
+
+    it('titles the dialog by card kind: titleChild for a child, titlePartner for the partner', async () => {
+      await create(withPartnerAndChild());
+      await openCard(2);
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+      expect(query('app-confirm-dialog .modal-title')?.textContent?.trim()).toBe('Remove this child?');
+      confirmDialogButtons()[0].click(); // cancel, back to a clean state
+      await fixture.whenStable();
+
+      await openCard(1);
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+      expect(query('app-confirm-dialog .modal-title')?.textContent?.trim()).toBe('Remove the partner?');
+    });
+
+    it('the message carries the full name, or the kind-specific fallback when unnamed', async () => {
+      await create(withPartnerAndChild());
+      await openCard(2);
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+      expect(query('app-confirm-dialog .message')?.textContent?.trim()).toContain('Kit will be taken off');
+      confirmDialogButtons()[0].click(); // cancel
+      await fixture.whenStable();
+
+      await create(
+        draftWith({ children: [{ firstName: '', age: '', options: {} }] }),
+      );
+      await openCard(1);
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+      expect(query('app-confirm-dialog .message')?.textContent?.trim()).toContain(
+        'This child will be taken off',
+      );
+
+      await create(
+        draftWith({ partner2: { firstName: '', lastName: '', options: {}, kind: 'plus-one' } }),
+      );
+      await openCard(1);
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+      expect(query('app-confirm-dialog .message')?.textContent?.trim()).toContain(
+        'This partner will be taken off',
+      );
+    });
+
+    it('binds tone="danger" on the confirm dialog', async () => {
+      await create(withPartnerAndChild());
+      await openCard(2);
+      query<HTMLButtonElement>('.card-body .remove-btn')!.click();
+      await fixture.whenStable();
+
+      const [cancelBtn, confirmBtn] = confirmDialogButtons();
+      expect(confirmBtn.classList.contains('danger')).toBe(true);
+      expect(cancelBtn.classList.contains('danger')).toBe(false);
+    });
   });
 });

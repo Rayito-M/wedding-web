@@ -224,6 +224,14 @@
           "remove": "Quitar {{name}}"
         }
       },
+      "remove": {
+        "titlePartner": "¿Eliminar a la pareja?",
+        "titleChild": "¿Eliminar a este niño?",
+        "message": "{{name}} se eliminará de la confirmación, junto con sus datos de comida y alergias. Esto no podrá deshacerse una vez guardado.",
+        "fallbackPartner": "Esta pareja",
+        "fallbackChild": "Este niño",
+        "keep": "Conservar"
+      },
       "unnamed": {
         "none": "Ningún invitado necesita nombre y apellido",
         "singular": "{{count}} invitado necesita nombre y apellido",

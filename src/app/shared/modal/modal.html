@@ -6,6 +6,7 @@
       [class.xl]="size() === 'xl'"
       role="dialog"
       aria-modal="true"
+      [attr.aria-labelledby]="title() ? titleId : null"
       (click)="$event.stopPropagation()"
     >
       @if (size() !== 'sm') {
@@ -16,11 +17,11 @@
         <div class="modal-heading">
           <ng-content select="[modal-eyebrow]" />
           @if (title()) {
-            <h2 class="modal-title">{{ title() }}</h2>
+            <h2 class="modal-title" [id]="titleId">{{ title() }}</h2>
           }
         </div>
 
-        @if (dismissable()) {
+        @if (dismissable() && showClose()) {
           <button type="button" class="modal-close" aria-label="Close" (click)="close.emit()">
             ×
           </button>

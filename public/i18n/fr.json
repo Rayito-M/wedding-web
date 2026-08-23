@@ -224,6 +224,14 @@
           "remove": "Retirer {{name}}"
         }
       },
+      "remove": {
+        "titlePartner": "Retirer le partenaire ?",
+        "titleChild": "Retirer cet enfant ?",
+        "message": "{{name}} sera retiré(e) de la confirmation, ainsi que ses préférences de repas et allergies. Cette action est irréversible une fois enregistrée.",
+        "fallbackPartner": "Ce partenaire",
+        "fallbackChild": "Cet enfant",
+        "keep": "Garder"
+      },
       "unnamed": {
         "none": "Aucun invité n'a besoin d'un prénom et d'un nom",
         "singular": "{{count}} invité a besoin d'un prénom et d'un nom",

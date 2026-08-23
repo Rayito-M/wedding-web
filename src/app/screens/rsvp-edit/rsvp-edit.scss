@@ -79,7 +79,13 @@ footer {
 @media (min-width: 900px) {
   :host {
     max-width: 560px;
-    margin: 0 auto;
+    // Breathing room between the page container and the card, per the DS:
+    // `AppShell.jsx:20` pads its wide content container `26px 32px 44px`.
+    // The 24px bottom + `private-layout`'s own `main { padding-bottom: 20px }`
+    // adds up to the DS's 44px; the top has no such contribution (`main` only
+    // carries `margin-top: 52px` to clear the fixed header), so it is the full
+    // 26px here.
+    margin: 26px auto 24px;
     // Undo the mobile `min-height: 100%` (needed there to pin the footer at
     // the bottom of a full-height screen) — the desktop card has no such
     // requirement and must size to its content, matching the DS reference

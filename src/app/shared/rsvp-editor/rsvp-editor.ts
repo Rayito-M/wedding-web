@@ -1,11 +1,13 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   computed,
   inject,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
@@ -26,6 +28,7 @@ import {
 } from '@app/core';
 import { Avatar } from '@app/shared/avatar/avatar';
 import { ChoiceCard } from '@app/shared/choice-card/choice-card';
+import { ConfirmDialog } from '@app/shared/confirm-dialog/confirm-dialog';
 import { Pill } from '@app/shared/pill/pill';
 import { TextInput } from '@app/shared/input/input';
 import { TextareaInput } from '@app/shared/textarea/textarea';
@@ -97,7 +100,7 @@ interface PersonCard {
   selector: 'app-rsvp-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Avatar, ChoiceCard, Pill, TextInput, TextareaInput, TranslatePipe],
+  imports: [Avatar, ChoiceCard, ConfirmDialog, Pill, TextInput, TextareaInput, TranslatePipe],
   templateUrl: './rsvp-editor.html',
   styleUrl: './rsvp-editor.scss',
 })
@@ -452,7 +455,55 @@ export class RsvpEditor {
     });
   }
 
-  protected removePerson(key: PersonKey): void {
+  /**
+   * `partner2` or a child, awaiting confirmation from `<app-confirm-dialog>`
+   * — `null` means no dialog is open. `.remove-btn`'s `(click)` sets this
+   * instead of mutating the draft directly (Phase M / T278); the mutation
+   * itself is unchanged and now lives in `confirmRemove`.
+   */
+  protected readonly pendingRemoval = signal<PersonKey | null>(null);
+
+  private readonly partyTitleRef = viewChild<ElementRef<HTMLHeadingElement>>('partyTitle');
+
+  /** The card the confirm dialog is asking about, or `null` when closed. */
+  protected readonly pendingCard = computed<PersonCard | null>(() => {
+    const key = this.pendingRemoval();
+    if (key === null) return null;
+    return this.cards().find((card) => card.key === key) ?? null;
+  });
+
+  /** i18n key for the dialog title — by card kind, never by parsing `key`. */
+  protected removeDialogTitleKey(): string {
+    return this.pendingCard()?.role === 'child'
+      ? 'rsvp.editor.remove.titleChild'
+      : 'rsvp.editor.remove.titlePartner';
+  }
+
+  /** The consequence line, with the person's name — or the DS's fallback
+   *  ("This partner" / "This child") when they have none yet. */
+  protected removeDialogMessage(): string {
+    const card = this.pendingCard();
+    if (!card) return '';
+    const fallbackKey =
+      card.role === 'child' ? 'rsvp.editor.remove.fallbackChild' : 'rsvp.editor.remove.fallbackPartner';
+    const name = this.fullName(card) || this.translate.instant(fallbackKey);
+    return this.translate.instant('rsvp.editor.remove.message', { name });
+  }
+
+  /** Opens the confirmation. Same early `return` as the old `removePerson`
+   *  — ignores `partner1` and any unrecognised key, so a programmatic call
+   *  can't queue up removing the primary guest. */
+  protected requestRemove(key: PersonKey): void {
+    if (key !== 'partner2' && !key.startsWith('child:')) return;
+    this.pendingRemoval.set(key);
+  }
+
+  /** Verbatim the old `removePerson` body, run against the pending key, then
+   *  clears the signal. Focus moves to the party heading — the trigger that
+   *  would normally receive it is gone. */
+  protected confirmRemove(): void {
+    const key = this.pendingRemoval();
+    if (key === null) return;
     const draft = this.draft();
     let next: RsvpDraft;
     if (key === 'partner2') {
@@ -465,6 +516,14 @@ export class RsvpEditor {
     }
     if (this.openKey() === key) this.openKey.set(null);
     this.draftChange.emit(next);
+    this.pendingRemoval.set(null);
+    this.partyTitleRef()?.nativeElement.focus();
+  }
+
+  /** Every dismissal means "keep them" — clears the signal, emits nothing.
+   *  Focus restoration to `.remove-btn` is `app-confirm-dialog`'s own job. */
+  protected cancelRemove(): void {
+    this.pendingRemoval.set(null);
   }
 
   // ── helpers ────────────────────────────────────────────────────────────

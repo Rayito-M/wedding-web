@@ -1,0 +1,40 @@
+<app-modal
+  [open]="open()"
+  size="sm"
+  [dismissable]="true"
+  [showClose]="false"
+  [title]="title()"
+  (close)="onCancel()"
+>
+  @if (message()) {
+    <p class="message" [id]="messageId">{{ message() }}</p>
+  }
+
+  <div modal-actions class="actions">
+    <button
+      #cancelBtn
+      app-btn
+      type="button"
+      class="action"
+      [primary]="false"
+      [attr.aria-describedby]="message() ? messageId : null"
+      (keydown)="onCancelKeydown($event)"
+      (click)="onCancel()"
+    >
+      {{ cancelLabel() }}
+    </button>
+    <button
+      #confirmBtn
+      app-btn
+      type="button"
+      class="action"
+      [class.danger]="tone() === 'danger'"
+      [attr.aria-describedby]="message() ? messageId : null"
+      (keydown)="onConfirmKeydown($event)"
+      (keyup)="onConfirmKeyup($event)"
+      (click)="onConfirm()"
+    >
+      {{ confirmLabel() }}
+    </button>
+  </div>
+</app-modal>

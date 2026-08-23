@@ -1,0 +1,32 @@
+@use '../../../styles/tokens' as t;
+
+// Consequence line — existing small-body size/line-height, no new sizes
+// (ConfirmDialog.jsx:16: fontSize 13, lineHeight 1.6, color var(--text-body)
+// i.e. this repo's --text-muted).
+.message {
+  margin: t.$space-2 0 0;
+  font-family: t.$font-sans;
+  font-size: t.$text-body;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+// One wrapper spans the `.modal-actions` row (which is
+// `justify-content: flex-end`) instead of fighting the justify; the two
+// buttons split it evenly (ConfirmDialog.jsx:17-19).
+.actions {
+  display: flex;
+  gap: t.$space-2;
+  width: 100%;
+}
+
+.action {
+  flex: 1;
+}
+
+// tone="danger" — --danger/--on-danger only, never --on-accent (Phase M
+// decision 4). The cancel button is never toned; it stays hairline-ghost.
+.action.danger {
+  background: var(--danger);
+  color: var(--on-danger);
+}
