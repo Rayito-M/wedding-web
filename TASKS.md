@@ -3080,7 +3080,21 @@
 
 ### T273 — Guest RSVP screen: inline status editing, status-driven eyebrow, no "Change my answer"
 
-- **Status:** todo
+- **Status:** done (`4d045c4`) — 2026-08-23. `app-rsvp-editor` renders unconditionally with
+  `[showStatus]="true"`, no `statusPending`; the `@if (draft().status !== 'declined')` wrapper is
+  gone, so the party stays visible while declined (no status conditional added around it). "Change
+  my answer" removed end to end — `rsvp-edit.{html,scss,ts}`'s button/SCSS/output, and
+  `screens/rsvp/`'s `(changeAnswer)` binding, `onChangeAnswer()`, and the `forceCreate` signal
+  (incl. `&& !forceCreate()`); `onSubmitted()`/`(submitted)` also removed as dead once
+  `forceCreate` no longer needs resetting (flagged explicitly — not in the original acceptance
+  list, but entailed). `app-rsvp-create` confirmed still reachable for a `pending` record, asserted
+  in new `rsvp.spec.ts`. Eyebrow split into `rsvp.edit.eyebrow.{confirmed,declined}` across all
+  three i18n files, consumed by both the template and the `HeaderService` effect. Check glyph
+  follows status via `[class.declined]`, no inline style. `<h2>` deliberately untouched — stays
+  `rsvp.edit.title`, the DS's status-driven `<h2>` is a documented non-adoption (ADR W-0003
+  §Decision.9). **Manual cross-browser/theme verification not performed — no browser available in
+  this environment**, stated plainly rather than claimed. Verified independently: `pnpm typecheck`
+  clean, `pnpm lint` only the 4 known `shared/modal/` errors, `pnpm test` 60/60.
 - **Owner:** agent (implementer)
 - **Depends on:** T272 (and, in run order, T274 — this screen ships the promise T274 makes true)
 - **Context:** DS `ScreenRSVPEdit.jsx` is now 55 lines and materially different: the editor
