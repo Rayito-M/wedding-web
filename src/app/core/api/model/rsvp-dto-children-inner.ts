@@ -12,17 +12,7 @@ import { RsvpDtoAdultsPartner1Options } from './rsvp-dto-adults-partner1-options
 
 export interface RsvpDtoChildrenInner { 
     firstName: string;
-    kind: RsvpDtoChildrenInner.KindEnum;
     options?: RsvpDtoAdultsPartner1Options;
     age: number;
 }
-export namespace RsvpDtoChildrenInner {
-    export const KindEnum = {
-        GUEST: 'guest',
-        PLUS_ONE: 'plus-one',
-        CHILD: 'child'
-    } as const;
-    export type KindEnum = typeof KindEnum[keyof typeof KindEnum];
-}
-
 
