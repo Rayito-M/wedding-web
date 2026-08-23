@@ -302,15 +302,25 @@ export class RsvpCreate {
           }
         : undefined;
 
-    // A partner account already linked server-side (`hasLinkedPartner`) isn't
-    // editable here — carried forward verbatim rather than replaced.
-    const partner2 =
-      d.attending === 'yes' && d.withPartner ? (typedPartner ?? rsvp.adults.partner2) : undefined;
+    // Declining is a change of *answer*, not a deletion of the party (ADR
+    // W-0004 §Decision.6): the stored partner/children are carried forward
+    // verbatim so switching back to attending finds everyone again. Explicit
+    // removal — un-ticking "With my partner"/"With children" while attending
+    // — is a separate condition and must not be widened into this one.
+    let partner2: RsvpDtoAdultsPartner2 | undefined;
+    let children: RsvpDtoChildrenInner[] | undefined;
 
-    const children: RsvpDtoChildrenInner[] | undefined =
-      d.attending === 'yes' && d.withChildren
+    if (d.attending === 'no') {
+      partner2 = rsvp.adults.partner2;
+      children = rsvp.children;
+    } else {
+      // A partner account already linked server-side (`hasLinkedPartner`)
+      // isn't editable here — carried forward verbatim rather than replaced.
+      partner2 = d.withPartner ? (typedPartner ?? rsvp.adults.partner2) : undefined;
+      children = d.withChildren
         ? d.children.map((c) => ({ firstName: c.firstName.trim(), age: Number(c.age) }))
         : undefined;
+    }
 
     try {
       // The orchestrator has already provisioned this RSVP (`pending`, or a

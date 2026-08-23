@@ -138,3 +138,74 @@ describe('partner2.kind (ADR W-0004)', () => {
     expect(serialisedChild && 'kind' in serialisedChild).toBe(false);
   });
 });
+
+describe('declining never prunes the party (ADR W-0004 §Decision.6)', () => {
+  it('keeps the party on a declined save', () => {
+    // Regression guard: fromRsvpDraft() must not special-case status. It
+    // already behaves — this exists so a future "a declined RSVP has no
+    // party" simplification fails loudly, and so does a caller who starts
+    // withholding partner2/children before calling this when declining.
+    const value = draft({
+      status: RsvpDto.StatusEnum.DECLINED,
+      partner2: adult({
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        kind: 'plus-one',
+        options: { dietaryPreferenceIds: ['vegetarian'], allergyIds: ['nuts'] },
+      }),
+      children: [
+        child({ firstName: 'Iris', age: '7', options: { customAllergies: ['pollen'] } }),
+        child({ firstName: 'Alan', age: '3', options: {} }),
+      ],
+    });
+
+    const serialised = fromRsvpDraft(value);
+
+    expect(serialised.status).toBe('declined');
+    expect(serialised.adults?.partner2).toEqual({
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      options: { dietaryPreferenceIds: ['vegetarian'], allergyIds: ['nuts'] },
+      kind: 'plus-one',
+    });
+    expect(serialised.children).toEqual([
+      { firstName: 'Iris', age: 7, options: { customAllergies: ['pollen'] } },
+      { firstName: 'Alan', age: 3, options: {} },
+    ]);
+  });
+
+  it('round-trips the party through a decline and back to attending', () => {
+    // draft (full party, attending) -> fromRsvpDraft -> toRsvpDraft
+    // (declined) -> fromRsvpDraft -> toRsvpDraft (attending again) -> the
+    // party is unchanged throughout, at the draft layer only (no live API).
+    const attendingDraft = draft({
+      status: RsvpDto.StatusEnum.ATTENDING,
+      partner2: adult({
+        id: 'usr_partner',
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        kind: 'guest',
+        options: { dietaryPreferenceIds: ['vegan'], allergyIds: ['shellfish'], customAllergies: ['kiwi'] },
+      }),
+      children: [child({ firstName: 'Iris', age: '7', options: { customAllergies: ['pollen'] } })],
+    });
+
+    const asDto = (partial: Partial<RsvpDto>): RsvpDto => rsvpDto(partial);
+
+    const declinedDto = asDto({
+      ...fromRsvpDraft({ ...attendingDraft, status: RsvpDto.StatusEnum.DECLINED }),
+    });
+    const declinedDraft = toRsvpDraft(declinedDto);
+    expect(declinedDraft.status).toBe('declined');
+    expect(declinedDraft.partner2).toEqual(attendingDraft.partner2);
+    expect(declinedDraft.children).toEqual(attendingDraft.children);
+
+    const attendingAgainDto = asDto({
+      ...fromRsvpDraft({ ...declinedDraft, status: RsvpDto.StatusEnum.ATTENDING }),
+    });
+    const attendingAgainDraft = toRsvpDraft(attendingAgainDto);
+    expect(attendingAgainDraft.status).toBe('attending');
+    expect(attendingAgainDraft.partner2).toEqual(attendingDraft.partner2);
+    expect(attendingAgainDraft.children).toEqual(attendingDraft.children);
+  });
+});
