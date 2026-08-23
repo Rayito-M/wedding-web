@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideEffects } from '@ngrx/effects';
 import { EntityServices, provideEntityData, withEffects } from '@ngrx/data';
 import { provideStore } from '@ngrx/store';
@@ -13,6 +14,7 @@ import {
   entityConfig,
   provideEntityDataServices,
 } from '@app/core';
+import { RsvpEditor } from '@app/shared/rsvp-editor/rsvp-editor';
 
 import { RsvpEdit } from './rsvp-edit';
 
@@ -28,15 +30,16 @@ const TRANSLATIONS = {
   rsvp: {
     header: 'RSVP',
     edit: {
-      eyebrow: 'CONFIRMED',
+      eyebrow: { confirmed: 'CONFIRMED', declined: 'DECLINED' },
       title: 'Your reply',
       seatsHeld: { singular: '{{count}} seat held.', plural: '{{count}} seats held.' },
       declinedSub: "You told us you can't make it.",
-      changeAnswer: 'Change my answer',
       footer: { saved: 'Changes saved ✓', unsaved: 'Unsaved changes' },
       error: "Couldn't save.",
     },
     editor: {
+      attendingLabel: 'Attending?',
+      choice: { attending: 'With joy', pending: 'Pending', declined: 'Sadly no' },
       total: 'Total: {{count}}',
       unnamed: {
         none: 'No guest needs a first and last name',
@@ -52,6 +55,7 @@ const TRANSLATIONS = {
           notePlaceholder: 'A song to dance to, a memory…',
           addPartner: '+ Add my partner',
           addChild: '+ Add a child',
+          declinedHint: 'Your party and meal details are kept.',
         },
       },
     },
@@ -123,12 +127,15 @@ describe('RsvpEdit', () => {
     expect(text('.sub')).toBe('1 seat held.');
   });
 
-  it('uses the same title when the RSVP is declined and renders no editor', async () => {
+  it('uses the same title when the RSVP is declined, and still renders the editor with the party visible', async () => {
     await create(rsvpWith(RsvpDto.StatusEnum.DECLINED));
 
     expect(text('h2')).toBe('Your reply');
     expect(text('.sub')).toBe("You told us you can't make it.");
-    expect(fixture.nativeElement.querySelector('app-rsvp-editor')).toBeNull();
+    // A declined RSVP no longer hides the editor — the party stays visible
+    // (T273; the party itself is never pruned, T274).
+    expect(fixture.nativeElement.querySelector('app-rsvp-editor')).not.toBeNull();
+    expect(text('app-rsvp-editor .party-title')).toBe('Your party');
   });
 
   it('gates the save on the shared unnamed-adult count', async () => {
@@ -136,5 +143,52 @@ describe('RsvpEdit', () => {
 
     expect(text('.status')).toBe('1 guest needs a first and last name');
     expect(fixture.nativeElement.querySelector('button[app-btn]').disabled).toBe(true);
+  });
+
+  it('shows a status-driven eyebrow: CONFIRMED while attending, DECLINED while declined', async () => {
+    await create(rsvpWith(RsvpDto.StatusEnum.ATTENDING));
+    expect(text('.eyebrow')).toBe('RSVP · CONFIRMED');
+
+    await create(rsvpWith(RsvpDto.StatusEnum.DECLINED));
+    expect(text('.eyebrow')).toBe('RSVP · DECLINED');
+  });
+
+  it('shows the accent check glyph while attending and the muted dash while declined', async () => {
+    await create(rsvpWith(RsvpDto.StatusEnum.ATTENDING));
+    let glyph = fixture.nativeElement.querySelector('.check');
+    expect(glyph.textContent.trim()).toBe('✓');
+    expect(glyph.classList.contains('declined')).toBe(false);
+
+    await create(rsvpWith(RsvpDto.StatusEnum.DECLINED));
+    glyph = fixture.nativeElement.querySelector('.check');
+    expect(glyph.textContent.trim()).toBe('—');
+    expect(glyph.classList.contains('declined')).toBe(true);
+  });
+
+  it('gives the guest exactly two answers ("With joy" / "Sadly no") and no "Change my answer" control', async () => {
+    await create(rsvpWith(RsvpDto.StatusEnum.ATTENDING));
+
+    const choiceLabels = Array.from(
+      fixture.nativeElement.querySelectorAll('app-rsvp-editor [app-choice-card]'),
+    ).map((el) => (el as HTMLElement).textContent?.trim());
+    expect(choiceLabels).toEqual(['With joy', 'Sadly no']);
+    expect(fixture.nativeElement.textContent).not.toContain('Pending');
+    expect(fixture.nativeElement.querySelector('.change-answer')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Change my answer');
+  });
+
+  it('renders the reassurance line when the guest is declined', async () => {
+    await create(rsvpWith(RsvpDto.StatusEnum.DECLINED));
+
+    expect(text('app-rsvp-editor .declined-hint')).toBe('Your party and meal details are kept.');
+  });
+
+  it('passes showStatus true and leaves statusPending unset on the shared editor', async () => {
+    await create(rsvpWith(RsvpDto.StatusEnum.ATTENDING));
+
+    const editor = fixture.debugElement.query(By.directive(RsvpEditor))
+      .componentInstance as RsvpEditor;
+    expect(editor.showStatus()).toBe(true);
+    expect(editor.statusPending()).toBe(false);
   });
 });

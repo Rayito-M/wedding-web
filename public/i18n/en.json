@@ -181,7 +181,10 @@
       "error": "Something went wrong sending your reply. Please try again."
     },
     "edit": {
-      "eyebrow": "CONFIRMED",
+      "eyebrow": {
+        "confirmed": "CONFIRMED",
+        "declined": "DECLINED"
+      },
       "title": "Your reply",
       "seatsHeld": {
         "none": "No seats held yet. Edit anything until 1 May.",
@@ -189,7 +192,6 @@
         "plural": "{{count}} seats held. Edit anything until 1 May."
       },
       "declinedSub": "You told us you can't make it. You can change your mind until 1 May.",
-      "changeAnswer": "Change my answer",
       "footer": {
         "saved": "Changes saved ✓",
         "unsaved": "Unsaved changes"

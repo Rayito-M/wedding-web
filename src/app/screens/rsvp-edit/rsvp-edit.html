@@ -1,7 +1,15 @@
 <div class="content">
   <div class="head">
     <div class="head-text">
-      <div class="eyebrow">{{ 'rsvp.header' | translate }} · {{ 'rsvp.edit.eyebrow' | translate }}</div>
+      <div class="eyebrow">
+        {{ 'rsvp.header' | translate }} ·
+        {{
+          (draft().status === 'declined'
+            ? 'rsvp.edit.eyebrow.declined'
+            : 'rsvp.edit.eyebrow.confirmed'
+          ) | translate
+        }}
+      </div>
       <h2>{{ 'rsvp.edit.title' | translate }}</h2>
       @if (draft().status === 'declined') {
         <p class="sub">{{ 'rsvp.edit.declinedSub' | translate }}</p>
@@ -11,21 +19,19 @@
         </p>
       }
     </div>
-    <span class="check" aria-hidden="true">✓</span>
+    <span class="check" [class.declined]="draft().status === 'declined'" aria-hidden="true">
+      {{ draft().status === 'declined' ? '—' : '✓' }}
+    </span>
   </div>
 
-  <!-- A declined RSVP has no party to edit — a host decision, not the editor's. -->
-  @if (draft().status !== 'declined') {
-    <app-rsvp-editor
-      [draft]="draft()"
-      perspective="owner"
-      (draftChange)="onDraftChange($event)"
-    />
-  }
-
-  <button type="button" class="change-answer" (click)="onChangeAnswer()">
-    {{ 'rsvp.edit.changeAnswer' | translate }}
-  </button>
+  <!-- The editor renders whole, always — including the party while declined
+       (T273; T274 guarantees the party itself is never pruned by a decline). -->
+  <app-rsvp-editor
+    [draft]="draft()"
+    perspective="owner"
+    [showStatus]="true"
+    (draftChange)="onDraftChange($event)"
+  />
 </div>
 
 <footer>

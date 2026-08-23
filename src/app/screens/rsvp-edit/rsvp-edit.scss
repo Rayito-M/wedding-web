@@ -1,9 +1,9 @@
 @use '../../../styles/tokens' as t;
 @use '../../../styles/primitives';
 
-// Host chrome only: page header, the "Change my answer" link, the save footer
-// and the desktop card wrapper. The editable body — cards, chips, add links,
-// note — belongs to `app-rsvp-editor` and is styled there (ADR W-0003).
+// Host chrome only: page header, the save footer and the desktop card
+// wrapper. The editable body — status row, cards, chips, add links, note —
+// belongs to `app-rsvp-editor` and is styled there (ADR W-0003).
 
 :host {
   display: flex;
@@ -49,6 +49,10 @@ h2 {
   color: var(--brand-accent);
   font-size: 20px;
   line-height: 1;
+
+  &.declined {
+    color: var(--text-muted);
+  }
 }
 
 // The gap the deleted `.cards` rule used to carry between the header and the
@@ -56,19 +60,6 @@ h2 {
 app-rsvp-editor {
   display: block;
   margin-top: 22px;
-}
-
-.change-answer {
-  margin-top: 22px;
-  background: transparent;
-  border: none;
-  padding: 0;
-  font-size: t.$text-label;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  font-family: t.$font-sans;
-  cursor: pointer;
 }
 
 footer {

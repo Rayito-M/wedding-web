@@ -178,7 +178,10 @@
       "error": "Algo salió mal al enviar tu respuesta. Inténtalo de nuevo."
     },
     "edit": {
-      "eyebrow": "CONFIRMADO",
+      "eyebrow": {
+        "confirmed": "CONFIRMADO",
+        "declined": "DECLINADO"
+      },
       "title": "Tu respuesta",
       "seatsHeld": {
         "none": "Aún no hay asientos reservados. Edita lo que quieras hasta el 1 de mayo.",
@@ -186,7 +189,6 @@
         "plural": "{{count}} asientos reservados. Edita lo que quieras hasta el 1 de mayo."
       },
       "declinedSub": "Nos dijiste que no podrás venir. Puedes cambiar de opinión hasta el 1 de mayo.",
-      "changeAnswer": "Cambiar mi respuesta",
       "footer": {
         "saved": "Cambios guardados ✓",
         "unsaved": "Cambios sin guardar"

@@ -178,7 +178,10 @@
       "error": "Une erreur est survenue lors de l'envoi de votre réponse. Veuillez réessayer."
     },
     "edit": {
-      "eyebrow": "CONFIRMÉ",
+      "eyebrow": {
+        "confirmed": "CONFIRMÉ",
+        "declined": "DÉCLINÉ"
+      },
       "title": "Votre réponse",
       "seatsHeld": {
         "none": "Aucune place réservée pour l'instant. Modifiez tout ce que vous voulez jusqu'au 1er mai.",
@@ -186,7 +189,6 @@
         "plural": "{{count}} places réservées. Modifiez tout ce que vous voulez jusqu'au 1er mai."
       },
       "declinedSub": "Vous nous avez dit que vous ne pourrez pas venir. Vous pouvez changer d'avis jusqu'au 1er mai.",
-      "changeAnswer": "Modifier ma réponse",
       "footer": {
         "saved": "Modifications enregistrées ✓",
         "unsaved": "Modifications non enregistrées"

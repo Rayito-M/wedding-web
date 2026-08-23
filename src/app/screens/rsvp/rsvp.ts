@@ -54,9 +54,6 @@ export class Rsvp implements OnInit {
     EntityServices,
   ).getEntityCollectionService<RsvpDto>(EntityNamesEnum.RSVP);
 
-  /** Flips to `true` on "Change my answer"; reset once a fresh reply lands. */
-  protected readonly forceCreate = signal(false);
-
   /** Gates the initial render until the existence check (and, if needed, the
    *  auto-provision create call) below has resolved. */
   protected readonly loaded = signal(false);
@@ -82,14 +79,6 @@ export class Rsvp implements OnInit {
     const status = this.rsvp()?.status;
     return status === RsvpDto.StatusEnum.ATTENDING || status === RsvpDto.StatusEnum.DECLINED;
   });
-
-  protected onSubmitted(): void {
-    this.forceCreate.set(false);
-  }
-
-  protected onChangeAnswer(): void {
-    this.forceCreate.set(true);
-  }
 
   async ngOnInit(): Promise<void> {
     const currentUser = this.login.currentUserClaims();

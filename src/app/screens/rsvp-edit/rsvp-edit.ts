@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -19,19 +27,27 @@ import { RsvpEditor } from '@app/shared/rsvp-editor/rsvp-editor';
 
 /**
  * The RSVP once it exists (design system `ScreenRSVPEdit.jsx`): the page
- * header, the shared `app-rsvp-editor` in `owner` perspective, "Change my
- * answer" back to `app-rsvp-create`, and the save footer.
+ * header, the shared `app-rsvp-editor` in `owner` perspective (rendered
+ * unconditionally, with `showStatus` so the guest can switch their answer
+ * inline), and the save footer.
  *
  * This screen is chrome, persistence and gating only (ADR W-0003
- * §Decision.2). The editable body — participant cards, name lock, diet and
- * allergy chips, add/remove, the note — lives in `app-rsvp-editor` and is
- * shared with the couple's manage-RSVP modal.
+ * §Decision.2). The editable body — the attendance answer, participant
+ * cards, name lock, diet and allergy chips, add/remove, the note — lives in
+ * `app-rsvp-editor` and is shared with the couple's manage-RSVP modal.
+ *
+ * There is no "Change my answer" control any more (Phase L decision 1): a
+ * declined guest edits their status inline, in the same editor that shows
+ * their party, and `app-rsvp-create` stays reachable only for a genuinely
+ * `pending` record (`screens/rsvp/rsvp.html`).
  *
  * Two headings, two owners: this host says *which record this is* ("Your
  * reply", `rsvp.edit.title`, one string for both the attending and the
- * declined state — the eyebrow and the subtitle carry the status), while the
- * editor labels the list below it ("Your party") from its own perspective
- * namespace (ADR W-0003 §Decision.9).
+ * declined state — the eyebrow and the subtitle carry the status; the DS's
+ * status-driven `<h2>` is a deliberate non-adoption, ADR W-0003 §Decision.9
+ * and Phase L — following it would print "Your party" twice, since that
+ * heading already moved into the editor), while the editor labels the list
+ * below it ("Your party") from its own perspective namespace.
  */
 @Component({
   selector: 'app-rsvp-edit',
@@ -50,9 +66,6 @@ export class RsvpEdit {
 
   /** The current guest's RSVP, as read by the orchestrator. */
   readonly rsvp = input.required<RsvpDto>();
-
-  /** "Change my answer" — the orchestrator switches back to `app-rsvp-create`. */
-  readonly changeAnswer = output<void>();
 
   // Placeholder until the constructor's `effect()` below resyncs it from the
   // required `rsvp` input — reading a required input signal at field-init
@@ -76,7 +89,11 @@ export class RsvpEdit {
   constructor() {
     effect(() => {
       const header = this.translateService.instant('rsvp.header');
-      this.header.set(`${header} · ${this.translateService.instant('rsvp.edit.eyebrow')}`);
+      const eyebrowKey =
+        this.draft().status === RsvpDto.StatusEnum.DECLINED
+          ? 'rsvp.edit.eyebrow.declined'
+          : 'rsvp.edit.eyebrow.confirmed';
+      this.header.set(`${header} · ${this.translateService.instant(eyebrowKey)}`);
     });
 
     // Resync the draft whenever the orchestrator hands us a fresh entity
@@ -116,9 +133,5 @@ export class RsvpEdit {
     } finally {
       this.saving.set(false);
     }
-  }
-
-  protected onChangeAnswer(): void {
-    this.changeAnswer.emit();
   }
 }
