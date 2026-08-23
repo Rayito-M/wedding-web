@@ -3220,3 +3220,145 @@
   `src/app/core/helper/{rsvp-draft.ts,rsvp-draft.spec.ts}`;
   `wedding-api/src/common/documents/rsvp.ts` (why an omitted `children` survives but a sent
   `adults` does not)
+
+> **Phase L reopens, 2026-08-23, same day it closed.** The external Zod duplicate-discriminator
+> defect that T270–T274 were built around (phase preamble, "External dependency — the user owns
+> it") is **fixed upstream** — the same day, by the same author who owned it. The fix changes the
+> generated client's shape in ways that break every `KindEnum` reference T270/T271 wrote. This is
+> not a new defect and not scope creep on the couple's or guest's side: it is the follow-through
+> that ADR W-0004's "Recorded external dependency" section always said would be needed once the
+> dependency resolved. **ADR W-0004 has already been amended** (a new "Amendment (2026-08-23)"
+> section plus inline superseded-notes on §Decision.2, §Decision.4, the Context note, and the
+> "Recorded external dependency" section, which is now marked resolved) — read it before starting
+> T275; it settles the reasoning so T275 does not have to re-argue it.
+
+### T275 — Follow the upstream Zod-discriminator fix: `kind` degrades to `string`, `partner1` gains `attending?`
+
+- **Status:** done (`3f0b718`, `5dc71a6`) — 2026-08-23. Regeneration matched the tripwire exactly
+  (verified independently): `partner1` gained `attending?`; both partner2 variants' `kind` became
+  plain `string` with their `KindEnum` namespaces gone; the profile-partner `AnyOf`/`AnyOf1`/merged
+  files swapped which carries `id`/`attending` and lost their own `KindEnum` block the same way.
+  All eleven call sites across the eight named files switched to direct `'guest'`/`'plus-one'`
+  string-literal comparison/assignment; `AdultDraft.kind` retyped plain optional `string`; the
+  now-unused `RsvpDtoAdultsPartner2OneOf` import dropped everywhere it was only used for
+  `.KindEnum`. Both "needs no code change" claims confirmed by grep, not assumed: the split
+  profile-partner variants have zero consumers outside `core/api/`, and nothing reads or writes
+  `partner1.attending` anywhere in `src/`. No behaviour, `.html`, or `.scss` change. Baseline
+  `pnpm typecheck` at true `HEAD` was 0 errors (the committed client still matched the code
+  written against it); 0 after too — the regeneration and the fix landed as two atomic, each
+  individually clean commits. Verified independently: `pnpm typecheck` clean, `pnpm lint` only the
+  4 known `shared/modal/` errors, `pnpm test` 60/60, `pnpm gen:api:check` clean.
+- **Owner:** agent (implementer)
+- **Depends on:** T270, T271, T272, T273, T274 — **all done**, landed 2026-08-23. This task does
+  not build on any incomplete work; it is a pure follow-up to a shape change in a dependency T270
+  already integrated once.
+- **Context:** The API fixed the Zod bug the phase preamble flagged as out of scope by giving each
+  `adults.partner2` variant its own `z.literal('guest')` / `z.literal('plus-one')` instead of
+  sharing a three-value enum. The hub contract (`../wedding-architecture/contracts/openapi.json`)
+  is re-synced to match. This is good news for the save path and bad news for this repo's types,
+  for a specific and slightly counter-intuitive reason recorded in ADR W-0004's amendment:
+  openapi-generator turns a Zod `z.enum([...])` into a generated `KindEnum` namespace, but it has
+  **no code path that emits any type at all** for a Zod `z.literal(...)` — JSON Schema represents
+  it as `const`, and the generator's output for a `const` field is plain `kind: string`. So making
+  the schema *more* precise upstream makes the generated TypeScript *less* precise: the `KindEnum`
+  namespace disappears from the client altogether, on both `RsvpDtoAdultsPartner2OneOf` and
+  `…OneOf1`, and every reference this repo has to
+  `RsvpDtoAdultsPartner2OneOf.KindEnum.{GUEST,PLUS_ONE}` (11 sites across 8 files, all written in
+  T270/T271) stops compiling. Separately, `adults.partner1` gained an optional
+  `attending?: boolean` it never had — a narrower `omit` upstream (`kind` only, not `kind` +
+  `attending`), not a field this repo asked for or needs to read or write; ADR W-0004's amendment
+  records this as settled dead weight, not an open question. And the **non-discriminated** union
+  behind the profile-partner type had its two members reordered (unaffected by the Zod fix — that
+  union was never discriminated), which swaps which generated interface name — `…AnyOf` vs.
+  `…AnyOf1` — carries which shape; confirmed by grep to have zero positional consumers in this
+  repo, so it is a rename with no code impact, stated for the record rather than left for the next
+  reader to rediscover. This task is a type-following exercise, not a feature: it changes how
+  `kind` is spelled and compared, not what any screen does or shows.
+- **Acceptance:**
+  - **First commit, on its own: `pnpm gen:api`,** against the hub contract with the re-sync landed
+    (confirm the hub commit before regenerating — same rule as T270's blocking-dependency note; do
+    not assume today's working tree already reflects a committed regeneration, even if it looks
+    like it does). State the hub commit referenced in the PR. **Tripwire — the expected diff
+    shape:**
+    - `rsvp-dto-adults-partner1.ts` gains one field: `attending?: boolean;`.
+    - `rsvp-dto-adults-partner2-one-of.ts` and `…-one-of1.ts`: `kind` changes from the generated
+      enum type to `kind: string;`, and the `export namespace RsvpDtoAdultsPartner2OneOf { … }` /
+      `…OneOf1` `KindEnum` blocks are deleted entirely (not renamed, not narrowed — gone).
+    - `user-profile-list-response-dto-profiles-inner-guest-info-partner-any-of.ts` and `…-any-of1.ts`
+      swap which one carries `id`/`attending` (the guest shape) vs. neither (the plus-one shape);
+      the merged `user-profile-list-response-dto-profiles-inner-guest-info-partner.ts` loses its
+      own `KindEnum` block the same way the partner2 variants do.
+    - Nothing else moves. If the actual diff differs from this shape in kind (not just in which
+      exact files list which fields), **stop and report** — do not adapt the rest of the task to a
+      different-shaped diff without asking. `pnpm gen:api:check` clean afterwards. Nothing in
+      `src/app/core/api/` is hand-edited (CLAUDE.md folder ownership).
+  - **`AdultDraft.kind`** (`core/helper/rsvp-draft.ts`) is retyped from
+    `RsvpDtoAdultsPartner2OneOf.KindEnum` (removed) to plain **`string`**, still **optional** —
+    matching the type the generated `…OneOf`/`…OneOf1` interfaces themselves now give the field.
+    This is **not** a new hand-written type and does not trigger CLAUDE.md Hard rule 15: it is the
+    same generated-field type, carried over, not a locally invented union. The doc comment is
+    updated to stop citing `KindEnum` (ADR W-0004 §Decision.2's superseded-note has the replacement
+    wording).
+  - **Every `RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST` / `.PLUS_ONE` reference becomes a direct
+    string-literal comparison or assignment against `'guest'` / `'plus-one'`** — the values the
+    contract's `const`s actually carry. This is a plain equality/assignment against a field already
+    typed `string` by the generated client, not a redeclared type, so Hard rule 15 does not apply;
+    do **not** invent a local `type Kind = 'guest' | 'plus-one'` (or similar) to feel safer about
+    it — ADR W-0004's amendment explains why that would be the wrong move, and if anyone still
+    disagrees after reading it, that is a stop-and-ask, not a unilateral call. Fix, file by file:
+    - `core/helper/rsvp-draft.ts`: the doc comment (L35) drops the `KindEnum` citation; the type
+      decl (L40) becomes `kind?: string;`; the two `fromRsvpDraft()` sites (L109, L115) drop the
+      `as RsvpDtoAdultsPartner2OneOf.KindEnum` cast — narrow only the optionality
+      (`string | undefined` → `string`, since the wire type's `kind` is required on both variants),
+      by whatever idiomatic means (`as string`, `!`, or restructuring); no `as unknown as`.
+    - `core/helper/rsvp-draft.spec.ts` (L67, L89): fixtures use `'guest'` in place of
+      `RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST`.
+    - `core/helper/partner-account.ts`: the doc comment (L24, "three-value `KindEnum`") is updated
+      per ADR W-0004's amendment; the comparison (L39) becomes `partner?.kind === 'guest'`.
+    - `core/helper/partner-account.spec.ts` (L19, L30, L52): `'guest'` / `'plus-one'` in place of
+      the `RsvpDtoAdultsPartner2OneOf.KindEnum.*` and
+      `UserProfileListResponseDtoProfilesInnerGuestInfoPartner.KindEnum.GUEST` fixtures.
+    - `shared/rsvp-editor/rsvp-editor.ts` (L442, `addPartner()`): stamps `'plus-one'`.
+    - `shared/rsvp-editor/rsvp-editor.spec.ts` (L184, L207, L229, L238): fixtures use `'guest'` /
+      `'plus-one'`.
+    - `screens/rsvp-create/rsvp-create.ts` (L65, L82, L301 — `EMPTY_DRAFT.partner`,
+      `toCreateDraft()`, `submit()`'s `typedPartner`): all three stamp `'plus-one'`.
+    - `screens/guest-manager/modal/manage-rsvp-modal.spec.ts` (L90): fixture uses `'guest'`.
+    - In every one of the eight files above, drop the now-unused `RsvpDtoAdultsPartner2OneOf`
+      import if nothing else in that file still references the type (confirmed by grep: today it
+      is imported in exactly these eight files and used **only** for `.KindEnum` access in every
+      one — no file uses `RsvpDtoAdultsPartner2OneOf` as a type annotation elsewhere, so the import
+      is fully removable in all eight, not just some). An unused import is both a lint failure and
+      dead weight; do not leave it "just in case."
+  - **The profile-partner union swap needs no code change.** State in the PR the grep that proves
+    it: `UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf` / `…AnyOf1` are referenced
+    nowhere in `src/app/` outside the generated model files themselves — the only consumer of the
+    profile partner shape is `partnerHasAccount()`, via the merged
+    `UserProfileListResponseDtoProfilesInnerGuestInfoPartner` type, reading `.kind`, never a split
+    variant and never by structural position. If the grep turns up a consumer this task's recon
+    missed, stop and report before writing around it.
+  - **`RsvpDtoAdultsPartner1` gaining `attending?: boolean` needs no code change**, per ADR
+    W-0004's amendment: nothing in this app may start reading or writing `attending` on `partner1`
+    as part of this task — `fromRsvpDraft()`'s `partner1` object literal is unchanged and stays
+    that way. This is stated so nobody "completes the picture" by wiring it up as a drive-by.
+  - **No behaviour change beyond the type mechanics.** `partnerHasAccount()`'s logic
+    (`kind === 'guest'`, no `id` fallback), `fromRsvpDraft()`'s shape (what fields it emits and
+    when), and every screen's rendering are unchanged — this task only changes how `kind` is typed,
+    compared and imported. If a diff touches an `.html` or `.scss` file, that is out of scope and a
+    sign something went sideways.
+  - `pnpm typecheck && pnpm lint && pnpm test` green at the end. State the before/after
+    `typecheck` error count in the PR (recon for this task found the working tree already failing
+    to compile against a client shaped like the tripwire above, from the 11 sites listed, but did
+    not run the compiler to get an exact count — get the real number from `HEAD` before touching
+    anything, the same way T270 did). Lint clean except the 4 known `shared/modal/` errors
+    (CLAUDE.md's carve-out).
+- **Refs:** in-repo ADR W-0004 (whole document, particularly "Amendment (2026-08-23)"); ADR
+  W-0002 §Decision.1 (superseded by W-0004, unaffected by this task); CLAUDE.md Hard rule 15;
+  `src/app/core/api/model/rsvp-dto-adults-partner1.ts`,
+  `rsvp-dto-adults-partner2-{one-of,one-of1}.ts`,
+  `user-profile-list-response-dto-profiles-inner-guest-info-partner{,-any-of,-any-of1}.ts`
+  (regenerated here); `src/app/core/helper/{rsvp-draft.ts,rsvp-draft.spec.ts,partner-account.ts,
+  partner-account.spec.ts}`; `src/app/shared/rsvp-editor/rsvp-editor.{ts,spec.ts}`;
+  `src/app/screens/rsvp-create/rsvp-create.ts`;
+  `src/app/screens/guest-manager/modal/manage-rsvp-modal.spec.ts`;
+  `wedding-api/src/common/documents/rsvp.ts`; hub `contracts/openapi.json`

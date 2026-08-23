@@ -1,6 +1,7 @@
 # ADR W-0004: `kind` is the partner-slot discriminator (amends W-0002)
 
-- **Status:** accepted
+- **Status:** accepted, amended 2026-08-23 (same day — see "Amendment" below; the upstream Zod
+  defect recorded in the original text was fixed within the day)
 - **Date:** 2026-08-23
 - **Deciders:** wedding-web architect (this repo)
 - **Scope:** wedding-web (in-repo). **Consumes** a contract change made upstream; proposes no
@@ -33,6 +34,10 @@ on children; a re-sync the same day removed it again (`RsvpChildrenParticipantSc
 | `RsvpDtoChildrenInner` | `firstName`, `age`, `options?` — **no `kind`**, after the re-sync |
 | `RsvpDtoAdultsPartner1` | unchanged — **no `kind`** (the contract omits it for the primary guest) |
 
+*(Superseded by the 2026-08-23 amendment below: `…OneOf`/`…OneOf1`'s `kind` degrades from an enum to
+plain `string`, and `RsvpDtoAdultsPartner1` gains an optional `attending?: boolean`. The table above
+is left as originally written, for the record of what T270/T271 actually built against.)*
+
 Three things follow. First, the `anyOf`-merge wrinkle W-0002 documented is gone: `partner2` is a
 genuine union, so the two `as unknown as RsvpDtoAdultsPartner2` casts (in
 `core/helper/rsvp-draft.ts` and `screens/rsvp-create/rsvp-create.ts`) are both wrong and no longer
@@ -46,7 +51,10 @@ union whose second member has none, and two `PartnerDraft` literals missing `kin
 
 Note what `kind` does **not** buy: the generated `KindEnum` is the full three-value enum on *both*
 union members, so TypeScript cannot narrow `RsvpDtoAdultsPartner2` by `kind` — only the presence
-of `id` distinguishes the two members structurally.
+of `id` distinguishes the two members structurally. *(This paragraph describes the state T270/T271
+were built against. See "Amendment (2026-08-23)" below: the generated `KindEnum` no longer exists
+at all, which changes nothing about the `id`-based narrowing conclusion but does break every
+reference to the enum itself.)*
 
 ## Decision
 
@@ -60,7 +68,11 @@ of `id` distinguishes the two members structurally.
 2. **The draft carries `kind` verbatim rather than re-deriving it on write.** `AdultDraft` (the
    local editing shape in `core/helper/rsvp-draft.ts`) gains an **optional** `kind`, typed with
    the **generated** `RsvpDtoAdultsPartner2OneOf.KindEnum` — never a hand-written
-   `'guest' | 'plus-one' | 'child'` union, which CLAUDE.md Hard rule 15 forbids. It is read on
+   `'guest' | 'plus-one' | 'child'` union, which CLAUDE.md Hard rule 15 forbids.
+   *(Superseded by the 2026-08-23 amendment below: the generated `KindEnum` no longer exists, so
+   `AdultDraft.kind` is typed plain `string` — the same type the generated `…OneOf`/`…OneOf1`
+   interfaces themselves give the field. This is still not a hand-written union; there is simply
+   nothing generated left to defer to.)* It is read on
    `toRsvpDraft`, carried through every mutation, and written back on `fromRsvpDraft`.
    **`ChildDraft` gains nothing** — children have no `kind` in the contract.
 
@@ -98,6 +110,10 @@ of `id` distinguishes the two members structurally.
      `z.enum(['plus-one', 'child'])`), the generated members would gain unit-typed discriminators,
      the union *would* narrow on `kind`, and this reason would evaporate — revisit it then. Reason
      (b) below would still stand on its own.
+     *(Superseded by the 2026-08-23 amendment below: the contingency above was triggered — the
+     upstream schema now declares `kind` as a distinct `z.literal(...)` per variant — but it did
+     not resolve the way this paragraph predicted. Read the amendment before touching this
+     helper.)*
    - **The helper spans three unrelated input types** (the profile partner, `RsvpDtoAdultsPartner2`,
      and the local `AdultDraft`). Narrowing an `AdultDraft` to a generated API interface would be
      unsound at the call sites that pass one (`unnamedAdultCount`, the editor's card builder).
@@ -128,6 +144,57 @@ of `id` distinguishes the two members structurally.
    same path only by accident — an omitted key leaves the stored array untouched, so the two
    halves of the party are not even destroyed consistently.)
 
+## Amendment (2026-08-23): the upstream Zod fix removes `KindEnum` entirely
+
+The "Recorded external dependency" section below described a real defect: `z.discriminatedUnion`
+gave both `partner2` variants the same three-value `kind` enum, so Zod threw on any payload that
+exercised the union. The API fixed this the same day by giving each variant its own
+`z.literal('guest')` / `z.literal('plus-one')` instead of sharing the enum — the union is now
+genuinely disjoint and the server-side defect is gone. **This is not the outcome §Decision.4's
+contingency note anticipated, and the difference matters:**
+
+- §Decision.4 reason (a) predicted that narrowing the schema per variant would make
+  openapi-generator emit **unit-typed discriminators**, so the TypeScript union would finally
+  narrow on `kind` and reason (a) would "evaporate." That does not happen. openapi-generator turns
+  a Zod `z.enum([...])` into a generated `KindEnum` namespace + union type, but it turns a Zod
+  `z.literal('guest')` into a JSON Schema `const`, and openapi-generator has **no code path that
+  emits a literal type — or any enum at all — for a `const`**. The generated field degrades to
+  plain `kind: string` on both `RsvpDtoAdultsPartner2OneOf` and `…OneOf1`, and the `KindEnum`
+  namespace disappears from the generated client entirely (confirmed by inspecting the
+  regeneration: `grep -r KindEnum src/app/core/api/` returns nothing).
+- The predicted alternative — "the union would narrow on `kind`" — is therefore the opposite of
+  what happened: there is now **less** type information than before, not more. Reason (a) does not
+  evaporate; it strengthens into its own limit case — there is no generated discriminator of any
+  kind (shared or unit-typed) left to narrow on, so a `partner is …OneOf` predicate would be even
+  more clearly an unchecked assertion than the original text argued. Reason (b) is untouched. The
+  conclusion — `partnerHasAccount()` stays a plain `boolean` — stands, now for a reason with no
+  contingency attached.
+- Every reference to `RsvpDtoAdultsPartner2OneOf.KindEnum` (or the profile-partner equivalent) in
+  this repo's source now fails to compile. The fix is a direct string-literal comparison —
+  `kind === 'guest'` / `kind === 'plus-one'` — against the values the contract's `const`s actually
+  carry. **This is not the hand-written union Hard rule 15 forbids**: the rule prohibits
+  redeclaring a *type* the generated client already models; comparing a field the generated
+  interface types as `string` to a literal it can already hold is an ordinary equality check, not
+  a type declaration. `AdultDraft.kind` (§Decision.2) is retyped `string` for the same reason — it
+  mirrors the generated field's own type, not a new invented one.
+- `RsvpDtoAdultsPartner1` separately gains an optional `attending?: boolean`, because
+  `rsvpMemberPrimarySchema` (the renamed schema behind `partner1`) now omits only `kind` from the
+  shared member schema, not `attending` too — a narrower omission than before, not a new field this
+  repo asked for. This is judged harmless dead weight, not a modelling error worth flagging
+  upstream: the primary guest's attendance is `RsvpDocument.status`, and a member-level `attending`
+  flag has only ever had a purpose on `partner2` (letting an already-provisioned account holder
+  show pending/declined independent of the RSVP's own status). Nothing in this app reads or writes
+  `attending` on `partner1`; `fromRsvpDraft()`'s `partner1` object literal does not set it, and the
+  field being optional means it does not need to.
+- The non-discriminated `z.union` behind the profile-partner type
+  (`UserProfileListResponseDtoProfilesInnerGuestInfoPartner`, built in
+  `wedding-api/src/modules/profile/dto/profile.dto.ts`, untouched by the Zod discriminator defect
+  or its fix) had its two members reordered upstream, which swaps which generated interface name —
+  `…AnyOf` vs. `…AnyOf1` — carries which shape. This is cosmetic for this repo: nothing consumes
+  either split interface directly (both are folded into the merged
+  `UserProfileListResponseDtoProfilesInnerGuestInfoPartner`, which is what `partnerHasAccount()`
+  and its one call path actually read, by `kind`, not by structural position).
+
 ## Consequences
 
 - Reading `id` off `RsvpDtoAdultsPartner2` now needs an `in` check at four sites
@@ -138,6 +205,8 @@ of `id` distinguishes the two members structurally.
 - Test fixtures that construct an `RsvpDto` with a `partner2` must now supply `kind` — the
   compiler enforces it, which is the point. **Child fixtures are unaffected**, and a spec asserts
   that a serialised child has no `kind` property, so nobody adds one back out of symmetry.
+  *(Amended 2026-08-23: fixtures assert `kind` against the string literal `'guest'` / `'plus-one'`,
+  not a `KindEnum` member — there is no longer one to import.)*
 - The client must be regenerated before any of this lands: the committed
   `rsvp-dto-children-inner.ts` still carries the `kind` the contract re-sync removed.
 - §Decision.6 is a **behaviour change, not a refactor**: `rsvp-create.submit()` stops pruning the
@@ -145,15 +214,17 @@ of `id` distinguishes the two members structurally.
 
 ## Recorded external dependency — owned by the user, not by this repo
 
-- **A defect in the upstream Zod schema.** `z.discriminatedUnion('kind', [RsvpUserSchema,
-  RsvpParticipantSchema])` gives both members the same three-value `kind` enum. Zod v4 throws
-  `Duplicate discriminator value "guest"` the first time that union is exercised (reproduced
-  against `zod@4.4.3`), so **any** `partner2` payload fails server-side regardless of what this
-  repo sends. Sending `kind` correctly is necessary but not sufficient. **The user has explicitly
-  taken ownership of this; no task exists for it in `TASKS.md` and none is to be written.** It is
-  recorded for two reasons only: nothing in this repo may be gated on a live save round trip
-  while it stands, and it is what keeps §Decision.4's reason (a) true (see the contingency note
-  there).
+- **Resolved 2026-08-23 (same day recorded).** `z.discriminatedUnion('kind', [RsvpUserSchema,
+  RsvpParticipantSchema])` gave both members the same three-value `kind` enum. Zod v4 threw
+  `Duplicate discriminator value "guest"` the first time that union was exercised (reproduced
+  against `zod@4.4.3`), so **any** `partner2` payload failed server-side regardless of what this
+  repo sent. Sending `kind` correctly was necessary but not sufficient. **The user took ownership
+  of this; no task existed for it in `TASKS.md`.** The API fixed it by giving each `partner2`
+  variant its own `z.literal(...)` instead of sharing the enum (see the "Amendment" section
+  above), which resolves the save-blocking defect **and** removes the generated `KindEnum` this
+  repo's code referenced — the follow-on type breakage is `TASKS.md` T275, not a new instance of
+  this same dependency. A live save round trip against a running API is unblocked as of this
+  amendment, but T275 does not itself claim to have verified one — see its acceptance list.
 
 ## References
 
@@ -165,4 +236,4 @@ of `id` distinguishes the two members structurally.
   rule 15
 - Code: `src/app/core/helper/{rsvp-draft.ts,partner-account.ts}`,
   `src/app/screens/rsvp-create/rsvp-create.ts`, `src/app/shared/rsvp-editor/rsvp-editor.ts`
-- Tasks: `TASKS.md` T270, T271, T274
+- Tasks: `TASKS.md` T270, T271, T274, T275 (propagates the amendment above into code)
