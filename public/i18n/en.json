@@ -238,7 +238,8 @@
           "note": "A note for us (optional)",
           "notePlaceholder": "A song to dance to, a memory…",
           "addPartner": "+ Add my partner",
-          "addChild": "+ Add a child"
+          "addChild": "+ Add a child",
+          "declinedHint": "Your party and meal details are kept — switch back any time and nothing is lost."
         },
         "couple": {
           "party": "The party",
@@ -247,7 +248,8 @@
           "note": "Note from guest",
           "notePlaceholder": "No note left.",
           "addPartner": "+ Add partner",
-          "addChild": "+ Add child"
+          "addChild": "+ Add child",
+          "declinedHint": "Party and meal details are kept — switching back changes nothing else."
         }
       }
     }

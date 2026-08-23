@@ -3,7 +3,7 @@
   <div class="status-section">
     <div class="label">{{ 'rsvp.editor.attendingLabel' | translate }}</div>
     <div class="choice-row">
-      @for (status of statuses; track status) {
+      @for (status of statuses(); track status) {
         <button
           type="button"
           app-choice-card
@@ -14,6 +14,9 @@
         </button>
       }
     </div>
+    @if (showDeclinedHint()) {
+      <p class="declined-hint">{{ perspectiveKey('declinedHint') | translate }}</p>
+    }
   </div>
 }
 

@@ -30,13 +30,14 @@ const TRANSLATIONS = {
     editor: {
       attendingLabel: 'Attending?',
       total: 'Total: {{count}}',
+      choice: { attending: 'With joy', pending: 'Pending', declined: 'Sadly no' },
       person: {
         openProfile: 'Open their profile',
         customAllergy: { label: 'Anything else?', placeholder: 'Type an allergy…', remove: 'Remove {{name}}' },
       },
       perspective: {
-        owner: { party: 'Your party', primaryHint: 'You', partyMeta: 'Party · dietary & allergies', note: 'A note for us (optional)', notePlaceholder: 'A song to dance to, a memory…', addPartner: '+ Add my partner', addChild: '+ Add a child' },
-        couple: { party: 'The party', primaryHint: 'Main guest', partyMeta: 'Participants · dietary & allergies', note: 'Note from guest', notePlaceholder: 'No note left.', addPartner: '+ Add partner', addChild: '+ Add child' },
+        owner: { party: 'Your party', primaryHint: 'You', partyMeta: 'Party · dietary & allergies', note: 'A note for us (optional)', notePlaceholder: 'A song to dance to, a memory…', addPartner: '+ Add my partner', addChild: '+ Add a child', declinedHint: 'Your party and meal details are kept — switch back any time and nothing is lost.' },
+        couple: { party: 'The party', primaryHint: 'Main guest', partyMeta: 'Participants · dietary & allergies', note: 'Note from guest', notePlaceholder: 'No note left.', addPartner: '+ Add partner', addChild: '+ Add child', declinedHint: 'Party and meal details are kept — switching back changes nothing else.' },
       },
     },
   },
@@ -307,7 +308,52 @@ describe('RsvpEditor', () => {
 
     await create(draftWith(), { showStatus: true });
     expect(query('.status-section')).not.toBeNull();
-    expect(queryAll('.choice-row button').length).toBe(3);
+  });
+
+  it('renders two answers without statusPending, three with it', async () => {
+    await create(draftWith(), { showStatus: true });
+    const twoAnswers = queryAll<HTMLButtonElement>('.choice-row button');
+    expect(twoAnswers.length).toBe(2);
+    expect(twoAnswers.some((btn) => btn.textContent?.trim() === 'Pending')).toBe(false);
+
+    await create(draftWith(), { showStatus: true, statusPending: true });
+    const threeAnswers = queryAll<HTMLButtonElement>('.choice-row button');
+    expect(threeAnswers.length).toBe(3);
+    expect(threeAnswers.some((btn) => btn.textContent?.trim() === 'Pending')).toBe(true);
+  });
+
+  it('renders no answer selected for a pending draft when statusPending is off', async () => {
+    await create(draftWith({ status: RsvpDto.StatusEnum.PENDING }), { showStatus: true });
+    const selected = queryAll<HTMLButtonElement>('.choice-row button[aria-pressed="true"]');
+    expect(selected.length).toBe(0);
+  });
+
+  it('renders the declined reassurance line only when showStatus is set and the answer is "no"', async () => {
+    await create(draftWith({ status: RsvpDto.StatusEnum.DECLINED }));
+    expect(query('.declined-hint')).toBeNull();
+
+    await create(draftWith({ status: RsvpDto.StatusEnum.ATTENDING }), { showStatus: true });
+    expect(query('.declined-hint')).toBeNull();
+
+    await create(draftWith({ status: RsvpDto.StatusEnum.PENDING }), {
+      showStatus: true,
+      statusPending: true,
+    });
+    expect(query('.declined-hint')).toBeNull();
+
+    await create(draftWith({ status: RsvpDto.StatusEnum.DECLINED }), { showStatus: true });
+    expect(query('.declined-hint')).not.toBeNull();
+    expect(query('.declined-hint')?.textContent?.trim()).toBe(
+      'Your party and meal details are kept — switch back any time and nothing is lost.',
+    );
+
+    await create(draftWith({ status: RsvpDto.StatusEnum.DECLINED }), {
+      showStatus: true,
+      perspective: 'couple',
+    });
+    expect(query('.declined-hint')?.textContent?.trim()).toBe(
+      'Party and meal details are kept — switching back changes nothing else.',
+    );
   });
 
   it('reads its section copy from the perspective namespace', async () => {

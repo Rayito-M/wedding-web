@@ -235,7 +235,8 @@
           "note": "Un mensaje para nosotros (opcional)",
           "notePlaceholder": "Una canción para bailar, un recuerdo…",
           "addPartner": "+ Añadir mi pareja",
-          "addChild": "+ Añadir niño"
+          "addChild": "+ Añadir niño",
+          "declinedHint": "Tu grupo y los detalles de comida se conservan — puedes cambiar de opinión cuando quieras y no se pierde nada."
         },
         "couple": {
           "party": "El grupo",
@@ -244,7 +245,8 @@
           "note": "Nota del invitado",
           "notePlaceholder": "No ha dejado ninguna nota.",
           "addPartner": "+ Añadir pareja",
-          "addChild": "+ Añadir niño"
+          "addChild": "+ Añadir niño",
+          "declinedHint": "El grupo y los detalles de comida se conservan — cambiar de respuesta no afecta a nada más."
         }
       }
     }

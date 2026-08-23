@@ -154,6 +154,10 @@ describe('ManageRsvpModal', () => {
     expect(fixture.nativeElement.querySelector('app-rsvp-editor .status-section')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-rsvp-editor textarea')).toBeNull();
     expect(text('app-rsvp-editor .note-text')).toBe('No note left.');
+    // The couple's editor passes `statusPending`, so all three answers show.
+    expect(
+      fixture.nativeElement.querySelectorAll('app-rsvp-editor .choice-row button').length,
+    ).toBe(3);
   });
 
   it('gates the save on the shared unnamed-adult count', async () => {

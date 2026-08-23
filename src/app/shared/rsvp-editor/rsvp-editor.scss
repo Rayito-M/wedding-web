@@ -41,6 +41,14 @@
   gap: t.$space-2;
 }
 
+// The "party and meal details are kept" reassurance under a "no" answer.
+.declined-hint {
+  margin: t.$space-2 0 0;
+  font-size: t.$text-micro;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 // ── Party heading + meta line ────────────────────────────────────────────
 
 .party-title {

@@ -121,6 +121,11 @@ export class RsvpEditor {
    *  their answer through the create flow instead). */
   readonly showStatus = input(false);
 
+  /** Offer "Pending" as a third answer, alongside "With joy" / "Sadly no" —
+   *  the couple's editor only (DS `RSVPEditor.jsx` L107, L217–227). Ignored
+   *  when `showStatus` is false. */
+  readonly statusPending = input(false);
+
   /** Render the note as static text instead of a field — see the class note. */
   readonly noteReadonly = input(false);
 
@@ -137,11 +142,19 @@ export class RsvpEditor {
    */
   readonly openProfile = output<string>();
 
-  protected readonly statuses: RsvpDto.StatusEnum[] = [
-    RsvpDto.StatusEnum.ATTENDING,
-    RsvpDto.StatusEnum.PENDING,
-    RsvpDto.StatusEnum.DECLINED,
-  ];
+  /** The answer choices to render, in DS order — "Pending" only joins when
+   *  `statusPending()` is set (the couple's editor; the guest's omits it). */
+  protected readonly statuses = computed<RsvpDto.StatusEnum[]>(() =>
+    this.statusPending()
+      ? [RsvpDto.StatusEnum.ATTENDING, RsvpDto.StatusEnum.PENDING, RsvpDto.StatusEnum.DECLINED]
+      : [RsvpDto.StatusEnum.ATTENDING, RsvpDto.StatusEnum.DECLINED],
+  );
+
+  /** The muted reassurance line under the answer row — DS `RSVPEditor.jsx`
+   *  L225. Shown only while the row itself is shown and the answer is "no". */
+  protected readonly showDeclinedHint = computed(
+    () => this.showStatus() && this.draft().status === RsvpDto.StatusEnum.DECLINED,
+  );
 
   /** Which participant card is expanded — the first one, until the user says
    *  otherwise. Local: it is view state, not part of the reply. */

@@ -235,7 +235,8 @@
           "note": "Un message pour nous (optionnel)",
           "notePlaceholder": "Une chanson à danser, un souvenir…",
           "addPartner": "+ Ajouter mon partenaire",
-          "addChild": "+ Ajouter un enfant"
+          "addChild": "+ Ajouter un enfant",
+          "declinedHint": "Votre groupe et vos détails de repas sont conservés — revenez en arrière quand vous voulez, rien n'est perdu."
         },
         "couple": {
           "party": "Le groupe",
@@ -244,7 +245,8 @@
           "note": "Note de l'invité",
           "notePlaceholder": "Aucune note laissée.",
           "addPartner": "+ Ajouter un partenaire",
-          "addChild": "+ Ajouter un enfant"
+          "addChild": "+ Ajouter un enfant",
+          "declinedHint": "Le groupe et les détails de repas sont conservés — changer de réponse ne change rien d'autre."
         }
       }
     }
