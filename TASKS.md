@@ -3017,7 +3017,16 @@
 
 ### T272 — `app-rsvp-editor`: `statusPending` input + the "sadly no" reassurance line
 
-- **Status:** todo
+- **Status:** done (`742f9ba`) — 2026-08-23. `statusPending = input(false)`; `statuses` is now a
+  `computed` yielding `[attending, pending, declined]` when true, `[attending, declined]` when
+  false, still off `RsvpDto.StatusEnum`. `showDeclinedHint` computed gates a new `.declined-hint`
+  line — `showStatus() && status === DECLINED` — composed via `perspectiveKey('declinedHint')`,
+  no English literal, no perspective `switch`. `manage-rsvp-modal.html` gained
+  `[statusPending]="true"` next to `[showStatus]="true"`; no other call site touched. New
+  `perspective.{owner,couple}.declinedHint` key added to all three `public/i18n/*.json` — English
+  verified verbatim from the DS line, es/fr real translations, key sets symmetric. Verified
+  independently: `pnpm typecheck` clean, `pnpm lint` only the 4 known `shared/modal/` errors,
+  `pnpm test` 52/52.
 - **Owner:** agent (implementer)
 - **Depends on:** T271
 - **Context:** DS `RSVPEditor.jsx` L107, L217–227 (commit `24e1259`). The answer row splits in
