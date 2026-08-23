@@ -25,6 +25,14 @@ import { RsvpStatusTick } from '../../shared/rsvp-status-tick/rsvp-status-tick';
 import { StatusPill } from '../../shared/status-pill/status-pill';
 import { TimelineItem } from '../../shared/timeline-item/timeline-item';
 
+/** `adults.partner2`'s account id, when it has one — the union's second
+ *  member (`…OneOf1`) carries no `id` at all, so it is only readable behind
+ *  an `in` check (ADR W-0004 §Decision.1, §Consequences). */
+function partner2Id(rsvp: RsvpDto): string | undefined {
+  const partner2 = rsvp.adults.partner2;
+  return partner2 && 'id' in partner2 ? partner2.id : undefined;
+}
+
 @Component({
   selector: 'app-invitee',
   imports: [
@@ -83,7 +91,7 @@ export class Invitee {
       map((rsvps) => {
         const currentUser = this.login.currentUserClaims();
         const found = rsvps.find(
-          (r) => r.id === currentUser?.sub || r.adults.partner2?.id === currentUser?.sub,
+          (r) => r.id === currentUser?.sub || partner2Id(r) === currentUser?.sub,
         );
         if (currentUser && !found) {
           this.rsvpCollection.getByKey(currentUser.sub); // Only fetches if cache is empty}

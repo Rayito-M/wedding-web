@@ -7,16 +7,20 @@ import { AdultDraft } from './rsvp-draft';
 /**
  * Does this partner have their own guest account, or are they a plus-one?
  *
- * The contract models a partner as an OpenAPI `anyOf` whose **only**
- * discriminator is the presence of `id` (`…PartnerAnyOf1` / `RsvpDtoAdultsPartner2AnyOf1`
- * carry it, the plus-one variants do not). openapi-generator flattens each
- * `anyOf` into a single merged interface in which `id` is wrongly typed as a
- * required `string`, so the type system cannot answer this — a runtime check
- * can, and this is the one place that makes it.
+ * `id` is the only signal this checks — `kind` is a `partner2` concern only
+ * (ADR W-0004) and is out of scope for this helper in this task; the
+ * discriminator switch is T271. `RsvpDtoAdultsPartner2` is a real union
+ * whose second member (`…OneOf1`) carries no `id` at all, so `id` is read
+ * behind an `in` check — the one narrowing the union supports. The other
+ * two input types still merge `id` in as an always-present field
+ * (`UserProfileListResponseDtoProfilesInnerGuestInfoPartner`'s `anyOf`
+ * flattening, and `AdultDraft`'s own optional `id`), so the check is
+ * harmless there too.
  *
- * Returns a plain `boolean`, not a `partner is …AnyOf1` type predicate: the
- * merged generated type already claims `id` is present, so a predicate would
- * narrow nothing. See ADR W-0002 §Decision.1–2.
+ * Returns a plain `boolean`, not a type predicate: this helper spans three
+ * unrelated input types, so narrowing any one of them to a specific variant
+ * of another would be unsound at its call sites. See ADR W-0002
+ * §Decision.1–2, ADR W-0004 §Decision.4.
  */
 export function partnerHasAccount(
   partner:
@@ -26,5 +30,5 @@ export function partnerHasAccount(
     | null
     | undefined,
 ): boolean {
-  return !!partner?.id?.trim();
+  return !!partner && 'id' in partner && !!partner.id?.trim();
 }

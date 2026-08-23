@@ -9,6 +9,7 @@ import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import {
   EntityNamesEnum,
   RsvpDto,
+  RsvpDtoAdultsPartner2OneOf,
   WeddingConfigResponseDto,
   entityConfig,
   provideEntityDataServices,
@@ -81,7 +82,13 @@ function rsvpWithLinkedPartner(): RsvpDto {
     ...rsvp,
     adults: {
       ...rsvp.adults,
-      partner2: { id: 'guest-2', firstName: 'Grace', lastName: 'Hopper', options: {} },
+      partner2: {
+        id: 'guest-2',
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        options: {},
+        kind: RsvpDtoAdultsPartner2OneOf.KindEnum.GUEST,
+      },
     },
   };
 }

@@ -3,6 +3,7 @@ import {
   RsvpDtoAdultsPartner1,
   RsvpDtoAdultsPartner1Options,
   RsvpDtoAdultsPartner2,
+  RsvpDtoAdultsPartner2OneOf,
   RsvpDtoChildrenInner,
 } from '../api';
 import { partnerHasAccount } from './partner-account';
@@ -29,6 +30,14 @@ export interface AdultDraft {
   firstName: string;
   lastName: string;
   options: RsvpDtoAdultsPartner1Options;
+  /**
+   * `partner2`'s discriminated-union tag on the wire — typed with the
+   * **generated** `RsvpDtoAdultsPartner2OneOf.KindEnum`, never a hand-written
+   * union (CLAUDE.md Hard rule 15). Optional because this one type also
+   * backs `partner1`, which never carries `kind`: `partner1` never has one
+   * and `fromRsvpDraft` never emits one for it (ADR W-0004 §Decision.2).
+   */
+  kind?: RsvpDtoAdultsPartner2OneOf.KindEnum;
 }
 
 /** Age is kept as free text while editing so an empty field reads as empty,
@@ -68,10 +77,11 @@ export function toRsvpDraft(rsvp: RsvpDto): RsvpDraft {
     },
     partner2: rsvp.adults.partner2
       ? {
-          id: rsvp.adults.partner2.id,
+          id: 'id' in rsvp.adults.partner2 ? rsvp.adults.partner2.id : undefined,
           firstName: rsvp.adults.partner2.firstName,
           lastName: rsvp.adults.partner2.lastName,
           options: rsvp.adults.partner2.options ?? {},
+          kind: rsvp.adults.partner2.kind,
         }
       : undefined,
     children: (rsvp.children ?? []).map((c) => ({
@@ -90,17 +100,20 @@ export function fromRsvpDraft(draft: RsvpDraft): Partial<RsvpDto> {
     options: draft.partner1.options,
   };
   const partner2: RsvpDtoAdultsPartner2 | undefined = draft.partner2
-    ? // reason: the generated `RsvpDtoAdultsPartner2` type incorrectly requires
-      // `id` (an OpenAPI `anyOf`-merge artifact); the API's Zod schema
-      // (`RsvpParticipantSchema`, wedding-api rsvp.ts) allows partner2 without
-      // an id for a party member with no account — `id` is only included here
-      // when one was already known (carried forward, never editable in this UI).
-      ({
-        ...(draft.partner2.id ? { id: draft.partner2.id } : {}),
-        firstName: draft.partner2.firstName.trim(),
-        lastName: draft.partner2.lastName.trim(),
-        options: draft.partner2.options,
-      } as unknown as RsvpDtoAdultsPartner2)
+    ? draft.partner2.id
+      ? {
+          id: draft.partner2.id,
+          firstName: draft.partner2.firstName.trim(),
+          lastName: draft.partner2.lastName.trim(),
+          options: draft.partner2.options,
+          kind: draft.partner2.kind as RsvpDtoAdultsPartner2OneOf.KindEnum,
+        }
+      : {
+          firstName: draft.partner2.firstName.trim(),
+          lastName: draft.partner2.lastName.trim(),
+          options: draft.partner2.options,
+          kind: draft.partner2.kind as RsvpDtoAdultsPartner2OneOf.KindEnum,
+        }
     : undefined;
   const children: RsvpDtoChildrenInner[] = draft.children.map((c) => ({
     firstName: c.firstName.trim(),

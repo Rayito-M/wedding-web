@@ -18,6 +18,7 @@ import {
   partnerHasAccount,
   RsvpDto,
   RsvpDtoAdultsPartner2,
+  RsvpDtoAdultsPartner2OneOf,
   RsvpDtoChildrenInner,
 } from '@app/core';
 import { Btn } from '@app/shared/button/button';
@@ -59,7 +60,9 @@ const EMPTY_DRAFT: CreateDraft = {
   attending: null,
   withPartner: false,
   withChildren: false,
-  partner: { firstName: '', lastName: '' },
+  // A partner typed into this screen is always a plus-one — this app cannot
+  // provision an account (ADR W-0004 §Decision.3, W-0002 §Decision.5).
+  partner: { firstName: '', lastName: '', kind: RsvpDtoAdultsPartner2OneOf.KindEnum.PLUS_ONE },
   children: [],
 };
 
@@ -75,8 +78,8 @@ function toCreateDraft(rsvp: RsvpDto): CreateDraft {
     withPartner: !!partner2,
     withChildren: (rsvp.children?.length ?? 0) > 0,
     partner: partner2
-      ? { firstName: partner2.firstName, lastName: partner2.lastName }
-      : { firstName: '', lastName: '' },
+      ? { firstName: partner2.firstName, lastName: partner2.lastName, kind: partner2.kind }
+      : { firstName: '', lastName: '', kind: RsvpDtoAdultsPartner2OneOf.KindEnum.PLUS_ONE },
     children: (rsvp.children ?? []).map((c) => ({ firstName: c.firstName, age: String(c.age) })),
   };
 }
@@ -289,15 +292,14 @@ export class RsvpCreate {
       !this.hasLinkedPartner() &&
       d.partner.firstName.trim() &&
       d.partner.lastName.trim()
-        ? // reason: the generated `RsvpDtoAdultsPartner2` type incorrectly requires
-          // `id` (an OpenAPI `anyOf`-merge artifact). The API's Zod schema
-          // (`RsvpParticipantSchema`, wedding-api rsvp.ts) allows partner2
-          // without an id for a party member with no account of their own —
-          // exactly the simplified case this screen supports.
-          ({
+        ? // A partner typed into this screen has no account of their own — no
+          // `id` — so this is `…OneOf1`, and is always `'plus-one'` (this app
+          // cannot provision an account; ADR W-0004 §Decision.3, W-0002 §Decision.5).
+          {
             firstName: d.partner.firstName.trim(),
             lastName: d.partner.lastName.trim(),
-          } as unknown as RsvpDtoAdultsPartner2)
+            kind: RsvpDtoAdultsPartner2OneOf.KindEnum.PLUS_ONE,
+          }
         : undefined;
 
     // A partner account already linked server-side (`hasLinkedPartner`) isn't

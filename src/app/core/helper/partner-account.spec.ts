@@ -18,6 +18,7 @@ describe('partnerHasAccount', () => {
       id: 'usr_123',
       firstName: 'Ada',
       lastName: 'Lovelace',
+      kind: UserProfileListResponseDtoProfilesInnerGuestInfoPartner.KindEnum.GUEST,
     };
     expect(partnerHasAccount(linked)).toBe(true);
   });

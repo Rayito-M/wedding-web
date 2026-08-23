@@ -18,6 +18,7 @@ import {
   RsvpDraft,
   RsvpDto,
   RsvpDtoAdultsPartner1Options,
+  RsvpDtoAdultsPartner2OneOf,
   TranslateLanguageService,
   WeddingConfigResponseDto,
   partnerHasAccount,
@@ -421,7 +422,12 @@ export class RsvpEditor {
     this.openKey.set('partner2');
     this.draftChange.emit({
       ...draft,
-      partner2: { firstName: '', lastName: '', options: {} },
+      partner2: {
+        firstName: '',
+        lastName: '',
+        options: {},
+        kind: RsvpDtoAdultsPartner2OneOf.KindEnum.PLUS_ONE,
+      },
     });
   }
 

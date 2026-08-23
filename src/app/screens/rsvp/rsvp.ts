@@ -18,6 +18,14 @@ import { AppLoadingComponent } from '@app/shared/loading/loading';
 import { RsvpCreate } from '../rsvp-create/rsvp-create';
 import { RsvpEdit } from '../rsvp-edit/rsvp-edit';
 
+/** `adults.partner2`'s account id, when it has one — the union's second
+ *  member (`…OneOf1`) carries no `id` at all, so it is only readable behind
+ *  an `in` check (ADR W-0004 §Decision.1, §Consequences). */
+function partner2Id(rsvp: RsvpDto): string | undefined {
+  const partner2 = rsvp.adults.partner2;
+  return partner2 && 'id' in partner2 ? partner2.id : undefined;
+}
+
 /**
  * Thin orchestrator (ad hoc rebuild, see design system `ScreenRSVPCreate.jsx`
  * / `ScreenRSVPEdit.jsx`, commit 9e44df2): on init, reads the guest's `RsvpDto`
@@ -62,7 +70,7 @@ export class Rsvp implements OnInit {
       map((rsvps) => {
         const currentUser = this.login.currentUserClaims();
         const found = rsvps.find(
-          (r) => r.id === currentUser?.sub || r.adults.partner2?.id === currentUser?.sub,
+          (r) => r.id === currentUser?.sub || partner2Id(r) === currentUser?.sub,
         );
         return found;
       }),
