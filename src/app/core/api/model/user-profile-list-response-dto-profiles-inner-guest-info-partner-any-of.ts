@@ -10,17 +10,10 @@
 
 
 export interface UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf { 
+    id: string;
     firstName: string;
     lastName: string;
-    kind: UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf.KindEnum;
+    kind: string;
+    attending?: boolean;
 }
-export namespace UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf {
-    export const KindEnum = {
-        GUEST: 'guest',
-        PLUS_ONE: 'plus-one',
-        CHILD: 'child'
-    } as const;
-    export type KindEnum = typeof KindEnum[keyof typeof KindEnum];
-}
-
 

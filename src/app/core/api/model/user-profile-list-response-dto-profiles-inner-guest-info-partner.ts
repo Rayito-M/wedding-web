@@ -12,19 +12,10 @@ import { UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf } from './
 
 
 export interface UserProfileListResponseDtoProfilesInnerGuestInfoPartner { 
+    id: string;
     firstName: string;
     lastName: string;
-    kind: UserProfileListResponseDtoProfilesInnerGuestInfoPartner.KindEnum;
-    id: string;
+    kind: string;
     attending?: boolean;
 }
-export namespace UserProfileListResponseDtoProfilesInnerGuestInfoPartner {
-    export const KindEnum = {
-        GUEST: 'guest',
-        PLUS_ONE: 'plus-one',
-        CHILD: 'child'
-    } as const;
-    export type KindEnum = typeof KindEnum[keyof typeof KindEnum];
-}
-
 
