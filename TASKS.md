@@ -3822,3 +3822,131 @@
   `src/app/shared/confirm-dialog/` (T277); `src/app/core/helper/rsvp-draft.ts` (`PersonKey`);
   `public/i18n/{en,es,fr}.json`; `src/app/screens/rsvp-edit/rsvp-edit.html`,
   `src/app/screens/guest-manager/modal/manage-rsvp-modal.html` (the two call sites to verify)
+
+---
+
+## Phase N — Couple's preparation timeline (hub ADR-0029, accepted)
+
+> Hub **ADR-0029** is `accepted` with **Option B**: the couple gets a private, admin-only
+> **preparation timeline** — a dated list of milestones they tick off. `SPEC.md` journey **J6**
+> is the flow. Depends on `wedding-api` **T208** having landed and its contract committed in the
+> hub.
+>
+> **The design system is a visual reference only, not the spec.**
+> `wedding-ui-design/ui_kits/wedding-app/ScreenMilestones.jsx` and `ScreenMilestonesMobile.jsx`
+> render the **guest-facing** milestone kind — audience chips, channel chips, a message body, an
+> auto-send toggle, a delivery progress bar, a send confirmation and a toast. **None of that
+> belongs in this task.** Hub **ADR-0030** is now `accepted`, so that surface is real product —
+> but it is **T280's**, and ADR-0030 *rejected* three of the things those screens show: the
+> message composer, the "Send automatically" toggle and the channel picker. Take the *timeline
+> chrome* from these screens (date-ascending rows, the "Today" marker, status pills, the desktop
+> detail pane / mobile bottom sheet) and nothing else.
+
+### T279 — Couple-only preparation timeline screen
+- **Status:** todo — blocked on `wedding-api` T208 landing and its contract being committed in the hub
+- **Owner:** agent (implementer)
+- **Depends on:** `wedding-api` T208 (contract), T235 (private shell / nav model)
+- **Acceptance:**
+  - `pnpm gen:api` regenerated after T208's contract lands; `pnpm gen:api:check` clean. No
+    hand-written type restates a generated API model (hard rule 15).
+  - A new couple-only feature under `src/app/features/` (or the repo's current equivalent),
+    reachable from the **admin/couple navigation only** and guarded by the existing admin gate
+    (T202's `role` claim check). A guest must not be able to reach the route, see the nav entry,
+    or learn that the timeline exists (hub ADR-0029 §4.7).
+  - **List:** every milestone, **date-ascending**, with a "Today" marker inserted before the first
+    milestone dated later than today (and rendered at the end when every milestone is in the past),
+    matching `ScreenMilestones.jsx:47,81-93,119,123`.
+  - **Three displayed states, two of them stored:** *reached*, *not reached*, and **at-risk**, where
+    at-risk is **derived** — planned date in the past **and** not reached (hub ADR-0029 §4.2). If
+    the API returns at-risk as a computed field, use it; if not, derive it client-side against the
+    current calendar date in **`Europe/Madrid`** — **not** the browser's timezone, so the web and
+    the API cannot disagree. Never store or `PATCH` an at-risk value.
+  - **Full CRUD**, all persisted server-side (hub ADR-0029 §4.1): tick/untick reached, create a
+    milestone, rename one, change its date, delete one. **Delete is permanent** — put the shared
+    `app-confirm-dialog` (T277) in front of it with `tone="danger"`, exactly as T278 did for RSVP
+    participant removal.
+  - **Persistence is not optional and not local-only.** Autosave-per-field or an explicit Save is
+    your call, but every mutation must be persisted before it is presented as done, and a failed
+    write must be surfaced (hub ADR-0029 §5). The kit's local-state-only model
+    (`ScreenMilestones.jsx:18`) is explicitly **not** a permitted implementation.
+  - **Two empty states, and they differ** (hub ADR-0029 §4.1): *no wedding date set yet* — the seed
+    cannot run, so explain that and point at the config manager; *the couple deleted everything* —
+    an ordinary empty list with a "create one" affordance and **no** re-seed offer, because the seed
+    runs at most once ever. Plus the standard loading and error states via the existing
+    `shared/loading` / `shared/error` conventions.
+  - **Explicitly not built** — the whole guest-facing surface: no audience selector, no channel
+    chips, no message body field, no "Send automatically" toggle, no send button, no send
+    confirmation, no toast, no delivered-of-total progress bar, no "Mark as not sent". That whole
+    surface is **T280** (hub ADR-0030, accepted) and must not be pulled forward into this task —
+    it depends on `wedding-api` T211/T212, which do not exist yet. Note that three of the kit's
+    controls are decided **out** under ADR-0030 and never get built at all: the message composer,
+    the auto-send toggle and the channel picker.
+  - **A wedding-date change does not move milestones** (hub ADR-0029 §4.3). You **may** surface a
+    one-line hint after the couple edits the wedding date in the config manager, telling them the
+    timeline was not re-dated. You must **not** offer to recompute dates, and must not recompute
+    silently.
+  - i18n: all UI labels in **all three** `public/i18n/{en,es,fr}.json`, real translations, the three
+    files structurally identical. **Milestone titles themselves are never translated** — they are
+    couple-private free text stored in whatever language the couple typed (hub ADR-0029 §4.5). Do
+    not run a title through the translate pipe.
+  - Responsive: desktop list + detail pane, mobile list + bottom sheet, following the kit's layout
+    and the repo's sanctioned breakpoint tiers (T248).
+  - Specs: at-risk is derived and never sent to the API; the list is date-ascending; the Today
+    marker lands in the right place including the all-in-the-past case; delete asks for confirmation
+    and a dismissal keeps the milestone; both empty states render for the right reason; a failed
+    write surfaces an error rather than showing the change as saved.
+  - No new `type`/`interface` restating a generated API model (hard rule 15); `pnpm typecheck &&
+    pnpm lint && pnpm test` green (lint clean except the 4 known `shared/modal/` errors, per
+    CLAUDE.md rule 11's carve-out). Verified by hand at mobile and desktop widths in all three
+    themes; if no browser is available, **say so plainly** rather than claiming it (T273/T275
+    precedent).
+- **Refs:** hub ADR-0029 (§4.1 CRUD + seeding, §4.2 derived at-risk, §4.3 absolute dates, §4.5
+  titles are not localized, §4.7 bounds, §5 what is left to this repo);
+  hub `SPEC.md` journey **J6** and Users → Admin; hub `GLOSSARY.md` → Milestone;
+  hub ADR-0030 (**accepted** — the send/audience UI it authorizes is T280, not this task; and it
+  decides the composer, auto-send toggle and channel picker **out** permanently);
+  `wedding-ui-design/ui_kits/wedding-app/ScreenMilestones.jsx` + `ScreenMilestonesMobile.jsx`
+  (**visual reference for timeline chrome only**); in-repo T277 (`app-confirm-dialog`), T278
+  (the destructive-confirm precedent), T235 (private shell), T248 (breakpoints)
+
+### T280 — Guest-facing milestones: announcement type, audience, and the send button
+- **Status:** todo — blocked on `wedding-api` T211/T212 landing and their contract being committed
+  in the hub, and on T279 (the internal timeline) existing
+- **Owner:** agent (implementer)
+- **Depends on:** T279, `wedding-api` T211 + T212 (contract), T277 (`app-confirm-dialog`)
+- **Acceptance:**
+  - `pnpm gen:api` regenerated; `pnpm gen:api:check` clean. No hand-written type restates a
+    generated API model (hard rule 15).
+  - On the existing couple-only timeline: a **kind** control (internal / guest-facing) on create
+    and edit, and — for a guest-facing milestone only — an **announcement type** selector and a
+    **single-select audience** selector. Audience chips show live counts from `GET /v1/audiences`.
+    **Two audiences from the design kit do not exist and must not appear**: "Travelling from
+    abroad" and "Table hosts" (hub ADR-0030 §8).
+  - **The send button, with a confirmation that states the blast radius first** (hub ADR-0030 §6):
+    the milestone name, the announcement type, the audience, the **recipient count**, the
+    **reachable count**, and that it goes out **immediately**. Nothing is sent without it. Disable
+    the button when the milestone is not guest-facing, has no type, has no audience, the audience
+    is empty, or it has already been sent.
+  - **Already sent:** show the send date and the counts. **No "Send again" button.** Re-sending is
+    reached only through an explicit **"Mark as not sent"**, behind `app-confirm-dialog` with
+    `tone="danger"`, whose copy must say plainly that **it does not unsend anything** — it only
+    allows sending again (hub ADR-0030 §7).
+  - Handle `409` (already sent, or someone else edited/sent it) by re-reading and telling the
+    couple what happened — never by retrying the send.
+  - **Explicitly not built** (hub ADR-0030 §3, §6, §7, §11f): no message body or subject field, no
+    channel chips, no "Send automatically" toggle, no schedule or send-date picker, no
+    delivered-of-total progress bar, no per-recipient delivery list. If the design kit tempts you
+    toward any of these, **stop** — they are decided out.
+  - i18n: all UI labels in all three `public/i18n/{en,es,fr}.json`, real translations. **Milestone
+    titles are never translated** (hub ADR-0029 §4.5 as reaffirmed by ADR-0030 §10) and neither is
+    announcement copy — that lives server-side in the ADR-0028 catalog and never reaches this app.
+  - Specs: the confirmation renders the counts it was given; the send button's disabled conditions;
+    a `409` surfaces rather than retries; "mark as not sent" requires confirmation and a dismissal
+    changes nothing; the two dropped audiences never render.
+  - `pnpm typecheck && pnpm lint && pnpm test` green (lint clean except the 4 known
+    `shared/modal/` errors, per CLAUDE.md rule 11's carve-out). Verified by hand at mobile and
+    desktop widths in all three themes; if no browser is available, **say so plainly**.
+- **Refs:** hub ADR-0030 (§3 no composing, §6 the button + confirmation, §7 idempotency and
+  "mark as not sent", §8 audiences, §9 the catalogue, §11 the API surface); hub `SPEC.md`
+  journey **J7**; hub `GLOSSARY.md` → Announcement / Announcement type / Audience;
+  in-repo T277, T279
