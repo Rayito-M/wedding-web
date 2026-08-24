@@ -3886,9 +3886,16 @@
     timeline was not re-dated. You must **not** offer to recompute dates, and must not recompute
     silently.
   - i18n: all UI labels in **all three** `public/i18n/{en,es,fr}.json`, real translations, the three
-    files structurally identical. **Milestone titles themselves are never translated** — they are
-    couple-private free text stored in whatever language the couple typed (hub ADR-0029 §4.5). Do
-    not run a title through the translate pipe.
+    files structurally identical. **Milestone titles themselves are never run through the translate
+    pipe** — they are couple data, not UI strings. Note the title *is* stored localized
+    (`{es,en,fr}`, hub ADR-0031, which reversed ADR-0029 §4.5): render the locale the admin is
+    currently viewing in, exactly as you would any other localized content field.
+  - **Title authoring ergonomics** (hub ADR-0031): a milestone title is an `{es,en,fr}` map with
+    all three locales required, so the create/rename form takes **one** typed title and pre-fills
+    all three locales with it, exposing the other two for optional editing behind a disclosure.
+    The API requires three values, not three *distinct* values — do not force the couple to type
+    a title three times. Milestone titles are still **never** run through the translate pipe: they
+    are couple data, not UI strings, and a guest never sees one (hub ADR-0030 §10).
   - Responsive: desktop list + detail pane, mobile list + bottom sheet, following the kit's layout
     and the repo's sanctioned breakpoint tiers (T248).
   - Specs: at-risk is derived and never sent to the API; the list is date-ascending; the Today
