@@ -1,6 +1,7 @@
 ---
 name: web-implementer
 description: take one task from TASKS.md and produce code satisfying its acceptance criteria — nothing more
+model: sonnet
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
