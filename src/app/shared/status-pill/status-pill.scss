@@ -18,17 +18,29 @@
   white-space: nowrap;
 }
 
-// Final variant: solid border, accent background, on-accent text.
-:host(.final) {
+// Final / reached variant: solid border, accent background, on-accent text.
+:host(.final),
+:host(.reached) {
   background: var(--status-final);
   color: var(--on-accent);
   border: 1px solid var(--status-final);
 }
 
-// Provisional variant: keep the default (dashed border, muted text).
-// Explicitly stated for clarity (already default :host, but makes the intent clear).
-:host(.provisional) {
+// Provisional / not-reached variant: keep the default (dashed border, muted
+// text). Explicitly stated for clarity (already default :host, but makes the
+// intent clear).
+:host(.provisional),
+:host(.not-reached) {
   background: transparent;
   color: var(--text-muted);
   border: 1px dashed var(--border-hairline);
+}
+
+// At-risk (T279, hub ADR-0029 §4.2): solid, theme-invariant danger fill — an
+// alarm, not a decoration, on every theme (same rationale as the confirm
+// dialog's danger tone, T277).
+:host(.at-risk) {
+  background: var(--danger);
+  color: var(--on-danger);
+  border: 1px solid var(--danger);
 }

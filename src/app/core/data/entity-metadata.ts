@@ -6,6 +6,7 @@ import {
   RsvpDto,
   UserProfileDto,
   UserDto,
+  MilestoneDto,
 } from '../api';
 
 export enum EntityNamesEnum {
@@ -14,6 +15,7 @@ export enum EntityNamesEnum {
   RSVP = 'Rsvp',
   USER = 'User',
   USER_PROFILE = 'UserProfile',
+  MILESTONE = 'Milestone',
 }
 
 /**
@@ -23,9 +25,10 @@ export enum EntityNamesEnum {
  * sub-resource), auth (RPC), and the admin `config` singleton are deliberately
  * excluded — they call the generated client through thin services (T213).
  *
- * Currently wired: `WeddingConfigPublic` only (partial T210/T211 slice,
- * delivered ahead of schedule). `Guest` and the remaining T210 entities are
- * added when T210/T211 land.
+ * Currently wired: `WeddingConfigPublic`, `WeddingConfig`, `Rsvp`, `User`,
+ * `UserProfile` (T210/T211 slices) and `Milestone` (T279 — full CRUD/read,
+ * fits this file's own rule above). `Guest` and any remaining T210 entities
+ * are added as their tasks land.
  */
 export const entityMetadata: EntityMetadataMap = {
   [EntityNamesEnum.WEDDING_CONFIG]: {
@@ -49,6 +52,9 @@ export const entityMetadata: EntityMetadataMap = {
   [EntityNamesEnum.USER_PROFILE]: {
     selectId: (profile: UserProfileDto) => profile.id,
   },
+  [EntityNamesEnum.MILESTONE]: {
+    selectId: (milestone: MilestoneDto) => milestone.id,
+  },
 };
 
 /**
@@ -62,6 +68,7 @@ export const pluralNames: Record<EntityNamesEnum, string> = {
   [EntityNamesEnum.RSVP]: 'Rsvp',
   [EntityNamesEnum.USER]: 'User',
   [EntityNamesEnum.USER_PROFILE]: 'UserProfile',
+  [EntityNamesEnum.MILESTONE]: 'Milestone',
 };
 
 export const entityConfig: EntityDataModuleConfig = {

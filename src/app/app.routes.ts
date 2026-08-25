@@ -121,6 +121,17 @@ export const routes: Routes = [
         data: { tab: 'seating', tabBar: true, topNav: true },
       },
       {
+        // Couple-only preparation timeline (hub ADR-0029, T279). Admin-gated
+        // like `config`/`guests`/`seating` — a guest must never reach this
+        // route (hub ADR-0029 §4.7).
+        path: 'milestones',
+        loadComponent: () =>
+          import('./screens/milestones/milestones').then((m) => m.Milestones),
+        title: 'titles.milestones',
+        canActivate: [adminGuard, routeEnabledGuard],
+        data: { tab: 'milestones', tabBar: true, topNav: true },
+      },
+      {
         path: 'me',
         loadComponent: () => import('./screens/invitee/invitee').then((m) => m.Invitee),
         title: 'titles.invitee',

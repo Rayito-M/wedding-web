@@ -326,7 +326,8 @@
       "agenda": "Le déroulé de la journée. Titres et descriptions sont par langue.",
       "hotels": "Hôtels recommandés près des lieux, affichés sur l'écran S'y rendre.",
       "dietary": "Options proposées aux invités lors de leur réponse. Libellés affichés par langue.",
-      "appearance": "La palette et les libellés de langue vus par les invités."
+      "appearance": "La palette et les libellés de langue vus par les invités.",
+      "weddingDateChanged": "Le calendrier des préparatifs garde ses dates existantes : les étapes ne se déplacent pas avec la date du mariage."
     },
     "field": {
       "brideName": "Mariée",
@@ -563,6 +564,7 @@
     "travel": "S'y rendre",
     "seating": "Tables",
     "people": "Contacts",
+    "milestones": "Étapes",
     "more": "Plus"
   },
   "titles": {
@@ -580,6 +582,7 @@
     "invitee": "Sara & Christophe · Votre journée",
     "profile": "Sara & Christophe · Mon profil",
     "people": "Sara & Christophe · Contacts",
+    "milestones": "Sara & Christophe · Étapes",
     "privacyPolicy": "Sara & Christophe · Politique de confidentialité"
   },
   "guest_manager": {
@@ -750,6 +753,57 @@
       "age": "Âge"
     },
     "empty": "Aucun invité. Ajoutez votre premier invité pour commencer."
+  },
+  "milestones": {
+    "headerMeta": "PRÉPARATIFS",
+    "title": "Étapes",
+    "subtitle": "Votre propre liste de préparatifs — jamais visible des invités.",
+    "today": "Aujourd'hui",
+    "create": {
+      "button": "+ Nouvelle étape"
+    },
+    "emptyNoDate": {
+      "title": "Fixez d'abord la date du mariage",
+      "body": "Le calendrier est généré à partir de la date du mariage, qui n'a pas encore été fixée. Ajoutez-la dans la configuration du mariage, puis revenez ici.",
+      "cta": "Aller à la configuration"
+    },
+    "emptyNoMilestones": {
+      "title": "Rien sur le calendrier pour l'instant",
+      "body": "Créez votre première étape pour commencer à suivre l'avancement des préparatifs.",
+      "cta": "Créer une étape"
+    },
+    "status": {
+      "reached": "Atteinte",
+      "atRisk": "À risque",
+      "notReached": "Non atteinte"
+    },
+    "markReached": "Marquer comme atteinte",
+    "markNotReached": "Marquer comme non atteinte",
+    "form": {
+      "createEyebrow": "Nouvelle étape",
+      "editEyebrow": "Étape",
+      "createTitle": "Nouvelle étape",
+      "titleLabel": "Titre",
+      "titleRequired": "Le titre est obligatoire.",
+      "otherLanguages": "Modifier les autres langues",
+      "hideOtherLanguages": "Masquer les autres langues",
+      "lang": {
+        "es": "Espagnol",
+        "en": "Anglais",
+        "fr": "Français"
+      },
+      "dateLabel": "Date prévue",
+      "dateRequired": "Une date prévue est requise."
+    },
+    "delete": {
+      "title": "Supprimer cette étape ?",
+      "message": "« {{title}} » sera retirée du calendrier. Cette action est définitive.",
+      "keep": "Conserver"
+    },
+    "error": {
+      "conflict": "Quelqu'un vient de mettre à jour cette étape. Rouvrez-la pour voir la dernière version.",
+      "generic": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
+    }
   },
   "people": {
     "eyebrow_singular": "{{count}} personne présente",

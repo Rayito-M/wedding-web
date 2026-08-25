@@ -10,13 +10,13 @@
 import { CreateWeddingConfigDtoVenuesInner } from './create-wedding-config-dto-venues-inner';
 import { CreateWeddingConfigDtoDietaryPreferencesInner } from './create-wedding-config-dto-dietary-preferences-inner';
 import { CreateWeddingConfigDtoMenusInner } from './create-wedding-config-dto-menus-inner';
-import { UpdateWeddingConfigDtoLanguage } from './update-wedding-config-dto-language';
+import { UpdateMilestoneDtoTitle } from './update-milestone-dto-title';
 import { UpdateWeddingConfigDtoAgenda } from './update-wedding-config-dto-agenda';
 import { CreateWeddingConfigDtoHotelsInner } from './create-wedding-config-dto-hotels-inner';
 
 
 export interface UpdateWeddingConfigDto { 
-    id: string;
+    id?: string;
     version: number;
     createdAt?: string;
     updatedAt?: string;
@@ -24,7 +24,7 @@ export interface UpdateWeddingConfigDto {
     groomName?: string;
     tagline?: string;
     date?: string;
-    language?: UpdateWeddingConfigDtoLanguage;
+    language?: UpdateMilestoneDtoTitle;
     themeId?: UpdateWeddingConfigDto.ThemeIdEnum;
     city?: string;
     country?: string;

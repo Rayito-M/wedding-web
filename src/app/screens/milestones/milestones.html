@@ -1,0 +1,233 @@
+@if (!ready()) {
+  @if (loadError()) {
+    <app-error [message]="loadError()!" (retry)="retryLoad()" />
+  } @else {
+    <app-loading />
+  }
+} @else {
+  <div class="title-block">
+    <div>
+      <h1>{{ 'milestones.title' | translate }}</h1>
+      <p class="sub">{{ 'milestones.subtitle' | translate }}</p>
+    </div>
+    <button app-btn type="button" class="new-btn" (click)="openCreate()">
+      {{ 'milestones.create.button' | translate }}
+    </button>
+  </div>
+
+  @if (actionError()) {
+    <div class="action-error">
+      <span>{{ actionError() }}</span>
+      <button type="button" class="dismiss" (click)="dismissActionError()" [attr.aria-label]="'shared.close' | translate">
+        &times;
+      </button>
+    </div>
+  }
+
+  <div class="layout">
+    <div class="list">
+      @if (sortedMilestones().length === 0) {
+        @if (!hasWeddingDate()) {
+          <div class="empty-state">
+            <h2>{{ 'milestones.emptyNoDate.title' | translate }}</h2>
+            <p>{{ 'milestones.emptyNoDate.body' | translate }}</p>
+            <button app-btn type="button" (click)="goToConfig()">
+              {{ 'milestones.emptyNoDate.cta' | translate }}
+            </button>
+          </div>
+        } @else {
+          <div class="empty-state">
+            <h2>{{ 'milestones.emptyNoMilestones.title' | translate }}</h2>
+            <p>{{ 'milestones.emptyNoMilestones.body' | translate }}</p>
+            <button app-btn type="button" (click)="openCreate()">
+              {{ 'milestones.emptyNoMilestones.cta' | translate }}
+            </button>
+          </div>
+        }
+      } @else {
+        @for (m of sortedMilestones(); track m.id; let i = $index) {
+          @if (i === todayIndex()) {
+            <div class="today-marker">
+              <div class="today-rail">
+                <span class="today-line"></span>
+                <span class="today-dot"></span>
+              </div>
+              <div class="today-label">{{ 'milestones.today' | translate }}</div>
+            </div>
+          }
+          <div class="row">
+            <div class="row-date">{{ m.plannedDate }}</div>
+            <div class="row-rail">
+              <span class="rail-line"></span>
+              <span class="rail-dot" [class.filled]="m.reached"></span>
+            </div>
+            <div
+              class="card"
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="titleFor(m)"
+              (click)="openView(m.id)"
+              (keydown.enter)="openView(m.id)"
+              (keydown.space)="openView(m.id)"
+            >
+              <button
+                type="button"
+                class="check"
+                [class.done]="m.reached"
+                (click)="toggleReached(m, $event)"
+                [attr.aria-label]="(m.reached ? 'milestones.markNotReached' : 'milestones.markReached') | translate"
+              >
+                @if (m.reached) {
+                  &#10003;
+                }
+              </button>
+              <span class="card-title" [class.done]="m.reached">{{ titleFor(m) }}</span>
+              <app-status-pill [variant]="milestoneStatus(m)">
+                {{ statusLabelKey(m) | translate }}
+              </app-status-pill>
+            </div>
+          </div>
+        }
+        @if (todayIndex() === -1) {
+          <div class="today-marker">
+            <div class="today-rail">
+              <span class="today-line"></span>
+              <span class="today-dot"></span>
+            </div>
+            <div class="today-label">{{ 'milestones.today' | translate }}</div>
+          </div>
+        }
+      }
+    </div>
+
+    @if (panel().kind !== 'closed') {
+      <div
+        class="detail-overlay"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="'shared.close' | translate"
+        (click)="closePanel()"
+        (keydown.enter)="closePanel()"
+        (keydown.space)="closePanel()"
+      >
+        <div class="detail" role="presentation" (click)="$event.stopPropagation()">
+          <div class="detail-header">
+            <div class="detail-heading">
+              <span class="eyebrow">
+                {{ (panel().kind === 'create' ? 'milestones.form.createEyebrow' : 'milestones.form.editEyebrow') | translate }}
+              </span>
+              <h2>
+                {{ panel().kind === 'create' ? ('milestones.form.createTitle' | translate) : titleFor(selectedMilestone()!) }}
+              </h2>
+              @if (selectedMilestone(); as m) {
+                <div class="detail-status">
+                  <button
+                    type="button"
+                    class="check"
+                    [class.done]="m.reached"
+                    (click)="toggleReached(m, $event)"
+                    [attr.aria-label]="(m.reached ? 'milestones.markNotReached' : 'milestones.markReached') | translate"
+                  >
+                    @if (m.reached) {
+                      &#10003;
+                    }
+                  </button>
+                  <app-status-pill [variant]="milestoneStatus(m)">
+                    {{ statusLabelKey(m) | translate }}
+                  </app-status-pill>
+                </div>
+              }
+            </div>
+            <button
+              type="button"
+              class="detail-close"
+              (click)="closePanel()"
+              [attr.aria-label]="'shared.close' | translate"
+            >
+              &times;
+            </button>
+          </div>
+
+          <form class="detail-body" (submit)="onFormSubmit($event)">
+            <label class="field">
+              <span class="field-label">{{ 'milestones.form.titleLabel' | translate }}</span>
+              <input
+                app-input
+                type="text"
+                [value]="formTitle()[primaryLang()]"
+                (input)="onPrimaryTitleInput(inputValue($event))"
+                (blur)="touchTitle()"
+              />
+            </label>
+            @if (showTitleError()) {
+              <p class="field-error">{{ 'milestones.form.titleRequired' | translate }}</p>
+            }
+
+            <button type="button" class="disclosure" (click)="toggleOtherLocales()">
+              {{ (showOtherLocales() ? 'milestones.form.hideOtherLanguages' : 'milestones.form.otherLanguages') | translate }}
+            </button>
+            @if (showOtherLocales()) {
+              @for (lang of otherLangs(); track lang) {
+                <label class="field">
+                  <span class="field-label">{{ 'milestones.form.lang.' + lang | translate }}</span>
+                  <input
+                    app-input
+                    type="text"
+                    [value]="formTitle()[lang]"
+                    (input)="onOtherTitleInput(lang, inputValue($event))"
+                  />
+                </label>
+              }
+            }
+
+            <label class="field">
+              <span class="field-label">{{ 'milestones.form.dateLabel' | translate }}</span>
+              <input
+                app-input
+                type="date"
+                [value]="formDate()"
+                (input)="formDate.set(inputValue($event))"
+                (blur)="touchDate()"
+              />
+            </label>
+            @if (showDateError()) {
+              <p class="field-error">{{ 'milestones.form.dateRequired' | translate }}</p>
+            }
+
+            @if (formError()) {
+              <p class="field-error">{{ formError() }}</p>
+            }
+
+            <div class="detail-actions">
+              @if (panel().kind === 'view') {
+                <button
+                  app-btn
+                  [primary]="false"
+                  type="button"
+                  class="delete-btn"
+                  (click)="requestDelete(selectedMilestone()!.id)"
+                >
+                  {{ 'shared.remove' | translate }}
+                </button>
+              }
+              <button app-btn type="submit" [disabled]="saving()">
+                {{ 'shared.save' | translate }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+<app-confirm-dialog
+  [open]="pendingDelete() !== null"
+  tone="danger"
+  [title]="'milestones.delete.title' | translate"
+  [message]="deleteDialogMessage()"
+  [confirmLabel]="'shared.remove' | translate"
+  [cancelLabel]="'milestones.delete.keep' | translate"
+  (confirm)="confirmDelete()"
+  (cancel)="cancelDelete()"
+/>

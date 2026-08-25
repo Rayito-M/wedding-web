@@ -8,9 +8,9 @@
  * Do not edit the class manually.
  */
 import { CreateWeddingConfigDtoVenuesInner } from './create-wedding-config-dto-venues-inner';
-import { CreateWeddingConfigDtoLanguage } from './create-wedding-config-dto-language';
 import { CreateWeddingConfigDtoDietaryPreferencesInner } from './create-wedding-config-dto-dietary-preferences-inner';
 import { CreateWeddingConfigDtoMenusInner } from './create-wedding-config-dto-menus-inner';
+import { MilestoneDtoTitle } from './milestone-dto-title';
 import { CreateWeddingConfigDtoAgenda } from './create-wedding-config-dto-agenda';
 import { CreateWeddingConfigDtoHotelsInner } from './create-wedding-config-dto-hotels-inner';
 
@@ -22,7 +22,7 @@ export interface WeddingConfigResponseDto {
     groomName: string;
     tagline: string;
     date: string;
-    language: CreateWeddingConfigDtoLanguage;
+    language: MilestoneDtoTitle;
     themeId: WeddingConfigResponseDto.ThemeIdEnum;
     city: string;
     country: string;

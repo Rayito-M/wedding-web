@@ -329,7 +329,8 @@
       "agenda": "The order of the day. Titles and descriptions are per-language.",
       "hotels": "Recommended hotels near the venues, shown on the Travel screen.",
       "dietary": "Options guests choose from when they RSVP. Labels shown per-language.",
-      "appearance": "The palette and language labels guests experience."
+      "appearance": "The palette and language labels guests experience.",
+      "weddingDateChanged": "The preparation timeline keeps its existing dates — milestones don't move with the wedding date."
     },
     "field": {
       "brideName": "Bride",
@@ -568,6 +569,7 @@
     "travel": "Travel",
     "seating": "Seating",
     "people": "Contacts",
+    "milestones": "Milestones",
     "more": "More"
   },
   "titles": {
@@ -585,6 +587,7 @@
     "invitee": "Sara & Christophe · Your day",
     "profile": "Sara & Christophe · My profile",
     "people": "Sara & Christophe · Contacts",
+    "milestones": "Sara & Christophe · Milestones",
     "privacyPolicy": "Sara & Christophe · Privacy policy"
   },
   "guest_manager": {
@@ -754,6 +757,57 @@
       "age": "Age"
     },
     "empty": "No guests to display. Add your first guest to get started."
+  },
+  "milestones": {
+    "headerMeta": "PLANNING",
+    "title": "Milestones",
+    "subtitle": "Your own checklist for getting ready — never seen by guests.",
+    "today": "Today",
+    "create": {
+      "button": "+ New milestone"
+    },
+    "emptyNoDate": {
+      "title": "Set the wedding date first",
+      "body": "The timeline is seeded from the wedding date, and none has been set yet. Add it in the wedding configuration, then come back here.",
+      "cta": "Go to configuration"
+    },
+    "emptyNoMilestones": {
+      "title": "Nothing on the timeline yet",
+      "body": "Create your first milestone to start tracking how the preparations are going.",
+      "cta": "Create a milestone"
+    },
+    "status": {
+      "reached": "Reached",
+      "atRisk": "At risk",
+      "notReached": "Not reached"
+    },
+    "markReached": "Mark as reached",
+    "markNotReached": "Mark as not reached",
+    "form": {
+      "createEyebrow": "New milestone",
+      "editEyebrow": "Milestone",
+      "createTitle": "New milestone",
+      "titleLabel": "Title",
+      "titleRequired": "A title is required.",
+      "otherLanguages": "Edit other languages",
+      "hideOtherLanguages": "Hide other languages",
+      "lang": {
+        "es": "Spanish",
+        "en": "English",
+        "fr": "French"
+      },
+      "dateLabel": "Planned for",
+      "dateRequired": "A planned date is required."
+    },
+    "delete": {
+      "title": "Delete this milestone?",
+      "message": "\"{{title}}\" will be removed from the timeline. This cannot be undone.",
+      "keep": "Keep"
+    },
+    "error": {
+      "conflict": "Someone else just updated this milestone. Reopen it to see the latest version.",
+      "generic": "Something went wrong saving that. Please try again."
+    }
   },
   "people": {
     "eyebrow_singular": "{{count}} person going",

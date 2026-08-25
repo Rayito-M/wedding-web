@@ -9,9 +9,7 @@
  */
 
 
-export interface CreateWeddingConfigDtoLanguage { 
-    es: string;
-    en: string;
-    fr: string;
+export interface SendAnnouncementDto { 
+    version: number;
 }
 

@@ -102,6 +102,11 @@
                   [value]="dateInputValue(cfg().date)"
                   (input)="setBasics({ date: inputValue($event) })"
                 />
+                @if (weddingDateChanged()) {
+                  <p class="field-hint">
+                    {{ 'configManager.note.weddingDateChanged' | translate }}
+                  </p>
+                }
               </label>
               <label class="field">
                 <span class="field-label">{{

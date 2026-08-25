@@ -1,6 +1,7 @@
 import { EnvironmentProviders, inject, provideEnvironmentInitializer } from '@angular/core';
 import { EntityDataService } from '@ngrx/data';
 
+import { MilestoneDataService } from './milestone-data.service';
 import { RsvpDataService } from './rsvp-data.service';
 import { UserDataService } from './user-data.service';
 import { UserProfileDataService } from './user-profile-data.service';
@@ -10,6 +11,7 @@ import { WeddingConfigPublicDataService } from './wedding-config-public-data.ser
 import { EntityNamesEnum } from './entity-metadata';
 
 export * from './entity-metadata';
+export * from './milestone-data.service';
 export * from './rsvp-data.service';
 export * from './user-data.service';
 export * from './user-profile-data.service';
@@ -36,6 +38,10 @@ export function provideEntityDataServices(): EnvironmentProviders {
     inject(EntityDataService).registerService(
       EntityNamesEnum.USER_PROFILE,
       inject(UserProfileDataService),
+    );
+    inject(EntityDataService).registerService(
+      EntityNamesEnum.MILESTONE,
+      inject(MilestoneDataService),
     );
   });
 }

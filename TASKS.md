@@ -3565,7 +3565,14 @@
 
 ### T277 — Mirror `--danger`/`--on-danger` + build the shared `app-confirm-dialog` (no call sites yet)
 
-- **Status:** todo — **unblocked** by DS `ccea99a` (T276 resolved)
+- **Status:** done (`a7c9aff`) — 2026-08-23. Corrected from a stale `todo` on
+  2026-08-25 while starting T279: `src/app/shared/confirm-dialog/` (`.ts/.html/.scss/.spec.ts`)
+  and the `--danger`/`--on-danger` mirror in `src/styles/_tokens.scss` both landed in `a7c9aff`,
+  the same commit that wired T278 into `app-rsvp-editor` — the status line just never got updated
+  to reflect it. Verified by hand: all four files exist, `_tokens.scss:92-93` carries the two
+  tokens after `--status-final` per this task's spec, and `confirm-dialog.spec.ts` covers the
+  acceptance criteria below. (T278's own status line is *also* stale — still `todo` — but
+  correcting it is out of scope here; flagged for a follow-up, not fixed in this pass.)
 - **Owner:** agent (implementer)
 - **Depends on:** T276 (resolved)
 - **Context:** Read, in this order: `../wedding-ui-design/components/overlays/ConfirmDialog.prompt.md`
@@ -3843,7 +3850,20 @@
 > detail pane / mobile bottom sheet) and nothing else.
 
 ### T279 — Couple-only preparation timeline screen
-- **Status:** todo — blocked on `wedding-api` T208 landing and its contract being committed in the hub
+- **Status:** done (uncommitted) — 2026-08-25. `pnpm gen:api` regenerated (`kind` widened to
+  `['internal','guest-facing']`; nothing yet consumes `guest-facing` — that's T280) and
+  `pnpm gen:api:check` clean. New `src/app/screens/milestones/` (`.ts/.html/.scss/.spec.ts`, 11
+  specs) behind `adminGuard` + `routeEnabledGuard` at `/milestones`, a new `nav-tabs.ts` entry
+  (`roles: ['groom','bride']` only) and `environment{,.prod}.ts` `enabledRoutes` addition — a
+  guest cannot reach the route or see the nav entry. New `MilestoneDataService` +
+  `EntityNamesEnum.MILESTONE` (`src/app/core/data/`) following the existing `@ngrx/data` pattern;
+  `StatusPill` extended (additive) with `reached`/`not-reached`/`at-risk` variants, the last using
+  the T277 `--danger`/`--on-danger` tokens. `atRisk` is read directly off `MilestoneDto` (the API
+  returns it computed) and never appears in a create/update payload. Delete goes through
+  `app-confirm-dialog` `tone="danger"` (T277/T278 pattern). Two distinct empty states (no wedding
+  date vs. an emptied timeline). One-line, non-recomputing hint added to `config-manager` after a
+  wedding-date edit (hub ADR-0029 §4.3). i18n in all three `public/i18n/*.json`. T277's status line
+  corrected alongside (see its entry).
 - **Owner:** agent (implementer)
 - **Depends on:** `wedding-api` T208 (contract), T235 (private shell / nav model)
 - **Acceptance:**

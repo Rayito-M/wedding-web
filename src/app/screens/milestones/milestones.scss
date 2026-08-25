@@ -1,0 +1,421 @@
+@use '../../../styles/tokens' as t;
+
+:host {
+  display: block;
+  width: 100%;
+  position: relative;
+}
+
+// ── Header ─────────────────────────────────────────────────────────────────
+
+.title-block {
+  padding: 14px t.$space-6 6px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: t.$space-3;
+  flex-wrap: wrap;
+
+  h1 {
+    font-family: t.$font-serif;
+    font-weight: 400;
+    font-size: t.$text-display-lg;
+    line-height: 1;
+  }
+
+  .sub {
+    font-size: t.$text-caption;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+}
+
+.new-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.action-error {
+  margin: 6px t.$space-6 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+  padding: 10px t.$space-3;
+  border-radius: t.$radius-md;
+  background: var(--surface-chip);
+  color: var(--danger);
+  font-size: t.$text-caption;
+  line-height: 1.4;
+
+  .dismiss {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0 0 t.$space-2;
+  }
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────
+
+.empty-state {
+  padding: t.$space-7 t.$space-6;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: t.$space-3;
+  max-width: 420px;
+  margin: 0 auto;
+
+  h2 {
+    font-family: t.$font-serif;
+    font-weight: 400;
+    font-size: t.$text-display-sm;
+  }
+
+  p {
+    font-size: t.$text-body;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+}
+
+// ── Layout: list + detail pane / mobile sheet ────────────────────────────
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.list {
+  flex: 1;
+  min-width: 0;
+  padding: 14px t.$space-4 8px;
+}
+
+// ── Timeline rows (DS `ScreenMilestones.jsx` chrome: dot-rail + card) ────
+
+.row {
+  display: grid;
+  grid-template-columns: 56px 24px 1fr;
+  align-items: stretch;
+}
+
+.row-date {
+  text-align: right;
+  padding: 16px 0 0;
+  font-size: t.$text-label;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.row-rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.rail-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-hairline);
+}
+
+.rail-dot {
+  position: relative;
+  margin-top: 14px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--surface-page);
+  border: 1px solid var(--text-muted);
+  box-sizing: border-box;
+
+  &.filled {
+    background: var(--status-final);
+    border-color: var(--status-final);
+  }
+}
+
+.card {
+  margin: 0 0 t.$space-3 t.$space-2;
+  padding: 10px t.$space-3;
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: t.$radius-card;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--brand-accent);
+    outline: none;
+  }
+}
+
+.card-title {
+  flex: 1;
+  min-width: 0;
+  font-size: t.$text-body-lg;
+  font-weight: 500;
+  color: var(--text-body-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.done {
+    color: var(--text-muted);
+  }
+}
+
+// Check-circle toggle — same visual language as `app-task-row`'s `.check`
+// (T279 keeps its own copy: this row's grid/card shape differs enough from
+// `task-row`'s flex layout that composing it would fight the layout more
+// than a ~15-line rule duplicates).
+.check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-hairline);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-accent);
+  font-size: t.$text-label;
+  cursor: pointer;
+  padding: 0;
+
+  &.done {
+    border-color: var(--brand-accent);
+    background: var(--brand-accent);
+  }
+}
+
+// ── "Today" marker (`ScreenMilestones.jsx:81-93`) ────────────────────────
+
+.today-marker {
+  display: grid;
+  grid-template-columns: 56px 24px 1fr;
+  align-items: center;
+  margin: 2px 0 t.$space-3;
+}
+
+.today-rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-hairline);
+}
+
+.today-dot {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--brand-accent);
+}
+
+.today-label {
+  padding-left: t.$space-2;
+  font-size: t.$text-label;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-accent);
+}
+
+// ── Detail pane / mobile bottom sheet ────────────────────────────────────
+// Mobile: fixed-position scrim + bottom sheet (DS `ScreenMilestonesMobile.jsx`).
+// Desktop (≥900px): becomes an in-flow side pane, no scrim (DS `ScreenMilestones.jsx`).
+
+.detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--scrim);
+  display: flex;
+  align-items: flex-end;
+}
+
+.detail {
+  width: 100%;
+  max-height: 88vh;
+  background: var(--surface-page);
+  border: 1px solid var(--border-hairline);
+  border-radius: t.$radius-card t.$radius-card 0 0;
+  box-shadow: var(--shadow-modal);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.detail-header {
+  flex: 0 0 auto;
+  padding: t.$space-4 t.$space-5;
+  border-bottom: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: t.$space-3;
+}
+
+.detail-heading {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-1;
+}
+
+.eyebrow {
+  font-size: t.$text-label;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.detail-heading h2 {
+  font-family: t.$font-serif;
+  font-weight: 400;
+  font-size: t.$text-display-sm;
+  line-height: 1.15;
+  overflow-wrap: break-word;
+}
+
+.detail-status {
+  margin-top: t.$space-1;
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+}
+
+.detail-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+  color: var(--text-body-color);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: t.$space-4 t.$space-5;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-label {
+  font-size: t.$text-label;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.field-error {
+  margin: -4px 0 0;
+  font-size: t.$text-caption;
+  color: var(--danger);
+}
+
+.disclosure {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: t.$text-caption;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.detail-actions {
+  margin-top: t.$space-2;
+  display: flex;
+  justify-content: flex-end;
+  gap: t.$space-2;
+
+  .delete-btn {
+    margin-right: auto;
+  }
+}
+
+@media (min-width: 900px) {
+  :host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .layout {
+    flex-direction: row;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .list {
+    overflow-y: auto;
+    padding: 18px t.$space-6 t.$space-6;
+  }
+
+  .row,
+  .today-marker {
+    grid-template-columns: 92px 28px 1fr;
+  }
+
+  .row-date {
+    padding-top: 18px;
+  }
+
+  .detail-overlay {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    background: transparent;
+    flex: 0 0 380px;
+    border-left: 1px solid var(--border-hairline);
+    align-items: stretch;
+  }
+
+  .detail {
+    max-height: none;
+    height: 100%;
+    width: 100%;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}

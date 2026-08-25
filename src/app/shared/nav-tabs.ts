@@ -26,5 +26,9 @@ export const NAV_TABS: NavTab[] = [
   { id: 'people', labelKey: 'nav.people', link: '/people' },
   { id: 'guests', labelKey: 'nav.guests', link: '/guests', roles: ['groom', 'bride'] },
   { id: 'seating', labelKey: 'nav.seating', link: '/seating', roles: ['groom', 'bride'] },
+  // Couple-only preparation timeline (hub ADR-0029, T279). `roles` keeps this
+  // entry — and therefore any knowledge that the timeline exists — out of a
+  // guest's nav entirely (hub ADR-0029 §4.7).
+  { id: 'milestones', labelKey: 'nav.milestones', link: '/milestones', roles: ['groom', 'bride'] },
   { id: 'config', labelKey: 'nav.config', link: '/config', roles: ['groom', 'bride'] },
 ];

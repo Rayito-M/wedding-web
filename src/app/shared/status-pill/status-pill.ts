@@ -1,9 +1,22 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 /**
- * Status pill for agenda (final vs provisional).
- * Renders a dashed border pill with muted text by default (provisional),
- * or a solid-filled pill with accent-on-text for final.
+ * Status pill (DS inline pattern, shared across screens): a dashed-border
+ * muted pill by default, or a solid-filled pill for a "done"-shaped state.
+ * Originally agenda-only (`final`/`provisional`); extended (T279) for the
+ * couple's preparation timeline, which needs a third, alarm-toned state
+ * `at-risk` that neither existing variant covers — reuses this component
+ * rather than a second `.status-pill` declaration (the exact drift the
+ * `schedule`/`invitee` consolidation, T242, was fixing).
+ *
+ * - `final` / `reached` — solid, `--status-final` fill, `--on-accent` text.
+ *   Same visual, different call sites: agenda "final" vs. a milestone ticked
+ *   off. Kept as separate variant names rather than aliasing one to the
+ *   other, so each screen's template reads in its own domain vocabulary.
+ * - `provisional` / `not-reached` — the default look: dashed hairline
+ *   border, muted text, transparent fill.
+ * - `at-risk` — solid `--danger` fill, `--on-danger` text (hub ADR-0029
+ *   §4.2's derived state: planned date in the past and not reached).
  *
  * Styling: uses schedule's `3px 9px` + `gap: 6px` padding/gap (T241 inventory
  * resolution); these are the newer DS-aligned values. Schedule variant applies
@@ -18,9 +31,15 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   host: {
     '[class.final]': "variant() === 'final'",
     '[class.provisional]': "variant() === 'provisional'",
+    '[class.reached]': "variant() === 'reached'",
+    '[class.not-reached]': "variant() === 'not-reached'",
+    '[class.at-risk]': "variant() === 'at-risk'",
   },
 })
 export class StatusPill {
-  /** Schedule status variant: 'final' or 'provisional'. */
-  readonly variant = input<'final' | 'provisional'>('provisional');
+  /** Agenda: 'final' | 'provisional'. Milestone (T279): 'reached' |
+   *  'not-reached' | 'at-risk'. */
+  readonly variant = input<'final' | 'provisional' | 'reached' | 'not-reached' | 'at-risk'>(
+    'provisional',
+  );
 }

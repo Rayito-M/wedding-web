@@ -18,7 +18,6 @@ import { EntityCollectionService, EntityServices, DataServiceError } from '@ngrx
 
 import {
   CreateWeddingConfigDtoAgendaItemsInner,
-  CreateWeddingConfigDtoAgendaItemsInnerTitle,
   CreateWeddingConfigDtoDietaryPreferencesInner,
   CreateWeddingConfigDtoHotelsInner,
   CreateWeddingConfigDtoVenuesInner,
@@ -29,6 +28,12 @@ import {
   UserDto,
   CreateUserDto,
   LoginService,
+  // `pnpm gen:api` (T279) deduped this structurally-identical `{es,en,fr}`
+  // schema onto the milestone title's generated name instead of its own —
+  // an openapi-generator naming artifact of adding the Milestone schemas,
+  // not a shape change. Same `{es: string; en: string; fr: string}` shape
+  // as the old `CreateWeddingConfigDtoAgendaItemsInnerTitle`.
+  MilestoneListResponseDtoItemsInnerTitle,
 } from '@app/core';
 import { LangCode, ThemeId } from '@app/model';
 import { Btn } from '@app/shared/button/button';
@@ -42,7 +47,7 @@ import { Pill } from '@app/shared/pill/pill';
 // (T211-T214, not built yet). This screen is UI-only, local component state.
 type ConfigState = WeddingConfigResponseDto;
 type Venue = CreateWeddingConfigDtoVenuesInner;
-type MultiLangText = CreateWeddingConfigDtoAgendaItemsInnerTitle;
+type MultiLangText = MilestoneListResponseDtoItemsInnerTitle;
 type AgendaItem = CreateWeddingConfigDtoAgendaItemsInner;
 type Hotel = CreateWeddingConfigDtoHotelsInner;
 type DietTag = CreateWeddingConfigDtoDietaryPreferencesInner;
@@ -217,6 +222,18 @@ export class ConfigManager implements OnInit {
   protected readonly lang = signal<LangCode>('en');
   protected readonly dirty = signal(false);
   protected readonly savedFlash = signal(false);
+  /**
+   * True while the draft wedding date differs from the persisted one — drives
+   * a one-line hint that the preparation timeline (T279) does **not** move
+   * with it (hub ADR-0029 §4.3: milestone dates are absolute, computed once
+   * at seed time; nothing here recomputes them, silently or otherwise). Not a
+   * general "any field is dirty" flag — comparing directly against the
+   * loaded `weddingConfig()` means it only lights up for an actual date edit.
+   */
+  protected readonly weddingDateChanged = computed(() => {
+    const persisted = this.weddingConfig()?.date;
+    return persisted !== undefined && this.cfg().date !== persisted;
+  });
   protected readonly coupleRoles = COUPLE_ROLES;
   // Draft text for the inline "+ Add tag" chip input, per tag collection.
   protected readonly draftTag = signal<Record<TagCollection, string>>({

@@ -272,6 +272,16 @@
   flex: 0 0 auto;
 }
 
+// One-line hint (hub ADR-0029 §4.3): the preparation timeline (T279) does not
+// re-date itself when the wedding date changes — informational only, no
+// affordance to recompute anything.
+.field-hint {
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
 .field-grow {
   flex: 1;
   min-width: 0;

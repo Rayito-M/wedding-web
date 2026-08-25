@@ -9,7 +9,7 @@
  */
 
 
-export interface UpdateWeddingConfigDtoLanguage { 
+export interface UpdateMilestoneDtoTitle { 
     es: string;
     en: string;
     fr: string;

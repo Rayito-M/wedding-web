@@ -7,7 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { CreateWeddingConfigDtoAgendaItemsInnerTitle } from './create-wedding-config-dto-agenda-items-inner-title';
+import { MilestoneListResponseDtoItemsInnerTitle } from './milestone-list-response-dto-items-inner-title';
 
 
 export interface CreateWeddingConfigDtoAgendaItemsInner { 
@@ -15,8 +15,8 @@ export interface CreateWeddingConfigDtoAgendaItemsInner {
     status: CreateWeddingConfigDtoAgendaItemsInner.StatusEnum;
     highlight?: boolean;
     time: string;
-    title: CreateWeddingConfigDtoAgendaItemsInnerTitle;
-    desc: CreateWeddingConfigDtoAgendaItemsInnerTitle;
+    title: MilestoneListResponseDtoItemsInnerTitle;
+    desc: MilestoneListResponseDtoItemsInnerTitle;
     venueId: string | null;
 }
 export namespace CreateWeddingConfigDtoAgendaItemsInner {

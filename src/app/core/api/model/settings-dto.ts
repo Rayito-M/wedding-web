@@ -7,11 +7,10 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { SettingsDtoNotificationPrefs } from './settings-dto-notification-prefs';
 
 
-export interface CreateWeddingConfigDtoAgendaItemsInnerTitle { 
-    es: string;
-    en: string;
-    fr: string;
+export interface SettingsDto { 
+    notificationPrefs: SettingsDtoNotificationPrefs;
 }
 

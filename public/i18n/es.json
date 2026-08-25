@@ -326,7 +326,8 @@
       "agenda": "El orden del día. Títulos y descripciones son por idioma.",
       "hotels": "Hoteles recomendados cerca de los lugares, mostrados en la pantalla Cómo llegar.",
       "dietary": "Opciones que los invitados eligen al confirmar asistencia. Las etiquetas se muestran por idioma.",
-      "appearance": "La paleta y las etiquetas de idioma que ven los invitados."
+      "appearance": "La paleta y las etiquetas de idioma que ven los invitados.",
+      "weddingDateChanged": "El cronograma de preparativos mantiene sus fechas: los hitos no se mueven con la fecha de la boda."
     },
     "field": {
       "brideName": "Novia",
@@ -563,6 +564,7 @@
     "travel": "Cómo llegar",
     "seating": "Mesas",
     "people": "Contactos",
+    "milestones": "Hitos",
     "more": "Más"
   },
   "titles": {
@@ -580,6 +582,7 @@
     "invitee": "Sara & Christophe · Tu día",
     "profile": "Sara & Christophe · Mi perfil",
     "people": "Sara & Christophe · Contactos",
+    "milestones": "Sara & Christophe · Hitos",
     "privacyPolicy": "Sara & Christophe · Política de privacidad"
   },
   "guest_manager": {
@@ -750,6 +753,57 @@
       "age": "Edad"
     },
     "empty": "Sin invitados. Añade el primer invitado para comenzar."
+  },
+  "milestones": {
+    "headerMeta": "PREPARATIVOS",
+    "title": "Hitos",
+    "subtitle": "Vuestra propia lista de preparativos — los invitados nunca la ven.",
+    "today": "Hoy",
+    "create": {
+      "button": "+ Nuevo hito"
+    },
+    "emptyNoDate": {
+      "title": "Primero fijad la fecha de la boda",
+      "body": "El cronograma se genera a partir de la fecha de la boda, y todavía no se ha fijado. Añadidla en la configuración de la boda y volved aquí.",
+      "cta": "Ir a configuración"
+    },
+    "emptyNoMilestones": {
+      "title": "Aún no hay nada en el cronograma",
+      "body": "Cread vuestro primer hito para empezar a seguir cómo van los preparativos.",
+      "cta": "Crear un hito"
+    },
+    "status": {
+      "reached": "Cumplido",
+      "atRisk": "En riesgo",
+      "notReached": "Pendiente"
+    },
+    "markReached": "Marcar como cumplido",
+    "markNotReached": "Marcar como pendiente",
+    "form": {
+      "createEyebrow": "Nuevo hito",
+      "editEyebrow": "Hito",
+      "createTitle": "Nuevo hito",
+      "titleLabel": "Título",
+      "titleRequired": "El título es obligatorio.",
+      "otherLanguages": "Editar otros idiomas",
+      "hideOtherLanguages": "Ocultar otros idiomas",
+      "lang": {
+        "es": "Español",
+        "en": "Inglés",
+        "fr": "Francés"
+      },
+      "dateLabel": "Fecha prevista",
+      "dateRequired": "La fecha prevista es obligatoria."
+    },
+    "delete": {
+      "title": "¿Eliminar este hito?",
+      "message": "«{{title}}» se eliminará del cronograma. Esta acción no se puede deshacer.",
+      "keep": "Conservar"
+    },
+    "error": {
+      "conflict": "Alguien acaba de actualizar este hito. Vuelve a abrirlo para ver la última versión.",
+      "generic": "Ha ocurrido un error al guardar. Inténtalo de nuevo."
+    }
   },
   "people": {
     "eyebrow_singular": "{{count}} persona asistiendo",

@@ -7,7 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { CreateWeddingConfigDtoLanguage } from './create-wedding-config-dto-language';
+import { MilestoneDtoTitle } from './milestone-dto-title';
 import { WeddingConfigPublicResponseDtoSocialProviders } from './wedding-config-public-response-dto-social-providers';
 import { WeddingConfigPublicResponseDtoMainVenue } from './wedding-config-public-response-dto-main-venue';
 
@@ -19,7 +19,7 @@ export interface WeddingConfigPublicResponseDto {
     groomName: string;
     tagline: string;
     date: string;
-    language: CreateWeddingConfigDtoLanguage;
+    language: MilestoneDtoTitle;
     themeId: WeddingConfigPublicResponseDto.ThemeIdEnum;
     city: string;
     country: string;
