@@ -10,6 +10,7 @@ import {
   EntityNamesEnum,
   HeaderService,
   MilestoneDto,
+  PluralTranslatePipe,
   TranslateLanguageService,
   WeddingConfigResponseDto,
   todayInMadrid,
@@ -38,6 +39,29 @@ const STATUS_LABEL_KEYS: Record<MilestoneStatus, string> = {
 /** What the detail pane / mobile sheet is currently showing. */
 type PanelState = { kind: 'closed' } | { kind: 'create' } | { kind: 'view'; id: string };
 
+/** How a milestone's row/detail "second line" reads relative to today
+ *  (hub ADR-0029 §4.2's `atRisk` stays the API's own derived value — this is
+ *  purely a display concern layered on top of `plannedDate`/`reached`). */
+type RelativeKind = 'reached' | 'today' | 'upcoming' | 'overdue';
+
+/** Parses a plain `YYYY-MM-DD` (no time component) into its numeric parts. */
+function parseIsoDate(iso: string): { y: number; m: number; d: number } {
+  const [y, m, d] = iso.split('-').map(Number);
+  return { y, m, d };
+}
+
+/** Whole calendar days from `fromIso` to `toIso` (positive when `toIso` is
+ *  later) — both are plain `YYYY-MM-DD` business dates, so this anchors both
+ *  to UTC midnight rather than constructing a local-timezone `Date`, keeping
+ *  the count immune to the browser's own timezone/DST. */
+function daysBetween(fromIso: string, toIso: string): number {
+  const from = parseIsoDate(fromIso);
+  const to = parseIsoDate(toIso);
+  const fromUtc = Date.UTC(from.y, from.m - 1, from.d);
+  const toUtc = Date.UTC(to.y, to.m - 1, to.d);
+  return Math.round((toUtc - fromUtc) / 86_400_000);
+}
+
 /**
  * Couple-only preparation timeline (hub ADR-0029, T279): every milestone,
  * date-ascending, with a "Today" marker, tick-off, and full CRUD — all
@@ -58,6 +82,7 @@ type PanelState = { kind: 'closed' } | { kind: 'create' } | { kind: 'view'; id: 
     AppLoadingComponent,
     Btn,
     ConfirmDialog,
+    PluralTranslatePipe,
     StatusPill,
     TextInput,
     TranslatePipe,
@@ -117,6 +142,22 @@ export class Milestones {
 
   protected readonly sortedMilestones = computed(() =>
     [...this.milestones()].sort((a, b) => (a.plannedDate < b.plannedDate ? -1 : 1)),
+  );
+
+  // ── Header counters (DS `ScreenMilestones.jsx:103` chrome, internal
+  //    equivalents of the kit's guest-facing Sent/Waiting/Scheduled: this
+  //    screen never sends anything, hub ADR-0030) — derived from the same
+  //    in-memory list the row/rail already renders, no extra fetch. Mutually
+  //    exclusive and mirror `milestoneStatus()`'s own precedence (reached
+  //    first, then at-risk, then not-reached). ─────────────────────────────
+  protected readonly reachedCount = computed(
+    () => this.milestones().filter((m) => m.reached).length,
+  );
+  protected readonly atRiskCount = computed(
+    () => this.milestones().filter((m) => !m.reached && m.atRisk).length,
+  );
+  protected readonly notReachedCount = computed(
+    () => this.milestones().filter((m) => !m.reached && !m.atRisk).length,
   );
 
   /** Today's calendar date in Europe/Madrid (hub ADR-0029 §4.2) — never the
@@ -226,6 +267,30 @@ export class Milestones {
 
   protected titleFor(m: MilestoneDto): string {
     return m.title[this.primaryLang()];
+  }
+
+  /** Whether `m`'s detail is the one currently open — drives the card's
+   *  "selected" border (DS `ScreenMilestones.jsx`: `on = sel && sel.id ===
+   *  m.id`), independent of hover/focus. */
+  protected isSelected(id: string): boolean {
+    const state = this.panel();
+    return state.kind === 'view' && state.id === id;
+  }
+
+  /** Card second line (defect #3): relative to today in Europe/Madrid — never
+   *  re-derives `atRisk` itself, which stays the API's own authoritative
+   *  value; this only decides which phrasing today's date implies. */
+  protected relativeKind(m: MilestoneDto): RelativeKind {
+    if (m.reached) return 'reached';
+    const diff = daysBetween(this.todayIso(), m.plannedDate);
+    if (diff === 0) return 'today';
+    return diff > 0 ? 'upcoming' : 'overdue';
+  }
+
+  /** Absolute day count for the 'upcoming'/'overdue' phrasings — meaningless
+   *  (and unused) for 'reached'/'today'. */
+  protected relativeDays(m: MilestoneDto): number {
+    return Math.abs(daysBetween(this.todayIso(), m.plannedDate));
   }
 
   /** Tick/untick, persisted immediately (hub ADR-0029 §4.2/§5) — independent

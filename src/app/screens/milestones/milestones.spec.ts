@@ -130,7 +130,14 @@ describe('Milestones', () => {
     updateSpy = vi.fn((params: { id: string; updateMilestoneDto: Partial<MilestoneDto> }) => {
       if (updateFailure) return updateFailure;
       const existing = currentMilestones.find((m) => m.id === params.id) ?? milestone({ id: params.id });
-      return of({ ...existing, ...params.updateMilestoneDto, id: params.id });
+      // Real HTTP JSON serialization drops undefined-valued keys — a partial
+      // update (e.g. `toggleReached`'s `{ reached }`-only payload leaves
+      // `title`/`plannedDate` as `undefined` in `updateMilestoneDto`) must not
+      // spread-overwrite the untouched fields on `existing` with `undefined`.
+      const definedChanges = Object.fromEntries(
+        Object.entries(params.updateMilestoneDto).filter(([, v]) => v !== undefined),
+      );
+      return of({ ...existing, ...definedChanges, id: params.id });
     });
     removeSpy = vi.fn(() => of(undefined));
 
@@ -312,6 +319,29 @@ describe('Milestones', () => {
     expect(updateSpy).toHaveBeenCalledTimes(1);
     const dto = updateSpy.mock.calls[0][0].updateMilestoneDto;
     expect('atRisk' in dto).toBe(false);
+  });
+
+  // Defect #2 (DS compliance pass): the dedicated check-mark control is gone
+  // — tick/untick now lives on the row's status-pill toggle button, but the
+  // underlying persist-immediately behaviour it used to cover must still be
+  // exercised somewhere.
+  it('ticking the status pill toggles reached, persists immediately, and fills the rail dot', async () => {
+    currentMilestones = [
+      milestone({ id: 'm1', title: { es: '', en: 'Book venue', fr: '' }, reached: false }),
+    ];
+    await create();
+
+    const dot = fixture.nativeElement.querySelector('.row .rail-dot') as HTMLElement;
+    expect(dot.classList.contains('filled')).toBe(false);
+
+    const toggle = fixture.nativeElement.querySelector('.row .pill-toggle') as HTMLButtonElement;
+    toggle.click();
+    await settle();
+
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    const dto = updateSpy.mock.calls[0][0].updateMilestoneDto;
+    expect(dto.reached).toBe(true);
+    expect(dot.classList.contains('filled')).toBe(true);
   });
 
   it('surfaces a failed rename/re-date as an error rather than showing it as saved', async () => {

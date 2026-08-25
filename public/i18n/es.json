@@ -759,6 +759,17 @@
     "title": "Hitos",
     "subtitle": "Vuestra propia lista de preparativos — los invitados nunca la ven.",
     "today": "Hoy",
+    "relative": {
+      "inDays": {
+        "singular": "dentro de {{count}} día",
+        "plural": "dentro de {{count}} días"
+      },
+      "overdueDays": {
+        "singular": "{{count}} día de retraso",
+        "plural": "{{count}} días de retraso"
+      },
+      "reachedOn": "Cumplido el {{date}}"
+    },
     "create": {
       "button": "+ Nuevo hito"
     },

@@ -759,6 +759,17 @@
     "title": "Étapes",
     "subtitle": "Votre propre liste de préparatifs — jamais visible des invités.",
     "today": "Aujourd'hui",
+    "relative": {
+      "inDays": {
+        "singular": "dans {{count}} jour",
+        "plural": "dans {{count}} jours"
+      },
+      "overdueDays": {
+        "singular": "{{count}} jour de retard",
+        "plural": "{{count}} jours de retard"
+      },
+      "reachedOn": "Atteinte le {{date}}"
+    },
     "create": {
       "button": "+ Nouvelle étape"
     },

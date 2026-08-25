@@ -763,6 +763,17 @@
     "title": "Milestones",
     "subtitle": "Your own checklist for getting ready — never seen by guests.",
     "today": "Today",
+    "relative": {
+      "inDays": {
+        "singular": "in {{count}} day",
+        "plural": "in {{count}} days"
+      },
+      "overdueDays": {
+        "singular": "{{count}} day overdue",
+        "plural": "{{count}} days overdue"
+      },
+      "reachedOn": "Reached {{date}}"
+    },
     "create": {
       "button": "+ New milestone"
     },

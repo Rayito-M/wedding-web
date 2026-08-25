@@ -5,11 +5,29 @@
     <app-loading />
   }
 } @else {
-  <div class="title-block">
-    <div>
-      <h1>{{ 'milestones.title' | translate }}</h1>
+  <div class="header">
+    <div class="header-title">
+      <span class="header-meta">{{ 'milestones.headerMeta' | translate }}</span>
+      <h1 class="header-text">{{ 'milestones.title' | translate }}</h1>
       <p class="sub">{{ 'milestones.subtitle' | translate }}</p>
     </div>
+    <div class="header-counters">
+      <div class="counter reached">
+        <div class="counter-value">{{ reachedCount() }}</div>
+        <div class="counter-label">{{ 'milestones.status.reached' | translate }}</div>
+      </div>
+      <div class="counter not-reached">
+        <div class="counter-value">{{ notReachedCount() }}</div>
+        <div class="counter-label">{{ 'milestones.status.notReached' | translate }}</div>
+      </div>
+      <div class="counter at-risk">
+        <div class="counter-value">{{ atRiskCount() }}</div>
+        <div class="counter-label">{{ 'milestones.status.atRisk' | translate }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar">
     <button app-btn type="button" class="new-btn" (click)="openCreate()">
       {{ 'milestones.create.button' | translate }}
     </button>
@@ -63,6 +81,7 @@
             </div>
             <div
               class="card"
+              [class.selected]="isSelected(m.id)"
               role="button"
               tabindex="0"
               [attr.aria-label]="titleFor(m)"
@@ -70,21 +89,41 @@
               (keydown.enter)="openView(m.id)"
               (keydown.space)="openView(m.id)"
             >
-              <button
-                type="button"
-                class="check"
-                [class.done]="m.reached"
-                (click)="toggleReached(m, $event)"
-                [attr.aria-label]="(m.reached ? 'milestones.markNotReached' : 'milestones.markReached') | translate"
-              >
-                @if (m.reached) {
-                  &#10003;
+              <div class="card-top">
+                <span class="card-title" [class.done]="m.reached">{{ titleFor(m) }}</span>
+                <button
+                  type="button"
+                  class="pill-toggle"
+                  (click)="toggleReached(m, $event)"
+                  [attr.aria-label]="(m.reached ? 'milestones.markNotReached' : 'milestones.markReached') | translate"
+                >
+                  <app-status-pill [variant]="milestoneStatus(m)">
+                    {{ statusLabelKey(m) | translate }}
+                  </app-status-pill>
+                </button>
+              </div>
+              <div class="card-meta">
+                @switch (relativeKind(m)) {
+                  @case ('reached') {
+                    {{ 'milestones.relative.reachedOn' | translate: { date: m.plannedDate } }}
+                  }
+                  @case ('today') {
+                    {{ 'milestones.today' | translate }}
+                  }
+                  @case ('overdue') {
+                    {{
+                      ('milestones.relative.overdueDays' | pluralTranslate: relativeDays(m))
+                        | translate: { count: relativeDays(m) }
+                    }}
+                  }
+                  @default {
+                    {{
+                      ('milestones.relative.inDays' | pluralTranslate: relativeDays(m))
+                        | translate: { count: relativeDays(m) }
+                    }}
+                  }
                 }
-              </button>
-              <span class="card-title" [class.done]="m.reached">{{ titleFor(m) }}</span>
-              <app-status-pill [variant]="milestoneStatus(m)">
-                {{ statusLabelKey(m) | translate }}
-              </app-status-pill>
+              </div>
             </div>
           </div>
         }
@@ -123,18 +162,14 @@
                 <div class="detail-status">
                   <button
                     type="button"
-                    class="check"
-                    [class.done]="m.reached"
+                    class="pill-toggle"
                     (click)="toggleReached(m, $event)"
                     [attr.aria-label]="(m.reached ? 'milestones.markNotReached' : 'milestones.markReached') | translate"
                   >
-                    @if (m.reached) {
-                      &#10003;
-                    }
+                    <app-status-pill [variant]="milestoneStatus(m)">
+                      {{ statusLabelKey(m) | translate }}
+                    </app-status-pill>
                   </button>
-                  <app-status-pill [variant]="milestoneStatus(m)">
-                    {{ statusLabelKey(m) | translate }}
-                  </app-status-pill>
                 </div>
               }
             </div>

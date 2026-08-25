@@ -6,28 +6,86 @@
   position: relative;
 }
 
-// ── Header ─────────────────────────────────────────────────────────────────
+// ── Header (DS `ScreenMilestones.jsx:97-110` chrome: eyebrow+title left,
+//    three right-aligned counters) ───────────────────────────────────────
 
-.title-block {
-  padding: 14px t.$space-6 6px;
+.header {
+  padding: 12px t.$space-4 10px;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  flex-direction: column;
   gap: t.$space-3;
-  flex-wrap: wrap;
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--border-hairline);
+}
 
-  h1 {
-    font-family: t.$font-serif;
-    font-weight: 400;
-    font-size: t.$text-display-lg;
-    line-height: 1;
-  }
+.header-title {
+  min-width: 0;
+}
 
-  .sub {
-    font-size: t.$text-caption;
-    color: var(--text-muted);
-    margin-top: 6px;
-  }
+.header-meta {
+  font-size: t.$text-label;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+  display: block;
+}
+
+.header-text {
+  font-family: t.$font-serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1;
+  margin: 0;
+}
+
+.sub {
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.header-counters {
+  display: flex;
+  align-items: center;
+  gap: t.$space-4;
+}
+
+.counter {
+  text-align: left;
+}
+
+.counter-value {
+  font-family: t.$font-serif;
+  font-size: t.$text-display-sm;
+  line-height: 1;
+  color: var(--text-body-color);
+}
+
+.counter.reached .counter-value {
+  color: var(--brand-accent);
+}
+
+.counter.at-risk .counter-value {
+  color: var(--danger);
+}
+
+.counter-label {
+  margin-top: 3px;
+  font-size: t.$text-label;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+// New-milestone button lives in its own strip below the header — the header
+// row above is chrome-for-chrome with the kit (title + three counters only);
+// stacking the button here keeps it from competing with the counters for the
+// same row (defect #1).
+.toolbar {
+  padding: 8px t.$space-4 0;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .new-btn {
@@ -148,10 +206,7 @@
 
 .card {
   margin: 0 0 t.$space-3 t.$space-2;
-  padding: 10px t.$space-3;
-  display: flex;
-  align-items: center;
-  gap: t.$space-2;
+  padding: 12px 14px;
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
   border-radius: t.$radius-card;
@@ -159,17 +214,26 @@
   transition: border-color var(--transition-fast);
 
   &:hover,
-  &:focus-visible {
+  &:focus-visible,
+  &.selected {
     border-color: var(--brand-accent);
     outline: none;
   }
 }
 
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: t.$space-3;
+}
+
 .card-title {
   flex: 1;
   min-width: 0;
-  font-size: t.$text-body-lg;
+  font-size: 14px;
   font-weight: 500;
+  line-height: 1.3;
   color: var(--text-body-color);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -180,29 +244,29 @@
   }
 }
 
-// Check-circle toggle — same visual language as `app-task-row`'s `.check`
-// (T279 keeps its own copy: this row's grid/card shape differs enough from
-// `task-row`'s flex layout that composing it would fight the layout more
-// than a ~15-line rule duplicates).
-.check {
+// Tick/untick — moved off the dedicated `.check` circle (which the kit has
+// no counterpart for) and onto the status pill itself: the kit's own pill
+// already carries a checkmark glyph for its "done"-shaped state
+// (`ScreenMilestones.jsx:33`), so wrapping the existing `app-status-pill` in
+// a plain reset button keeps that same rail-dot + pill vocabulary as the
+// single source of "reached" state, rather than a second visual affordance.
+.pill-toggle {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 1.5px solid var(--border-hairline);
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--on-accent);
-  font-size: t.$text-label;
-  cursor: pointer;
   padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+}
 
-  &.done {
-    border-color: var(--brand-accent);
-    background: var(--brand-accent);
-  }
+// Card second line (defect #3): relative time, DS `ScreenMilestones.jsx`
+// metadata row (`margin-top: 9px`, `font-size: 11px`) — filled with the
+// internal relative-time equivalent of the kit's guest-facing
+// audience/channel/send info (out of scope here, hub ADR-0030 / T280).
+.card-meta {
+  margin-top: 9px;
+  font-size: t.$text-micro;
+  color: var(--text-muted);
 }
 
 // ── "Today" marker (`ScreenMilestones.jsx:81-93`) ────────────────────────
@@ -398,6 +462,30 @@
 
   .row-date {
     padding-top: 18px;
+  }
+
+  .header {
+    padding: 18px t.$space-7 14px;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: t.$space-4;
+  }
+
+  .header-text {
+    font-size: 26px;
+  }
+
+  .header-counters {
+    gap: t.$space-6;
+  }
+
+  .counter {
+    text-align: right;
+  }
+
+  .toolbar {
+    padding: 8px t.$space-7 0;
   }
 
   .detail-overlay {
