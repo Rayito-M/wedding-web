@@ -198,6 +198,15 @@
   border: 1px solid var(--text-muted);
   box-sizing: border-box;
 
+  // Internal milestones render as a rotated square (diamond) instead of a
+  // circle — same fill/hollow-by-reached logic, just a different shape (DS
+  // `ScreenMilestones.jsx`'s `Row`: `borderRadius: internal ? 2 : '50%',
+  // transform: internal ? 'rotate(45deg)' : 'none'`).
+  &.internal {
+    border-radius: 2px;
+    transform: rotate(45deg);
+  }
+
   &.filled {
     background: var(--status-final);
     border-color: var(--status-final);

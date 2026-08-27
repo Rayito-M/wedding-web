@@ -43,7 +43,7 @@
   }
 
   <div class="layout">
-    <div class="list">
+    <div class="list" #listEl>
       @if (sortedMilestones().length === 0) {
         @if (!hasWeddingDate()) {
           <div class="empty-state">
@@ -65,7 +65,7 @@
       } @else {
         @for (m of sortedMilestones(); track m.id; let i = $index) {
           @if (i === todayIndex()) {
-            <div class="today-marker">
+            <div class="today-marker" #todayMarkerEl>
               <div class="today-rail">
                 <span class="today-line"></span>
                 <span class="today-dot"></span>
@@ -77,7 +77,11 @@
             <div class="row-date">{{ m.plannedDate }}</div>
             <div class="row-rail">
               <span class="rail-line"></span>
-              <span class="rail-dot" [class.filled]="m.reached"></span>
+              <span
+                class="rail-dot"
+                [class.filled]="m.reached"
+                [class.internal]="m.kind === KindEnum.INTERNAL"
+              ></span>
             </div>
             <div
               class="card"
@@ -148,7 +152,7 @@
           </div>
         }
         @if (todayIndex() === -1) {
-          <div class="today-marker">
+          <div class="today-marker" #todayMarkerEl>
             <div class="today-rail">
               <span class="today-line"></span>
               <span class="today-dot"></span>

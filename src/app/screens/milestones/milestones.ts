@@ -1,6 +1,16 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal, Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  signal,
+  Signal,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
@@ -155,6 +165,14 @@ export class Milestones {
 
   protected readonly ready = computed(() => this.milestonesLoaded() && this.weddingConfigLoaded());
 
+  /** Refs for the "Today" marker centering (DS `ScreenMilestones.jsx` /
+   *  `ScreenMilestonesMobile.jsx`'s `scrollRef`/`todayRef`) — `todayMarkerEl`
+   *  matches whichever of the two `.today-marker` render sites is actually in
+   *  the DOM (only one renders per view, `#todayIndex`). */
+  private readonly listEl = viewChild<ElementRef<HTMLElement>>('listEl');
+  private readonly todayMarkerEl = viewChild<ElementRef<HTMLElement>>('todayMarkerEl');
+  private todayCentered = false;
+
   /** `GET /v1/audiences` (hub ADR-0030 §11e) — the four live-counted
    *  audiences, fetched once on load. Deliberately **not** folded into
    *  `ready()`: audiences are only needed for the guest-facing announcement
@@ -295,6 +313,30 @@ export class Milestones {
     // always the same document, matching `config-manager.ts`'s own `.load()`.
     this.weddingConfigCollection.load();
     this.fetchAudiences();
+
+    // Center the "Today" marker into view once, on the first paint after the
+    // data is `ready()` (DS `ScreenMilestones.jsx`/`ScreenMilestonesMobile.jsx`:
+    // a one-time `scrollTop` centering, not a re-center on every change — the
+    // couple's own subsequent scrolling is never fought).
+    effect(() => {
+      if (this.todayCentered) return;
+      if (!this.ready()) return;
+      const list = this.listEl()?.nativeElement;
+      const marker = this.todayMarkerEl()?.nativeElement;
+      if (!list || !marker) return;
+      this.todayCentered = true;
+      this.centerTodayMarker(list, marker);
+    });
+  }
+
+  /** Mirrors the DS's own clamp-at-zero centering, with the same rAF +
+   *  short-delay retry (to allow for layout that settles slightly late). */
+  private centerTodayMarker(list: HTMLElement, marker: HTMLElement): void {
+    const center = () => {
+      list.scrollTop = Math.max(0, marker.offsetTop - list.clientHeight / 2 + marker.offsetHeight / 2);
+    };
+    requestAnimationFrame(center);
+    setTimeout(center, 200);
   }
 
   private fetchMilestones(): void {
