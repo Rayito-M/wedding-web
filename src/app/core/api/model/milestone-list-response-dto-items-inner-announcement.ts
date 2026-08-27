@@ -19,6 +19,8 @@ export interface MilestoneListResponseDtoItemsInnerAnnouncement {
 }
 export namespace MilestoneListResponseDtoItemsInnerAnnouncement {
     export const AnnouncementTypeEnum = {
+        SAVE_THE_DATE: 'save-the-date',
+        INVITATION: 'invitation',
         RSVP_REMINDER: 'rsvp-reminder',
         MENU_SELECTION_REMINDER: 'menu-selection-reminder'
     } as const;

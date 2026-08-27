@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -9,6 +9,9 @@ import { provideStore } from '@ngrx/store';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 
 import {
+  AnnouncementDto,
+  AudienceListResponseDtoItemsInner,
+  AudiencesService,
   EntityNamesEnum,
   MilestoneDto,
   WeddingConfigResponseDto,
@@ -29,6 +32,43 @@ function milestone(overrides: Partial<MilestoneDto> = {}): MilestoneDto {
     kind: MilestoneDto.KindEnum.INTERNAL,
     reached: false,
     atRisk: false,
+    ...overrides,
+  };
+}
+
+/** The four real audiences (hub ADR-0030 §8) with distinct, assertable
+ *  counts — "Travelling from abroad" and "Table hosts" are not among them
+ *  and cannot be, since `AudienceListResponseDtoItemsInner.IdEnum` has no
+ *  such member (hard rule 15: the generated type is the whole guard here). */
+const DEFAULT_AUDIENCES: AudienceListResponseDtoItemsInner[] = [
+  { id: AudienceListResponseDtoItemsInner.IdEnum.ALL, size: 150, reachableSize: 140 },
+  { id: AudienceListResponseDtoItemsInner.IdEnum.NOT_REPLIED, size: 40, reachableSize: 35 },
+  { id: AudienceListResponseDtoItemsInner.IdEnum.ATTENDING, size: 90, reachableSize: 88 },
+  { id: AudienceListResponseDtoItemsInner.IdEnum.ATTENDING_NO_MENU, size: 12, reachableSize: 10 },
+];
+
+/** A guest-facing milestone with a type and an audience already configured
+ *  (PATCH-only per hub ADR-0030 §11c, so this always models the *saved*
+ *  state, never something a create payload could carry). */
+function configuredGuestFacingMilestone(overrides: Partial<MilestoneDto> = {}): MilestoneDto {
+  return milestone({
+    kind: MilestoneDto.KindEnum.GUEST_FACING,
+    announcementType: MilestoneDto.AnnouncementTypeEnum.RSVP_REMINDER,
+    audience: MilestoneDto.AudienceEnum.NOT_REPLIED,
+    ...overrides,
+  });
+}
+
+function sentAnnouncement(
+  overrides: Partial<AnnouncementDto> = {},
+): NonNullable<MilestoneDto['announcement']> {
+  return {
+    sentAt: '2027-01-05T10:00:00.000Z',
+    sentBy: 'admin-1',
+    announcementType: MilestoneDto.AnnouncementTypeEnum.RSVP_REMINDER,
+    audience: MilestoneDto.AudienceEnum.NOT_REPLIED,
+    recipientCount: 40,
+    reachableCount: 35,
     ...overrides,
   };
 }
@@ -83,10 +123,22 @@ describe('Milestones', () => {
     >
   >;
   let removeSpy: ReturnType<typeof vi.fn<(params: { id: string }) => Observable<undefined>>>;
+  let listSpy: ReturnType<typeof vi.fn<() => Observable<unknown>>>;
+  let sendSpy: ReturnType<
+    typeof vi.fn<
+      (params: { id: string; sendAnnouncementDto: { version: number } }) => Observable<AnnouncementDto>
+    >
+  >;
+  let clearAnnouncementSpy: ReturnType<typeof vi.fn<(params: { id: string }) => Observable<undefined>>>;
   /** Overridden per-test to simulate a failed write; `null` means "succeed
    *  with a sensible default response". */
   let createFailure: Observable<never> | null;
   let updateFailure: Observable<never> | null;
+  let sendFailure: Observable<never> | null;
+  let clearAnnouncementFailure: Observable<never> | null;
+  /** `GET /v1/audiences` (hub ADR-0030 §11e) — the four real audiences by
+   *  default; overridden per-test for the empty-audience disable condition. */
+  let currentAudiences: AudienceListResponseDtoItemsInner[];
 
   /**
    * `@ngrx/data`'s `EntityEffects` delays every save/query success *and*
@@ -118,9 +170,12 @@ describe('Milestones', () => {
   beforeEach(async () => {
     currentMilestones = [];
     currentConfig = WEDDING_CONFIG_WITH_DATE;
+    currentAudiences = DEFAULT_AUDIENCES;
 
     createFailure = null;
     updateFailure = null;
+    sendFailure = null;
+    clearAnnouncementFailure = null;
 
     createSpy = vi.fn((params: { createMilestoneDto: Partial<MilestoneDto> }) => {
       if (createFailure) return createFailure;
@@ -140,6 +195,21 @@ describe('Milestones', () => {
       return of({ ...existing, ...definedChanges, id: params.id });
     });
     removeSpy = vi.fn(() => of(undefined));
+    listSpy = vi.fn(() => of({ items: currentMilestones, count: currentMilestones.length }));
+    sendSpy = vi.fn((params: { id: string; sendAnnouncementDto: { version: number } }) => {
+      if (sendFailure) return sendFailure;
+      const m = currentMilestones.find((item) => item.id === params.id);
+      return of(
+        sentAnnouncement({
+          announcementType: m?.announcementType,
+          audience: m?.audience,
+        }),
+      );
+    });
+    clearAnnouncementSpy = vi.fn(() => {
+      if (clearAnnouncementFailure) return clearAnnouncementFailure;
+      return of(undefined);
+    });
 
     await TestBed.configureTestingModule({
       imports: [Milestones],
@@ -155,8 +225,7 @@ describe('Milestones', () => {
         {
           provide: WeddingMilestonesService,
           useValue: {
-            milestonesControllerListV1: () =>
-              of({ items: currentMilestones, count: currentMilestones.length }),
+            milestonesControllerListV1: () => listSpy(),
             milestonesControllerCreateV1: (params: { createMilestoneDto: Partial<MilestoneDto> }) =>
               createSpy(params),
             milestonesControllerUpdateV1: (params: {
@@ -164,16 +233,45 @@ describe('Milestones', () => {
               updateMilestoneDto: Partial<MilestoneDto>;
             }) => updateSpy(params),
             milestonesControllerRemoveV1: (params: { id: string }) => removeSpy(params),
+            milestonesControllerSendV1: (params: {
+              id: string;
+              sendAnnouncementDto: { version: number };
+            }) => sendSpy(params),
+            milestonesControllerClearAnnouncementV1: (params: { id: string }) =>
+              clearAnnouncementSpy(params),
           },
         },
         {
           provide: WeddingConfigurationService,
           useValue: { weddingConfigControllerGetV1: () => of(currentConfig) },
         },
+        {
+          provide: AudiencesService,
+          useValue: { audiencesControllerListV1: () => of({ items: currentAudiences }) },
+        },
       ],
     }).compileComponents();
 
     TestBed.inject(TranslateService).setTranslation('en', {}, true);
+    // Only the two keys below need real interpolation for the new specs to
+    // assert on rendered numbers — every other key stays untranslated
+    // (echoed back literally) so the existing raw-key assertions above stay
+    // untouched.
+    TestBed.inject(TranslateService).setTranslation(
+      'en',
+      {
+        milestones: {
+          announcement: {
+            audienceCounts: '{{size}}/{{reachable}}',
+            sendConfirm: {
+              message:
+                'Send {{title}} ({{type}}) to {{audience}} — {{recipientCount}} recipients, {{reachableCount}} reachable. Immediately.',
+            },
+          },
+        },
+      },
+      true,
+    );
     TestBed.inject(EntityServices)
       .getEntityCollectionService<MilestoneDto>(EntityNamesEnum.MILESTONE)
       .clearCache();
@@ -432,5 +530,297 @@ describe('Milestones', () => {
     expect(fixture.nativeElement.querySelector('.detail-body')).not.toBeNull();
     expect((fixture.nativeElement.textContent as string)).toContain('milestones.error.generic');
     expect(cardTitles()).toEqual([]);
+  });
+
+  // ── T280: kind, announcement config, and the send button (hub ADR-0030) ──
+
+  function chipByText(text: string): HTMLButtonElement | undefined {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll('.chip') as NodeListOf<HTMLButtonElement>,
+    ).find((btn) => btn.textContent?.includes(text));
+  }
+
+  function saveButton(): HTMLButtonElement {
+    return fixture.nativeElement.querySelector(
+      '.detail-actions button[type="submit"]',
+    ) as HTMLButtonElement;
+  }
+
+  it('sends the chosen kind on create, and never sends announcement config at create time', async () => {
+    currentMilestones = [];
+    await create();
+
+    fixture.nativeElement.querySelector('.new-btn').click();
+    await settle();
+
+    chipByText('milestones.form.kind.guestFacing')?.click();
+    await settle();
+
+    setInputValue(
+      fixture.nativeElement.querySelector('.detail-body input[type="text"]') as HTMLInputElement,
+      'Chase the stragglers',
+    );
+    setInputValue(
+      fixture.nativeElement.querySelector('.detail-body input[type="date"]') as HTMLInputElement,
+      '2027-02-01',
+    );
+    await settle();
+
+    submitDetailForm(fixture.nativeElement);
+    await settle();
+
+    expect(createSpy).toHaveBeenCalledTimes(1);
+    const dto = createSpy.mock.calls[0][0].createMilestoneDto;
+    expect(dto.kind).toBe(MilestoneDto.KindEnum.GUEST_FACING);
+    // hub ADR-0030 §11c: a new guest-facing milestone always starts
+    // unconfigured — creation and configuration are separate steps.
+    expect('announcementType' in dto).toBe(false);
+    expect('audience' in dto).toBe(false);
+  });
+
+  it('sends the chosen announcement type and audience via PATCH, not at creation', async () => {
+    currentMilestones = [
+      milestone({ id: 'm1', kind: MilestoneDto.KindEnum.GUEST_FACING, title: { es: '', en: 'Reminder', fr: '' } }),
+    ];
+    await create();
+
+    fixture.nativeElement.querySelector('.card').click();
+    await settle();
+
+    chipByText('milestones.announcementType.rsvp-reminder')?.click();
+    chipByText('milestones.audience.not-replied')?.click();
+    await settle();
+
+    saveButton().click();
+    await settle();
+
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    const dto = updateSpy.mock.calls[0][0].updateMilestoneDto;
+    expect(dto.announcementType).toBe(MilestoneDto.AnnouncementTypeEnum.RSVP_REMINDER);
+    expect(dto.audience).toBe(MilestoneDto.AudienceEnum.NOT_REPLIED);
+  });
+
+  it('shows both the recipient count and the reachable count on an audience chip', async () => {
+    currentMilestones = [
+      milestone({ id: 'm1', kind: MilestoneDto.KindEnum.GUEST_FACING, title: { es: '', en: 'Reminder', fr: '' } }),
+    ];
+    await create();
+
+    fixture.nativeElement.querySelector('.card').click();
+    await settle();
+
+    const chip = chipByText('milestones.audience.not-replied');
+    // DEFAULT_AUDIENCES: not-replied → size 40, reachableSize 35 — both
+    // numbers, not just one.
+    expect(chip?.textContent).toContain('40/35');
+  });
+
+  it('the confirmation states the milestone name, type, audience, recipient count, reachable count, and immediacy', async () => {
+    currentMilestones = [
+      configuredGuestFacingMilestone({ id: 'm1', title: { es: '', en: 'Chase the stragglers', fr: '' } }),
+    ];
+    await create();
+
+    fixture.nativeElement.querySelector('.card').click();
+    await settle();
+
+    (fixture.nativeElement.querySelector('.send-btn') as HTMLButtonElement).click();
+    await settle();
+
+    const message = fixture.nativeElement.querySelector('app-confirm-dialog .message')?.textContent;
+    expect(message).toContain('Chase the stragglers');
+    // recipientCount / reachableCount for `not-replied` (DEFAULT_AUDIENCES).
+    expect(message).toContain('40 recipients');
+    expect(message).toContain('35 reachable');
+    expect(message).toContain('Immediately');
+    // Nothing sent yet — opening the confirmation is not sending.
+    expect(sendSpy).not.toHaveBeenCalled();
+  });
+
+  describe('send button disabled conditions', () => {
+    it('is not rendered at all for an internal milestone (not guest-facing)', async () => {
+      currentMilestones = [milestone({ id: 'm1', kind: MilestoneDto.KindEnum.INTERNAL })];
+      await create();
+
+      fixture.nativeElement.querySelector('.card').click();
+      await settle();
+
+      expect(fixture.nativeElement.querySelector('.send-btn')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.announcement-config')).toBeNull();
+    });
+
+    it('is disabled with no announcement type set', async () => {
+      currentMilestones = [
+        configuredGuestFacingMilestone({ id: 'm1', announcementType: undefined }),
+      ];
+      await create();
+
+      fixture.nativeElement.querySelector('.card').click();
+      await settle();
+
+      expect(
+        (fixture.nativeElement.querySelector('.send-btn') as HTMLButtonElement).disabled,
+      ).toBe(true);
+    });
+
+    it('is disabled with no audience set', async () => {
+      currentMilestones = [configuredGuestFacingMilestone({ id: 'm1', audience: undefined })];
+      await create();
+
+      fixture.nativeElement.querySelector('.card').click();
+      await settle();
+
+      expect(
+        (fixture.nativeElement.querySelector('.send-btn') as HTMLButtonElement).disabled,
+      ).toBe(true);
+    });
+
+    it('is disabled when the audience evaluates empty', async () => {
+      currentAudiences = DEFAULT_AUDIENCES.map((a) =>
+        a.id === AudienceListResponseDtoItemsInner.IdEnum.NOT_REPLIED
+          ? { ...a, size: 0, reachableSize: 0 }
+          : a,
+      );
+      currentMilestones = [configuredGuestFacingMilestone({ id: 'm1' })];
+      await create();
+
+      fixture.nativeElement.querySelector('.card').click();
+      await settle();
+
+      expect(
+        (fixture.nativeElement.querySelector('.send-btn') as HTMLButtonElement).disabled,
+      ).toBe(true);
+    });
+
+    it('has no button at all once already sent — no "Send again"', async () => {
+      currentMilestones = [
+        configuredGuestFacingMilestone({ id: 'm1', announcement: sentAnnouncement() }),
+      ];
+      await create();
+
+      fixture.nativeElement.querySelector('.card').click();
+      await settle();
+
+      expect(fixture.nativeElement.querySelector('.send-btn')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.mark-not-sent-btn')).not.toBeNull();
+    });
+
+    it('is enabled once guest-facing with a type, an audience, a non-empty audience, and no prior send', async () => {
+      currentMilestones = [configuredGuestFacingMilestone({ id: 'm1' })];
+      await create();
+
+      fixture.nativeElement.querySelector('.card').click();
+      await settle();
+
+      expect(
+        (fixture.nativeElement.querySelector('.send-btn') as HTMLButtonElement).disabled,
+      ).toBe(false);
+    });
+  });
+
+  it('sends on confirm, and refreshes the list afterwards (the send response carries no updated version)', async () => {
+    currentMilestones = [configuredGuestFacingMilestone({ id: 'm1', version: 3 })];
+    await create();
+    listSpy.mockClear();
+
+    fixture.nativeElement.querySelector('.card').click();
+    await settle();
+    (fixture.nativeElement.querySelector('.send-btn') as HTMLButtonElement).click();
+    await settle();
+
+    const actionButtons = fixture.nativeElement.querySelectorAll('app-confirm-dialog button.action');
+    (actionButtons[1] as HTMLButtonElement).click(); // Confirm (Yes, send now)
+    await settle();
+
+    expect(sendSpy).toHaveBeenCalledTimes(1);
+    expect(sendSpy.mock.calls[0][0]).toEqual({ id: 'm1', sendAnnouncementDto: { version: 3 } });
+    expect(listSpy).toHaveBeenCalled();
+  });
+
+  it('a 409 on send surfaces information to the couple rather than retrying', async () => {
+    currentMilestones = [configuredGuestFacingMilestone({ id: 'm1' })];
+    sendFailure = throwError(() => new HttpErrorResponse({ status: 409 }));
+    await create();
+    listSpy.mockClear();
+
+    fixture.nativeElement.querySelector('.card').click();
+    await settle();
+    (fixture.nativeElement.querySelector('.send-btn') as HTMLButtonElement).click();
+    await settle();
+
+    const actionButtons = fixture.nativeElement.querySelectorAll('app-confirm-dialog button.action');
+    (actionButtons[1] as HTMLButtonElement).click(); // Confirm
+    await settle();
+
+    expect(sendSpy).toHaveBeenCalledTimes(1);
+    expect((fixture.nativeElement.textContent as string)).toContain(
+      'milestones.announcement.sendConflict',
+    );
+    // Re-read, not a silent swallow and not a retry.
+    expect(listSpy).toHaveBeenCalled();
+  });
+
+  it('"mark as not sent" requires confirmation, and dismissing it changes nothing', async () => {
+    currentMilestones = [
+      configuredGuestFacingMilestone({ id: 'm1', announcement: sentAnnouncement() }),
+    ];
+    await create();
+
+    fixture.nativeElement.querySelector('.card').click();
+    await settle();
+
+    (fixture.nativeElement.querySelector('.mark-not-sent-btn') as HTMLButtonElement).click();
+    await settle();
+
+    const actionButtons = fixture.nativeElement.querySelectorAll('app-confirm-dialog button.action');
+    expect(actionButtons.length).toBe(2);
+
+    // First action button is Cancel/Keep (T277: cancel always first, never toned).
+    (actionButtons[0] as HTMLButtonElement).click();
+    await settle();
+
+    expect(clearAnnouncementSpy).not.toHaveBeenCalled();
+    // The milestone is still shown as sent — nothing changed.
+    expect(fixture.nativeElement.querySelector('.mark-not-sent-btn')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.send-btn')).toBeNull();
+  });
+
+  it('confirming "mark as not sent" clears the send record so the milestone becomes sendable again', async () => {
+    currentMilestones = [
+      configuredGuestFacingMilestone({ id: 'm1', announcement: sentAnnouncement() }),
+    ];
+    await create();
+
+    fixture.nativeElement.querySelector('.card').click();
+    await settle();
+    (fixture.nativeElement.querySelector('.mark-not-sent-btn') as HTMLButtonElement).click();
+    await settle();
+
+    const actionButtons = fixture.nativeElement.querySelectorAll('app-confirm-dialog button.action');
+    (actionButtons[1] as HTMLButtonElement).click(); // Confirm (Mark as not sent)
+    await settle();
+
+    expect(clearAnnouncementSpy).toHaveBeenCalledWith({ id: 'm1' });
+  });
+
+  it('never renders the two audiences the design kit shows but the API does not have', async () => {
+    currentMilestones = [
+      milestone({ id: 'm1', kind: MilestoneDto.KindEnum.GUEST_FACING, title: { es: '', en: 'Reminder', fr: '' } }),
+    ];
+    await create();
+
+    fixture.nativeElement.querySelector('.card').click();
+    await settle();
+
+    // Exactly the four real audiences render, generically off the API
+    // response — not a hand-listed five-item set.
+    const chips = Array.from(
+      fixture.nativeElement.querySelectorAll('.audience-chip') as NodeListOf<HTMLButtonElement>,
+    );
+    expect(chips.length).toBe(DEFAULT_AUDIENCES.length);
+
+    const pageText = fixture.nativeElement.textContent as string;
+    expect(pageText).not.toContain('Travelling from abroad');
+    expect(pageText).not.toContain('Table hosts');
   });
 });

@@ -804,7 +804,15 @@
         "fr": "Francés"
       },
       "dateLabel": "Fecha prevista",
-      "dateRequired": "La fecha prevista es obligatoria."
+      "dateRequired": "La fecha prevista es obligatoria.",
+      "kindLabel": "Tipo",
+      "kind": {
+        "internal": "Interno",
+        "guestFacing": "Para invitados",
+        "hint": "Los hitos para invitados pueden llevar un aviso que enviáis a los invitados. Los internos nunca notifican a nadie, por ningún canal."
+      },
+      "announcementTypeLabel": "Tipo de aviso",
+      "audienceLabel": "Destinatarios"
     },
     "delete": {
       "title": "¿Eliminar este hito?",
@@ -814,6 +822,48 @@
     "error": {
       "conflict": "Alguien acaba de actualizar este hito. Vuelve a abrirlo para ver la última versión.",
       "generic": "Ha ocurrido un error al guardar. Inténtalo de nuevo."
+    },
+    "announcementType": {
+      "rsvp-reminder": "Recordatorio de confirmación",
+      "menu-selection-reminder": "Recordatorio de elección de menú",
+      "save-the-date": "Reserva la fecha",
+      "invitation": "Invitación"
+    },
+    "audience": {
+      "all": "Todos",
+      "not-replied": "Sin responder todavía",
+      "attending": "Asisten",
+      "attending-no-menu": "Asisten, sin menú elegido"
+    },
+    "row": {
+      "unconfigured": "Aún sin configurar",
+      "recipients": {
+        "none": "Ningún invitado coincide con estos destinatarios ahora mismo",
+        "singular": "{{count}} invitado",
+        "plural": "{{count}} invitados"
+      }
+    },
+    "announcement": {
+      "audienceCounts": "{{size}} invitados · {{reachable}} localizables",
+      "sendButton": "Enviar aviso",
+      "sendHint": "No se envía nada hasta que lo confirméis.",
+      "sendDisabledHint": "Elegid un tipo y unos destinatarios, y guardad, para poder enviarlo.",
+      "sentOn": "Enviado el {{date}}",
+      "sentCounts": "{{recipientCount}} destinatarios · {{reachableCount}} localizables",
+      "markNotSent": "Marcar como no enviado",
+      "sendConflict": "Este aviso no se ha podido enviar — puede que ya se haya enviado, o que alguien más lo haya cambiado. Lo hemos actualizado para mostraros el estado actual.",
+      "sendConfirm": {
+        "title": "¿Enviar este aviso?",
+        "message": "Enviar «{{title}}» ({{type}}) a {{audience}} — {{recipientCount}} invitados, {{reachableCount}} localizables. Esto se envía de inmediato.",
+        "confirm": "Sí, enviar ahora",
+        "cancel": "Cancelar"
+      },
+      "clearConfirm": {
+        "title": "¿Marcar como no enviado?",
+        "message": "Esto no deshace el envío — no se recupera ningún aviso ni se revierte nada ya entregado. Solo elimina el bloqueo que impide volver a enviar este hito.",
+        "confirm": "Marcar como no enviado",
+        "cancel": "Mantener como enviado"
+      }
     }
   },
   "people": {

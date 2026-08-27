@@ -103,24 +103,44 @@
                 </button>
               </div>
               <div class="card-meta">
-                @switch (relativeKind(m)) {
-                  @case ('reached') {
-                    {{ 'milestones.relative.reachedOn' | translate: { date: m.plannedDate } }}
+                @if (m.kind === KindEnum.GUEST_FACING) {
+                  <!-- Guest-facing second line (hub ADR-0030): audience/
+                       send-state, a distinct branch from the internal
+                       relative-time line below, never a mutation of it. -->
+                  @if (m.announcement; as ann) {
+                    {{ 'milestones.announcement.sentOn' | translate: { date: (ann.sentAt | date: 'd MMM y' : '' : primaryLang()) } }}
+                    · {{ 'milestones.announcement.sentCounts' | translate: { recipientCount: ann.recipientCount, reachableCount: ann.reachableCount } }}
+                  } @else if (m.announcementType && m.audience) {
+                    {{ announcementTypeLabel(m.announcementType) }} · {{ audienceLabel(m.audience) }}
+                    @if (audiencesLoaded()) {
+                      · {{
+                        ('milestones.row.recipients' | pluralTranslate: (audienceSize(m.audience) ?? 0))
+                          | translate: { count: audienceSize(m.audience) ?? 0 }
+                      }}
+                    }
+                  } @else {
+                    {{ 'milestones.row.unconfigured' | translate }}
                   }
-                  @case ('today') {
-                    {{ 'milestones.today' | translate }}
-                  }
-                  @case ('overdue') {
-                    {{
-                      ('milestones.relative.overdueDays' | pluralTranslate: relativeDays(m))
-                        | translate: { count: relativeDays(m) }
-                    }}
-                  }
-                  @default {
-                    {{
-                      ('milestones.relative.inDays' | pluralTranslate: relativeDays(m))
-                        | translate: { count: relativeDays(m) }
-                    }}
+                } @else {
+                  @switch (relativeKind(m)) {
+                    @case ('reached') {
+                      {{ 'milestones.relative.reachedOn' | translate: { date: m.plannedDate } }}
+                    }
+                    @case ('today') {
+                      {{ 'milestones.today' | translate }}
+                    }
+                    @case ('overdue') {
+                      {{
+                        ('milestones.relative.overdueDays' | pluralTranslate: relativeDays(m))
+                          | translate: { count: relativeDays(m) }
+                      }}
+                    }
+                    @default {
+                      {{
+                        ('milestones.relative.inDays' | pluralTranslate: relativeDays(m))
+                          | translate: { count: relativeDays(m) }
+                      }}
+                    }
                   }
                 }
               </div>
@@ -229,6 +249,103 @@
               <p class="field-error">{{ 'milestones.form.dateRequired' | translate }}</p>
             }
 
+            <!-- Kind (hub ADR-0030 §11a): a real create-time choice, never
+                 patchable afterwards — a selector on create, a read-only
+                 label once the milestone exists. -->
+            @if (panel().kind === 'create') {
+              <div class="field">
+                <span class="field-label">{{ 'milestones.form.kindLabel' | translate }}</span>
+                <div class="chip-row">
+                  <button
+                    type="button"
+                    class="chip"
+                    [class.selected]="formKind() === KindEnum.INTERNAL"
+                    (click)="setKind(KindEnum.INTERNAL)"
+                  >
+                    {{ 'milestones.form.kind.internal' | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="chip"
+                    [class.selected]="formKind() === KindEnum.GUEST_FACING"
+                    (click)="setKind(KindEnum.GUEST_FACING)"
+                  >
+                    {{ 'milestones.form.kind.guestFacing' | translate }}
+                  </button>
+                </div>
+                <p class="field-hint">{{ 'milestones.form.kind.hint' | translate }}</p>
+              </div>
+            } @else if (selectedMilestone(); as m) {
+              <div class="field">
+                <span class="field-label">{{ 'milestones.form.kindLabel' | translate }}</span>
+                <app-pill>
+                  {{ (m.kind === KindEnum.GUEST_FACING ? 'milestones.form.kind.guestFacing' : 'milestones.form.kind.internal') | translate }}
+                </app-pill>
+              </div>
+
+              @if (m.kind === KindEnum.GUEST_FACING) {
+                <div class="announcement-config">
+                  <div class="field">
+                    <span class="field-label">{{ 'milestones.form.announcementTypeLabel' | translate }}</span>
+                    <div class="chip-row">
+                      @for (type of announcementTypes; track type) {
+                        <button
+                          type="button"
+                          class="chip"
+                          [class.selected]="formAnnouncementType() === type"
+                          (click)="formAnnouncementType.set(type)"
+                        >
+                          {{ announcementTypeLabel(type) }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="field">
+                    <span class="field-label">{{ 'milestones.form.audienceLabel' | translate }}</span>
+                    @if (audiencesLoaded()) {
+                      <div class="chip-row">
+                        @for (a of audiences(); track a.id) {
+                          <button
+                            type="button"
+                            class="chip audience-chip"
+                            [class.selected]="formAudience() === a.id"
+                            (click)="formAudience.set(a.id)"
+                          >
+                            <span>{{ audienceLabel(a.id) }}</span>
+                            <span class="chip-counts">
+                              {{ 'milestones.announcement.audienceCounts' | translate: { size: a.size, reachable: a.reachableSize } }}
+                            </span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  @if (m.announcement; as ann) {
+                    <div class="announcement-sent">
+                      <p class="field-hint">
+                        {{ 'milestones.announcement.sentOn' | translate: { date: (ann.sentAt | date: 'd MMM y' : '' : primaryLang()) } }}
+                        · {{ 'milestones.announcement.sentCounts' | translate: { recipientCount: ann.recipientCount, reachableCount: ann.reachableCount } }}
+                      </p>
+                      <button type="button" class="disclosure mark-not-sent-btn" (click)="requestClearAnnouncement()">
+                        {{ 'milestones.announcement.markNotSent' | translate }}
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="announcement-send">
+                      <p class="field-hint">
+                        {{ (canSend(m) ? 'milestones.announcement.sendHint' : 'milestones.announcement.sendDisabledHint') | translate }}
+                      </p>
+                      <button app-btn type="button" class="send-btn" [disabled]="!canSend(m)" (click)="requestSend()">
+                        {{ 'milestones.announcement.sendButton' | translate }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            }
+
             @if (formError()) {
               <p class="field-error">{{ formError() }}</p>
             }
@@ -265,4 +382,32 @@
   [cancelLabel]="'milestones.delete.keep' | translate"
   (confirm)="confirmDelete()"
   (cancel)="cancelDelete()"
+/>
+
+<!-- Blast-radius confirmation (hub ADR-0030 §6) — states the milestone name,
+     announcement type, audience, recipient count, reachable count, and that
+     it goes out immediately. No quick-send path exists outside this dialog. -->
+<app-confirm-dialog
+  [open]="sendConfirmOpen()"
+  tone="accent"
+  [title]="'milestones.announcement.sendConfirm.title' | translate"
+  [message]="sendConfirmMessage()"
+  [confirmLabel]="'milestones.announcement.sendConfirm.confirm' | translate"
+  [cancelLabel]="'milestones.announcement.sendConfirm.cancel' | translate"
+  (confirm)="confirmSend()"
+  (cancel)="cancelSend()"
+/>
+
+<!-- "Mark as not sent" (hub ADR-0030 §7) — explicit copy that this unsends
+     nothing; the only way back to sendable, gated behind the same
+     tone="danger" pattern as delete/T277/T278. -->
+<app-confirm-dialog
+  [open]="pendingClearId() !== null"
+  tone="danger"
+  [title]="'milestones.announcement.clearConfirm.title' | translate"
+  [message]="'milestones.announcement.clearConfirm.message' | translate"
+  [confirmLabel]="'milestones.announcement.clearConfirm.confirm' | translate"
+  [cancelLabel]="'milestones.announcement.clearConfirm.cancel' | translate"
+  (confirm)="confirmClearAnnouncement()"
+  (cancel)="cancelClearAnnouncement()"
 />

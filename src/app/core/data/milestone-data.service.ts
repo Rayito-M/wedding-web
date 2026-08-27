@@ -3,6 +3,7 @@ import { EntityCollectionDataService } from '@ngrx/data';
 import { Observable, map, throwError } from 'rxjs';
 
 import {
+  AnnouncementDto,
   CreateMilestoneDto,
   MilestoneDto,
   MilestoneListResponseDto,
@@ -23,10 +24,18 @@ import { EntityNamesEnum } from './entity-metadata';
  * field on `MilestoneDto` (hub ADR-0029 §4.2) — it is never read from form
  * state and never written back, on either `add()` or `update()` below.
  * `kind` is create-only and not patchable per the contract's own doc comment
- * (`WeddingMilestonesService.milestonesControllerUpdateV1`); this app never
- * sends anything but the default (`internal`) on create (T280 owns
- * `guest-facing`), so `update()` never carries it — `UpdateMilestoneDto` has
- * no `kind` field at all.
+ * (`WeddingMilestonesService.milestonesControllerUpdateV1`) — `add()` sends
+ * it (T280: the couple's own choice, internal or guest-facing), `update()`
+ * never carries it — `UpdateMilestoneDto` has no `kind` field at all.
+ *
+ * `announcementType`/`audience` (hub ADR-0030 §11c) are PATCH-only: a new
+ * guest-facing milestone starts unconfigured (`add()` never sends them) and
+ * is configured afterwards via `update()`. `send()`/`clearAnnouncement()`
+ * (§11d) are the create-once announcement sub-resource — outside the
+ * `EntityCollectionDataService` interface (they are neither a CRUD verb nor
+ * cacheable the way `add`/`update`/`delete` are), so the call site
+ * (`screens/milestones`) re-reads the collection via `getAll()` afterwards
+ * rather than this service reaching into the @ngrx/data cache itself.
  */
 @Injectable({ providedIn: 'root' })
 export class MilestoneDataService implements EntityCollectionDataService<MilestoneDto> {
@@ -60,23 +69,31 @@ export class MilestoneDataService implements EntityCollectionDataService<Milesto
   /**
    * `POST /v1/milestones`. `entity.id`/`entity.version`/`entity.atRisk` are
    * ignored — the server assigns the id and version, and derives `atRisk`.
-   * `entity.kind` is never sent: this app only ever creates `internal`
-   * milestones (the contract default), matching this task's bound.
+   * `entity.kind` is sent (T280: the couple's explicit create-time choice —
+   * defaults to `internal` server-side if omitted, but this app always
+   * supplies it, never leaving it implicit). `announcementType`/`audience`
+   * are never accepted on create (hub ADR-0030 §11c) — a guest-facing
+   * milestone always starts unconfigured; that is `update()`'s job.
    */
   add(entity: MilestoneDto): Observable<MilestoneDto> {
     const createMilestoneDto: CreateMilestoneDto = {
       title: entity.title,
       plannedDate: entity.plannedDate,
       reached: entity.reached,
+      kind: entity.kind,
     };
     return this.milestonesApi.milestonesControllerCreateV1({ createMilestoneDto });
   }
 
   /**
    * `PATCH /v1/milestones/:id`. `update.changes` carries only the fields
-   * being changed (title rename, re-date, tick/untick reached) plus the
-   * envelope `version` for the optimistic-lock guard — always the
-   * currently-loaded entity's `version`, never a default.
+   * being changed (title rename, re-date, tick/untick reached,
+   * announcement-type/audience configuration) plus the envelope `version`
+   * for the optimistic-lock guard — always the currently-loaded entity's
+   * `version`, never a default. `announcementType`/`audience` are valid only
+   * on a `guest-facing` milestone (422 otherwise, hub ADR-0030 §11c) —
+   * `undefined` for an `internal` one drops the key entirely over real HTTP
+   * JSON, same as every other untouched field here.
    */
   update(update: { id: string; changes: Partial<MilestoneDto> }): Observable<MilestoneDto> {
     const updateMilestoneDto: UpdateMilestoneDto = {
@@ -84,6 +101,8 @@ export class MilestoneDataService implements EntityCollectionDataService<Milesto
       title: update.changes.title,
       plannedDate: update.changes.plannedDate,
       reached: update.changes.reached,
+      announcementType: update.changes.announcementType,
+      audience: update.changes.audience,
     };
     return this.milestonesApi.milestonesControllerUpdateV1({
       id: update.id,
@@ -100,6 +119,33 @@ export class MilestoneDataService implements EntityCollectionDataService<Milesto
     return this.milestonesApi
       .milestonesControllerRemoveV1({ id: String(id) })
       .pipe(map(() => id));
+  }
+
+  /**
+   * `POST /v1/milestones/:id/announcement` — the create-once send
+   * sub-resource (hub ADR-0030 §11d). Sends **immediately**; the caller must
+   * have already shown the blast-radius confirmation (§6). `version` guards
+   * the second idempotency lock (§7) — `409` if stale or if already sent.
+   * The response carries the send fact and counts, not the updated
+   * `MilestoneDto` (no new `version` in it) — the caller re-reads the
+   * collection afterwards rather than patching the cache from this shape.
+   */
+  send(id: string, version: number): Observable<AnnouncementDto> {
+    return this.milestonesApi.milestonesControllerSendV1({
+      id,
+      sendAnnouncementDto: { version },
+    });
+  }
+
+  /**
+   * `DELETE /v1/milestones/:id/announcement` — clears the send record so
+   * another send is possible. **Unsends nothing** (hub ADR-0030 §7/§11d):
+   * no message is recalled, and `reached` is untouched. `404` if not sent.
+   */
+  clearAnnouncement(id: string): Observable<void> {
+    return this.milestonesApi
+      .milestonesControllerClearAnnouncementV1({ id })
+      .pipe(map(() => undefined));
   }
 
   private notSupported(): Observable<never> {

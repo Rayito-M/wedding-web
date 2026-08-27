@@ -414,6 +414,80 @@
   color: var(--danger);
 }
 
+.field-hint {
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+// ── Kind / announcement-type / audience chips (T280, hub ADR-0030) ───────
+// Hand-built selectable pill, same precedent as `people.filter-chip`
+// ("no DS list-item toggle equivalent — `app-pill` is a static label, not
+// an interactive toggle"): tokens only, unselected = hairline border on
+// transparent, selected = accent fill (DS `ScreenMilestones.jsx:150-152`
+// audience-chip values).
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-1;
+  padding: 6px 12px;
+  border: 1px solid var(--border-hairline);
+  border-radius: t.$radius-pill;
+  background: transparent;
+  color: var(--text-body-color);
+  font-size: t.$text-micro;
+  font-family: t.$font-sans;
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+
+  &.selected {
+    border-color: transparent;
+    background: var(--brand-accent);
+    color: var(--on-accent);
+  }
+}
+
+.audience-chip {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.chip-counts {
+  font-size: t.$text-micro;
+  opacity: 0.75;
+}
+
+.announcement-config {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.announcement-sent,
+.announcement-send {
+  padding: 12px 14px;
+  border: 1px solid var(--border-hairline);
+  border-radius: t.$radius-md;
+  background: var(--surface-page);
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
+.announcement-sent .disclosure {
+  align-self: flex-start;
+}
+
 .disclosure {
   align-self: flex-start;
   padding: 0;

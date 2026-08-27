@@ -804,7 +804,15 @@
         "fr": "Français"
       },
       "dateLabel": "Date prévue",
-      "dateRequired": "Une date prévue est requise."
+      "dateRequired": "Une date prévue est requise.",
+      "kindLabel": "Type",
+      "kind": {
+        "internal": "Interne",
+        "guestFacing": "Pour les invités",
+        "hint": "Les étapes pour les invités peuvent porter une annonce que vous envoyez aux invités. Les étapes internes ne notifient jamais personne, sur aucun canal."
+      },
+      "announcementTypeLabel": "Type d'annonce",
+      "audienceLabel": "Destinataires"
     },
     "delete": {
       "title": "Supprimer cette étape ?",
@@ -814,6 +822,48 @@
     "error": {
       "conflict": "Quelqu'un vient de mettre à jour cette étape. Rouvrez-la pour voir la dernière version.",
       "generic": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
+    },
+    "announcementType": {
+      "rsvp-reminder": "Rappel de confirmation",
+      "menu-selection-reminder": "Rappel de choix du menu",
+      "save-the-date": "Réservez la date",
+      "invitation": "Invitation"
+    },
+    "audience": {
+      "all": "Tout le monde",
+      "not-replied": "Pas encore répondu",
+      "attending": "Présents",
+      "attending-no-menu": "Présents, sans menu choisi"
+    },
+    "row": {
+      "unconfigured": "Pas encore configurée",
+      "recipients": {
+        "none": "Aucun invité ne correspond à ces destinataires pour l'instant",
+        "singular": "{{count}} invité",
+        "plural": "{{count}} invités"
+      }
+    },
+    "announcement": {
+      "audienceCounts": "{{size}} invités · {{reachable}} joignables",
+      "sendButton": "Envoyer l'annonce",
+      "sendHint": "Rien ne part tant que vous n'avez pas confirmé.",
+      "sendDisabledHint": "Choisissez un type et des destinataires, puis enregistrez, pour pouvoir l'envoyer.",
+      "sentOn": "Envoyée le {{date}}",
+      "sentCounts": "{{recipientCount}} destinataires · {{reachableCount}} joignables",
+      "markNotSent": "Marquer comme non envoyée",
+      "sendConflict": "Cette annonce n'a pas pu être envoyée — l'étape a peut-être déjà été envoyée, ou modifiée par quelqu'un d'autre. Nous l'avons actualisée pour vous montrer son état actuel.",
+      "sendConfirm": {
+        "title": "Envoyer cette annonce ?",
+        "message": "Envoyer « {{title}} » ({{type}}) à {{audience}} — {{recipientCount}} invités, {{reachableCount}} joignables. Cela part immédiatement.",
+        "confirm": "Oui, envoyer maintenant",
+        "cancel": "Annuler"
+      },
+      "clearConfirm": {
+        "title": "Marquer comme non envoyée ?",
+        "message": "Cela n'annule aucun envoi — aucune annonce n'est rappelée et rien de ce qui a déjà été délivré n'est inversé. Cela retire seulement le blocage qui empêche de renvoyer cette étape.",
+        "confirm": "Marquer comme non envoyée",
+        "cancel": "Garder comme envoyée"
+      }
     }
   },
   "people": {

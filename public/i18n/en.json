@@ -808,7 +808,15 @@
         "fr": "French"
       },
       "dateLabel": "Planned for",
-      "dateRequired": "A planned date is required."
+      "dateRequired": "A planned date is required.",
+      "kindLabel": "Kind",
+      "kind": {
+        "internal": "Internal",
+        "guestFacing": "Guest-facing",
+        "hint": "Guest-facing milestones can carry an announcement you send to guests. Internal ones never notify anyone, on any channel."
+      },
+      "announcementTypeLabel": "Announcement type",
+      "audienceLabel": "Audience"
     },
     "delete": {
       "title": "Delete this milestone?",
@@ -818,6 +826,48 @@
     "error": {
       "conflict": "Someone else just updated this milestone. Reopen it to see the latest version.",
       "generic": "Something went wrong saving that. Please try again."
+    },
+    "announcementType": {
+      "rsvp-reminder": "RSVP reminder",
+      "menu-selection-reminder": "Menu selection reminder",
+      "save-the-date": "Save the date",
+      "invitation": "Invitation"
+    },
+    "audience": {
+      "all": "Everyone",
+      "not-replied": "Not replied yet",
+      "attending": "Attending",
+      "attending-no-menu": "Attending, no menu yet"
+    },
+    "row": {
+      "unconfigured": "Not configured yet",
+      "recipients": {
+        "none": "No guests currently match this audience",
+        "singular": "{{count}} guest",
+        "plural": "{{count}} guests"
+      }
+    },
+    "announcement": {
+      "audienceCounts": "{{size}} guests · {{reachable}} reachable",
+      "sendButton": "Send announcement",
+      "sendHint": "Nothing goes out until you confirm.",
+      "sendDisabledHint": "Choose a type and an audience, then save, to enable sending.",
+      "sentOn": "Sent {{date}}",
+      "sentCounts": "{{recipientCount}} recipients · {{reachableCount}} reachable",
+      "markNotSent": "Mark as not sent",
+      "sendConflict": "This announcement could not be sent — the milestone may already have been sent, or changed, by someone else. We've refreshed it to show the latest state.",
+      "sendConfirm": {
+        "title": "Send this announcement?",
+        "message": "Send “{{title}}” ({{type}}) to {{audience}} — {{recipientCount}} guests, {{reachableCount}} reachable. This goes out immediately.",
+        "confirm": "Yes, send now",
+        "cancel": "Cancel"
+      },
+      "clearConfirm": {
+        "title": "Mark as not sent?",
+        "message": "This does not unsend anything — no announcement is recalled and nothing already delivered is reversed. It only removes the block that stops this milestone being sent again.",
+        "confirm": "Mark as not sent",
+        "cancel": "Keep as sent"
+      }
     }
   },
   "people": {
