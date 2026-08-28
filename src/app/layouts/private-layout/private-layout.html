@@ -12,3 +12,20 @@
 @if (chrome().tabBar) {
   <app-tab-bar class="tab-bar" [active]="chrome().tab ?? ''" />
 }
+
+<app-toast-stack placement="bottom-center" [clearsTabBar]="true">
+  @for (t of toastCenter.toasts(); track t.id) {
+    <app-toast
+      [tone]="t.tone"
+      [variant]="t.variant"
+      [icon]="t.icon"
+      [title]="t.title"
+      [meta]="t.meta"
+      [actionLabel]="t.actionLabel"
+      [delay]="t.delay"
+      [dismissible]="t.dismissible"
+      (close)="toastCenter.dismiss(t.id)"
+      >{{ t.body }}</app-toast
+    >
+  }
+</app-toast-stack>

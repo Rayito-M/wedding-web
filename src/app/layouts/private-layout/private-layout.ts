@@ -10,8 +10,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 
+import { ToastCenterService } from '@app/core';
+
 import { ScreenHeader } from '../../shared/screen-header/screen-header';
 import { TabBar } from '../../shared/tab-bar/tab-bar';
+import { Toast } from '../../shared/toast/toast';
+import { ToastStack } from '../../shared/toast-stack/toast-stack';
 
 /** Chrome flags read from the active child route's `data`. */
 interface RouteChrome {
@@ -25,16 +29,21 @@ interface RouteChrome {
  * header (which carries the desktop nav ≥900px) and the mobile tab-bar around a
  * `<router-outlet>`. Which chrome shows is driven by the active child route's
  * `data` (`tab`, `tabBar`, `topNav`).
+ *
+ * Also mounts the app's one `app-toast-stack` (T285) — `bottom-center`,
+ * clearing the mobile tab bar — so a toast survives navigation between
+ * private screens. There is no stack on the public/auth shell.
  */
 @Component({
   selector: 'app-private-layout',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, ScreenHeader, TabBar],
+  imports: [RouterOutlet, ScreenHeader, TabBar, ToastStack, Toast],
   templateUrl: './private-layout.html',
   styleUrl: './private-layout.scss',
 })
 export class PrivateLayout {
   private readonly router = inject(Router);
+  protected readonly toastCenter = inject(ToastCenterService);
 
   @ViewChild('mainContent') private mainContent?: ElementRef<HTMLElement>;
   protected readonly isScrolled = signal(false);

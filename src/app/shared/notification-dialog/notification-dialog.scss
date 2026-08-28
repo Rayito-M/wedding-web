@@ -1,0 +1,55 @@
+@use '../../../styles/tokens' as t;
+
+// Kicker line above the title (NotificationDialog.jsx:29-33), projected into
+// `app-modal`'s `[modal-eyebrow]` slot.
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+}
+
+.kicker-icon {
+  flex: none;
+  color: var(--brand-accent);
+}
+
+.kicker-label {
+  flex: 1;
+  min-width: 0;
+  font-family: t.$font-sans;
+  font-size: t.$text-label;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.kicker-time {
+  flex: none;
+  font-family: t.$font-sans;
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+// Body copy, shown in full — never clamped (that's the dropdown row's job,
+// not this dialog's).
+.body {
+  margin: t.$space-2 0 0;
+  font-family: t.$font-sans;
+  font-size: t.$text-body;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+// One wrapper spans the `.modal-actions` row (`justify-content: flex-end`)
+// instead of fighting the justify; the two buttons split it evenly — same
+// arrangement and reasoning as `confirm-dialog.scss`.
+.actions {
+  display: flex;
+  gap: t.$space-2;
+  width: 100%;
+}
+
+.action {
+  flex: 1;
+}

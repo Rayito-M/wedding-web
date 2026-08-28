@@ -928,5 +928,55 @@
       "title": "Modifier votre choix",
       "body": "Vous pouvez modifier votre choix Accepter/Refuser à tout moment en effaçant les données de ce site dans les paramètres de votre navigateur ; il vous sera à nouveau demandé lors de votre prochaine visite."
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "ariaLabel": "Notifications",
+    "ariaLabelUnread": "Notifications, {{count}} non lues",
+    "markAllRead": "Tout marquer comme lu",
+    "empty": "Rien de nouveau — nous vous le dirons ici.",
+    "ago": {
+      "now": "à l'instant",
+      "minutes": "il y a {{count}} min",
+      "hours": "il y a {{count}} h",
+      "days": "il y a {{count}} j"
+    },
+    "typeLabel": {
+      "save-the-date": "Réservez la date",
+      "invitation": "Invitation",
+      "rsvp-reminder": "Rappel de confirmation",
+      "menu-selection-reminder": "Rappel de menu",
+      "fallback": "Mariage"
+    },
+    "template": {
+      "save-the-date": {
+        "title": "Vous pouvez réserver la date",
+        "body": "Nous avons fixé la date — notez-la dans votre agenda. L'invitation suivra plus tard."
+      },
+      "invitation": {
+        "title": "Votre invitation est arrivée",
+        "body": "Ouvrez l'application pour voir tous les détails et confirmer votre présence."
+      },
+      "rsvp-reminder": {
+        "title": "Il manque votre confirmation",
+        "body": "Nous n'avons pas encore reçu votre réponse. Répondez quand vous pourrez."
+      },
+      "menu-selection-reminder": {
+        "title": "Choix du menu à faire",
+        "body": "Votre présence est confirmée — dites-nous maintenant ce que chacun mangera."
+      },
+      "fallback": {
+        "title": "Vous avez une notification",
+        "body": "Ouvrez l'application pour voir les détails."
+      }
+    },
+    "errors": {
+      "load": "Impossible de charger les notifications. Veuillez réessayer.",
+      "markRead": "Impossible de marquer comme lue. Veuillez réessayer.",
+      "markAllRead": "Impossible de tout marquer comme lu. Veuillez réessayer."
+    }
+  },
+  "toast": {
+    "dismiss": "Ignorer"
   }
 }

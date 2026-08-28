@@ -20,7 +20,9 @@ export type IconName =
   | 'lock'
   | 'info'
   | 'warning'
-  | 'chevron';
+  | 'chevron'
+  | 'bell'
+  | 'check';
 
 const PATHS: Record<IconName, string> = {
   mail: 'M4.5 5.5h15A1.5 1.5 0 0 1 21 7v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17V7a1.5 1.5 0 0 1 1.5-1.5zM3.5 7.5 12 13.5 20.5 7.5',
@@ -45,6 +47,8 @@ const PATHS: Record<IconName, string> = {
   info: 'M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17zM12 11v5.5',
   warning: 'M12 4.2l8.6 15.3H3.4L12 4.2zM12 10v4.4',
   chevron: 'M9.5 5 16.5 12 9.5 19',
+  bell: 'M12 4a5.5 5.5 0 0 0-5.5 5.5c0 3.5-.9 4.9-1.7 5.7-.5.5-.2 1.3.5 1.3h13.4c.7 0 1-.8.5-1.3-.8-.8-1.7-2.2-1.7-5.7A5.5 5.5 0 0 0 12 4zM9.8 19a2.2 2.2 0 0 0 4.4 0',
+  check: 'M5 12.8 9.5 17.3 19 7.8',
 };
 
 /** Generic line-art icon (DS `Icon`, 24px grid, 1.5px stroke, round caps,

@@ -1,0 +1,200 @@
+// Per design system components/navigation/NotificationBell.jsx. Sizing
+// (width/height) is a `[style.*]` host binding driven by the `size` input —
+// see notification-bell.ts's host metadata comment.
+:host {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-family: var(--font-sans);
+}
+
+.bell-btn {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-body-color);
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--transition-fast);
+}
+
+.bell-btn:hover,
+.bell-btn.open {
+  background: var(--surface-chip);
+}
+
+// Unread-count badge — gone entirely at zero (no badge, no dot, no empty
+// circle; handled by the `@if (hasUnread())` in the template, not by CSS).
+.badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-accent);
+  color: var(--on-accent);
+  font-size: var(--text-label);
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+  border: 1.5px solid var(--surface-card);
+  box-sizing: content-box;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 316px;
+  // Capped to the viewport with `max-width`, not a media query (hard rule
+  // 4) — never overflows on an iPhone SE.
+  max-width: calc(100vw - 32px);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  // `--shadow-overlay`, not `--shadow-modal`: this is a dropdown/menu, and
+  // hub ADR-0025 assigns `--shadow-overlay` to dropdowns and menus (menus
+  // use `--shadow-modal` in the DS prototype only because that was the
+  // token that happened to exist at the time — `NotificationBell.jsx:72`).
+  box-shadow: var(--shadow-overlay);
+  overflow: hidden;
+  z-index: 10;
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.dropdown-title {
+  flex: 1;
+  font-family: var(--font-serif);
+  font-size: var(--text-body-lg);
+  color: var(--text-body-color);
+}
+
+.mark-all {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  color: var(--brand-accent);
+}
+
+.empty {
+  padding: 26px 16px;
+  text-align: center;
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+// A failed list fetch, rendered where the rows/`.empty` state would
+// otherwise go (T289) — the user is already looking at the dropdown, so this
+// is the failure's only surface (no toast; see `NotificationCenterService`'s
+// doc comment).
+.load-error {
+  padding: 26px 16px;
+  text-align: center;
+  font-size: var(--text-caption);
+  color: var(--danger);
+}
+
+.row {
+  display: flex;
+  gap: var(--space-2);
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--border-hairline);
+  background: transparent;
+  padding: 11px 14px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  align-items: flex-start;
+  transition: filter var(--transition-fast);
+}
+
+.row:hover {
+  filter: brightness(0.98);
+}
+
+.row.unread {
+  background: var(--surface-chip);
+}
+
+.row-icon {
+  margin-top: 1px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.row.unread .row-icon {
+  color: var(--brand-accent);
+}
+
+.row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.row-top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.row-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-body);
+  line-height: 1.35;
+  color: var(--text-body-color);
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row.unread .row-title {
+  font-weight: 600;
+}
+
+.row-time {
+  flex-shrink: 0;
+  font-size: var(--text-label);
+  color: var(--text-muted);
+}
+
+.row-snippet {
+  display: -webkit-box;
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  color: var(--text-muted);
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.row-dot {
+  margin-top: 6px;
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--brand-accent);
+}

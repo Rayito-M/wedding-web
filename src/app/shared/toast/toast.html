@@ -1,0 +1,37 @@
+@if (icon()) {
+  <div class="icon">
+    <app-icon [name]="icon()!" />
+  </div>
+}
+
+<div class="content">
+  @if (title() || meta()) {
+    <div class="head">
+      @if (title()) {
+        <div class="title">{{ title() }}</div>
+      }
+      @if (meta()) {
+        <div class="meta">{{ meta() }}</div>
+      }
+    </div>
+  }
+
+  <div class="body">
+    <ng-content />
+  </div>
+
+  @if (actionLabel()) {
+    <button type="button" class="action" (click)="onAction()">{{ actionLabel() }}</button>
+  }
+</div>
+
+@if (dismissible()) {
+  <button
+    type="button"
+    class="dismiss"
+    [attr.aria-label]="'toast.dismiss' | translate"
+    (click)="onDismiss()"
+  >
+    ✕
+  </button>
+}

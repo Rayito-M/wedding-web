@@ -1,0 +1,63 @@
+// Per design system components/overlays/ToastStack.jsx, adapted per Phase O
+// decision 2 (`position: fixed`, not `absolute` — no `data-overlay-host`,
+// no portal). `:host` is the positioned container itself; projected
+// `app-toast` instances set their own `pointer-events: auto` (toast.scss),
+// so clicks pass through this layer everywhere except on a toast.
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  box-sizing: border-box;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+// The nine placements factor into two independent axes — `top|middle|bottom`
+// picks `justify-content`, `start|center|end` picks `align-items` — exactly
+// as `ToastStack.jsx`'s PLACE table does, so an attribute selector per axis
+// replaces its nine-entry lookup.
+:host([data-placement^='top']) {
+  justify-content: flex-start;
+}
+
+:host([data-placement^='middle']) {
+  justify-content: center;
+}
+
+:host([data-placement^='bottom']) {
+  justify-content: flex-end;
+}
+
+:host([data-placement$='start']) {
+  align-items: flex-start;
+}
+
+:host([data-placement$='center']) {
+  align-items: center;
+}
+
+:host([data-placement$='end']) {
+  align-items: flex-end;
+}
+
+// `clearsTabBar` — the one caller-facing clearance this app has (replaces
+// the DS's free-form `gutter`; see the class doc comment in toast-stack.ts).
+// 70px matches the mobile `TabBar`'s own reserved height
+// (private-layout.scss:7's `padding-bottom: 70px`), and only applies to a
+// bottom-anchored stack, which is the only placement the bar can cover.
+:host(.clears-tab-bar[data-placement^='bottom']) {
+  padding-bottom: calc(var(--space-4) + 70px);
+}
+
+// The `TabBar` itself is hidden ≥900px (private-layout.scss's own
+// breakpoint, reused rather than inventing a new one) — no clearance needed
+// once it is gone.
+@media (min-width: 900px) {
+  :host(.clears-tab-bar[data-placement^='bottom']) {
+    padding-bottom: var(--space-4);
+  }
+}

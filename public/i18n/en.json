@@ -932,5 +932,55 @@
       "title": "Changing your choice",
       "body": "You can change your Accept/Decline choice at any time by clearing this site's data in your browser settings; you'll be asked again on your next visit."
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "ariaLabel": "Notifications",
+    "ariaLabelUnread": "Notifications, {{count}} unread",
+    "markAllRead": "Mark all read",
+    "empty": "Nothing new — we'll tell you here.",
+    "ago": {
+      "now": "now",
+      "minutes": "{{count}}m ago",
+      "hours": "{{count}}h ago",
+      "days": "{{count}}d ago"
+    },
+    "typeLabel": {
+      "save-the-date": "Save the date",
+      "invitation": "Invitation",
+      "rsvp-reminder": "RSVP reminder",
+      "menu-selection-reminder": "Menu reminder",
+      "fallback": "Wedding"
+    },
+    "template": {
+      "save-the-date": {
+        "title": "You can save the date now",
+        "body": "We've set the date — save it to your calendar. The invitation follows later."
+      },
+      "invitation": {
+        "title": "Your invitation is here",
+        "body": "Open the app to see all the details and RSVP."
+      },
+      "rsvp-reminder": {
+        "title": "Your RSVP is missing",
+        "body": "We haven't heard from you yet. Reply whenever you can."
+      },
+      "menu-selection-reminder": {
+        "title": "Menu choice needed",
+        "body": "You're confirmed to attend — now tell us what everyone's eating."
+      },
+      "fallback": {
+        "title": "You have a notification",
+        "body": "Open the app to see the details."
+      }
+    },
+    "errors": {
+      "load": "Couldn't load notifications. Please try again.",
+      "markRead": "Couldn't mark that as read. Please try again.",
+      "markAllRead": "Couldn't mark everything as read. Please try again."
+    }
+  },
+  "toast": {
+    "dismiss": "Dismiss"
   }
 }

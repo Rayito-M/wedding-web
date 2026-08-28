@@ -1,0 +1,53 @@
+<app-modal
+  [open]="open() && !!notification()"
+  size="sm"
+  [dismissable]="true"
+  [showClose]="false"
+  [title]="resolvedTitle()"
+  (close)="onClose()"
+>
+  <!-- Each slot gets its own @if with a single root node — a shared @if
+       around all three (kicker/body/actions) silently defeats `app-modal`'s
+       `[modal-eyebrow]`/`[modal-actions]` projection (NG8011: "will not be
+       projected into the specific slot because the surrounding @if has more
+       than one node at its root"). -->
+  @if (notification(); as n) {
+    <div modal-eyebrow class="kicker">
+      <app-icon class="kicker-icon" [name]="icon()!" [size]="16" />
+      <span class="kicker-label">{{ typeLabelKey() | translate }}</span>
+      <span class="kicker-time">{{ n.createdAt | date: 'd MMMM, HH:mm' : '' : lang() }}</span>
+    </div>
+  }
+
+  @if (notification()) {
+    <p class="body">{{ bodyKey() | translate }}</p>
+  }
+
+  @if (notification()) {
+    <div modal-actions class="actions">
+      <button
+        #closeBtn
+        app-btn
+        type="button"
+        class="action"
+        [primary]="false"
+        (keydown)="onCloseKeydown($event)"
+        (click)="onClose()"
+      >
+        {{ 'shared.close' | translate }}
+      </button>
+      @if (actionLabel()) {
+        <button
+          #actionBtn
+          app-btn
+          type="button"
+          class="action"
+          (keydown)="onActionKeydown($event)"
+          (click)="onAction()"
+        >
+          {{ actionLabel() }}
+        </button>
+      }
+    </div>
+  }
+</app-modal>

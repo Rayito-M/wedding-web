@@ -28,6 +28,7 @@ import {
 import { LangCode } from '../../model';
 import { Monogram } from '../monogram/monogram';
 import { NAV_TABS } from '../nav-tabs';
+import { NotificationBell } from '../notification-bell/notification-bell';
 
 /**
  * Per-screen header row: monogram left, an uppercase meta label right, and the
@@ -40,7 +41,7 @@ import { NAV_TABS } from '../nav-tabs';
 @Component({
   selector: 'app-screen-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, KeyValuePipe, TranslatePipe, Monogram],
+  imports: [RouterLink, KeyValuePipe, TranslatePipe, Monogram, NotificationBell],
   templateUrl: './screen-header.html',
   styleUrl: './screen-header.scss',
 })

@@ -928,5 +928,55 @@
       "title": "Cambiar tu elección",
       "body": "Puedes cambiar tu elección de Aceptar/Rechazar en cualquier momento borrando los datos de este sitio en la configuración de tu navegador; se te volverá a preguntar en tu próxima visita."
     }
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "ariaLabel": "Notificaciones",
+    "ariaLabelUnread": "Notificaciones, {{count}} sin leer",
+    "markAllRead": "Marcar todo como leído",
+    "empty": "Nada nuevo — te avisaremos aquí.",
+    "ago": {
+      "now": "ahora",
+      "minutes": "hace {{count}} min",
+      "hours": "hace {{count}} h",
+      "days": "hace {{count}} d"
+    },
+    "typeLabel": {
+      "save-the-date": "Reserva la fecha",
+      "invitation": "Invitación",
+      "rsvp-reminder": "Recordatorio de confirmación",
+      "menu-selection-reminder": "Recordatorio de menú",
+      "fallback": "Boda"
+    },
+    "template": {
+      "save-the-date": {
+        "title": "Ya puedes reservar la fecha",
+        "body": "Hemos fijado la fecha — guárdala en tu calendario. La invitación llegará más adelante."
+      },
+      "invitation": {
+        "title": "Tu invitación ya está aquí",
+        "body": "Abre la app para ver todos los detalles y confirmar tu asistencia."
+      },
+      "rsvp-reminder": {
+        "title": "Falta tu confirmación",
+        "body": "Todavía no hemos recibido tu respuesta. Confírmala cuando puedas."
+      },
+      "menu-selection-reminder": {
+        "title": "Falta elegir tu menú",
+        "body": "Ya has confirmado asistencia — ahora dinos qué comerá cada uno."
+      },
+      "fallback": {
+        "title": "Tienes una notificación",
+        "body": "Abre la app para ver los detalles."
+      }
+    },
+    "errors": {
+      "load": "No se han podido cargar las notificaciones. Inténtalo de nuevo.",
+      "markRead": "No se ha podido marcar como leída. Inténtalo de nuevo.",
+      "markAllRead": "No se ha podido marcar todo como leído. Inténtalo de nuevo."
+    }
+  },
+  "toast": {
+    "dismiss": "Descartar"
   }
 }

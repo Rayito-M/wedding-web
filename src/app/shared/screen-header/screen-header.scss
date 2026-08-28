@@ -73,6 +73,17 @@ header {
   gap: var(--space-4);
 }
 
+// Wraps `app-notification-bell`, between `.header-meta` and `.account`
+// (`AppHeader.jsx:11-18`'s account cluster). `--space-1`-scale gap in case a
+// second affordance ever joins it; `flex-shrink: 0` so the bell never
+// compresses under the role label / desktop nav.
+.notifications {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
 // Account menu — avatar button (always visible) + dropdown.
 .account {
   position: relative;

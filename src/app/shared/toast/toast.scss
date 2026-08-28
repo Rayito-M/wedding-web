@@ -1,0 +1,182 @@
+// Per design system components/overlays/Toast.jsx — every value below is a
+// token/alias, not a port of the JSX's `style={{…}}` object (Phase O
+// decision 1). `--toast-tone`/`--toast-on` are private custom properties,
+// set once per `:host(.tone-*)` block, so the icon tint (surface) and the
+// flood fill (filled) share one source of truth instead of two parallel
+// tone tables.
+
+:host {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 340px;
+  box-sizing: border-box;
+  padding: var(--space-3);
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  // A toast floats over content but is never a modal panel (hub ADR-0025) —
+  // `--shadow-overlay`, never `--shadow-modal`.
+  box-shadow: var(--shadow-overlay);
+  font-family: var(--font-sans);
+  color: var(--text-body-color);
+  pointer-events: auto;
+
+  --toast-tone: var(--text-muted);
+  --toast-on: var(--on-accent);
+}
+
+// Tones carry meaning, not decoration (Toast.prompt.md §Colour scheme).
+:host(.tone-neutral) {
+  --toast-tone: var(--text-muted);
+  --toast-on: var(--on-accent);
+}
+
+:host(.tone-accent) {
+  --toast-tone: var(--brand-accent);
+  --toast-on: var(--on-accent);
+}
+
+:host(.tone-provisional) {
+  --toast-tone: var(--status-provisional);
+  // No `--on-provisional` token exists in the DS (noted gap, T284) — the
+  // semantic `--surface-card` alias stands in, per hard rule 3. Replace this
+  // one line if the token ever lands.
+  --toast-on: var(--surface-card);
+}
+
+:host(.tone-danger) {
+  --toast-tone: var(--danger);
+  --toast-on: var(--on-danger);
+}
+
+// variant="surface" (default): white card, tone tints only the icon.
+.icon {
+  display: flex;
+  flex: none;
+  color: var(--toast-tone);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.title {
+  flex: 1;
+  font-size: var(--text-body);
+  font-weight: 600;
+  line-height: 1.4;
+  color: inherit;
+}
+
+.meta {
+  flex: none;
+  font-size: var(--text-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.body {
+  font-size: var(--text-body);
+  line-height: 1.6;
+  color: var(--text-muted);
+
+  .head + & {
+    margin-top: var(--space-1);
+  }
+}
+
+.action {
+  appearance: none;
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  cursor: pointer;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-hairline);
+  background: transparent;
+  color: inherit;
+  transition: opacity var(--transition-fast);
+}
+
+.action:hover {
+  opacity: 0.85;
+}
+
+.dismiss {
+  appearance: none;
+  flex: none;
+  width: var(--space-6);
+  height: var(--space-6);
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--text-body);
+  line-height: 1;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: opacity var(--transition-fast);
+}
+
+.dismiss:hover {
+  opacity: 0.85;
+}
+
+// variant="filled": floods the toast in the tone colour, on-colour text.
+:host(.filled) {
+  background: var(--toast-tone);
+  border-color: transparent;
+  color: var(--toast-on);
+}
+
+:host(.filled) .icon {
+  color: var(--toast-on);
+}
+
+:host(.filled) .meta {
+  color: var(--toast-on);
+  opacity: 0.8;
+}
+
+:host(.filled) .body {
+  color: var(--toast-on);
+  opacity: 0.9;
+}
+
+:host(.filled) .action {
+  border-color: var(--toast-on);
+}
+
+:host(.filled) .dismiss {
+  color: var(--toast-on);
+}
+
+// translucent — the only blur in the system (Toast.prompt.md §Translucent),
+// Album screen over guest photography only. `-webkit-` prefix required for
+// iOS Safari (hard rule 4). `color-mix` already used in this repo
+// (tab-bar.scss:77).
+:host(.translucent) {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+:host(.translucent):not(.filled) {
+  background: color-mix(in oklab, var(--surface-card) 82%, transparent);
+}
+
+:host(.translucent.filled) {
+  background: color-mix(in oklab, var(--toast-tone) 88%, transparent);
+}

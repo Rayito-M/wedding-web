@@ -1,0 +1,67 @@
+<button
+  type="button"
+  class="bell-btn"
+  [class.open]="open()"
+  (click)="toggle($event)"
+  aria-haspopup="menu"
+  [attr.aria-expanded]="open()"
+  [attr.aria-label]="ariaLabelKey() | translate: ariaLabelParams()"
+>
+  <app-icon name="bell" [size]="iconSize()" />
+  @if (hasUnread()) {
+    <span class="badge">{{ badgeLabel() }}</span>
+  }
+</button>
+
+@if (open()) {
+  <div class="dropdown" role="menu">
+    <div class="dropdown-header">
+      <span class="dropdown-title">{{ 'notifications.title' | translate }}</span>
+      @if (hasUnread()) {
+        <button type="button" class="mark-all" (click)="markAllRead($event)">
+          {{ 'notifications.markAllRead' | translate }}
+        </button>
+      }
+    </div>
+
+    @if (loadError()) {
+      <div class="load-error">{{ 'notifications.errors.load' | translate }}</div>
+    } @else if (rows().length === 0) {
+      <div class="empty">{{ 'notifications.empty' | translate }}</div>
+    } @else {
+      @for (row of rows(); track row.notification.id) {
+        <button
+          type="button"
+          role="menuitem"
+          class="row"
+          [class.unread]="row.unread"
+          (click)="selectRow(row.notification, $event)"
+        >
+          <app-icon class="row-icon" [name]="row.icon" [size]="16" />
+          <span class="row-body">
+            <span class="row-top">
+              <span class="row-title">{{ row.titleKey | translate }}</span>
+              <span class="row-time">
+                @if (row.ago.pastWeek) {
+                  {{ row.notification.createdAt | date: 'd MMM' : '' : lang() }}
+                } @else {
+                  {{ row.ago.key | translate: row.ago.params }}
+                }
+              </span>
+            </span>
+            <span class="row-snippet">{{ row.bodyKey | translate }}</span>
+          </span>
+          @if (row.unread) {
+            <span class="row-dot"></span>
+          }
+        </button>
+      }
+    }
+  </div>
+}
+
+<app-notification-dialog
+  [open]="!!selected()"
+  [notification]="selected()"
+  (close)="closeDialog()"
+/>
