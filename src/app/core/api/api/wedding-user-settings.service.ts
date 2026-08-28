@@ -35,7 +35,7 @@ export interface SettingsControllerUpdateV1RequestParams {
 @Injectable({
   providedIn: 'root'
 })
-export class SettingsService extends BaseService {
+export class WeddingUserSettingsService extends BaseService {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
@@ -44,7 +44,7 @@ export class SettingsService extends BaseService {
     /**
      * Get the caller\&#39;s settings
      * Returns the authenticated caller\&#39;s own settings. Notification preferences are returned fully resolved: &#x60;true&#x60; means the channel will be used, &#x60;false&#x60; means the caller has opted out. Scoped to the JWT subject — there is no way to read another guest\&#39;s settings.
-     * @endpoint get /v1/settings
+     * @endpoint get /v1/user-settings
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
@@ -82,7 +82,7 @@ export class SettingsService extends BaseService {
             }
         }
 
-        let localVarPath = `/v1/settings`;
+        let localVarPath = `/v1/user-settings`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<SettingsDto>('get', `${basePath}${localVarPath}`,
             {
@@ -99,8 +99,8 @@ export class SettingsService extends BaseService {
 
     /**
      * Update the caller\&#39;s settings
-     * Patches the authenticated caller\&#39;s own settings. Both notification channels are optional, so one may be flipped without restating the other. Opting out suppresses outbound delivery on that channel only — the notification record itself is still written (hub ADR-0019), so nothing disappears from the in-app list.
-     * @endpoint patch /v1/settings
+     * Patches the authenticated caller\&#39;s own settings. Every notification channel is optional, so one may be flipped without restating the others. Opting out suppresses outbound delivery on that channel only — the notification record itself is still written (hub ADR-0019), so nothing disappears from the in-app list.
+     * @endpoint patch /v1/user-settings
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -152,7 +152,7 @@ export class SettingsService extends BaseService {
             }
         }
 
-        let localVarPath = `/v1/settings`;
+        let localVarPath = `/v1/user-settings`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<SettingsDto>('patch', `${basePath}${localVarPath}`,
             {

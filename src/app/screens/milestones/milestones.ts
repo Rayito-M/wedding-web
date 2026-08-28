@@ -20,7 +20,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
   AudienceListResponseDtoItemsInner,
-  AudiencesService,
+  WeddingAudiencesService,
   EntityNamesEnum,
   HeaderService,
   MilestoneDataService,
@@ -123,7 +123,7 @@ export class Milestones {
   private readonly translateService = inject(TranslateService);
   private readonly translate = inject(TranslateLanguageService);
   private readonly milestoneDataService = inject(MilestoneDataService);
-  private readonly audiencesApi = inject(AudiencesService);
+  private readonly audiencesApi = inject(WeddingAudiencesService);
 
   private readonly milestoneCollection: EntityCollectionService<MilestoneDto> = inject(
     EntityServices,
@@ -149,9 +149,12 @@ export class Milestones {
     this.milestoneCollection.entities$,
     { initialValue: [] },
   );
-  protected readonly milestonesLoaded: Signal<boolean> = toSignal(this.milestoneCollection.loaded$, {
-    initialValue: false,
-  });
+  protected readonly milestonesLoaded: Signal<boolean> = toSignal(
+    this.milestoneCollection.loaded$,
+    {
+      initialValue: false,
+    },
+  );
 
   /** Singleton resource: the collection holds at most one document. */
   protected readonly weddingConfig: Signal<WeddingConfigResponseDto | undefined> = toSignal(
@@ -351,7 +354,10 @@ export class Milestones {
    *  short-delay retry (to allow for layout that settles slightly late). */
   private centerTodayMarker(list: HTMLElement, marker: HTMLElement): void {
     const center = () => {
-      list.scrollTop = Math.max(0, marker.offsetTop - list.clientHeight / 2 + marker.offsetHeight / 2);
+      list.scrollTop = Math.max(
+        0,
+        marker.offsetTop - list.clientHeight / 2 + marker.offsetHeight / 2,
+      );
     };
     requestAnimationFrame(center);
     setTimeout(center, 200);
@@ -490,9 +496,11 @@ export class Milestones {
     // `EntityCollectionService.update()` takes a flat `Partial<T>` (must
     // include `id`) — `MilestoneDataService.update()` is what wraps it as
     // `{ id, changes }` before calling the API (matches `rsvp-edit.ts`).
-    this.milestoneCollection.update({ id: m.id, version: m.version, reached: !m.reached }).subscribe({
-      error: (error: unknown) => this.actionError.set(this.errorMessage(error)),
-    });
+    this.milestoneCollection
+      .update({ id: m.id, version: m.version, reached: !m.reached })
+      .subscribe({
+        error: (error: unknown) => this.actionError.set(this.errorMessage(error)),
+      });
   }
 
   protected dismissActionError(): void {
@@ -764,7 +772,9 @@ export class Milestones {
           // Hub ADR-0030 §7: either it was already sent, or someone else's
           // edit/send won the race. Never retried automatically — re-read
           // and say plainly what happened.
-          this.actionError.set(this.translateService.instant('milestones.announcement.sendConflict'));
+          this.actionError.set(
+            this.translateService.instant('milestones.announcement.sendConflict'),
+          );
           this.refetchMilestones();
         } else {
           this.actionError.set(this.translateService.instant('milestones.error.generic'));

@@ -12,5 +12,6 @@
 export interface UpdateSettingsDtoNotificationPrefs { 
     email?: boolean;
     sms?: boolean;
+    whatsapp?: boolean;
 }
 

@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import type { IconName } from '@app/shared/icons/icon';
 
-import { MilestoneDto, NotificationDto, NotificationsService } from '../api';
+import { MilestoneDto, NotificationDto, WeddingNotificationsService } from '../api';
 
 import { ToastCenterService } from './toast-center.service';
 
@@ -85,7 +85,9 @@ export function bodyKeyFor(n: NotificationDto): string {
 /** Defensive sort, newest first — the API documents this ordering already
  *  but a client-side re-sort costs five lines and removes the dependency. */
 function sortByCreatedAtDesc(items: NotificationDto[]): NotificationDto[] {
-  return [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return [...items].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
 }
 
 /**
@@ -147,7 +149,7 @@ function sortByCreatedAtDesc(items: NotificationDto[]): NotificationDto[] {
  */
 @Injectable({ providedIn: 'root' })
 export class NotificationCenterService {
-  private readonly api = inject(NotificationsService);
+  private readonly api = inject(WeddingNotificationsService);
   private readonly toastCenter = inject(ToastCenterService);
   private readonly translate = inject(TranslateService);
 

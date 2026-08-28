@@ -40,7 +40,7 @@ export interface NotificationsControllerMarkReadV1RequestParams {
 @Injectable({
   providedIn: 'root'
 })
-export class NotificationsService extends BaseService {
+export class WeddingNotificationsService extends BaseService {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
