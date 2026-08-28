@@ -180,9 +180,9 @@ export class GuestProfileModal {
    * The same pre-formatted label the guest-manager row/column render (T290's
    * pure helper), read directly off `UserProfileDto.lastSeen`. Read-only,
    * admin-surface-only — there is no edit control (ADR-0035 §2/§6). `/guests`
-   * sits behind `adminGuard`, so this modal's caller is always the couple and
-   * the API always populates the real value (hub ADR-0036) — no separate role
-   * check is needed here.
+   * sits behind `rbacGuard` with `roles: ['groom', 'bride']`, so this modal's
+   * caller is always the couple and the API always populates the real value
+   * (hub ADR-0036) — no separate role check is needed here.
    */
   protected readonly lastSeenLabel = computed(() => {
     const profile = this.guestProfile();

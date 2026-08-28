@@ -62,7 +62,7 @@ export class LoginService {
 
   /**
    * Whether the signed-in user is the couple (bride or groom) — the same
-   * predicate {@link adminGuard} uses for route access, exposed here so UI
+   * check {@link rbacGuard} makes against a route's `data.roles`, exposed here so UI
    * that needs to know (without gating a whole route) doesn't duplicate the
    * check. `lastSeen` is the first such case (hub ADR-0035 §6, widened by
    * ADR-0036): the API only populates it when the caller is the couple, so a

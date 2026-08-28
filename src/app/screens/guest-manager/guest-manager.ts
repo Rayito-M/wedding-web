@@ -132,9 +132,10 @@ export class GuestManager {
    * ignores the field on write (ADR-0035 §2).
    *
    * `lastSeen` rides the same `requesterIsAdmin` gate as `email`/`phoneNumber`
-   * on this DTO (hub ADR-0036): `/guests` sits behind `adminGuard`, so every
-   * caller here is the couple and the API always populates the real value —
-   * this screen needs no separate role check.
+   * on this DTO (hub ADR-0036): `/guests` sits behind `rbacGuard` with
+   * `roles: ['groom', 'bride']`, so every caller here is the couple and the
+   * API always populates the real value — this screen needs no separate role
+   * check.
    */
   protected lastSeenLabel(profile: UserProfileDto): string {
     return formatLastSeen(
