@@ -195,6 +195,16 @@
   white-space: nowrap;
 }
 
+// Couple-only "last seen" line (hub ADR-0035/ADR-0036) — same muted type
+// scale as `.contact-line`, kept as its own block since it's gated
+// independently of `.contact` (a guest with no email/phone can still have a
+// last-seen line, when the viewer is the couple).
+.last-seen {
+  margin-top: 8px;
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
 @media (min-width: 900px) {
   .page {
     padding: var(--space-5) var(--space-7) var(--space-6);

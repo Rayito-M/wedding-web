@@ -78,6 +78,17 @@
                 }
               </div>
             }
+            <!-- Couple-only (hub ADR-0035 §6, widened by ADR-0036) — gated on
+                 the viewer's own role, not on `person.lastSeen`'s presence:
+                 the API returns `undefined` for both "not allowed" and "this
+                 admin-visible guest never signed in", and only `showContact`
+                 tells the two apart (see `people.ts`). "Never signed in"
+                 reads as text here, never colour/opacity alone (rule 14). -->
+            @if (showContact()) {
+              <div class="last-seen">
+                {{ 'people.lastSeen' | translate: { label: lastSeenLabel(person) } }}
+              </div>
+            }
           </div>
         </div>
       }

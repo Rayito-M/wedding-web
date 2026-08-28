@@ -1,3 +1,4 @@
+export * from './last-seen-label';
 export * from './madrid-today';
 export * from './media-signal';
 export * from './partner-account';

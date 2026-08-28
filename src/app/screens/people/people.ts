@@ -12,7 +12,14 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
-import { EntityNamesEnum, UserProfileDto } from '@app/core';
+import {
+  EntityNamesEnum,
+  UserProfileDto,
+  LoginService,
+  TranslateLanguageService,
+  lastSeenLabel as formatLastSeen,
+  todayInMadrid,
+} from '@app/core';
 
 import { Pill } from '@app/shared/pill/pill';
 import { TextInput } from '@app/shared/input/input';
@@ -68,6 +75,26 @@ export class People {
   private readonly langChange = toSignal(this.translateService.onLangChange, {
     initialValue: null,
   });
+
+  private readonly loginService = inject(LoginService);
+  private readonly translateLanguageService = inject(TranslateLanguageService);
+
+  /**
+   * DS `ScreenPeople.jsx`'s `showContact={role === 'couple'}` — the real
+   * auth/role signal this scaffold otherwise lacks (see `isMine`'s note),
+   * wired here because it's the one thing `ProfileCard.lastSeen` needs to
+   * render correctly (hub ADR-0035 §6, widened by ADR-0036).
+   *
+   * `UserProfileDto.email`/`phoneNumber` are also couple-gated on the API
+   * side, but their `@if (person.email || person.phoneNumber)` in the
+   * template needs no client-side check: `undefined` unambiguously means
+   * "don't show this line" for contact details. `lastSeen` can't use the
+   * same trick — the API returns `undefined` for both "I can't see it" and
+   * "this admin-visible guest never signed in", and only the second one
+   * should render "Never signed in" — so the last-seen line is gated on this
+   * signal explicitly, never on whether `person.lastSeen` happens to be set.
+   */
+  protected readonly showContact = this.loginService.isCouple;
 
   private readonly userProfileCollection: EntityCollectionService<UserProfileDto> = inject(
     EntityServices,
@@ -144,6 +171,20 @@ export class People {
 
   protected initials(person: UserProfileDto): string {
     return `${person.firstName.charAt(0)}${person.lastName.charAt(0)}`.toUpperCase() || '·';
+  }
+
+  /**
+   * T290's pure helper over `UserProfileDto.lastSeen` — only ever called from
+   * the template behind {@link showContact}, so `person.lastSeen` is always
+   * the real value here (or genuinely absent: "Never signed in").
+   */
+  protected lastSeenLabel(person: UserProfileDto): string {
+    return formatLastSeen(
+      person.lastSeen,
+      todayInMadrid(),
+      this.translateLanguageService.currentLang(),
+      (key) => this.translateService.instant(key),
+    );
   }
 
   protected inputValue(event: Event): string {

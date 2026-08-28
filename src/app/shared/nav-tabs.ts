@@ -23,7 +23,7 @@ export const NAV_TABS: NavTab[] = [
   { id: 'schedule', labelKey: 'nav.schedule', link: '/schedule' },
   { id: 'album', labelKey: 'nav.album', link: '/album' },
   { id: 'travel', labelKey: 'nav.travel', link: '/travel' },
-  { id: 'people', labelKey: 'nav.people', link: '/people' },
+  { id: 'people', labelKey: 'nav.people', link: '/people', roles: ['groom', 'bride'] },
   { id: 'guests', labelKey: 'nav.guests', link: '/guests', roles: ['groom', 'bride'] },
   { id: 'seating', labelKey: 'nav.seating', link: '/seating', roles: ['groom', 'bride'] },
   // Couple-only preparation timeline (hub ADR-0029, T279). `roles` keeps this

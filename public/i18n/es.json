@@ -628,7 +628,8 @@
       "adults": "Adultos",
       "children": "Niños",
       "dietary": "Dieta",
-      "table": "Mesa"
+      "table": "Mesa",
+      "lastSeen": "Última conexión"
     },
     "pagination": {
       "noResults": "Sin resultados",
@@ -660,7 +661,16 @@
       "email": "Correo electrónico",
       "phone": "Teléfono",
       "table": "Mesa",
-      "partner": "Pareja"
+      "partner": "Pareja",
+      "lastSeen": "Última conexión"
+    },
+    "lastSeen": {
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "lastWeek": "La semana pasada",
+      "lastMonth": "El mes pasado",
+      "never": "Nunca ha iniciado sesión",
+      "mobile": "Última conexión: {{label}}"
     },
     "relation": {
       "side": {
@@ -902,7 +912,8 @@
       "catering": "Catering",
       "photography": "Fotografía"
     },
-    "empty": "Nadie coincide con \"{{query}}\"."
+    "empty": "Nadie coincide con \"{{query}}\".",
+    "lastSeen": "Última conexión: {{label}}"
   },
   "privacyPolicy": {
     "title": "Política de privacidad",

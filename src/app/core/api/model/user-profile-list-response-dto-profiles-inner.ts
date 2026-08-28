@@ -18,6 +18,7 @@ export interface UserProfileListResponseDtoProfilesInner {
     phoneNumber?: string;
     preferredLang: UserProfileListResponseDtoProfilesInner.PreferredLangEnum;
     role: UserProfileListResponseDtoProfilesInner.RoleEnum;
+    lastSeen?: string;
     guestInfo?: UserProfileListResponseDtoProfilesInnerGuestInfo;
 }
 export namespace UserProfileListResponseDtoProfilesInner {

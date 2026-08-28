@@ -11,9 +11,9 @@ import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import {
   AnnouncementDto,
   AudienceListResponseDtoItemsInner,
-  AudiencesService,
   EntityNamesEnum,
   MilestoneDto,
+  WeddingAudiencesService,
   WeddingConfigResponseDto,
   WeddingConfigurationService,
   WeddingMilestonesService,
@@ -265,7 +265,7 @@ describe('Milestones', () => {
           useValue: { weddingConfigControllerGetV1: () => of(currentConfig) },
         },
         {
-          provide: AudiencesService,
+          provide: WeddingAudiencesService,
           useValue: { audiencesControllerListV1: () => of({ items: currentAudiences }) },
         },
       ],

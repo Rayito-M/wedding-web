@@ -18,6 +18,7 @@ export interface UserProfileDto {
     phoneNumber?: string;
     preferredLang: UserProfileDto.PreferredLangEnum;
     role: UserProfileDto.RoleEnum;
+    lastSeen?: string;
     guestInfo?: UserProfileDtoGuestInfo;
 }
 export namespace UserProfileDto {

@@ -16,6 +16,7 @@ export interface UpdateUserProfileDto {
     lastName?: string;
     preferredLang?: UpdateUserProfileDto.PreferredLangEnum;
     role: UpdateUserProfileDto.RoleEnum;
+    lastSeen?: string;
     guestInfo?: UserProfileDtoGuestInfo;
 }
 export namespace UpdateUserProfileDto {

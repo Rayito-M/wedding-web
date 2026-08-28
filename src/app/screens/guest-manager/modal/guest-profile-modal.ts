@@ -17,6 +17,9 @@ import {
   RsvpDtoAdultsPartner1Options,
   UserProfileDto,
   CreateGuestDtoRelation,
+  TranslateLanguageService,
+  lastSeenLabel as formatLastSeen,
+  todayInMadrid,
   partnerHasAccount,
 } from '@app/core';
 import { Modal } from '@app/shared/modal/modal';
@@ -70,6 +73,8 @@ export class GuestProfileModal {
   private readonly userId = signal<string | null>(null);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly translate = inject(TranslateService);
+
+  private readonly translateLanguageService = inject(TranslateLanguageService);
 
   private readonly userProfileCollection: EntityCollectionService<UserProfileDto> = inject(
     EntityServices,
@@ -170,6 +175,25 @@ export class GuestProfileModal {
       ? this.translate.instant('guest_manager.modal.editProfile')
       : this.guestFullName() || this.translate.instant('guest_manager.modal.guestPlaceholder'),
   );
+
+  /**
+   * The same pre-formatted label the guest-manager row/column render (T290's
+   * pure helper), read directly off `UserProfileDto.lastSeen`. Read-only,
+   * admin-surface-only — there is no edit control (ADR-0035 §2/§6). `/guests`
+   * sits behind `adminGuard`, so this modal's caller is always the couple and
+   * the API always populates the real value (hub ADR-0036) — no separate role
+   * check is needed here.
+   */
+  protected readonly lastSeenLabel = computed(() => {
+    const profile = this.guestProfile();
+    if (!profile) return '';
+    return formatLastSeen(
+      profile.lastSeen,
+      todayInMadrid(),
+      this.translateLanguageService.currentLang(),
+      (key) => this.translate.instant(key),
+    );
+  });
 
   /**
    * Open the overlay for this guest and fetch their RSVP fresh — but only if

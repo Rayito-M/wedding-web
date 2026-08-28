@@ -20,6 +20,7 @@ export interface GuestDto {
     role: string;
     preferredLang: GuestDto.PreferredLangEnum;
     delegateTo?: Array<string>;
+    lastSeen?: string;
     partnerId?: string;
     relation: CreateGuestDtoRelation;
 }

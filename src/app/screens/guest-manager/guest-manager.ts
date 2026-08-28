@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
 import {
@@ -17,6 +17,9 @@ import {
   UserProfileDto,
   PluralTranslatePipe,
   StatisticService,
+  TranslateLanguageService,
+  lastSeenLabel as formatLastSeen,
+  todayInMadrid,
   partnerHasAccount,
 } from '@app/core';
 import { Btn } from '@app/shared/button/button';
@@ -61,6 +64,9 @@ export class GuestManager {
   );
 
   private readonly statistics = inject(StatisticService);
+
+  private readonly translateService = inject(TranslateService);
+  private readonly translateLanguageService = inject(TranslateLanguageService);
 
   /**
    * Header counts come from the shared {@link StatisticService} so this table
@@ -115,6 +121,28 @@ export class GuestManager {
 
   constructor() {
     this.statistics.load(); // Only fetches if cache is empty
+  }
+
+  /**
+   * The desktop column, the mobile secondary line, and the profile modal's
+   * detail row (T291) all render this — the one pre-formatted label T290's
+   * pure helper produces from `UserProfileDto.lastSeen`, this screen's own
+   * "today" (`todayInMadrid()`, hub ADR-0029 §4.2) and the active UI
+   * language. Read-only: there is no setter anywhere, because the API
+   * ignores the field on write (ADR-0035 §2).
+   *
+   * `lastSeen` rides the same `requesterIsAdmin` gate as `email`/`phoneNumber`
+   * on this DTO (hub ADR-0036): `/guests` sits behind `adminGuard`, so every
+   * caller here is the couple and the API always populates the real value —
+   * this screen needs no separate role check.
+   */
+  protected lastSeenLabel(profile: UserProfileDto): string {
+    return formatLastSeen(
+      profile.lastSeen,
+      todayInMadrid(),
+      this.translateLanguageService.currentLang(),
+      (key) => this.translateService.instant(key),
+    );
   }
 
   /** Set the active filter and reset pagination */

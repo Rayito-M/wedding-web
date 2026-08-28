@@ -259,6 +259,9 @@
 
 .col-status {
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
   flex: 0 0 auto;
   padding: 0;
   border: none;
@@ -267,8 +270,20 @@
 .col-adults,
 .col-children,
 .col-dietary,
-.col-table {
+.col-table,
+.col-last-seen {
   display: none;
+}
+
+// Mobile secondary line under the status tag (DS `ScreenGuestManagerMobile.jsx`).
+// Muted like `.guest-caption`, but never the *only* signal for "Never signed
+// in" — the label text itself says so (rule 14), this is just its type scale.
+.last-seen-mobile {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .guest-name {
@@ -512,7 +527,7 @@
 
   .table-header {
     display: grid;
-    grid-template-columns: 1.7fr 0.95fr 0.7fr 0.7fr 1.5fr 0.85fr;
+    grid-template-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
     gap: 12px;
     padding: 0 16px 8px;
   }
@@ -523,7 +538,7 @@
 
   .table-row {
     display: grid;
-    grid-template-columns: 1.7fr 0.95fr 0.7fr 0.7fr 1.5fr 0.85fr;
+    grid-template-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
     gap: 12px;
     padding: 12px 16px;
 
@@ -544,7 +559,8 @@
   .col-adults,
   .col-children,
   .col-dietary,
-  .col-table {
+  .col-table,
+  .col-last-seen {
     // Grid children inherit font styling from .table-header > div
   }
 
@@ -556,10 +572,21 @@
     display: none;
   }
 
+  // The mobile stacked layout (status tag + secondary line) gives way to the
+  // desktop grid's own `.col-last-seen` column.
+  .col-status {
+    display: block;
+  }
+
+  .last-seen-mobile {
+    display: none;
+  }
+
   .col-adults,
   .col-children,
   .col-dietary,
-  .col-table {
+  .col-table,
+  .col-last-seen {
     display: block;
   }
 

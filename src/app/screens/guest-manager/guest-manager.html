@@ -150,6 +150,7 @@
         {{ 'guest_manager.table.dietary' | translate }}
       </div>
       <div class="col-table">{{ 'guest_manager.table.table' | translate }}</div>
+      <div class="col-last-seen">{{ 'guest_manager.table.lastSeen' | translate }}</div>
     </div>
 
     <!-- Table body -->
@@ -198,6 +199,14 @@
                 <span class="status-dot"></span>
                 {{ 'guest_manager.status.' + profile.guestInfo?.rsvp?.status | translate }}
               </span>
+              <!-- Mobile-only secondary line (DS `ScreenGuestManagerMobile.jsx`):
+                   the desktop grid has its own `.col-last-seen` column instead,
+                   so this is hidden there. Read-only, admin-surface-only
+                   (hub ADR-0035 §6) — never a colour/opacity-only cue (rule 14),
+                   the pre-formatted label text carries the information. -->
+              <span class="last-seen-mobile">
+                {{ 'guest_manager.lastSeen.mobile' | translate: { label: lastSeenLabel(profile) } }}
+              </span>
             </div>
             <div class="col-adults">
               {{ profile.guestInfo?.rsvp?.adults || '—' }}
@@ -214,6 +223,9 @@
             <div class="col-table">
               <span class="table-assignment">—</span>
             </div>
+            <!-- Desktop-only column (hidden on mobile via `.col-last-seen`'s
+                 base `display: none`, matching `.col-adults` etc.) -->
+            <div class="col-last-seen">{{ lastSeenLabel(profile) }}</div>
           </div>
         }
       } @else {

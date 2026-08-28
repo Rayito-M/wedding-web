@@ -91,7 +91,7 @@ function sortByCreatedAtDesc(items: NotificationDto[]): NotificationDto[] {
 }
 
 /**
- * The signals read/write model over `NotificationsService` (generated) —
+ * The signals read/write model over `WeddingNotificationsService` (generated) —
  * the one place in this app that talks to `/v1/notifications*`.
  *
  * **Not `@ngrx/data`.** Two of the four endpoints (`unread-count`,

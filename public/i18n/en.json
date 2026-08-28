@@ -632,7 +632,8 @@
       "adults": "Adults",
       "children": "Children",
       "dietary": "Dietary",
-      "table": "Table"
+      "table": "Table",
+      "lastSeen": "Last seen"
     },
     "pagination": {
       "noResults": "No results",
@@ -664,7 +665,16 @@
       "email": "Email",
       "phone": "Phone",
       "table": "Table",
-      "partner": "Partner"
+      "partner": "Partner",
+      "lastSeen": "Last seen"
+    },
+    "lastSeen": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "lastWeek": "Last week",
+      "lastMonth": "Last month",
+      "never": "Never signed in",
+      "mobile": "Last seen: {{label}}"
     },
     "relation": {
       "side": {
@@ -906,7 +916,8 @@
       "catering": "Catering",
       "photography": "Photography"
     },
-    "empty": "No one matches \"{{query}}\"."
+    "empty": "No one matches \"{{query}}\".",
+    "lastSeen": "Last seen: {{label}}"
   },
   "privacyPolicy": {
     "title": "Privacy policy",

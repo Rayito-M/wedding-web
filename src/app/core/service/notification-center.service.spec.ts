@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of, throwError } from 'rxjs';
 
-import { NotificationDto, NotificationsService } from '../api';
+import { NotificationDto, WeddingNotificationsService } from '../api';
 
 import {
   NotificationCenterService,
@@ -74,7 +74,7 @@ describe('NotificationCenterService', () => {
       providers: [
         provideTranslateService({ lang: 'en', fallbackLang: 'en' }),
         {
-          provide: NotificationsService,
+          provide: WeddingNotificationsService,
           useValue: {
             notificationsControllerListV1: () => listSpy(),
             notificationsControllerMarkReadV1: (params: { id: string }) => markReadSpy(params),

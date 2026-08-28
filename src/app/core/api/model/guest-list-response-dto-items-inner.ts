@@ -20,6 +20,7 @@ export interface GuestListResponseDtoItemsInner {
     role: string;
     preferredLang: GuestListResponseDtoItemsInner.PreferredLangEnum;
     delegateTo?: Array<string>;
+    lastSeen?: string;
     partnerId?: string;
     relation: GuestListResponseDtoItemsInnerRelation;
 }

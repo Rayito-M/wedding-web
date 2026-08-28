@@ -21,6 +21,7 @@ export interface UserListResponseDtoItemsInner {
     role: UserListResponseDtoItemsInner.RoleEnum;
     preferredLang: UserListResponseDtoItemsInner.PreferredLangEnum;
     delegateTo?: Array<string>;
+    lastSeen?: string;
 }
 export namespace UserListResponseDtoItemsInner {
     export const RoleEnum = {

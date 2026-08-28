@@ -73,6 +73,12 @@
               <span class="info-label">{{ 'guest_manager.profile.table' | translate }}</span>
               <div class="value muted">—</div>
             </div>
+            <!-- Read-only, admin-surface-only (hub ADR-0035 §6) — no edit
+                 control anywhere: the API ignores the field on write. -->
+            <div class="info-item">
+              <span class="info-label">{{ 'guest_manager.profile.lastSeen' | translate }}</span>
+              <div class="value">{{ lastSeenLabel() }}</div>
+            </div>
           </div>
         </div>
 

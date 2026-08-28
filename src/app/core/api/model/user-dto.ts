@@ -21,6 +21,7 @@ export interface UserDto {
     role: UserDto.RoleEnum;
     preferredLang: UserDto.PreferredLangEnum;
     delegateTo?: Array<string>;
+    lastSeen?: string;
 }
 export namespace UserDto {
     export const RoleEnum = {

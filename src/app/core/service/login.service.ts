@@ -60,6 +60,19 @@ export class LoginService {
    */
   readonly role = signal<UserRole>(this.decodeRole(this.token()));
 
+  /**
+   * Whether the signed-in user is the couple (bride or groom) — the same
+   * predicate {@link adminGuard} uses for route access, exposed here so UI
+   * that needs to know (without gating a whole route) doesn't duplicate the
+   * check. `lastSeen` is the first such case (hub ADR-0035 §6, widened by
+   * ADR-0036): the API only populates it when the caller is the couple, so a
+   * `UserProfileDto` with `lastSeen === undefined` is ambiguous between "not
+   * allowed to see it" and "admin-visible account, never signed in" — the UI
+   * must decide whether to render the field at all from this signal, not
+   * from whether the value happens to be present.
+   */
+  readonly isCouple = computed(() => this.role() === 'bride' || this.role() === 'groom');
+
   protected readonly socialProviders = computed(
     () => this.config.weddingConfigPublic()?.socialProviders,
   );
