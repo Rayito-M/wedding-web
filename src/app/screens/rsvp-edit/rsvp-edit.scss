@@ -8,11 +8,38 @@
 :host {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
   width: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+  // This is a full-screen route on mobile, not a floating card, so it always
+  // fills the space `app-rsvp`'s :host leaves available (itself `height:
+  // 100%` of `main`'s own definite flex-computed box — see rsvp.scss)
+  // rather than sizing to content: `.content` (below) scrolls internally
+  // while the footer/save button stays pinned at the true bottom of the
+  // screen instead of being reachable only by scrolling the whole page
+  // (same pattern as the desktop card and the guest-manager RSVP modal, see
+  // the `@media` block below and modal.scss's `.modal-card.lg`).
+  //
+  // Deliberately `height: 100%`, not a `calc(100dvh - ...px)` reconstructed
+  // from `private-layout`'s own tab-bar/header spacing: that arithmetic
+  // requires the tab bar's *rendered* height to exactly match the space
+  // `private-layout` reserves for it, and duplicating that number here is
+  // exactly the kind of drift that caused it to be wrong once already.
+  // `main`'s `overflow-y: auto` already knows the true available space; this
+  // just asks for all of it, plus the `+ 20px`: `private-layout`'s `main`
+  // reserves that as breathing room for screens that scroll past their own
+  // content (DS `AppShell.jsx`'s non-wide shell adds no such shared margin —
+  // each screen owns its own bottom spacing). A pinned-footer full screen
+  // like this one already supplies its own (the footer's 16px bottom
+  // padding, matching DS `ScreenRSVPEdit.jsx`'s mobile footer exactly), so
+  // it reaches past that reservation instead of stacking a second one on
+  // top — keep in sync with `main`'s `padding-bottom` in private-layout.scss.
+  height: calc(100% + 20px);
 }
 
 .content {
+  flex: 1;
+  overflow-y: auto;
   padding: 20px t.$space-6;
 }
 
@@ -63,6 +90,7 @@ app-rsvp-editor {
 }
 
 footer {
+  flex: 0 0 auto;
   padding: 12px t.$space-6 16px;
   display: flex;
   align-items: center;
@@ -86,15 +114,19 @@ footer {
     // carries `margin-top: 52px` to clear the fixed header), so it is the full
     // 26px here.
     margin: 26px auto 24px;
-    // Undo the mobile `min-height: 100%` (needed there to pin the footer at
-    // the bottom of a full-height screen) — the desktop card has no such
-    // requirement and must size to its content, matching the DS reference
-    // (ScreenRSVPEdit.jsx's wide wrapper carries no height rule at all).
-    min-height: 0;
+    // At this width the screen is a floating card, not a full-screen route:
+    // it sizes to its content instead of always filling the available space
+    // (unlike the mobile `height` above), but still caps at it and scrolls
+    // `.content` internally past that point, so the footer/save button stays
+    // on screen exactly as it does on mobile. `max-height: calc(100% - 50px)`
+    // resolves against the same definite box as the mobile `height: 100%`
+    // (see rsvp.scss), minus this card's own 26px top + 24px bottom margins
+    // — no need to reconstruct `private-layout`'s spacing by hand.
+    height: auto;
+    max-height: calc(100% - 50px);
     background: var(--surface-card);
     border: 1px solid var(--border-hairline);
     border-radius: t.$radius-card;
-    overflow: hidden;
   }
 
   .content {

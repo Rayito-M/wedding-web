@@ -4,7 +4,11 @@
   flex: 1;
   min-height: 0;
   height: 100%;
-  padding-bottom: 70px;
+  // `.tab-bar` below is `position: fixed`, out of flow, so this reserves the
+  // matching clearance in `main`'s scrollable area beneath it. Measured
+  // against the real rendered `app-tab-bar` (DM Sans loaded): 58px — not a
+  // round number, don't "tidy" it back up without re-measuring.
+  padding-bottom: 58px;
 }
 
 .header {
@@ -34,12 +38,12 @@ main {
   width: 100%;
 }
 
-// Fixed to the viewport, sitting right on top of the mobile tab bar (70px
-// tall) so the rider's crossing touches it, regardless of screen content
-// height/scroll — see :host padding-bottom above.
+// Fixed to the viewport, sitting right on top of the mobile tab bar (58px
+// tall, measured — see :host padding-bottom above) so the rider's crossing
+// touches it, regardless of screen content height/scroll.
 .mobile-moto {
   position: fixed;
-  bottom: 70px;
+  bottom: 58px;
   left: 0;
   right: 0;
   z-index: 9;

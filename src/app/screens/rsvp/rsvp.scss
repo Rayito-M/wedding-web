@@ -1,9 +1,15 @@
 // The orchestrator has no visual content of its own — `app-rsvp-create` /
 // `app-rsvp-edit` own the full-height layout (incl. the desktop card wrapper,
 // see their own .scss files). This host just needs to fill the outlet.
+//
+// `height` (not `min-height`) so this box's used height is *definite* —
+// `app-rsvp-edit` pins its footer with a percentage `height`/`max-height` of
+// its own that only resolves against a definite ancestor (CSS %-height
+// rules); a `min-height` floor here would leave that as `auto` and silently
+// no-op instead.
 :host {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  height: 100%;
   width: 100%;
 }
