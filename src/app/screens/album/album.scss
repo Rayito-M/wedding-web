@@ -107,9 +107,8 @@
 }
 
 // Album gets a wider column, 3 taller grid tiles, and its desktop metadata
-// fragment; the mobile-only motorcycle decor is hidden (matches
-// ScreenAlbum.jsx's `wide` AppShell maxWidth={880} + grid(3, 40) call — no
-// 4-column step in the reference).
+// fragment (matches ScreenAlbum.jsx's `wide` AppShell maxWidth={880} +
+// grid(3, 40) call — no 4-column step in the reference).
 @media (min-width: 900px) {
   :host {
     max-width: 880px;
@@ -128,9 +127,5 @@
     app-photo-placeholder {
       height: calc(var(--tile-h) + 40px);
     }
-  }
-
-  .mobile-moto {
-    display: none;
   }
 }

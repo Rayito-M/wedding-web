@@ -34,6 +34,18 @@ main {
   width: 100%;
 }
 
+// Fixed to the viewport, sitting right on top of the mobile tab bar (70px
+// tall) so the rider's crossing touches it, regardless of screen content
+// height/scroll — see :host padding-bottom above.
+.mobile-moto {
+  position: fixed;
+  bottom: 70px;
+  left: 0;
+  right: 0;
+  z-index: 9;
+  width: 100%;
+}
+
 // Mobile-first: bottom tab bar; ≥900px navigation moves into the screen header.
 @media (min-width: 900px) {
   :host {
@@ -46,6 +58,10 @@ main {
   }
 
   .tab-bar {
+    display: none;
+  }
+
+  .mobile-moto {
     display: none;
   }
 }

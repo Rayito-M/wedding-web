@@ -9,6 +9,17 @@
   <router-outlet />
 </main>
 
+@if (chrome().moto) {
+  <app-decor-motorcycle-rider
+    class="mobile-moto"
+    mode="ground"
+    color="var(--ink)"
+    accentColor="var(--brand-accent)"
+    [width]="54"
+    [bottom]="-10"
+  />
+}
+
 @if (chrome().tabBar) {
   <app-tab-bar class="tab-bar" [active]="chrome().tab ?? ''" />
 }

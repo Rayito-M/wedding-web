@@ -12,6 +12,7 @@ import { filter, map } from 'rxjs';
 
 import { ToastCenterService } from '@app/core';
 
+import { DecorMotorcycleRider } from '../../shared/decor/motorcycle-rider/motorcycle-rider';
 import { ScreenHeader } from '../../shared/screen-header/screen-header';
 import { TabBar } from '../../shared/tab-bar/tab-bar';
 import { Toast } from '../../shared/toast/toast';
@@ -22,6 +23,8 @@ interface RouteChrome {
   tab?: string;
   tabBar?: boolean;
   topNav?: boolean;
+  /** Show the decorative motorcycle-rider crossing above the mobile tab bar. */
+  moto?: boolean;
 }
 
 /**
@@ -37,7 +40,7 @@ interface RouteChrome {
 @Component({
   selector: 'app-private-layout',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, ScreenHeader, TabBar, ToastStack, Toast],
+  imports: [RouterOutlet, ScreenHeader, TabBar, ToastStack, Toast, DecorMotorcycleRider],
   templateUrl: './private-layout.html',
   styleUrl: './private-layout.scss',
 })

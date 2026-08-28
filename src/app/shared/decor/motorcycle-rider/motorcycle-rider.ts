@@ -62,6 +62,17 @@ const REAR_WHEEL_CX = 98;
 const KNOB_TICKS = [...buildKnobTicks(FRONT_WHEEL_CX), ...buildKnobTicks(REAR_WHEEL_CX)];
 const WHEEL_SPOKES = [...buildWheelSpokes(FRONT_WHEEL_CX), ...buildWheelSpokes(REAR_WHEEL_CX)];
 
+const VIEWBOX_WIDTH = 130;
+const VIEWBOX_HEIGHT = 74;
+// Tyres are the lowest paint in the artwork — the ticks around each wheel
+// (cy 51) reach out to r 18, i.e. y 69 — but the viewBox runs on to y 74 to
+// give the hop animation headroom. That gap is blank canvas below the tyres,
+// so anchoring the SVG's own box to a baseline (e.g. `bottom()`) leaves the
+// tyres floating above it; `groundOffset` below is how far to push the
+// artwork down to compensate, scaled to the current render width.
+const WHEEL_CY = 51;
+const TYRE_OUTER_RADIUS = 18;
+
 /**
  * Decorative side-profile motorcycle + rider, line-art, that randomly crosses
  * the screen (DS `components/motion/MotorcycleRider`). `mode="ridge"` adds an
@@ -93,8 +104,16 @@ export class DecorMotorcycleRider {
   protected readonly knobTicks = KNOB_TICKS;
   protected readonly wheelSpokes = WHEEL_SPOKES;
 
-  protected readonly overlayHeight = computed(() => this.width() * (74 / 130) + 16);
-  protected readonly svgHeight = computed(() => this.width() * (74 / 130));
+  protected readonly overlayHeight = computed(
+    () => this.width() * (VIEWBOX_HEIGHT / VIEWBOX_WIDTH) + 16,
+  );
+  protected readonly svgHeight = computed(() => this.width() * (VIEWBOX_HEIGHT / VIEWBOX_WIDTH));
+
+  /** How far to push the artwork down so the tyres — not the viewBox's own
+   *  blank margin below them — land on `bottom()`. */
+  protected readonly groundOffset = computed(
+    () => (VIEWBOX_HEIGHT - (WHEEL_CY + TYRE_OUTER_RADIUS)) * (this.width() / VIEWBOX_WIDTH),
+  );
 
   // Travel distance is the CONTAINER width, not the bike's own width — measured
   // on render so a pass always crosses the full illustration.

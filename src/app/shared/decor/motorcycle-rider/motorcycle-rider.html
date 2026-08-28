@@ -8,6 +8,7 @@
   @if (crossing(); as c) {
     <div
       class="crossing"
+      [style.bottom.px]="-groundOffset()"
       [style.animation-duration.s]="c.durationSeconds"
       [style.--moto-from.px]="c.from"
       [style.--moto-to.px]="c.to"

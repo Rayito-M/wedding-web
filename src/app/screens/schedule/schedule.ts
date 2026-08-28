@@ -12,7 +12,6 @@ import {
   TranslateLanguageService,
   WeddingConfigResponseDto,
 } from '@app/core';
-import { DecorMotorcycleRider } from '@app/shared/decor/motorcycle-rider/motorcycle-rider';
 import { StatusPill } from '@app/shared/status-pill/status-pill';
 import { TimelineItem } from '@app/shared/timeline-item/timeline-item';
 
@@ -25,7 +24,7 @@ interface AgendaCounts {
 @Component({
   selector: 'app-schedule',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TimelineItem, TranslatePipe, DecorMotorcycleRider, AgendaTimePipe, StatusPill],
+  imports: [TimelineItem, TranslatePipe, AgendaTimePipe, StatusPill],
   templateUrl: './schedule.html',
   styleUrl: './schedule.scss',
 })

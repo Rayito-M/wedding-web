@@ -10,6 +10,7 @@ import { adminGuard, authGuard, publicOnlyGuard, routeEnabledGuard } from './cor
 //   tab    — active entry in the header nav / tab bar
 //   tabBar — bottom tab bar on mobile (<900px)
 //   topNav — desktop nav, shown in the screen header (≥900px)
+//   moto   — decorative motorcycle-rider crossing above the mobile tab bar
 export const routes: Routes = [
   {
     path: '',
@@ -65,21 +66,21 @@ export const routes: Routes = [
         loadComponent: () => import('./screens/schedule/schedule').then((m) => m.Schedule),
         title: 'titles.schedule',
         canActivate: [routeEnabledGuard],
-        data: { tab: 'schedule', tabBar: true, topNav: true },
+        data: { tab: 'schedule', tabBar: true, topNav: true, moto: true },
       },
       {
         path: 'travel',
         loadComponent: () => import('./screens/travel/travel').then((m) => m.Travel),
         title: 'titles.travel',
         canActivate: [routeEnabledGuard],
-        data: { tab: 'travel', tabBar: true, topNav: true },
+        data: { tab: 'travel', tabBar: true, topNav: true, moto: true },
       },
       {
         path: 'album',
         loadComponent: () => import('./screens/album/album').then((m) => m.Album),
         title: 'titles.album',
         canActivate: [routeEnabledGuard],
-        data: { tab: 'album', tabBar: true, topNav: true },
+        data: { tab: 'album', tabBar: true, topNav: true, moto: true },
       },
       {
         path: 'dashboard',

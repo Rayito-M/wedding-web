@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { HeaderService } from '../../core';
-import { DecorMotorcycleRider } from '../../shared/decor/motorcycle-rider/motorcycle-rider';
 import { StayCard } from '../../shared/stay-card/stay-card';
 
 interface Stay {
@@ -13,7 +12,7 @@ interface Stay {
 @Component({
   selector: 'app-travel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [StayCard, DecorMotorcycleRider],
+  imports: [StayCard],
   templateUrl: './travel.html',
   styleUrl: './travel.scss',
 })

@@ -15,7 +15,7 @@
 .crossing {
   position: absolute;
   left: 0;
-  bottom: 0;
+  // `bottom` is set inline (`groundOffset`) — see motorcycle-rider.ts.
   animation-name: moto-cross;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
