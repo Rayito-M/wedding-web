@@ -4734,3 +4734,63 @@
   DS `Icon` `DOTS` map — both noted in T283, both drive-bys.
 - **Fixing CLAUDE.md's stale `src/app/features/` table, its `SPEC.md` reference, or its kebab-case
   i18n claim** (decisions 12 and 13). Real, recorded, not this phase's job.
+
+## Phase P — Last seen in the guest list (hub ADR-0035, DS `717120b`)
+
+### T290 — The relative-day label helper + ES/EN/FR copy
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** `pnpm gen:api` after wedding-api T223 lands in the contract
+- **Acceptance:**
+  - A small pure helper turning the API's raw `YYYY-MM-DD` into the displayed label: **"Today",
+    "Yesterday", "Last week", "Last month"**, falling back to an **absolute date** for older values,
+    and **"Never signed in"** when the value is absent/`null`.
+  - **All phrasing lives here, never on the server.** The API ships a date and no label (hub
+    ADR-0035 §6) — which is exactly what makes this ordinary translation work. Keys in
+    `public/i18n/{en,es,fr}.json`; **do not** build a sentence by lower-casing a label the way the
+    DS's `ProfileCard.jsx` does (`Last seen ${lastSeen.toLowerCase()}`) — that is an English grammar
+    assumption and it will not survive ES/FR. Each locale gets whole phrases.
+  - **There is no time of day.** The DS's `ScreenConfigManager` mocks render `'Today, 09:12'`; that
+    field does not exist in the data and must not be invented or faked (hub ADR-0035 §1).
+  - Bucket boundaries are computed against the **displayed date only** — the server already resolved
+    the `Europe/Madrid` day, so do **not** re-timezone it or reconstruct an instant from it.
+  - Unit spec covering each bucket, the absolute-date fallback, the absent value, and all three
+    locales.
+  - `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** hub ADR-0035 §6; `../wedding-ui-design` `717120b`; `public/i18n/{en,es,fr}.json`
+
+### T291 — Guest-list column + guest-detail row
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** T290
+- **Acceptance:**
+  - A read-only **"Last seen"** column on the admin guest list and the matching row in the guest
+    detail view, per DS `ScreenGuestManager.jsx` / `ScreenGuestManagerMobile.jsx`. Mobile carries the
+    field too — as a secondary line under the status tag — so it is **not** dropped on small screens.
+  - Wired to the DS `ProfileCard`'s sanctioned `lastSeen` prop, which takes a **pre-formatted label**
+    (or `null` for never) — the component does not format, T290 does. It renders behind
+    `ProfileCard`'s couple-only `showContact` gate, whose meaning `717120b` widened to "email, phone
+    and last-seen".
+  - **Read-only everywhere.** No edit control, no clear button, no sort or filter in this task
+    (deferred, hub ADR-0035 §10) — and never an input, because the API ignores the field on write.
+  - **Admin surfaces only.** It must appear on **no** guest-facing screen, including the guest's own
+    profile — the generated client will not carry it there, and nothing should reintroduce it.
+  - The DS mocks derive values from row id (`SEEN[r.id % SEEN.length]`, and `status === 'no' && id %
+    3 === 0 → 'Never'`). That is **placeholder wiring, not a rule** — it is not a finding that
+    declined guests never sign in, and it must not be reproduced.
+  - `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** hub ADR-0035 §6/§10; `SPEC.md` J4; `../wedding-ui-design` `717120b`
+  (`ScreenGuestManager.jsx`, `ScreenGuestManagerMobile.jsx`, `components/data-display/ProfileCard.jsx`);
+  in-repo T290
+
+### Deliberately out of scope for Phase P
+- **Sorting or filtering the guest list by last seen** — additive later if the couple asks (hub
+  ADR-0035 §10). A filter that *acts* on inactivity ("email everyone inactive 30 days") is
+  permanently out: it would turn an observation into an automated trigger, which nothing in this
+  system has.
+- **Any guest-facing surface**, including showing guests their own date (hub ADR-0035 §6).
+- **A last-seen column in the CSV export** — deliberately absent, and the API does not provide it.
+- **Presenting last seen as evidence that someone read an announcement.** It is not a read receipt
+  and may not be labelled or grouped as one (hub ADR-0035 §8).
+- **The DS `ScreenConfigManager` couple-account screen**, which renders a `lastSeen` with a time of
+  day. Not scoped by ADR-0035, and its time component does not exist.
