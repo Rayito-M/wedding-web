@@ -763,6 +763,11 @@
     "title": "Milestones",
     "subtitle": "Your own checklist for getting ready — never seen by guests.",
     "today": "Today",
+    "daysToGo": {
+      "none": "Today's the day",
+      "singular": "{{count}} day to go",
+      "plural": "{{count}} days to go"
+    },
     "relative": {
       "inDays": {
         "singular": "in {{count}} day",
@@ -785,7 +790,8 @@
     "emptyNoMilestones": {
       "title": "Nothing on the timeline yet",
       "body": "Create your first milestone to start tracking how the preparations are going.",
-      "cta": "Create a milestone"
+      "cta": "Create a milestone",
+      "seedCta": "Start from the usual plan"
     },
     "status": {
       "reached": "Reached",
@@ -794,6 +800,10 @@
     },
     "markReached": "Mark as reached",
     "markNotReached": "Mark as not reached",
+    "internal": {
+      "hint": "Nothing to send — just tick it off once it's true.",
+      "reachedHint": "Already marked as reached."
+    },
     "form": {
       "createEyebrow": "New milestone",
       "editEyebrow": "Milestone",
@@ -849,9 +859,10 @@
     },
     "announcement": {
       "audienceCounts": "{{size}} guests · {{reachable}} reachable",
-      "sendButton": "Send announcement",
+      "sendButton": "Send",
       "sendHint": "Nothing goes out until you confirm.",
       "sendDisabledHint": "Choose a type and an audience, then save, to enable sending.",
+      "reachedHint": "Already marked as reached — there's nothing to send.",
       "sentOn": "Sent {{date}}",
       "sentCounts": "{{recipientCount}} recipients · {{reachableCount}} reachable",
       "markNotSent": "Mark as not sent",
@@ -868,6 +879,9 @@
         "confirm": "Mark as not sent",
         "cancel": "Keep as sent"
       }
+    },
+    "seed": {
+      "conflict": "This wedding already has its milestones on record — nothing was added. If the list still looks empty, try reloading."
     }
   },
   "people": {

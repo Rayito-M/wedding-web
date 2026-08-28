@@ -759,6 +759,11 @@
     "title": "Hitos",
     "subtitle": "Vuestra propia lista de preparativos — los invitados nunca la ven.",
     "today": "Hoy",
+    "daysToGo": {
+      "none": "Hoy es el gran día",
+      "singular": "Falta {{count}} día",
+      "plural": "Faltan {{count}} días"
+    },
     "relative": {
       "inDays": {
         "singular": "dentro de {{count}} día",
@@ -781,7 +786,8 @@
     "emptyNoMilestones": {
       "title": "Aún no hay nada en el cronograma",
       "body": "Cread vuestro primer hito para empezar a seguir cómo van los preparativos.",
-      "cta": "Crear un hito"
+      "cta": "Crear un hito",
+      "seedCta": "Empezar con el plan habitual"
     },
     "status": {
       "reached": "Cumplido",
@@ -790,6 +796,10 @@
     },
     "markReached": "Marcar como cumplido",
     "markNotReached": "Marcar como pendiente",
+    "internal": {
+      "hint": "No hay nada que enviar — marcadlo cuando se haya cumplido.",
+      "reachedHint": "Ya está marcado como cumplido."
+    },
     "form": {
       "createEyebrow": "Nuevo hito",
       "editEyebrow": "Hito",
@@ -845,9 +855,10 @@
     },
     "announcement": {
       "audienceCounts": "{{size}} invitados · {{reachable}} localizables",
-      "sendButton": "Enviar aviso",
+      "sendButton": "Enviar",
       "sendHint": "No se envía nada hasta que lo confirméis.",
       "sendDisabledHint": "Elegid un tipo y unos destinatarios, y guardad, para poder enviarlo.",
+      "reachedHint": "Ya está marcado como cumplido — no hay nada que enviar.",
       "sentOn": "Enviado el {{date}}",
       "sentCounts": "{{recipientCount}} destinatarios · {{reachableCount}} localizables",
       "markNotSent": "Marcar como no enviado",
@@ -864,6 +875,9 @@
         "confirm": "Marcar como no enviado",
         "cancel": "Mantener como enviado"
       }
+    },
+    "seed": {
+      "conflict": "Esta boda ya tiene sus hitos registrados — no se ha añadido nada. Si la lista sigue vacía, probad a recargar."
     }
   },
   "people": {

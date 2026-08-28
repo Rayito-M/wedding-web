@@ -110,6 +110,17 @@ function submitDetailForm(root: HTMLElement): void {
   form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 }
 
+/** Opens the create panel from an *empty* list. The header's `.new-btn` only
+ *  renders once the list is non-empty (DS `ScreenMilestones.jsx:164/170`:
+ *  `items.length > 0`), so with nothing yet created the only "create" entry
+ *  point is the empty state's own manual button. */
+function openCreateFromEmptyState(root: HTMLElement): void {
+  const button = Array.from(
+    root.querySelectorAll('.empty-state button') as NodeListOf<HTMLButtonElement>,
+  ).find((b) => b.textContent?.includes('milestones.emptyNoMilestones.cta'))!;
+  button.click();
+}
+
 describe('Milestones', () => {
   let fixture: ComponentFixture<Milestones>;
   let currentMilestones: MilestoneDto[];
@@ -130,12 +141,14 @@ describe('Milestones', () => {
     >
   >;
   let clearAnnouncementSpy: ReturnType<typeof vi.fn<(params: { id: string }) => Observable<undefined>>>;
+  let seedSpy: ReturnType<typeof vi.fn<() => Observable<{ seeded: number }>>>;
   /** Overridden per-test to simulate a failed write; `null` means "succeed
    *  with a sensible default response". */
   let createFailure: Observable<never> | null;
   let updateFailure: Observable<never> | null;
   let sendFailure: Observable<never> | null;
   let clearAnnouncementFailure: Observable<never> | null;
+  let seedFailure: Observable<never> | null;
   /** `GET /v1/audiences` (hub ADR-0030 §11e) — the four real audiences by
    *  default; overridden per-test for the empty-audience disable condition. */
   let currentAudiences: AudienceListResponseDtoItemsInner[];
@@ -176,6 +189,7 @@ describe('Milestones', () => {
     updateFailure = null;
     sendFailure = null;
     clearAnnouncementFailure = null;
+    seedFailure = null;
 
     createSpy = vi.fn((params: { createMilestoneDto: Partial<MilestoneDto> }) => {
       if (createFailure) return createFailure;
@@ -210,6 +224,10 @@ describe('Milestones', () => {
       if (clearAnnouncementFailure) return clearAnnouncementFailure;
       return of(undefined);
     });
+    seedSpy = vi.fn(() => {
+      if (seedFailure) return seedFailure;
+      return of({ seeded: currentMilestones.length });
+    });
 
     await TestBed.configureTestingModule({
       imports: [Milestones],
@@ -239,6 +257,7 @@ describe('Milestones', () => {
             }) => sendSpy(params),
             milestonesControllerClearAnnouncementV1: (params: { id: string }) =>
               clearAnnouncementSpy(params),
+            milestonesControllerSeedV1: () => seedSpy(),
           },
         },
         {
@@ -343,6 +362,53 @@ describe('Milestones', () => {
     expect(labels).toEqual(['January', 'June', 'TODAY']);
   });
 
+  // Defect #2 (DS parity pass): the "Today" text belongs in the date column
+  // (column 1, same as `.row-date`), and the accent divider + "N days to go"
+  // countdown (column 3) was entirely absent before this fix.
+  it('renders "Today" in the date column and a days-to-go countdown against the wedding date in the third column', async () => {
+    vi.useFakeTimers();
+    // Madrid, 10 days before `WEDDING_CONFIG_WITH_DATE`'s `date: '2027-06-05'`.
+    vi.setSystemTime(new Date('2027-05-26T10:00:00Z'));
+
+    currentMilestones = [
+      milestone({ id: 'm-past', title: { es: '', en: 'Past', fr: '' }, plannedDate: '2027-01-01' }),
+    ];
+    currentConfig = WEDDING_CONFIG_WITH_DATE;
+    await create();
+
+    const marker = fixture.nativeElement.querySelector('.today-marker') as HTMLElement;
+    expect(marker.querySelector('.today-date')?.textContent?.trim()).toBe('milestones.today');
+    // Untranslated in this suite (only two keys carry real interpolation),
+    // so the raw plural key — with the correct count baked into it by
+    // `pluralTranslate` — is what actually renders.
+    expect(marker.querySelector('.today-countdown-text')?.textContent).toContain(
+      'milestones.daysToGo.plural',
+    );
+  });
+
+  it('omits the days-to-go countdown text (but keeps the rest of the marker) when the config carries no wedding date', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2027-05-26T10:00:00Z'));
+
+    currentMilestones = [milestone({ id: 'm-past', plannedDate: '2027-01-01' })];
+    currentConfig = WEDDING_CONFIG_NO_DATE;
+    await create();
+
+    const marker = fixture.nativeElement.querySelector('.today-marker') as HTMLElement;
+    expect(marker.querySelector('.today-date')?.textContent?.trim()).toBe('milestones.today');
+    expect(marker.querySelector('.today-countdown-text')).toBeNull();
+    // The rail itself is still there — only the countdown text is omitted.
+    expect(marker.querySelector('.today-rail')).not.toBeNull();
+  });
+
+  it('caps the milestone card at 560px so it never stretches full-bleed on a wide screen', async () => {
+    currentMilestones = [milestone({ id: 'm1' })];
+    await create();
+
+    const card = fixture.nativeElement.querySelector('.card') as HTMLElement;
+    expect(getComputedStyle(card).maxWidth).toBe('560px');
+  });
+
   it('shows the "no wedding date" empty state (with a link to config) when the list is empty and no wedding date is set', async () => {
     currentMilestones = [];
     currentConfig = WEDDING_CONFIG_NO_DATE;
@@ -360,7 +426,7 @@ describe('Milestones', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/config']);
   });
 
-  it('shows the ordinary "create one" empty state (no config link, no re-seed offer) when the couple deleted everything (a wedding date exists)', async () => {
+  it('shows the ordinary "create one" empty state, with a "start from the usual plan" seed button, when the couple deleted everything (a wedding date exists)', async () => {
     currentMilestones = [];
     currentConfig = WEDDING_CONFIG_WITH_DATE;
     await create();
@@ -368,14 +434,122 @@ describe('Milestones', () => {
     const html = fixture.nativeElement.textContent as string;
     expect(html).toContain('milestones.emptyNoMilestones.title');
     expect(html).not.toContain('milestones.emptyNoDate.title');
-    expect(fixture.nativeElement.querySelector('.new-btn')).not.toBeNull();
+    // The header's "New milestone" button only renders once the list is
+    // non-empty (DS `ScreenMilestones.jsx:164/170`: `items.length > 0`) — with
+    // nothing to show, the empty state's own affordances below are the only
+    // way to create one, so a second header button would be redundant here.
+    expect(fixture.nativeElement.querySelector('.new-btn')).toBeNull();
+
+    // T281 supersedes T279's "no re-seed offer": the seed button is now
+    // present and wired, alongside the manual "create one" affordance —
+    // neither replaces the other.
+    const emptyStateButtons = Array.from(
+      fixture.nativeElement.querySelectorAll('.empty-state button') as NodeListOf<HTMLButtonElement>,
+    );
+    expect(
+      emptyStateButtons.some((b) => b.textContent?.includes('milestones.emptyNoMilestones.cta')),
+    ).toBe(true);
+    const seedButton = emptyStateButtons.find((b) =>
+      b.textContent?.includes('milestones.emptyNoMilestones.seedCta'),
+    );
+    expect(seedButton).toBeTruthy();
+
+    seedButton?.click();
+    await settle();
+    expect(seedSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not show the seed button in the "no wedding date" empty state (seeding would 400 without one)', async () => {
+    currentMilestones = [];
+    currentConfig = WEDDING_CONFIG_NO_DATE;
+    await create();
+
+    const html = fixture.nativeElement.textContent as string;
+    expect(html).not.toContain('milestones.emptyNoMilestones.seedCta');
+  });
+
+  it('a successful seed refetches the collection and renders the server-returned rows', async () => {
+    currentMilestones = [];
+    currentConfig = WEDDING_CONFIG_WITH_DATE;
+    await create();
+    listSpy.mockClear();
+
+    const seedButton = Array.from(
+      fixture.nativeElement.querySelectorAll('.empty-state button') as NodeListOf<HTMLButtonElement>,
+    ).find((b) => b.textContent?.includes('milestones.emptyNoMilestones.seedCta'))!;
+
+    currentMilestones = [milestone({ id: 'seeded-1', title: { es: '', en: 'Seeded', fr: '' } })];
+    seedButton.click();
+    await settle();
+
+    expect(seedSpy).toHaveBeenCalledTimes(1);
+    expect(listSpy).toHaveBeenCalled();
+    expect(cardTitles()).toContain('Seeded');
+  });
+
+  it('disables the seed button while the call is in flight (no double-submit)', async () => {
+    currentMilestones = [];
+    currentConfig = WEDDING_CONFIG_WITH_DATE;
+    let resolveSeed!: (value: { seeded: number }) => void;
+    seedFailure = null;
+    seedSpy.mockImplementationOnce(
+      () => new Observable((subscriber) => {
+        resolveSeed = (value) => {
+          subscriber.next(value);
+          subscriber.complete();
+        };
+      }),
+    );
+    await create();
+
+    const seedButton = Array.from(
+      fixture.nativeElement.querySelectorAll('.empty-state button') as NodeListOf<HTMLButtonElement>,
+    ).find((b) => b.textContent?.includes('milestones.emptyNoMilestones.seedCta'))!;
+
+    seedButton.click();
+    fixture.detectChanges();
+    expect(seedButton.disabled).toBe(true);
+
+    seedButton.click(); // No-op while in flight — no double-submit.
+    resolveSeed({ seeded: 0 });
+    await settle();
+
+    expect(seedSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('a 409 on seed shows the "already has milestones" message, distinct from the generic error, and keeps the manual "create one" button usable', async () => {
+    currentMilestones = [];
+    currentConfig = WEDDING_CONFIG_WITH_DATE;
+    seedFailure = throwError(() => new HttpErrorResponse({ status: 409 }));
+    await create();
+
+    const seedButton = Array.from(
+      fixture.nativeElement.querySelectorAll('.empty-state button') as NodeListOf<HTMLButtonElement>,
+    ).find((b) => b.textContent?.includes('milestones.emptyNoMilestones.seedCta'))!;
+
+    seedButton.click();
+    await settle();
+
+    const html = fixture.nativeElement.textContent as string;
+    expect(html).toContain('milestones.seed.conflict');
+    expect(html).not.toContain('milestones.error.generic');
+
+    // The manual "create one" button remains present and clickable — never
+    // hidden or replaced by the (failed) seed attempt.
+    const createButton = Array.from(
+      fixture.nativeElement.querySelectorAll('.empty-state button') as NodeListOf<HTMLButtonElement>,
+    ).find((b) => b.textContent?.includes('milestones.emptyNoMilestones.cta'))!;
+    expect(createButton.disabled).toBe(false);
+    createButton.click();
+    await settle();
+    expect(fixture.nativeElement.querySelector('.detail')).not.toBeNull();
   });
 
   it('never sends atRisk on create', async () => {
     currentMilestones = [];
     await create();
 
-    fixture.nativeElement.querySelector('.new-btn').click();
+    openCreateFromEmptyState(fixture.nativeElement);
     await settle();
 
     const titleInput = fixture.nativeElement.querySelector(
@@ -440,6 +614,153 @@ describe('Milestones', () => {
     const dto = updateSpy.mock.calls[0][0].updateMilestoneDto;
     expect(dto.reached).toBe(true);
     expect(dot.classList.contains('filled')).toBe(true);
+  });
+
+  // DS parity (third report on this screen): DS `ScreenMilestones.jsx`'s
+  // `Row` puts the primary action on the card's own second line, not only
+  // in the detail panel — a row-level "Send now" / "Mark done" pill,
+  // `stopPropagation`-guarded so it never also opens (or, for the
+  // guest-facing case, doesn't fight the confirm dialog it just opened via)
+  // the card's own click handler.
+  describe('row-level action button (DS `Row`: lives on the card, not only the detail panel)', () => {
+    it('a guest-facing "Send now" row button opens the same send-confirm dialog the detail panel button uses, without the card\'s own click handler interfering', async () => {
+      currentMilestones = [
+        configuredGuestFacingMilestone({ id: 'm1', title: { es: '', en: 'Chase the stragglers', fr: '' } }),
+      ];
+      await create();
+
+      const rowSendBtn = fixture.nativeElement.querySelector(
+        '.row .row-action-send',
+      ) as HTMLButtonElement;
+      expect(rowSendBtn).toBeTruthy();
+      expect(rowSendBtn.disabled).toBe(false);
+
+      rowSendBtn.click();
+      await settle();
+
+      const message = fixture.nativeElement.querySelector('app-confirm-dialog .message')?.textContent;
+      expect(message).toContain('Chase the stragglers');
+      // Nothing sent yet — opening the confirmation is not sending.
+      expect(sendSpy).not.toHaveBeenCalled();
+    });
+
+    it('the "Send now" row button is disabled under the same conditions as the detail panel button', async () => {
+      currentMilestones = [configuredGuestFacingMilestone({ id: 'm1', audience: undefined })];
+      await create();
+
+      const rowSendBtn = fixture.nativeElement.querySelector(
+        '.row .row-action-send',
+      ) as HTMLButtonElement;
+      expect(rowSendBtn.disabled).toBe(true);
+    });
+
+    it('renders no action button on the row once the guest-facing milestone is already sent — the metadata text alone communicates it', async () => {
+      currentMilestones = [
+        configuredGuestFacingMilestone({ id: 'm1', announcement: sentAnnouncement() }),
+      ];
+      await create();
+
+      expect(fixture.nativeElement.querySelector('.row .row-action-send')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.row .row-action-mark-done')).toBeNull();
+    });
+
+    // Defect: a guest-facing milestone manually ticked `reached` (hub
+    // ADR-0030 §4 — `reached` is settable independently of a send) kept
+    // showing "Send now" on the row, merely disabled. Sending an
+    // announcement for something already reached makes no sense — hide the
+    // button outright rather than leave it clickable-looking-but-not.
+    it('renders no "Send now" row button once a guest-facing milestone is manually marked reached, even though it was never sent', async () => {
+      currentMilestones = [configuredGuestFacingMilestone({ id: 'm1', reached: true })];
+      await create();
+
+      expect(fixture.nativeElement.querySelector('.row .row-action-send')).toBeNull();
+    });
+
+    it('an internal "Mark done" row button calls the same reached-toggle as the pill-toggle, without opening the detail panel', async () => {
+      currentMilestones = [
+        milestone({ id: 'm1', kind: MilestoneDto.KindEnum.INTERNAL, reached: false }),
+      ];
+      await create();
+
+      const rowMarkDoneBtn = fixture.nativeElement.querySelector(
+        '.row .row-action-mark-done',
+      ) as HTMLButtonElement;
+      expect(rowMarkDoneBtn).toBeTruthy();
+
+      rowMarkDoneBtn.click();
+      await settle();
+
+      expect(updateSpy).toHaveBeenCalledTimes(1);
+      const dto = updateSpy.mock.calls[0][0].updateMilestoneDto;
+      expect(dto.reached).toBe(true);
+      // `stopPropagation()` keeps the card's own `(click)="openView(m.id)"`
+      // from also firing — the detail panel never opens off this click.
+      expect(fixture.nativeElement.querySelector('.detail')).toBeNull();
+    });
+
+    it('renders no action button on the row once the internal milestone is already reached — the metadata text alone communicates it', async () => {
+      currentMilestones = [
+        milestone({ id: 'm1', kind: MilestoneDto.KindEnum.INTERNAL, reached: true }),
+      ];
+      await create();
+
+      expect(fixture.nativeElement.querySelector('.row .row-action-mark-done')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.row .row-action-send')).toBeNull();
+    });
+  });
+
+  // Defect #3: an internal milestone's detail panel body had no visible,
+  // labeled action at all — only the small, unlabeled header pill-toggle.
+  // Both branches call the same `toggleReached()` path already covered by
+  // the pill-toggle test above, so these only exercise the new control.
+  describe('internal milestone "mark done" control (detail panel body)', () => {
+    it('shows a hint and a "Mark as reached" button when not yet reached, which persists the toggle', async () => {
+      currentMilestones = [
+        milestone({ id: 'm1', kind: MilestoneDto.KindEnum.INTERNAL, reached: false }),
+      ];
+      await create();
+
+      fixture.nativeElement.querySelector('.card').click();
+      await settle();
+
+      const body = fixture.nativeElement.querySelector('.detail-body') as HTMLElement;
+      expect(body.textContent).toContain('milestones.internal.hint');
+      const button = Array.from(body.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('milestones.markReached'),
+      ) as HTMLButtonElement | undefined;
+      expect(button).toBeTruthy();
+
+      button?.click();
+      await settle();
+
+      expect(updateSpy).toHaveBeenCalledTimes(1);
+      const dto = updateSpy.mock.calls[0][0].updateMilestoneDto;
+      expect(dto.reached).toBe(true);
+    });
+
+    it('shows a plain "already reached" hint and an undo control when reached, which persists the toggle back', async () => {
+      currentMilestones = [
+        milestone({ id: 'm1', kind: MilestoneDto.KindEnum.INTERNAL, reached: true }),
+      ];
+      await create();
+
+      fixture.nativeElement.querySelector('.card').click();
+      await settle();
+
+      const body = fixture.nativeElement.querySelector('.detail-body') as HTMLElement;
+      expect(body.textContent).toContain('milestones.internal.reachedHint');
+      const undoButton = Array.from(body.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('milestones.markNotReached'),
+      ) as HTMLButtonElement | undefined;
+      expect(undoButton).toBeTruthy();
+
+      undoButton?.click();
+      await settle();
+
+      expect(updateSpy).toHaveBeenCalledTimes(1);
+      const dto = updateSpy.mock.calls[0][0].updateMilestoneDto;
+      expect(dto.reached).toBe(false);
+    });
   });
 
   it('surfaces a failed rename/re-date as an error rather than showing it as saved', async () => {
@@ -509,7 +830,7 @@ describe('Milestones', () => {
     createFailure = throwError(() => new Error('boom'));
     await create();
 
-    fixture.nativeElement.querySelector('.new-btn').click();
+    openCreateFromEmptyState(fixture.nativeElement);
     await settle();
 
     const titleInput = fixture.nativeElement.querySelector(
@@ -550,7 +871,7 @@ describe('Milestones', () => {
     currentMilestones = [];
     await create();
 
-    fixture.nativeElement.querySelector('.new-btn').click();
+    openCreateFromEmptyState(fixture.nativeElement);
     await settle();
 
     chipByText('milestones.form.kind.guestFacing')?.click();
@@ -715,6 +1036,24 @@ describe('Milestones', () => {
       expect(
         (fixture.nativeElement.querySelector('.send-btn') as HTMLButtonElement).disabled,
       ).toBe(false);
+    });
+
+    // Same defect as the row-level test above, exercised on the detail
+    // panel: otherwise-sendable (type, audience, non-empty audience, no
+    // prior announcement) but manually marked reached — no send button/hint
+    // pair at all, just the reached-specific hint.
+    it('renders no send button, only a reached hint, once an otherwise-sendable milestone is manually marked reached', async () => {
+      currentMilestones = [configuredGuestFacingMilestone({ id: 'm1', reached: true })];
+      await create();
+
+      fixture.nativeElement.querySelector('.card').click();
+      await settle();
+
+      expect(fixture.nativeElement.querySelector('.send-btn')).toBeNull();
+      const body = fixture.nativeElement.querySelector('.detail-body') as HTMLElement;
+      expect(body.textContent).toContain('milestones.announcement.reachedHint');
+      expect(body.textContent).not.toContain('milestones.announcement.sendHint');
+      expect(body.textContent).not.toContain('milestones.announcement.sendDisabledHint');
     });
   });
 

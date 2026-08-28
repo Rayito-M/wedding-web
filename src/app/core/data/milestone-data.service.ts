@@ -7,6 +7,7 @@ import {
   CreateMilestoneDto,
   MilestoneDto,
   MilestoneListResponseDto,
+  SeededMilestoneResponseDto,
   UpdateMilestoneDto,
   WeddingMilestonesService,
 } from '../api';
@@ -36,6 +37,9 @@ import { EntityNamesEnum } from './entity-metadata';
  * cacheable the way `add`/`update`/`delete` are), so the call site
  * (`screens/milestones`) re-reads the collection via `getAll()` afterwards
  * rather than this service reaching into the @ngrx/data cache itself.
+ * `seed()` (T281, `POST /v1/milestones/seed`) follows the same precedent —
+ * a one-shot action outside the CRUD interface, with the same
+ * re-read-afterwards call-site pattern.
  */
 @Injectable({ providedIn: 'root' })
 export class MilestoneDataService implements EntityCollectionDataService<MilestoneDto> {
@@ -146,6 +150,18 @@ export class MilestoneDataService implements EntityCollectionDataService<Milesto
     return this.milestonesApi
       .milestonesControllerClearAnnouncementV1({ id })
       .pipe(map(() => undefined));
+  }
+
+  /**
+   * `POST /v1/milestones/seed` (T281) — populates the collection from the
+   * wedding date; idempotent and runs at most once (`409` if the collection
+   * document already exists, `400` with no wedding date — the caller gates
+   * the button on `hasWeddingDate()` so `400` is unreachable via this UI).
+   * The response is a seed count, not a list of `MilestoneDto` — the caller
+   * re-reads the collection afterwards rather than fabricating rows from it.
+   */
+  seed(): Observable<SeededMilestoneResponseDto> {
+    return this.milestonesApi.milestonesControllerSeedV1();
   }
 
   private notSupported(): Observable<never> {

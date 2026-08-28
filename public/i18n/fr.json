@@ -759,6 +759,11 @@
     "title": "Étapes",
     "subtitle": "Votre propre liste de préparatifs — jamais visible des invités.",
     "today": "Aujourd'hui",
+    "daysToGo": {
+      "none": "Aujourd'hui, c'est le grand jour",
+      "singular": "Encore {{count}} jour",
+      "plural": "Encore {{count}} jours"
+    },
     "relative": {
       "inDays": {
         "singular": "dans {{count}} jour",
@@ -781,7 +786,8 @@
     "emptyNoMilestones": {
       "title": "Rien sur le calendrier pour l'instant",
       "body": "Créez votre première étape pour commencer à suivre l'avancement des préparatifs.",
-      "cta": "Créer une étape"
+      "cta": "Créer une étape",
+      "seedCta": "Partir du plan habituel"
     },
     "status": {
       "reached": "Atteinte",
@@ -790,6 +796,10 @@
     },
     "markReached": "Marquer comme atteinte",
     "markNotReached": "Marquer comme non atteinte",
+    "internal": {
+      "hint": "Rien à envoyer — cochez-la une fois qu'elle est vraie.",
+      "reachedHint": "Déjà marquée comme atteinte."
+    },
     "form": {
       "createEyebrow": "Nouvelle étape",
       "editEyebrow": "Étape",
@@ -845,9 +855,10 @@
     },
     "announcement": {
       "audienceCounts": "{{size}} invités · {{reachable}} joignables",
-      "sendButton": "Envoyer l'annonce",
+      "sendButton": "Envoyer",
       "sendHint": "Rien ne part tant que vous n'avez pas confirmé.",
       "sendDisabledHint": "Choisissez un type et des destinataires, puis enregistrez, pour pouvoir l'envoyer.",
+      "reachedHint": "Déjà marquée comme atteinte — il n'y a rien à envoyer.",
       "sentOn": "Envoyée le {{date}}",
       "sentCounts": "{{recipientCount}} destinataires · {{reachableCount}} joignables",
       "markNotSent": "Marquer comme non envoyée",
@@ -864,6 +875,9 @@
         "confirm": "Marquer comme non envoyée",
         "cancel": "Garder comme envoyée"
       }
+    },
+    "seed": {
+      "conflict": "Ce mariage a déjà ses étapes enregistrées — rien n'a été ajouté. Si la liste reste vide, essayez de recharger la page."
     }
   },
   "people": {

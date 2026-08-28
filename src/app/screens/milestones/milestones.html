@@ -24,13 +24,12 @@
         <div class="counter-value">{{ atRiskCount() }}</div>
         <div class="counter-label">{{ 'milestones.status.atRisk' | translate }}</div>
       </div>
+      @if (sortedMilestones().length > 0) {
+        <button app-btn type="button" class="new-btn" (click)="openCreate()">
+          {{ 'milestones.create.button' | translate }}
+        </button>
+      }
     </div>
-  </div>
-
-  <div class="toolbar">
-    <button app-btn type="button" class="new-btn" (click)="openCreate()">
-      {{ 'milestones.create.button' | translate }}
-    </button>
   </div>
 
   @if (actionError()) {
@@ -57,109 +56,166 @@
           <div class="empty-state">
             <h2>{{ 'milestones.emptyNoMilestones.title' | translate }}</h2>
             <p>{{ 'milestones.emptyNoMilestones.body' | translate }}</p>
-            <button app-btn type="button" (click)="openCreate()">
-              {{ 'milestones.emptyNoMilestones.cta' | translate }}
-            </button>
+            <div class="empty-state-actions">
+              <button
+                app-btn
+                type="button"
+                class="seed-btn"
+                [disabled]="seeding()"
+                (click)="seedMilestones()"
+              >
+                {{ 'milestones.emptyNoMilestones.seedCta' | translate }}
+              </button>
+              <button app-btn [primary]="false" type="button" (click)="openCreate()">
+                {{ 'milestones.emptyNoMilestones.cta' | translate }}
+              </button>
+            </div>
           </div>
         }
       } @else {
-        @for (m of sortedMilestones(); track m.id; let i = $index) {
-          @if (i === todayIndex()) {
+        <div class="list-inner">
+          @for (m of sortedMilestones(); track m.id; let i = $index) {
+            @if (i === todayIndex()) {
+              <div class="today-marker" #todayMarkerEl>
+                <div class="today-date">{{ 'milestones.today' | translate }}</div>
+                <div class="today-rail">
+                  <span class="today-line"></span>
+                  <span class="today-dot"></span>
+                </div>
+                <div class="today-countdown">
+                  <span class="today-countdown-line"></span>
+                  @if (daysToGo() !== null) {
+                    <span class="today-countdown-text">
+                      {{ ('milestones.daysToGo' | pluralTranslate: daysToGo()!) | translate: { count: daysToGo()! } }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+            <div class="row">
+              <div class="row-date">{{ m.plannedDate }}</div>
+              <div class="row-rail">
+                <span class="rail-line"></span>
+                <span
+                  class="rail-dot"
+                  [class.filled]="m.reached"
+                  [class.internal]="m.kind === KindEnum.INTERNAL"
+                ></span>
+              </div>
+              <div
+                class="card"
+                [class.selected]="isSelected(m.id)"
+                role="button"
+                tabindex="0"
+                [attr.aria-label]="titleFor(m)"
+                (click)="openView(m.id)"
+                (keydown.enter)="openView(m.id)"
+                (keydown.space)="openView(m.id)"
+              >
+                <div class="card-top">
+                  <span class="card-title" [class.done]="m.reached">{{ titleFor(m) }}</span>
+                  <button
+                    type="button"
+                    class="pill-toggle"
+                    (click)="toggleReached(m, $event)"
+                    [attr.aria-label]="(m.reached ? 'milestones.markNotReached' : 'milestones.markReached') | translate"
+                  >
+                    <app-status-pill [variant]="milestoneStatus(m)">
+                      {{ statusLabelKey(m) | translate }}
+                    </app-status-pill>
+                  </button>
+                </div>
+                <div class="card-meta">
+                  <span class="card-meta-text">
+                    @if (m.kind === KindEnum.GUEST_FACING) {
+                      <!-- Guest-facing second line (hub ADR-0030): audience/
+                           send-state, a distinct branch from the internal
+                           relative-time line below, never a mutation of it. -->
+                      @if (m.announcement; as ann) {
+                        {{ 'milestones.announcement.sentOn' | translate: { date: (ann.sentAt | date: 'd MMM y' : '' : primaryLang()) } }}
+                        · {{ 'milestones.announcement.sentCounts' | translate: { recipientCount: ann.recipientCount, reachableCount: ann.reachableCount } }}
+                      } @else if (m.announcementType && m.audience) {
+                        {{ announcementTypeLabel(m.announcementType) }} · {{ audienceLabel(m.audience) }}
+                        @if (audiencesLoaded()) {
+                          · {{
+                            ('milestones.row.recipients' | pluralTranslate: (audienceSize(m.audience) ?? 0))
+                              | translate: { count: audienceSize(m.audience) ?? 0 }
+                          }}
+                        }
+                      } @else {
+                        {{ 'milestones.row.unconfigured' | translate }}
+                      }
+                    } @else {
+                      @switch (relativeKind(m)) {
+                        @case ('reached') {
+                          {{ 'milestones.relative.reachedOn' | translate: { date: m.plannedDate } }}
+                        }
+                        @case ('today') {
+                          {{ 'milestones.today' | translate }}
+                        }
+                        @case ('overdue') {
+                          {{
+                            ('milestones.relative.overdueDays' | pluralTranslate: relativeDays(m))
+                              | translate: { count: relativeDays(m) }
+                          }}
+                        }
+                        @default {
+                          {{
+                            ('milestones.relative.inDays' | pluralTranslate: relativeDays(m))
+                              | translate: { count: relativeDays(m) }
+                          }}
+                        }
+                      }
+                    }
+                  </span>
+                  <!-- Row-level action zone (DS `ScreenMilestones.jsx`'s `Row`:
+                       the button lives on the card itself, not only in the
+                       detail panel) — empty once resolved (`m.announcement` /
+                       `m.reached`): the text above already communicates that. -->
+                  @if (m.kind === KindEnum.GUEST_FACING) {
+                    @if (!m.announcement && !m.reached) {
+                      <button
+                        type="button"
+                        class="row-action row-action-send"
+                        [disabled]="!canSend(m)"
+                        (click)="requestSendFor(m, $event)"
+                      >
+                        {{ 'milestones.announcement.sendButton' | translate }}
+                      </button>
+                    }
+                  } @else {
+                    @if (!m.reached) {
+                      <button
+                        type="button"
+                        class="row-action row-action-mark-done"
+                        (click)="toggleReached(m, $event)"
+                      >
+                        {{ 'milestones.markReached' | translate }}
+                      </button>
+                    }
+                  }
+                </div>
+              </div>
+            </div>
+          }
+          @if (todayIndex() === -1) {
             <div class="today-marker" #todayMarkerEl>
+              <div class="today-date">{{ 'milestones.today' | translate }}</div>
               <div class="today-rail">
                 <span class="today-line"></span>
                 <span class="today-dot"></span>
               </div>
-              <div class="today-label">{{ 'milestones.today' | translate }}</div>
-            </div>
-          }
-          <div class="row">
-            <div class="row-date">{{ m.plannedDate }}</div>
-            <div class="row-rail">
-              <span class="rail-line"></span>
-              <span
-                class="rail-dot"
-                [class.filled]="m.reached"
-                [class.internal]="m.kind === KindEnum.INTERNAL"
-              ></span>
-            </div>
-            <div
-              class="card"
-              [class.selected]="isSelected(m.id)"
-              role="button"
-              tabindex="0"
-              [attr.aria-label]="titleFor(m)"
-              (click)="openView(m.id)"
-              (keydown.enter)="openView(m.id)"
-              (keydown.space)="openView(m.id)"
-            >
-              <div class="card-top">
-                <span class="card-title" [class.done]="m.reached">{{ titleFor(m) }}</span>
-                <button
-                  type="button"
-                  class="pill-toggle"
-                  (click)="toggleReached(m, $event)"
-                  [attr.aria-label]="(m.reached ? 'milestones.markNotReached' : 'milestones.markReached') | translate"
-                >
-                  <app-status-pill [variant]="milestoneStatus(m)">
-                    {{ statusLabelKey(m) | translate }}
-                  </app-status-pill>
-                </button>
-              </div>
-              <div class="card-meta">
-                @if (m.kind === KindEnum.GUEST_FACING) {
-                  <!-- Guest-facing second line (hub ADR-0030): audience/
-                       send-state, a distinct branch from the internal
-                       relative-time line below, never a mutation of it. -->
-                  @if (m.announcement; as ann) {
-                    {{ 'milestones.announcement.sentOn' | translate: { date: (ann.sentAt | date: 'd MMM y' : '' : primaryLang()) } }}
-                    · {{ 'milestones.announcement.sentCounts' | translate: { recipientCount: ann.recipientCount, reachableCount: ann.reachableCount } }}
-                  } @else if (m.announcementType && m.audience) {
-                    {{ announcementTypeLabel(m.announcementType) }} · {{ audienceLabel(m.audience) }}
-                    @if (audiencesLoaded()) {
-                      · {{
-                        ('milestones.row.recipients' | pluralTranslate: (audienceSize(m.audience) ?? 0))
-                          | translate: { count: audienceSize(m.audience) ?? 0 }
-                      }}
-                    }
-                  } @else {
-                    {{ 'milestones.row.unconfigured' | translate }}
-                  }
-                } @else {
-                  @switch (relativeKind(m)) {
-                    @case ('reached') {
-                      {{ 'milestones.relative.reachedOn' | translate: { date: m.plannedDate } }}
-                    }
-                    @case ('today') {
-                      {{ 'milestones.today' | translate }}
-                    }
-                    @case ('overdue') {
-                      {{
-                        ('milestones.relative.overdueDays' | pluralTranslate: relativeDays(m))
-                          | translate: { count: relativeDays(m) }
-                      }}
-                    }
-                    @default {
-                      {{
-                        ('milestones.relative.inDays' | pluralTranslate: relativeDays(m))
-                          | translate: { count: relativeDays(m) }
-                      }}
-                    }
-                  }
+              <div class="today-countdown">
+                <span class="today-countdown-line"></span>
+                @if (daysToGo() !== null) {
+                  <span class="today-countdown-text">
+                    {{ ('milestones.daysToGo' | pluralTranslate: daysToGo()!) | translate: { count: daysToGo()! } }}
+                  </span>
                 }
               </div>
             </div>
-          </div>
-        }
-        @if (todayIndex() === -1) {
-          <div class="today-marker" #todayMarkerEl>
-            <div class="today-rail">
-              <span class="today-line"></span>
-              <span class="today-dot"></span>
-            </div>
-            <div class="today-label">{{ 'milestones.today' | translate }}</div>
-          </div>
-        }
+          }
+        </div>
       }
     </div>
 
@@ -336,6 +392,10 @@
                         {{ 'milestones.announcement.markNotSent' | translate }}
                       </button>
                     </div>
+                  } @else if (m.reached) {
+                    <div class="announcement-sent">
+                      <p class="field-hint">{{ 'milestones.announcement.reachedHint' | translate }}</p>
+                    </div>
                   } @else {
                     <div class="announcement-send">
                       <p class="field-hint">
@@ -347,6 +407,32 @@
                     </div>
                   }
                 </div>
+              } @else {
+                <!-- Internal milestone (defect #3): the only way to mark one
+                     reached was the small header pill-toggle, which carries
+                     no visible label — mirror the guest-facing block above
+                     with a real, labeled action here instead, reusing the
+                     same "reached" mutation the pill-toggle already calls
+                     (`toggleReached()`). -->
+                @if (m.reached) {
+                  <div class="internal-reached">
+                    <p class="field-hint">{{ 'milestones.internal.reachedHint' | translate }}</p>
+                    <button
+                      type="button"
+                      class="disclosure mark-not-reached-btn"
+                      (click)="toggleReached(m, $event)"
+                    >
+                      {{ 'milestones.markNotReached' | translate }}
+                    </button>
+                  </div>
+                } @else {
+                  <div class="internal-not-reached">
+                    <p class="field-hint">{{ 'milestones.internal.hint' | translate }}</p>
+                    <button app-btn type="button" class="mark-reached-btn" (click)="toggleReached(m, $event)">
+                      {{ 'milestones.markReached' | translate }}
+                    </button>
+                  </div>
+                }
               }
             }
 

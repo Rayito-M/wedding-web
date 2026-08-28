@@ -3977,3 +3977,65 @@
   "mark as not sent", §8 audiences, §9 the catalogue, §11 the API surface); hub `SPEC.md`
   journey **J7**; hub `GLOSSARY.md` → Announcement / Announcement type / Audience;
   in-repo T277, T279
+
+### T281 — Milestones: "Start from the usual plan" seed button in the empty state
+- **Status:** todo
+- **Owner:** agent
+- **Depends on:** T279 (screen exists), T280 (`kind`/announcement fields exist on `MilestoneDto`)
+- **Acceptance:**
+  - `pnpm gen:api:check` is clean — the client already exposes
+    `WeddingMilestonesService.milestonesControllerSeedV1()` returning `SeededMilestoneResponseDto
+    { seeded: number }`; verify this rather than re-running `pnpm gen:api` blind. No new
+    `type`/`interface` restates `SeededMilestoneResponseDto` or any other generated model (hard
+    rule 15) — it is used as-is.
+  - **This supersedes hub ADR-0029 §4.1's "no re-seed offer" clause** from T279's acceptance
+    criteria: T279 predates `POST /v1/milestones/seed`'s existence in the contract. The endpoint
+    is already live server-side (`wedding-api/src/modules/milestones/milestones.controller.ts` +
+    `milestones.service.ts::seed()`), so this is this repo catching up to a decision already made,
+    not a new hub ADR to request.
+  - In the **`milestones.emptyNoMilestones` empty state only** (the "couple deleted everything, a
+    wedding date exists" case — `milestones.html`'s current `emptyNoMilestones` block): add a
+    "Start from the usual plan" button (real i18n key, all three `public/i18n/{en,es,fr}.json`)
+    alongside the existing "create one" affordance. The **`emptyNoDate`** empty state (gated by
+    the existing `hasWeddingDate()` computed) is unchanged — no seed button there, since seeding
+    would 400 without a wedding date; this is defensive-only and not a UI path to design for.
+  - `wedding-ui-design/ui_kits/wedding-app/ScreenMilestones.jsx` (`loadSuggested`, "Start from the
+    usual plan", ~lines 58, 185) is the **visual reference for the button only** — its
+    client-side `setItems(window.WEDDING_MILESTONES)` behavior is explicitly **not** what to
+    build. Real behavior: an actual call to the seed endpoint, then a refetch of the real
+    collection on success.
+  - On click: call the seed endpoint. Follow whichever precedent `MilestoneDataService`'s existing
+    `send()`/`clearAnnouncement()` methods set for a non-CRUD sub-action that bypasses `@ngrx/data`
+    (a new `seed()` method there, calling `WeddingMilestonesService` directly) — architect's call
+    is to keep this consistent with those two rather than reinvent a third pattern. In-flight state
+    disables the button; no double-submit.
+  - On success: re-read the collection via the existing `refetchMilestones()` pattern so the
+    seeded rows render from the server response. **No client-side fabrication** of the seeded
+    list (no local catalogue, no optimistic rows).
+  - On `409` (`"Milestones already seeded"`): this is an **expected outcome, not a generic error**
+    — it means the milestone collection document already existed (seeded or manually created,
+    possibly since emptied by delete) even though the visible list is empty, and the client has
+    no way to know this in advance. Show a plain, honest message via `actionError` (e.g. "this
+    wedding already has its milestones on record" — real i18n copy, not "something went wrong")
+    and leave the ordinary manual "create one" button in place/visible as the fallback (it must
+    never be hidden or replaced by the seed button — both coexist in this empty state).
+  - On `400` (no wedding date): unreachable via this UI since the button only renders when
+    `hasWeddingDate()` is true; do not build any UI path for this case, note it as defensive-only.
+  - Loading/error states match the rest of the screen's conventions: `actionError` signal,
+    dismissible via the existing dismiss control, non-blocking (never a full-screen error state).
+  - Specs: the seed button renders in `emptyNoMilestones` and not in `emptyNoDate`; a successful
+    seed refetches the collection and renders the new (server-returned) rows; a `409` shows the
+    "already has milestones" message (not the generic error copy) and the manual "create one"
+    button remains present and clickable; the button disables itself while the call is in flight
+    (no double-submit). Update the existing T279 spec at `milestones.spec.ts` titled "...no
+    re-seed offer..." (~line 363) — its expectation is now wrong under this task and must assert
+    the seed button **is** present and wired, not absent.
+  - `pnpm typecheck && pnpm lint && pnpm test` green (lint clean except the 4 known
+    `shared/modal/` errors, per CLAUDE.md rule 11's carve-out).
+- **Refs:** hub ADR-0029 §4.1 (superseded here re: "no re-seed offer" — the seed endpoint now
+  exists as a real, client-callable action); `wedding-api`
+  `src/modules/milestones/milestones.controller.ts` + `milestones.service.ts::seed()`;
+  `wedding-ui-design/ui_kits/wedding-app/ScreenMilestones.jsx` (button visual reference only);
+  in-repo T279 (empty states, `hasWeddingDate()`), T280 (`send()`/`clearAnnouncement()` precedent
+  in `MilestoneDataService`); `src/app/screens/milestones/milestones.ts`,
+  `milestones.html`, `milestones.spec.ts`

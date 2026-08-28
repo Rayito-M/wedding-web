@@ -47,6 +47,7 @@
 
 .header-counters {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: t.$space-4;
 }
@@ -78,18 +79,13 @@
   color: var(--text-muted);
 }
 
-// New-milestone button lives in its own strip below the header — the header
-// row above is chrome-for-chrome with the kit (title + three counters only);
-// stacking the button here keeps it from competing with the counters for the
-// same row (defect #1).
-.toolbar {
-  padding: 8px t.$space-4 0;
-  display: flex;
-  justify-content: flex-end;
-}
-
+// New-milestone button (DS `ScreenMilestones.jsx:170`): the last child of the
+// same flex row as the three counters, not a separate strip below the header
+// — `margin-left: auto` keeps it pinned to the row's end while `flex-wrap`
+// above lets it drop to its own line rather than overflow on a narrow phone.
 .new-btn {
   flex-shrink: 0;
+  margin-left: auto;
   white-space: nowrap;
 }
 
@@ -141,6 +137,13 @@
     color: var(--text-muted);
     line-height: 1.5;
   }
+}
+
+.empty-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: t.$space-2;
 }
 
 // ── Layout: list + detail pane / mobile sheet ────────────────────────────
@@ -215,6 +218,11 @@
 
 .card {
   margin: 0 0 t.$space-3 t.$space-2;
+  // DS `ScreenMilestones.jsx`'s `Row`: `maxWidth: CARD_MAX` (560) — a plain
+  // pixel value, not a token, matching the same bare `560px` precedent
+  // already used for `rsvp-edit.scss`/`rsvp-create.scss`'s own card caps.
+  // Without this the card stretches full-bleed on a wide desktop viewport.
+  max-width: 560px;
   padding: 12px 14px;
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
@@ -268,14 +276,63 @@
   display: inline-flex;
 }
 
-// Card second line (defect #3): relative time, DS `ScreenMilestones.jsx`
-// metadata row (`margin-top: 9px`, `font-size: 11px`) — filled with the
-// internal relative-time equivalent of the kit's guest-facing
-// audience/channel/send info (out of scope here, hub ADR-0030 / T280).
+// Card second line: metadata text on the left, a row-level action zone on
+// the right (DS `ScreenMilestones.jsx`'s `Row`: `justifyContent:
+// 'space-between'`) — the metadata itself is the internal relative-time
+// equivalent of the kit's guest-facing audience/channel/send info (hub
+// ADR-0030 / T280), and the action zone is a per-milestone "Send now" /
+// "Mark done" pill, not only the detail panel's own equivalent button.
 .card-meta {
   margin-top: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: t.$space-3;
+}
+
+.card-meta-text {
+  min-width: 0;
   font-size: t.$text-micro;
   color: var(--text-muted);
+}
+
+// Small action pill (DS `ScreenMilestones.jsx`'s `Row`: `padding: '5px
+// 13px'`, `fontSize: 11`) — a new, smaller size than the shared `app-btn`
+// (`padding: 12px 18px`), so scoped here rather than reusing that component.
+.row-action {
+  flex-shrink: 0;
+  padding: 5px 13px;
+  border-radius: t.$radius-pill;
+  font-size: t.$text-micro;
+  font-family: t.$font-sans;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    opacity var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+// Guest-facing "Send now" — filled accent, deliberately the heavier of the
+// two (DS: `background: var(--accent)`, `color: var(--surface)`).
+.row-action-send {
+  border: 1px solid transparent;
+  background: var(--brand-accent);
+  color: var(--on-accent);
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+// Internal "Mark done" — ghost/outline, deliberately the lighter of the two
+// (DS: `border: '1px solid var(--line)'`, `background: 'transparent'`,
+// `color: 'var(--ink)'`) — never filled, so it reads distinctly from
+// `.row-action-send`.
+.row-action-mark-done {
+  border: 1px solid var(--border-hairline);
+  background: transparent;
+  color: var(--text-body-color);
 }
 
 // ── "Today" marker (`ScreenMilestones.jsx:81-93`) ────────────────────────
@@ -309,12 +366,40 @@
   background: var(--brand-accent);
 }
 
-.today-label {
-  padding-left: t.$space-2;
+// Column 1 (`ScreenMilestones.jsx`'s `TodayMarker`: `{...label, textAlign:
+// 'right', color: 'var(--accent)'}`) — the "Today" text belongs in the same
+// visual column as `.row-date` on an ordinary row (right-aligned, same
+// label-style type scale), just recolored to the accent and without
+// `.row-date`'s top padding (this marker centers vertically instead).
+.today-date {
+  text-align: right;
   font-size: t.$text-label;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--brand-accent);
+  white-space: nowrap;
+}
+
+// Column 3 (`ScreenMilestones.jsx`'s `TodayMarker`: the accent divider line
+// plus the "N days to go" countdown) — previously absent entirely.
+.today-countdown {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding-left: t.$space-2;
+}
+
+.today-countdown-line {
+  flex: 1;
+  height: 1px;
+  background: var(--brand-accent);
+  opacity: 0.4;
+}
+
+.today-countdown-text {
+  font-size: t.$text-micro;
+  color: var(--brand-accent);
+  white-space: nowrap;
 }
 
 // ── Detail pane / mobile bottom sheet ────────────────────────────────────
@@ -482,8 +567,13 @@
   gap: t.$space-3;
 }
 
+// The internal-milestone "mark done" hint box (defect #3) is the same
+// visual treatment as the guest-facing announcement box above — extends the
+// shared rule rather than re-declaring it.
 .announcement-sent,
-.announcement-send {
+.announcement-send,
+.internal-reached,
+.internal-not-reached {
   padding: 12px 14px;
   border: 1px solid var(--border-hairline);
   border-radius: t.$radius-md;
@@ -534,8 +624,36 @@
   }
 
   .list {
+    // `.list` is the scroll container itself (`overflow-y: auto`) — its
+    // scrollbar is drawn at *its own* right edge, so it must stay full-width
+    // here. The reading-column cap lives on `.list-inner` below instead (DS
+    // `ScreenMilestones.jsx`: the scroll container (`scrollRef`) is
+    // full-width/`position: relative`, and a separate inner wrapper carries
+    // `maxWidth: 124 + CARD_MAX, margin: '0 auto'`). Capping `.list` itself
+    // here previously drew the scrollbar mid-screen on a wide viewport.
     overflow-y: auto;
     padding: 18px t.$space-6 t.$space-6;
+    // `offsetTop` (used by `centerTodayMarker()` in `milestones.ts`) resolves
+    // against the nearest positioned ancestor — this makes `.list` itself
+    // that ancestor, matching the DS's own scroll container (`position:
+    // 'relative'`), so the "Today" marker's centering math is anchored to
+    // the scroll container rather than falling through to `:host`.
+    position: relative;
+  }
+
+  .list-inner {
+    // DS `ScreenMilestones.jsx`'s inner wrapper caps the reading column and
+    // centers it (`maxWidth: 124 + CARD_MAX, margin: '0 auto'`) rather than
+    // leaving the capped `.card` flush against the rail with a large dead
+    // zone to its right on a wide viewport. `124`/`92`/`28` are the DS's own
+    // (different) rail widths — this derives the equivalent from
+    // wedding-web's own desktop rail (92px + 28px, set just below) + the
+    // card's own `t.$space-2` left offset + the 560px card cap. Unlike the
+    // old (incorrect) cap on `.list`, this wrapper has no horizontal padding
+    // of its own (it sits inside `.list`'s), so the derivation stops there:
+    // 92 + 28 + 8 + 560 = 688px.
+    max-width: 688px;
+    margin: 0 auto;
   }
 
   .row,
@@ -565,10 +683,6 @@
 
   .counter {
     text-align: right;
-  }
-
-  .toolbar {
-    padding: 8px t.$space-7 0;
   }
 
   .detail-overlay {

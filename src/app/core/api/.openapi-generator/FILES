@@ -89,6 +89,7 @@ model/rsvp-dto.ts
 model/rsvp-list-response-dto-items-inner-adults.ts
 model/rsvp-list-response-dto-items-inner.ts
 model/rsvp-list-response-dto.ts
+model/seeded-milestone-response-dto.ts
 model/send-announcement-dto.ts
 model/settings-dto-notification-prefs.ts
 model/settings-dto.ts

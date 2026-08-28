@@ -66,6 +66,7 @@ export * from './rsvp-dto-children-inner';
 export * from './rsvp-list-response-dto';
 export * from './rsvp-list-response-dto-items-inner';
 export * from './rsvp-list-response-dto-items-inner-adults';
+export * from './seeded-milestone-response-dto';
 export * from './send-announcement-dto';
 export * from './settings-dto';
 export * from './settings-dto-notification-prefs';

@@ -223,6 +223,20 @@ export class Milestones {
    *  browser's own timezone. */
   protected readonly todayIso = computed(() => todayInMadrid());
 
+  /** Days remaining until the wedding date itself (DS `ScreenMilestones.jsx`'s
+   *  `TodayMarker`: `TODAY.daysToGo`) — reuses {@link daysBetween} against the
+   *  same `todayIso()`/`weddingConfig()?.date` pair `hasWeddingDate()` already
+   *  reads. `null` covers both edge cases the countdown text must simply omit
+   *  rather than show something nonsensical for: no wedding date on the
+   *  config row yet (milestones can exist without one), and the (rarer) case
+   *  where the wedding date has already passed. */
+  protected readonly daysToGo = computed<number | null>(() => {
+    const date = this.weddingConfig()?.date;
+    if (!date) return null;
+    const days = daysBetween(this.todayIso(), date);
+    return days >= 0 ? days : null;
+  });
+
   /** Index of the first milestone dated *later* than today — the "Today"
    *  marker renders immediately before it, or at the end when every
    *  milestone is in the past (`findIndex` returns `-1`, which the template
@@ -299,6 +313,10 @@ export class Milestones {
 
   protected readonly pendingClearId = signal<string | null>(null);
   protected readonly clearingAnnouncement = signal(false);
+
+  // ── "Start from the usual plan" seed (T281) ─────────────────────────────
+
+  protected readonly seeding = signal(false);
 
   constructor() {
     inject(HeaderService).set(this.translateService.instant('milestones.headerMeta'));
@@ -450,10 +468,12 @@ export class Milestones {
   }
 
   /** Whether `m` is guest-facing and legally sendable right now (hub
-   *  ADR-0030 §6's five disable conditions, in order): not guest-facing, no
-   *  type, no audience, an empty audience, or already sent. */
+   *  ADR-0030 §6's disable conditions, in order): not guest-facing, already
+   *  marked reached (manually or via a prior send — ADR-0030 §4), no type,
+   *  no audience, already sent, or an empty audience. */
   protected canSend(m: MilestoneDto): boolean {
     if (m.kind !== MilestoneDto.KindEnum.GUEST_FACING) return false;
+    if (m.reached) return false;
     if (!m.announcementType) return false;
     if (!m.audience) return false;
     if (m.announcement) return false;
@@ -692,6 +712,18 @@ export class Milestones {
     this.sendConfirmOpen.set(true);
   }
 
+  /** Row-level "Send now" (DS `ScreenMilestones.jsx`'s `Row`: `setSelId(m.id);
+   *  setConfirm(true);`) — the card itself has no independent send path, so
+   *  this selects `m` (opening the detail panel, same as clicking the card)
+   *  and then defers to {@link requestSend}, which re-reads it off
+   *  `selectedMilestone()` and applies the same `canSend()` guard. Never
+   *  duplicates that guard or the confirm-dialog wiring. */
+  protected requestSendFor(m: MilestoneDto, event: Event): void {
+    event.stopPropagation();
+    this.openView(m.id);
+    this.requestSend();
+  }
+
   protected cancelSend(): void {
     this.sendConfirmOpen.set(false);
   }
@@ -772,6 +804,36 @@ export class Milestones {
         this.clearingAnnouncement.set(false);
         this.pendingClearId.set(null);
         this.actionError.set(this.translateService.instant('milestones.error.generic'));
+      },
+    });
+  }
+
+  // ── "Start from the usual plan" seed (T281) ─────────────────────────────
+  // `POST /v1/milestones/seed` — only rendered in `emptyNoMilestones`
+  // (`hasWeddingDate()` true), so a `400` (no wedding date) is unreachable
+  // via this button and gets no UI path. A `409` means the milestone
+  // collection document already existed (seeded or manually created,
+  // possibly since emptied by delete) even though the visible list is
+  // empty — an expected outcome, not a generic failure, so it gets its own
+  // `actionError` copy and the manual "create one" button stays untouched
+  // alongside it.
+
+  protected seedMilestones(): void {
+    if (this.seeding()) return;
+    this.actionError.set(null);
+    this.seeding.set(true);
+    this.milestoneDataService.seed().subscribe({
+      next: () => {
+        this.seeding.set(false);
+        this.refetchMilestones();
+      },
+      error: (error: unknown) => {
+        this.seeding.set(false);
+        if (this.httpStatus(error) === 409) {
+          this.actionError.set(this.translateService.instant('milestones.seed.conflict'));
+        } else {
+          this.actionError.set(this.translateService.instant('milestones.error.generic'));
+        }
       },
     });
   }
