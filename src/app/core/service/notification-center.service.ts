@@ -183,10 +183,11 @@ export class NotificationCenterService {
 
   /** Raises the one danger toast this service ever produces (T289) — a
    *  write failure the optimistic-flip recovery above has already reverted
-   *  or re-read. `tone: 'danger'` alone is enough to make
-   *  {@link ToastCenterService.show} drop any `delay` and force
-   *  `dismissible: true` (its own doc comment), so this does not need to
-   *  pass `delay` at all. */
+   *  or re-read. Passing no `delay` is what keeps it on screen until
+   *  dismissed: `tone: 'danger'` is enough to make
+   *  {@link ToastCenterService.show} default to no auto-hide and force
+   *  `dismissible: true` (its own doc comment). Do not add a `delay` here —
+   *  an explicit one would override that default. */
   private showWriteFailureToast(errorKey: string): void {
     this.toastCenter.show({
       tone: 'danger',

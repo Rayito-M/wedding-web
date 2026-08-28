@@ -297,6 +297,9 @@
     "title": "Configuration générale",
     "eyebrow": "Réglages",
     "version": "Version {{version}}",
+    "errors": {
+      "save": "Impossible d'enregistrer la configuration. Veuillez réessayer."
+    },
     "status": {
       "dirty": "Modifications non enregistrées",
       "upToDate": "À jour",

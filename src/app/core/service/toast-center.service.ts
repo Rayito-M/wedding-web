@@ -1,4 +1,4 @@
-import { Injectable, signal, type Signal } from '@angular/core';
+import { computed, Injectable, signal, type Signal } from '@angular/core';
 
 import type { IconName } from '@app/shared/icons/icon';
 import type { ToastPlacement } from '@app/shared/toast-stack/toast-stack';
@@ -31,16 +31,36 @@ export interface ShowToastOptions {
   body?: string;
   actionLabel?: string;
   /**
-   * Auto-hide after N ms. Ignored (forced to `undefined`) whenever the
-   * resolved toast carries `actionLabel` or `tone: 'danger'` — see the class
-   * doc comment. Omit to let the service pick a default from the DS's
-   * timing band for anything else.
+   * Auto-hide after N ms, or `undefined` for "stays until dismissed".
+   *
+   * **An explicit value always wins**, including on a `tone: 'danger'` or
+   * `actionLabel` toast — the DS's "a failure or an action toast never
+   * auto-hides" rule (`Toast.prompt.md` §Timing) is the *default* this
+   * service applies when a caller says nothing, not a veto over one that
+   * asked. Omit to get that default: no auto-hide for danger/action toasts,
+   * {@link DEFAULT_DELAY_MS} for everything else. Passing a delay on a
+   * failure toast is a deliberate call — the user loses the guarantee that
+   * the message is still there when they look back at the screen.
    */
   delay?: number;
   dismissible?: boolean;
+  /**
+   * Which of the nine corners/edges of the app frame this toast appears at
+   * (`top|middle|bottom` × `start|center|end`). Omit for
+   * {@link DEFAULT_PLACEMENT}.
+   *
+   * Each placement is its own independent column: ordering
+   * ({@link ToastCenterService.stacks}) and the three-toast cap are applied
+   * per placement, never across the screen. `Toast.prompt.md` §Placement is
+   * the convention — `top-center` for news that arrives on its own,
+   * `bottom-center` for confirmation of something the user just did,
+   * `bottom-end` on desktop, and `middle-center` reserved for a single
+   * blocking-feeling failure.
+   */
+  placement?: ToastPlacement;
 }
 
-/** One entry in the live stack — {@link ShowToastOptions} resolved to
+/** One entry in a live stack — {@link ShowToastOptions} resolved to
  *  concrete values, plus the service-generated `id` `app-toast` binds
  *  `(close)`/`(action)` against. */
 export interface ToastEntry {
@@ -54,11 +74,23 @@ export interface ToastEntry {
   actionLabel?: string;
   delay?: number;
   dismissible: boolean;
+  placement: ToastPlacement;
+}
+
+/** One `app-toast-stack` worth of toasts: the placement to mount it at, and
+ *  that column's entries already ordered for it. Only placements that
+ *  currently hold at least one toast appear in
+ *  {@link ToastCenterService.stacks}. */
+export interface ToastStackGroup {
+  placement: ToastPlacement;
+  toasts: ToastEntry[];
 }
 
 /** `Toast.prompt.md` §Stacking: pushing a fourth toast drops the oldest, the
- *  column never grows past this. */
-const MAX_TOASTS = 3;
+ *  column never grows past this. Applied **per placement** — the cap is a
+ *  statement about one column's height, and two columns at opposite corners
+ *  do not crowd each other. */
+const MAX_TOASTS_PER_PLACEMENT = 3;
 
 /**
  * `Toast.prompt.md` §Timing: "delay 4000–6000 for a one-line toast." The
@@ -68,31 +100,56 @@ const MAX_TOASTS = 3;
 const DEFAULT_DELAY_MS = 5000;
 
 /**
- * The one stack this app mounts (`PrivateLayout`, `bottom-center`,
- * `clearsTabBar` — see `private-layout.html`). {@link ToastCenterService}
- * reads its ordering rule from this single named constant rather than
- * guessing per call, per T285's acceptance criteria. If a second stack at a
- * different placement is ever added, ordering becomes a per-stack concern —
- * out of scope today ("exactly one stack" is the whole point of this task).
+ * Where a `show()` call that names no {@link ShowToastOptions.placement}
+ * lands. `bottom-center` because the overwhelming majority of this app's
+ * toasts confirm something the user just did (`Toast.prompt.md`
+ * §Placement), and it is the placement the app shipped with before toasts
+ * became placeable.
  */
-const STACK_PLACEMENT: ToastPlacement = 'bottom-center';
+const DEFAULT_PLACEMENT: ToastPlacement = 'bottom-center';
 
 /**
- * Signals-based, in-memory home for the app's one toast stack
+ * The nine placements in a fixed order, so {@link ToastCenterService.stacks}
+ * emits its groups deterministically (a `@for` over them keeps stable DOM
+ * order regardless of which column was filled first).
+ */
+const PLACEMENT_ORDER: readonly ToastPlacement[] = [
+  'top-start',
+  'top-center',
+  'top-end',
+  'middle-start',
+  'middle-center',
+  'middle-end',
+  'bottom-start',
+  'bottom-center',
+  'bottom-end',
+];
+
+/**
+ * Signals-based, in-memory home for the app's toast stacks
  * (`ToastStack.prompt.md`: "One stack per screen — mount it in the app
  * shell, not per route, so a toast survives navigation."). Producers call
- * {@link show}; `PrivateLayout` renders {@link toasts} through
- * `<app-toast-stack>`/`<app-toast>` and calls {@link dismiss} on `(close)`.
+ * {@link show}; `PrivateLayout` renders {@link stacks} as one
+ * `<app-toast-stack>` per occupied placement and calls {@link dismiss} on
+ * `(close)`.
  *
- * **Ships inert.** Nothing calls {@link show} yet — T289 is the first real
- * producer (Phase O). No polling, no global error hook, no interceptor
- * wiring: this service does not subscribe to anything on its own.
+ * **Placement is per toast, not per app.** A caller names one of the nine
+ * placements (or takes {@link DEFAULT_PLACEMENT}); this service keeps every
+ * live toast in one insertion-ordered list and slices it into columns on
+ * read. Two consequences a caller can rely on:
+ * - **ordering is per column** — newest nearest the edge the column hugs, so
+ *   newest *first* for `top-*` and newest *last* everywhere else
+ *   (`Toast.prompt.md` §Stacking states the rule for `top-*`/`bottom-*`;
+ *   the rarely-used `middle-*` follows the non-top case);
+ * - **the three-toast cap is per column** — a fourth toast at one placement
+ *   drops the oldest *at that placement* and leaves the other columns alone.
  *
- * **The two timing rules `app-toast` deliberately does not enforce
- * (`toast.ts`'s doc comment) live here instead:**
- * - a toast carrying `actionLabel`, or with `tone: 'danger'`, never gets a
- *   `delay` — regardless of what the caller passed — because the user must
- *   be able to reach it (`Toast.prompt.md` §Timing);
+ * **The timing rules `app-toast` deliberately does not enforce (`toast.ts`'s
+ * doc comment) live here instead — as defaults for a caller that passes no
+ * `delay`, never as a veto over one that does:**
+ * - a toast carrying `actionLabel`, or with `tone: 'danger'`, gets no
+ *   `delay` unless the caller asked for one, because by default the user
+ *   must be able to reach it (`Toast.prompt.md` §Timing);
  * - everything else defaults into the DS's 4000–6000ms band
  *   ({@link DEFAULT_DELAY_MS}) when the caller omits `delay`;
  * - `dismissible` stays `true` whenever no `delay` ends up set on the
@@ -102,8 +159,25 @@ const STACK_PLACEMENT: ToastPlacement = 'bottom-center';
 @Injectable({ providedIn: 'root' })
 export class ToastCenterService {
   private readonly _toasts = signal<ToastEntry[]>([]);
-  /** The live stack, already ordered for {@link STACK_PLACEMENT}. */
+  /** Every live toast, across all placements, in insertion order (oldest
+   *  first). Rendering goes through {@link stacks}, which is this list cut
+   *  into per-placement columns and ordered for each. */
   readonly toasts: Signal<ToastEntry[]> = this._toasts.asReadonly();
+
+  /** {@link toasts} grouped into the columns to render, one per placement
+   *  that currently holds at least one toast, in {@link PLACEMENT_ORDER}. */
+  readonly stacks: Signal<ToastStackGroup[]> = computed(() => {
+    const live = this._toasts();
+    const groups: ToastStackGroup[] = [];
+    for (const placement of PLACEMENT_ORDER) {
+      const column = live.filter((t) => t.placement === placement);
+      if (column.length === 0) continue;
+      // Newest nearest the edge the column hugs: reversed for a top stack,
+      // insertion order (newest last) for middle and bottom ones.
+      groups.push({ placement, toasts: isTop(placement) ? [...column].reverse() : column });
+    }
+    return groups;
+  });
 
   private idCounter = 0;
 
@@ -113,9 +187,12 @@ export class ToastCenterService {
     const id = `toast-${++this.idCounter}`;
     const tone = options.tone ?? 'neutral';
     const variant = options.variant ?? 'surface';
+    const placement = options.placement ?? DEFAULT_PLACEMENT;
 
-    const mustStayVisible = tone === 'danger' || !!options.actionLabel;
-    const delay = mustStayVisible ? undefined : (options.delay ?? DEFAULT_DELAY_MS);
+    // An explicit `delay` wins; the danger/action rule only decides what
+    // "omitted" means (see {@link ShowToastOptions.delay}).
+    const staysUntilDismissedByDefault = tone === 'danger' || !!options.actionLabel;
+    const delay = options.delay ?? (staysUntilDismissedByDefault ? undefined : DEFAULT_DELAY_MS);
     const dismissible = delay === undefined ? true : (options.dismissible ?? true);
 
     const entry: ToastEntry = {
@@ -129,23 +206,32 @@ export class ToastCenterService {
       actionLabel: options.actionLabel,
       delay,
       dismissible,
+      placement,
     };
 
     this._toasts.update((list) => {
-      const insertedFirst = STACK_PLACEMENT.startsWith('top');
-      const next = insertedFirst ? [entry, ...list] : [...list, entry];
-      if (next.length <= MAX_TOASTS) return next;
-      // Cap at three: drop the oldest, wherever it now sits — the tail for a
-      // "newest first" top stack, the head for a "newest last" bottom one.
-      return insertedFirst ? next.slice(0, MAX_TOASTS) : next.slice(next.length - MAX_TOASTS);
+      const next = [...list, entry];
+      const column = next.filter((t) => t.placement === placement);
+      if (column.length <= MAX_TOASTS_PER_PLACEMENT) return next;
+      // Cap this column at three by dropping its oldest entries only; the
+      // other placements keep everything they hold.
+      const dropped = new Set(column.slice(0, column.length - MAX_TOASTS_PER_PLACEMENT));
+      return next.filter((t) => !dropped.has(t));
     });
 
     return id;
   }
 
   /** Remove one toast by id — a no-op if it is already gone (already
-   *  dismissed, or dropped by the three-toast cap). */
+   *  dismissed, or dropped by its column's three-toast cap). */
   dismiss(id: string): void {
     this._toasts.update((list) => list.filter((t) => t.id !== id));
   }
+}
+
+/** `top-start | top-center | top-end` — the one axis slice that reverses a
+ *  column's order (`Toast.prompt.md` §Stacking). Mirrors the
+ *  `[data-placement^='top']` selector `toast-stack.scss` positions with. */
+function isTop(placement: ToastPlacement): boolean {
+  return placement.startsWith('top');
 }

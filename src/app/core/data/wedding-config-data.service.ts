@@ -47,7 +47,6 @@ export class WeddingConfigDataService implements EntityCollectionDataService<Wed
   }): Observable<WeddingConfigResponseDto> {
     const updateWeddingConfigDto: UpdateWeddingConfigDto = {
       ...update.changes,
-      id: update.id,
       version: update.changes.version ?? 0, // Default to 0 if version is not provided
     };
     return this.configApi.weddingConfigControllerUpdateV1({

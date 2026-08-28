@@ -21,8 +21,11 @@ export type ToastPlacement =
  * Positioned container for `app-toast` — the only legal parent for one
  * (DS `overlays/ToastStack`, commit `7db5d1c`). Covers the app frame, lets
  * clicks through everywhere except on a toast, and keeps the column from
- * overlapping. One stack per screen, mounted in the app shell (T285), not
- * per route, so a toast survives navigation.
+ * overlapping. Mounted in the app shell (T285), not per route, so a toast
+ * survives navigation — one instance per placement that has live toasts,
+ * since `ToastCenterService` lets each toast name its own corner. Instances
+ * are `position: fixed` full-frame and `pointer-events: none`, so several
+ * may overlap harmlessly; only the toasts themselves take clicks.
  *
  * `position: fixed`, not the DS reference's `position: absolute` (Phase O
  * decision 2 — the DS's `absolute inset:0` needs a `data-overlay-host`

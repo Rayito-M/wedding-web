@@ -33,9 +33,13 @@ interface RouteChrome {
  * `<router-outlet>`. Which chrome shows is driven by the active child route's
  * `data` (`tab`, `tabBar`, `topNav`).
  *
- * Also mounts the app's one `app-toast-stack` (T285) — `bottom-center`,
- * clearing the mobile tab bar — so a toast survives navigation between
- * private screens. There is no stack on the public/auth shell.
+ * Also mounts the app's toast stacks (T285) — one `app-toast-stack` per
+ * placement `ToastCenterService.stacks()` currently holds toasts for, so a
+ * toast survives navigation between private screens. Every stack is asked to
+ * clear the mobile tab bar; `clearsTabBar` is a no-op on any placement the
+ * bar cannot cover (`toast-stack.scss`). Producers pick a placement per
+ * toast, defaulting to `bottom-center`. There is no stack on the public/auth
+ * shell.
  */
 @Component({
   selector: 'app-private-layout',

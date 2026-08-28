@@ -300,6 +300,9 @@
     "title": "General configuration",
     "eyebrow": "Settings",
     "version": "Version {{version}}",
+    "errors": {
+      "save": "Couldn't save the configuration. Please try again."
+    },
     "status": {
       "dirty": "Unsaved changes",
       "upToDate": "Up to date",

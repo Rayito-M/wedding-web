@@ -427,7 +427,7 @@
             </div>
           </div>
           <div class="card-list">
-            @for (item of cfg().agenda.items; track item.id) {
+            @for (item of agendaItems(); track item.id) {
               <div class="card" [class.cancelled]="item.status === 'cancelled'">
                 <div class="row-top">
                   <label class="field field-time">
@@ -448,7 +448,9 @@
                       (change)="setAgendaVenue(item.id, selectValue($event))"
                     >
                       @for (venue of cfg().venues; track venue.id) {
-                        <option [value]="venue.id">{{ venue.name }}</option>
+                        <option [value]="venue.id" [selected]="venue.id === item.venueId">
+                          {{ venue.name }}
+                        </option>
                       }
                     </select>
                   </label>

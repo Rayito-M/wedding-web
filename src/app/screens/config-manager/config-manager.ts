@@ -28,6 +28,8 @@ import {
   UserDto,
   CreateUserDto,
   LoginService,
+  ToastCenterService,
+  ulid,
   // `pnpm gen:api` (T279) deduped this structurally-identical `{es,en,fr}`
   // schema onto the milestone title's generated name instead of its own —
   // an openapi-generator naming artifact of adding the Milestone schemas,
@@ -123,8 +125,11 @@ const THEME_SWATCHES: readonly ThemeSwatch[] = [
 
 const emptyLangText = (): MultiLangText => ({ es: '', en: '', fr: '' });
 
+/** Hour a freshly added agenda item starts at, until the admin edits it. */
+const DEFAULT_AGENDA_TIME = '12:00';
+
 //TOD: UID are manage by the backend, so we should not generate them on the frontend.
-const uid = (): string => globalThis.crypto.randomUUID();
+const uid = (): string => ulid();
 
 function buildEmptyConfig(): ConfigState {
   return {
@@ -166,6 +171,7 @@ function buildEmptyConfig(): ConfigState {
 export class ConfigManager implements OnInit {
   private readonly translateService = inject(TranslateService);
   private readonly loginService = inject(LoginService);
+  private readonly toastCenter = inject(ToastCenterService);
   /**
    * `WeddingConfigPublic` @ngrx/data collection (ADR W-0001 decisions 3–4):
    * store → custom data service → generated API client. RxJS stays inside
@@ -301,6 +307,27 @@ export class ConfigManager implements OnInit {
     'final',
   ];
 
+  /**
+   * The schedule read in clock order. `time` is a fixed-width ISO datetime, so
+   * a plain string comparison is already chronological — no `Date` parsing,
+   * which would also drag the `Z` suffix into a timezone conversion it does
+   * not mean here (see `extractAgendaTime`). An entry left in a half-typed,
+   * non-ISO state sorts last rather than jumping to the top, and `sort` being
+   * stable keeps same-hour items in the order they were added.
+   *
+   * Display order only: every edit addresses its item by `id`, so reordering
+   * the view never mis-targets a write.
+   */
+  protected readonly agendaItems = computed(() =>
+    [...this.cfg().agenda.items].sort((a, b) =>
+      this.timeSortKey(a.time).localeCompare(this.timeSortKey(b.time)),
+    ),
+  );
+
+  private timeSortKey(time: string): string {
+    return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(time) ? time : `\uffff${time}`;
+  }
+
   protected readonly agendaCounts = computed(() =>
     this.cfg().agenda.items.reduce(
       (acc, item) => ({ ...acc, [item.status]: acc[item.status] + 1 }),
@@ -336,10 +363,29 @@ export class ConfigManager implements OnInit {
   }
 
   protected save(): void {
-    this.dirty.set(false);
-    this.savedFlash.set(true);
-    clearTimeout(this.savedFlashTimer);
-    this.savedFlashTimer = setTimeout(() => this.savedFlash.set(false), 1800);
+    this.weddingConfigCollection.update(this.cfg()).subscribe({
+      next: () => {
+        this.dirty.set(false);
+        this.savedFlash.set(true);
+        clearTimeout(this.savedFlashTimer);
+        this.savedFlashTimer = setTimeout(() => this.savedFlash.set(false), 1800);
+      },
+      error: (err) => {
+        console.log('Failed to save wedding config:', err);
+
+        // A danger toast stays until dismissed *by default*; the explicit
+        // `delay` below opts out of that — this failure is recoverable (hit
+        // Save again), so it auto-hides rather than sitting on the screen.
+        this.toastCenter.show({
+          tone: 'danger',
+          variant: 'filled',
+          icon: 'warning',
+          title: this.translateService.instant('configManager.errors.save'),
+          placement: 'top-center',
+          delay: 5000, // 5s, not infinite (user can dismiss)
+        });
+      },
+    });
   }
 
   private mutate(updater: (current: ConfigState) => ConfigState): void {
@@ -632,9 +678,13 @@ export class ConfigManager implements OnInit {
   protected addAgenda(): void {
     const firstVenueId = this.cfg().venues[0]?.id ?? null;
     const newItem: AgendaItem = {
-      id: uid(),
+      id: ulid(),
       status: 'planned',
-      time: '',
+      // Seeded with a real datetime, not `''`: `time` is a required
+      // `z.iso.datetime()` on the API (`AgendaItemSchema`), so an item the
+      // admin adds and never types an hour into would otherwise fail
+      // validation and take the whole config save down with it.
+      time: this.mergeHourIntoIso('', DEFAULT_AGENDA_TIME),
       venueId: firstVenueId,
       title: emptyLangText(),
       desc: emptyLangText(),
@@ -664,7 +714,7 @@ export class ConfigManager implements OnInit {
       ...c,
       hotels: [
         ...c.hotels,
-        { id: uid(), name: '', priceTier: '€€', distanceKm: 0, bookingUrl: '', photoKey: null },
+        { id: ulid(), name: '', priceTier: '€€', distanceKm: 0, bookingUrl: '', photoKey: null },
       ],
     }));
   }

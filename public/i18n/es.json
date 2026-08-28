@@ -297,6 +297,9 @@
     "title": "Configuración general",
     "eyebrow": "Ajustes",
     "version": "Versión {{version}}",
+    "errors": {
+      "save": "No se pudo guardar la configuración. Inténtalo de nuevo."
+    },
     "status": {
       "dirty": "Cambios sin guardar",
       "upToDate": "Todo actualizado",
