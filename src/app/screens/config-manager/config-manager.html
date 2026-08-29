@@ -359,6 +359,9 @@
                     [value]="venue.mapUrl"
                     (input)="setVenue(venue.id, { mapUrl: inputValue($event) })"
                   />
+                  <p class="field-hint">
+                    {{ 'configManager.note.mapUrlEmbed' | translate }}
+                  </p>
                 </label>
               </div>
             }
@@ -372,24 +375,6 @@
             <div>
               <h2>{{ 'configManager.section.agenda' | translate }}</h2>
               <p class="note">{{ 'configManager.note.agenda' | translate }}</p>
-            </div>
-            <div
-              class="lang-tabs"
-              role="tablist"
-              [attr.aria-label]="'configManager.nav.langAriaLabel' | translate"
-            >
-              @for (code of editLangs; track code) {
-                <button
-                  type="button"
-                  role="tab"
-                  class="lang-tab"
-                  [class.on]="lang() === code"
-                  [attr.aria-selected]="lang() === code"
-                  (click)="selectLang(code)"
-                >
-                  {{ code.toUpperCase() }}
-                </button>
-              }
             </div>
           </div>
           <div class="card schedule-status-card">
@@ -426,9 +411,69 @@
               }
             </div>
           </div>
+          <div class="agenda-filter-row">
+            <span class="field-label">{{ 'configManager.agenda.filterLabel' | translate }}</span>
+            <div
+              class="segmented agenda-filter"
+              role="radiogroup"
+              [attr.aria-label]="'configManager.agenda.filterLabel' | translate"
+            >
+              <button
+                type="button"
+                role="radio"
+                class="segment"
+                [class.on]="agendaFilter() === 'all'"
+                [attr.aria-checked]="agendaFilter() === 'all'"
+                (click)="selectAgendaFilter('all')"
+              >
+                {{
+                  'configManager.agenda.filter.all'
+                    | translate: { count: agendaFilterCounts().all }
+                }}
+              </button>
+              <button
+                type="button"
+                role="radio"
+                class="segment"
+                [class.on]="agendaFilter() === 'keyMoments'"
+                [attr.aria-checked]="agendaFilter() === 'keyMoments'"
+                (click)="selectAgendaFilter('keyMoments')"
+              >
+                {{
+                  'configManager.agenda.filter.keyMoments'
+                    | translate: { count: agendaFilterCounts().keyMoments }
+                }}
+              </button>
+              <button
+                type="button"
+                role="radio"
+                class="segment"
+                [class.on]="agendaFilter() === 'optional'"
+                [attr.aria-checked]="agendaFilter() === 'optional'"
+                (click)="selectAgendaFilter('optional')"
+              >
+                {{
+                  'configManager.agenda.filter.optional'
+                    | translate: { count: agendaFilterCounts().optional }
+                }}
+              </button>
+            </div>
+          </div>
           <div class="card-list">
-            @for (item of agendaItems(); track item.id) {
-              <div class="card" [class.cancelled]="item.status === 'cancelled'">
+            @for (item of filteredAgendaItems(); track item.id) {
+              <div
+                class="card"
+                [class.cancelled]="item.status === 'cancelled'"
+                [class.key-moment]="item.highlight"
+              >
+                <button
+                  type="button"
+                  app-toggle
+                  [checked]="!!item.highlight"
+                  (toggled)="setAgendaHighlight(item.id, $event)"
+                >
+                  {{ 'configManager.agenda.keyMoment' | translate }}
+                </button>
                 <div class="row-top">
                   <label class="field field-time">
                     <span class="field-label">{{ 'configManager.field.time' | translate }}</span>
@@ -487,30 +532,75 @@
                     }
                   </div>
                 </div>
-                <label class="field">
-                  <span class="field-label"
-                    >{{ 'configManager.field.title' | translate }} ·
-                    {{ lang().toUpperCase() }}</span
-                  >
-                  <input
-                    app-input
-                    type="text"
-                    [value]="item.title[lang()]"
-                    (input)="setAgendaText(item.id, 'title', inputValue($event))"
-                  />
-                </label>
-                <label class="field">
-                  <span class="field-label"
-                    >{{ 'configManager.field.description' | translate }} ·
-                    {{ lang().toUpperCase() }}</span
-                  >
-                  <textarea
-                    app-textarea
-                    rows="2"
-                    [value]="item.desc[lang()]"
-                    (input)="setAgendaText(item.id, 'desc', inputValue($event))"
-                  ></textarea>
-                </label>
+
+                <!-- Wide: one grid row per language (chip · title · description). -->
+                <div class="ml-grid">
+                  <div class="ml-grid-header">
+                    <span></span>
+                    <span class="field-label">{{ 'configManager.field.title' | translate }}</span>
+                    <span class="field-label">{{
+                      'configManager.field.description' | translate
+                    }}</span>
+                  </div>
+                  @for (code of editLangs; track code) {
+                    <div class="ml-grid-row">
+                      <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                      <input
+                        app-input
+                        type="text"
+                        [value]="item.title[code]"
+                        (input)="setAgendaText(item.id, 'title', code, inputValue($event))"
+                      />
+                      <input
+                        app-input
+                        type="text"
+                        [value]="item.desc[code]"
+                        (input)="setAgendaText(item.id, 'desc', code, inputValue($event))"
+                      />
+                    </div>
+                  }
+                </div>
+
+                <!-- Narrow: title stack, then description stack — each row a
+                     full-width input prefixed by its language chip. -->
+                <div class="ml-stack">
+                  <div class="ml-stack-group">
+                    <span class="field-label">{{
+                      'configManager.agenda.titleAllLangs' | translate
+                    }}</span>
+                    @for (code of editLangs; track code) {
+                      <div class="ml-stack-row">
+                        <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                        <input
+                          app-input
+                          type="text"
+                          [value]="item.title[code]"
+                          (input)="setAgendaText(item.id, 'title', code, inputValue($event))"
+                        />
+                      </div>
+                    }
+                  </div>
+                  <div class="ml-stack-group">
+                    <span class="field-label">{{
+                      'configManager.agenda.descAllLangs' | translate
+                    }}</span>
+                    @for (code of editLangs; track code) {
+                      <div class="ml-stack-row">
+                        <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                        <input
+                          app-input
+                          type="text"
+                          [value]="item.desc[code]"
+                          (input)="setAgendaText(item.id, 'desc', code, inputValue($event))"
+                        />
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            } @empty {
+              <div class="card empty-filter">
+                {{ 'configManager.agenda.emptyFilter' | translate }}
               </div>
             }
             <button type="button" class="add-btn" (click)="addAgenda()">
@@ -620,97 +710,167 @@
               <h2>{{ 'configManager.section.dietary' | translate }}</h2>
               <p class="note">{{ 'configManager.note.dietary' | translate }}</p>
             </div>
-            <div
-              class="lang-tabs"
-              role="tablist"
-              [attr.aria-label]="'configManager.nav.langAriaLabel' | translate"
-            >
-              @for (code of editLangs; track code) {
-                <button
-                  type="button"
-                  role="tab"
-                  class="lang-tab"
-                  [class.on]="lang() === code"
-                  [attr.aria-selected]="lang() === code"
-                  (click)="selectLang(code)"
-                >
-                  {{ code.toUpperCase() }}
-                </button>
-              }
-            </div>
           </div>
           <div class="tag-editors">
             <div class="tag-editor">
               <div class="tag-title">
                 {{ 'configManager.dietary.preferencesTitle' | translate }}
               </div>
-              <div class="tag-pills">
-                @for (tag of cfg().dietaryPreferences; track tag.id) {
-                  <span class="tag-pill">
-                    <input
-                      type="text"
-                      class="tag-pill-input"
-                      [value]="tag.label[lang()]"
-                      [style.width.px]="tagInputWidth(tag.label[lang()])"
-                      [placeholder]="
-                        'configManager.dietary.placeholder'
-                          | translate: { lang: lang().toUpperCase() }
-                      "
-                      (input)="setTagLabel('dietaryPreferences', tag.id, inputValue($event))"
-                    />
+
+              <!-- Wide: bordered table — index · one input per language · remove. -->
+              <div class="option-grid">
+                <div class="option-grid-header">
+                  <span></span>
+                  @for (code of editLangs; track code) {
+                    <span class="field-label">{{ code.toUpperCase() }}</span>
+                  }
+                  <span></span>
+                </div>
+                @for (tag of cfg().dietaryPreferences; track tag.id; let i = $index) {
+                  <div class="option-grid-row">
+                    <span class="option-index">{{ i + 1 }}</span>
+                    @for (code of editLangs; track code) {
+                      <input
+                        app-input
+                        type="text"
+                        [value]="tag.label[code]"
+                        [placeholder]="code.toUpperCase()"
+                        (input)="setTagLabel('dietaryPreferences', tag.id, code, inputValue($event))"
+                      />
+                    }
                     <button
                       type="button"
-                      class="tag-pill-remove"
+                      class="remove-btn"
                       [attr.aria-label]="'configManager.dietary.remove' | translate"
                       (click)="removeTag('dietaryPreferences', tag.id)"
                     >
                       ×
                     </button>
-                  </span>
+                  </div>
                 }
-                <button
-                  class="tag-add-btn"
-                  (click)="openTagModal('dietaryPreferences')"
-                  [attr.aria-label]="'configManager.dietary.addAria' | translate"
-                >
-                  {{ 'configManager.dietary.add' | translate }}
-                </button>
               </div>
+
+              <!-- Narrow: one bordered card per option, stacked language rows,
+                   single remove button on the first row. -->
+              <div class="option-cards">
+                @for (tag of cfg().dietaryPreferences; track tag.id) {
+                  <div class="option-card">
+                    @for (code of editLangs; track code; let first = $first) {
+                      <div class="option-card-row" [class.no-remove]="!first">
+                        <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                        <input
+                          app-input
+                          type="text"
+                          [value]="tag.label[code]"
+                          [placeholder]="code.toUpperCase()"
+                          (input)="
+                            setTagLabel('dietaryPreferences', tag.id, code, inputValue($event))
+                          "
+                        />
+                        @if (first) {
+                          <button
+                            type="button"
+                            class="remove-btn"
+                            [attr.aria-label]="'configManager.dietary.remove' | translate"
+                            (click)="removeTag('dietaryPreferences', tag.id)"
+                          >
+                            ×
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <input
+                app-input
+                type="text"
+                class="option-add-input"
+                [value]="draftTag().dietaryPreferences"
+                [placeholder]="'configManager.dietary.addOptionPlaceholder' | translate"
+                [attr.aria-label]="'configManager.dietary.addOptionPlaceholder' | translate"
+                (input)="setDraftTag('dietaryPreferences', inputValue($event))"
+                (keydown.enter)="commitDraftTag('dietaryPreferences')"
+                (blur)="commitDraftTag('dietaryPreferences')"
+              />
             </div>
+
             <div class="tag-editor">
               <div class="tag-title">{{ 'configManager.dietary.allergiesTitle' | translate }}</div>
-              <div class="tag-pills">
-                @for (tag of cfg().allergies; track tag.id) {
-                  <span class="tag-pill">
-                    <input
-                      type="text"
-                      class="tag-pill-input"
-                      [value]="tag.label[lang()]"
-                      [style.width.px]="tagInputWidth(tag.label[lang()])"
-                      [placeholder]="
-                        'configManager.dietary.placeholder'
-                          | translate: { lang: lang().toUpperCase() }
-                      "
-                      (input)="setTagLabel('allergies', tag.id, inputValue($event))"
-                    />
+
+              <div class="option-grid">
+                <div class="option-grid-header">
+                  <span></span>
+                  @for (code of editLangs; track code) {
+                    <span class="field-label">{{ code.toUpperCase() }}</span>
+                  }
+                  <span></span>
+                </div>
+                @for (tag of cfg().allergies; track tag.id; let i = $index) {
+                  <div class="option-grid-row">
+                    <span class="option-index">{{ i + 1 }}</span>
+                    @for (code of editLangs; track code) {
+                      <input
+                        app-input
+                        type="text"
+                        [value]="tag.label[code]"
+                        [placeholder]="code.toUpperCase()"
+                        (input)="setTagLabel('allergies', tag.id, code, inputValue($event))"
+                      />
+                    }
                     <button
                       type="button"
-                      class="tag-pill-remove"
+                      class="remove-btn"
                       [attr.aria-label]="'configManager.dietary.remove' | translate"
                       (click)="removeTag('allergies', tag.id)"
                     >
                       ×
                     </button>
-                  </span>
+                  </div>
                 }
-                <button
-                  class="tag-add-btn"
-                  (click)="openTagModal('allergies')"
-                  [attr.aria-label]="'configManager.dietary.addAria' | translate"
-                >
-                  {{ 'configManager.dietary.add' | translate }}
-                </button>
               </div>
+
+              <div class="option-cards">
+                @for (tag of cfg().allergies; track tag.id) {
+                  <div class="option-card">
+                    @for (code of editLangs; track code; let first = $first) {
+                      <div class="option-card-row" [class.no-remove]="!first">
+                        <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                        <input
+                          app-input
+                          type="text"
+                          [value]="tag.label[code]"
+                          [placeholder]="code.toUpperCase()"
+                          (input)="setTagLabel('allergies', tag.id, code, inputValue($event))"
+                        />
+                        @if (first) {
+                          <button
+                            type="button"
+                            class="remove-btn"
+                            [attr.aria-label]="'configManager.dietary.remove' | translate"
+                            (click)="removeTag('allergies', tag.id)"
+                          >
+                            ×
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <input
+                app-input
+                type="text"
+                class="option-add-input"
+                [value]="draftTag().allergies"
+                [placeholder]="'configManager.dietary.addOptionPlaceholder' | translate"
+                [attr.aria-label]="'configManager.dietary.addOptionPlaceholder' | translate"
+                (input)="setDraftTag('allergies', inputValue($event))"
+                (keydown.enter)="commitDraftTag('allergies')"
+                (blur)="commitDraftTag('allergies')"
+              />
             </div>
           </div>
         </section>
@@ -792,62 +952,6 @@
     {{ saveLabelKey() | translate }}
   </button>
 </div>
-
-@if (tagModalOpen()) {
-  <div
-    class="modal-overlay"
-    role="presentation"
-    (click)="onOverlayClick($event)"
-    (keydown.escape)="closeTagModal()"
-  >
-    <div
-      class="modal-dialog"
-      role="dialog"
-      aria-modal="true"
-      [attr.aria-labelledby]="'tagModalTitle'"
-    >
-      <div class="modal-header">
-        <h2 class="modal-title" id="tagModalTitle">
-          {{ getTagModalTitle() | translate }}
-        </h2>
-        <button
-          type="button"
-          class="modal-close"
-          (click)="closeTagModal()"
-          [attr.aria-label]="'common.close' | translate"
-        >
-          ×
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="lang-fields">
-          @for (lang of editLangs; track lang) {
-            <label class="field">
-              <span class="field-label">{{ lang.toUpperCase() }}</span>
-              <input
-                app-input
-                type="text"
-                [value]="tagModalLabel()[lang]"
-                [placeholder]="
-                  'configManager.dietary.placeholder' | translate: { lang: lang.toUpperCase() }
-                "
-                (input)="setTagModalLabel(lang, inputValue($event))"
-              />
-            </label>
-          }
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button app-btn type="button" (click)="closeTagModal()">
-          {{ 'common.cancel' | translate }}
-        </button>
-        <button app-btn type="button" variant="primary" (click)="submitTagModal()">
-          {{ 'common.add' | translate }}
-        </button>
-      </div>
-    </div>
-  </div>
-}
 
 @if (createModalOpen()) {
   <div

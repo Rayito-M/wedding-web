@@ -208,30 +208,18 @@
   margin: 6px 0 0;
 }
 
-// ── Language edit tabs (Agenda, Dietary) ──
-.lang-tabs {
-  display: inline-flex;
+// Small accent badge labeling a language row/column (Agenda, Dietary
+// all-languages editors, T297) — a static per-row tag, not an interactive
+// chip (unlike `profile.scss`'s `.lang-chip`, which is a selectable button).
+.lang-tag {
+  flex: 0 0 auto;
+  padding: 5px 8px;
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-pill);
-  overflow: hidden;
-  background: var(--surface-card);
-  align-self: flex-start;
-}
-
-.lang-tab {
-  border: none;
-  padding: 6px 15px;
   font-size: var(--text-micro);
-  letter-spacing: 0.1em;
-  font-family: var(--font-sans);
-  cursor: pointer;
-  background: transparent;
-  color: var(--text-muted);
-}
-
-.lang-tab.on {
-  background: var(--brand-accent);
-  color: var(--on-accent);
+  letter-spacing: 0.08em;
+  color: var(--brand-accent);
+  text-align: center;
 }
 
 // ── Fields ──
@@ -309,6 +297,23 @@
   // Cancelled agenda items stay listed but visually recede.
   &.cancelled {
     opacity: 0.65;
+  }
+
+  // Agenda "Key moment" toggle on — accent left border, per
+  // ScreenConfigManager.jsx. Cards stay flat (hard rule 3: no shadow on an
+  // in-flow card); only the left edge widens/recolors.
+  &.key-moment {
+    border-left-width: 3px;
+    border-left-color: var(--brand-accent);
+  }
+
+  // Empty agenda-filter result — dashed, centered, muted note.
+  &.empty-filter {
+    border-style: dashed;
+    align-items: center;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: var(--text-caption);
   }
 }
 
@@ -445,6 +450,7 @@
 // on the right — per `ScreenConfigManager.jsx`.
 .schedule-status-card {
   max-width: 660px;
+  margin-bottom: var(--space-4);
 }
 
 .schedule-status-note {
@@ -510,6 +516,41 @@
   opacity: 0.85;
 }
 
+// ── Agenda card: all-languages Title/Description editor (T297) ──
+// Two renders of the same data (`editLangs` × title/desc), toggled by the
+// existing wide/narrow breakpoint — mirrors how `.rail`/`.pills` already
+// swap in this file, since the DS's wide grid-table and narrow stacked-card
+// arrangements are different enough in structure to not share one DOM shape.
+.ml-grid {
+  display: none;
+}
+
+.ml-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  border-top: 1px solid var(--border-hairline);
+  padding-top: t.$space-4;
+}
+
+.ml-stack-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ml-stack-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  > input,
+  > textarea {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
 // Hand-built native select — no Select component exists in the design system
 // yet (checked); styled to match app-input's hairline/radius/token language.
 .select-native {
@@ -572,6 +613,35 @@
   background: var(--status-cancelled);
 }
 
+// ── Agenda filter (All / Key moments / Optional, T297) ──
+.agenda-filter-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 660px;
+  margin-bottom: var(--space-4);
+}
+
+// Joined single pill (unlike the generic `.segmented`'s individually-pilled
+// buttons) at every width — per ScreenConfigManager.jsx *and*
+// ScreenConfigManagerMobile.jsx, both render the agenda filter this way
+// (only the overall schedule-status toggle differs by breakpoint).
+.segmented.agenda-filter {
+  gap: 0;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--surface-card);
+
+  .segment {
+    flex: 1;
+    padding: 8px 0;
+    border: none;
+    border-radius: 0;
+    font-size: var(--text-label);
+  }
+}
+
 // ── Dietary / allergy tag editors ──
 .tag-editors {
   display: grid;
@@ -593,64 +663,49 @@
   color: var(--text-muted);
 }
 
-// Tags render as inline, wrapping pills — each an editable label + remove
-// glyph — with a trailing dashed "+ Add tag" pill that commits on Enter/blur.
-// No DS component covers this (Pill is a static label, not an editable
-// dismissible chip), so it's hand-built here from the same tokens.
-.tag-pills {
+// Each dietary/allergy option is a row of per-language inputs (T297,
+// replacing the old single-language editable pill). Two renders of the same
+// `editLangs` × option data, toggled by the wide/narrow breakpoint below —
+// same reasoning as the agenda card's `.ml-grid`/`.ml-stack`.
+.option-grid {
+  display: none;
+}
+
+.option-cards {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.option-card {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-2);
-}
-
-.tag-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px 6px 14px;
-  border-radius: var(--radius-pill);
   border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
   background: var(--surface-card);
-  font-family: var(--font-sans);
-  font-size: var(--text-body);
-  color: var(--text-body-color);
+  padding: var(--space-3);
 }
 
-.tag-pill-input {
-  border: none;
-  outline: none;
-  background: transparent;
-  font: inherit;
-  color: inherit;
-  min-width: 56px;
-  padding: 0;
+.option-card-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  > input {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
-.tag-pill-remove {
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 15px;
-  line-height: 1;
-  padding: 0;
-  transition: opacity var(--transition-fast);
+// Every row but the first has no remove button (there's one per option, not
+// per language) — this keeps its input aligned with the ones that do.
+.option-card-row.no-remove {
+  padding-right: calc(30px + var(--space-2));
 }
 
-.tag-pill-remove:hover {
-  opacity: 0.85;
-}
-
-.tag-draft-input {
-  width: 96px;
-  padding: 6px 14px;
-  border-radius: var(--radius-pill);
-  border: 1px dashed var(--border-hairline);
-  background: transparent;
-  font-family: var(--font-sans);
-  font-size: var(--text-body);
-  color: var(--text-body-color);
-  outline: none;
+.option-add-input {
+  border-style: dashed;
 }
 
 // ── Appearance: theme swatch cards + language labels ──
@@ -843,24 +898,6 @@
   margin-bottom: var(--space-4);
 }
 
-.tag-add-btn {
-  align-self: flex-start;
-  font-size: var(--text-caption);
-  color: var(--brand-accent);
-  background: transparent;
-  border: 1px dashed var(--border-hairline);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  letter-spacing: 0.04em;
-  padding: 9px 16px;
-  font-family: var(--font-sans);
-  transition: opacity var(--transition-fast);
-}
-
-.tag-add-btn:hover {
-  opacity: 0.85;
-}
-
 @media (min-width: 900px) {
   .toolbar {
     display: flex;
@@ -917,5 +954,69 @@
       border-radius: 0;
       font-size: var(--text-label);
     }
+  }
+
+  // Agenda filter: auto-width segments (DS wide `display: inline-flex`)
+  // instead of the narrow layout's equal-width, full-bleed thirds.
+  .segmented.agenda-filter {
+    align-self: flex-start;
+
+    .segment {
+      flex: 0 0 auto;
+      padding: 7px 15px;
+    }
+  }
+
+  // Agenda card language editor: grid table replaces the stacked layout.
+  // Title and description are both single-line `app-input` fields (DS uses
+  // the same `TextField` for each) — equal columns so they match in width,
+  // same as their shared `app-input` styling already matches in height.
+  .ml-grid {
+    display: grid;
+    grid-template-columns: 34px 1fr 1fr;
+    gap: var(--space-3);
+    align-items: center;
+  }
+
+  .ml-grid-header {
+    display: contents;
+  }
+
+  .ml-grid-row {
+    display: contents;
+  }
+
+  .ml-stack {
+    display: none;
+  }
+
+  // Dietary/allergy options: bordered grid table replaces the stacked cards.
+  .option-grid {
+    display: grid;
+    grid-template-columns: 28px repeat(3, 1fr) 30px;
+    gap: var(--space-3);
+    align-items: center;
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-card);
+    background: var(--surface-card);
+    padding: var(--space-4);
+  }
+
+  .option-grid-header {
+    display: contents;
+  }
+
+  .option-grid-row {
+    display: contents;
+  }
+
+  .option-index {
+    font-size: var(--text-micro);
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .option-cards {
+    display: none;
   }
 }

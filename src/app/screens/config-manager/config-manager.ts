@@ -23,6 +23,7 @@ import {
   CreateWeddingConfigDtoVenuesInner,
   HeaderService,
   WeddingConfigResponseDto,
+  byAgendaTime,
   EntityNamesEnum,
   extractAgendaTime,
   UserDto,
@@ -41,8 +42,8 @@ import { LangCode, ThemeId } from '@app/model';
 import { Btn } from '@app/shared/button/button';
 import { DecorFish } from '@app/shared/decor/fish';
 import { TextInput } from '@app/shared/input/input';
-import { TextareaInput } from '@app/shared/textarea/textarea';
 import { Pill } from '@app/shared/pill/pill';
+import { Toggle } from '@app/shared/toggle/toggle';
 
 // Reuse the generated OpenAPI models directly (Hard Rule: "never duplicate type
 // definitions") — this is the exact shape a future `PATCH /v1/config` would send
@@ -55,6 +56,10 @@ type Hotel = CreateWeddingConfigDtoHotelsInner;
 type DietTag = CreateWeddingConfigDtoDietaryPreferencesInner;
 type TagCollection = 'dietaryPreferences' | 'allergies';
 type SectionId = 'basics' | 'couple' | 'venues' | 'agenda' | 'hotels' | 'dietary' | 'appearance';
+// Agenda filter (T297) — local UI state only, not an API field: "key moments"
+// reads the existing `highlight` boolean (see the phase note above T295 —
+// DS `important` *is* `highlight`), it is not a value stored anywhere itself.
+type AgendaFilter = 'all' | 'keyMoments' | 'optional';
 
 interface SectionDef {
   readonly id: SectionId;
@@ -78,10 +83,13 @@ type CoupleRole = 'bride' | 'groom';
 
 const COUPLE_ROLES: readonly CoupleRole[] = ['bride', 'groom'];
 
-// Order for the per-language edit tabs (Agenda, Dietary) — mirrors the design
-// reference's LangTabs order (FR · EN · ES); a UI convenience, not the app-wide
-// default-language order (that stays es-first, hub ADR-0009).
-const EDIT_LANGS: readonly LangCode[] = ['fr', 'en', 'es'];
+// Column order for the always-visible, all-languages Agenda/Dietary editors
+// (T297). Was `['fr', 'en', 'es']` only because the old tab bar had no notion
+// of a primary language; now that the leftmost column is permanently visible
+// rather than switched to, it should be the one the app treats as primary —
+// so this now matches the app-wide default-language order (es-first, hub
+// ADR-0009) instead of deliberately not matching it.
+const EDIT_LANGS: readonly LangCode[] = ['es', 'en', 'fr'];
 
 // The app's fixed language set (hub ADR-0009) — es default, en/fr switchable.
 const APP_LANGUAGES: readonly LangCode[] = ['es', 'en', 'fr'];
@@ -164,7 +172,7 @@ function buildEmptyConfig(): ConfigState {
 @Component({
   selector: 'app-config-manager',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Btn, TextInput, TextareaInput, Pill, DecorFish, TranslatePipe, KeyValuePipe],
+  imports: [Btn, TextInput, Pill, Toggle, DecorFish, TranslatePipe, KeyValuePipe],
   templateUrl: './config-manager.html',
   styleUrl: './config-manager.scss',
 })
@@ -225,7 +233,7 @@ export class ConfigManager implements OnInit {
 
   protected readonly cfg = signal<ConfigState>(this.weddingConfig() ?? buildEmptyConfig());
   protected readonly section = signal<SectionId>('basics');
-  protected readonly lang = signal<LangCode>('en');
+  protected readonly agendaFilter = signal<AgendaFilter>('all');
   protected readonly dirty = signal(false);
   protected readonly savedFlash = signal(false);
   /**
@@ -246,10 +254,6 @@ export class ConfigManager implements OnInit {
     dietaryPreferences: '',
     allergies: '',
   });
-
-  protected readonly tagModalOpen = signal(false);
-  protected readonly tagModalCollection = signal<TagCollection | null>(null);
-  protected readonly tagModalLabel = signal<MultiLangText>(emptyLangText());
 
   protected readonly createModalOpen = signal(false);
   protected readonly createModalRole = signal<CoupleRole | null>(null);
@@ -307,26 +311,11 @@ export class ConfigManager implements OnInit {
     'final',
   ];
 
-  /**
-   * The schedule read in clock order. `time` is a fixed-width ISO datetime, so
-   * a plain string comparison is already chronological — no `Date` parsing,
-   * which would also drag the `Z` suffix into a timezone conversion it does
-   * not mean here (see `extractAgendaTime`). An entry left in a half-typed,
-   * non-ISO state sorts last rather than jumping to the top, and `sort` being
-   * stable keeps same-hour items in the order they were added.
-   *
-   * Display order only: every edit addresses its item by `id`, so reordering
-   * the view never mis-targets a write.
-   */
-  protected readonly agendaItems = computed(() =>
-    [...this.cfg().agenda.items].sort((a, b) =>
-      this.timeSortKey(a.time).localeCompare(this.timeSortKey(b.time)),
-    ),
-  );
-
-  private timeSortKey(time: string): string {
-    return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(time) ? time : `\uffff${time}`;
-  }
+  /** The schedule read in clock order via `byAgendaTime`, which also carries
+   *  the half-typed-`time` and stability rules this tab depends on while an
+   *  admin edits an hour. Display order only: every edit addresses its item by
+   *  `id`, so reordering the view never mis-targets a write. */
+  protected readonly agendaItems = computed(() => byAgendaTime(this.cfg().agenda.items));
 
   protected readonly agendaCounts = computed(() =>
     this.cfg().agenda.items.reduce(
@@ -334,6 +323,26 @@ export class ConfigManager implements OnInit {
       { planned: 0, confirmed: 0, cancelled: 0 },
     ),
   );
+
+  /** All/Key moments/Optional counts for the agenda filter bar. */
+  protected readonly agendaFilterCounts = computed(() => {
+    const items = this.cfg().agenda.items;
+    const keyMoments = items.filter((item) => item.highlight).length;
+    return { all: items.length, keyMoments, optional: items.length - keyMoments };
+  });
+
+  /** `agendaItems()` (clock order) narrowed by the selected `agendaFilter`. */
+  protected readonly filteredAgendaItems = computed(() => {
+    const items = this.agendaItems();
+    switch (this.agendaFilter()) {
+      case 'keyMoments':
+        return items.filter((item) => item.highlight);
+      case 'optional':
+        return items.filter((item) => !item.highlight);
+      default:
+        return items;
+    }
+  });
 
   constructor() {
     inject(HeaderService).set(this.translateService.instant('configManager.headerMeta'));
@@ -358,8 +367,8 @@ export class ConfigManager implements OnInit {
     this.section.set(id);
   }
 
-  protected selectLang(code: LangCode): void {
-    this.lang.set(code);
+  protected selectAgendaFilter(filter: AgendaFilter): void {
+    this.agendaFilter.set(filter);
   }
 
   protected save(): void {
@@ -662,8 +671,12 @@ export class ConfigManager implements OnInit {
     this.mutate((c) => ({ ...c, agenda: { ...c.agenda, status } }));
   }
 
-  protected setAgendaText(id: string, field: 'title' | 'desc', value: string): void {
-    const lang = this.lang();
+  protected setAgendaText(
+    id: string,
+    field: 'title' | 'desc',
+    lang: LangCode,
+    value: string,
+  ): void {
     this.mutate((c) => ({
       ...c,
       agenda: {
@@ -671,6 +684,18 @@ export class ConfigManager implements OnInit {
         items: c.agenda.items.map((a) =>
           a.id === id ? { ...a, [field]: { ...a[field], [lang]: value } } : a,
         ),
+      },
+    }));
+  }
+
+  /** "Key moment" toggle — what the guest home screen surfaces (`invitee.html`
+   *  filters on `highlight`); `screens/schedule` shows every item regardless. */
+  protected setAgendaHighlight(id: string, highlight: boolean): void {
+    this.mutate((c) => ({
+      ...c,
+      agenda: {
+        ...c.agenda,
+        items: c.agenda.items.map((a) => (a.id === id ? { ...a, highlight } : a)),
       },
     }));
   }
@@ -686,6 +711,7 @@ export class ConfigManager implements OnInit {
       // validation and take the whole config save down with it.
       time: this.mergeHourIntoIso('', DEFAULT_AGENDA_TIME),
       venueId: firstVenueId,
+      highlight: false,
       title: emptyLangText(),
       desc: emptyLangText(),
     };
@@ -723,8 +749,12 @@ export class ConfigManager implements OnInit {
     this.mutate((c) => ({ ...c, hotels: c.hotels.filter((h) => h.id !== id) }));
   }
 
-  protected setTagLabel(collection: TagCollection, id: string, value: string): void {
-    const lang = this.lang();
+  protected setTagLabel(
+    collection: TagCollection,
+    id: string,
+    lang: LangCode,
+    value: string,
+  ): void {
     this.mutate((c) => ({
       ...c,
       [collection]: c[collection].map((tag: DietTag) =>
@@ -733,16 +763,13 @@ export class ConfigManager implements OnInit {
     }));
   }
 
-  // Adding a tag now happens inline (design update): the trailing "+ Add tag"
-  // chip commits its typed text straight into the new tag's label, in the
-  // language currently being edited — see setDraftTag/commitDraftTag below.
+  // Adding an option happens inline (T297): the trailing "+ Add option" input
+  // commits its typed text into all three languages as a starting point —
+  // each is then edited inline, per-language, on its own row.
   protected addTag(collection: TagCollection, text = ''): void {
     this.mutate((c) => ({
       ...c,
-      [collection]: [
-        ...c[collection],
-        { id: uid(), label: { ...emptyLangText(), [this.lang()]: text } },
-      ],
+      [collection]: [...c[collection], { id: uid(), label: { es: text, en: text, fr: text } }],
     }));
   }
 
@@ -762,59 +789,6 @@ export class ConfigManager implements OnInit {
     this.draftTag.update((draft) => ({ ...draft, [collection]: '' }));
     if (!text) return;
     this.addTag(collection, text);
-  }
-
-  protected openTagModal(collection: TagCollection): void {
-    this.tagModalCollection.set(collection);
-    this.tagModalLabel.set(emptyLangText());
-    this.tagModalOpen.set(true);
-  }
-
-  protected getTagModalTitle(): string {
-    const collection = this.tagModalCollection();
-    if (collection === 'dietaryPreferences') {
-      return 'configManager.dietary.addDietaryPreference';
-    }
-    return 'configManager.dietary.addAllergy';
-  }
-
-  // Close only when the backdrop itself is clicked — clicks inside the dialog
-  // land on descendants, so `target === currentTarget` distinguishes the two
-  // without a stopPropagation handler on the dialog (which would also swallow
-  // the overlay's Escape keybinding). Keyboard close stays on the overlay.
-  protected onOverlayClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.closeTagModal();
-    }
-  }
-
-  protected closeTagModal(): void {
-    this.tagModalOpen.set(false);
-    this.tagModalCollection.set(null);
-    this.tagModalLabel.set(emptyLangText());
-  }
-
-  protected submitTagModal(): void {
-    const collection = this.tagModalCollection();
-    const label = this.tagModalLabel();
-    if (!collection || !Object.values(label).some((v) => v.trim())) {
-      return;
-    }
-    this.mutate((c) => ({
-      ...c,
-      [collection]: [...c[collection], { id: uid(), label }],
-    }));
-    this.closeTagModal();
-  }
-
-  protected setTagModalLabel(lang: LangCode, value: string): void {
-    this.tagModalLabel.update((label) => ({ ...label, [lang]: value }));
-  }
-
-  // Naive content-based width so the pill's inline input grows with its text
-  // (matches the design reference's chip-editor sizing formula).
-  protected tagInputWidth(text: string): number {
-    return Math.max(56, text.length * 7 + 10);
   }
 
   protected setTheme(themeId: ThemeId): void {

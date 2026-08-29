@@ -8,13 +8,13 @@ import { EntityCollectionService, EntityServices } from '@ngrx/data';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import {
+  byAgendaTime,
   EntityNamesEnum,
   LoginService,
   RsvpDto,
   UserProfileDto,
   WeddingConfigResponseDto,
   TranslateLanguageService,
-  CreateWeddingConfigDtoAgendaItemsInner,
   PluralTranslatePipe,
   AgendaTimePipe,
 } from '@app/core';
@@ -126,6 +126,14 @@ export class Invitee {
     () => this.weddingConfig()?.agenda?.status === 'final',
   );
 
+  /** `venueId -> name` for the home preview's agenda rows' second subtitle.
+   *  An unmatched or null id resolves to `''`, which `app-timeline-item`
+   *  simply doesn't render. */
+  private readonly venueNameById = computed(() => {
+    const venues = this.weddingConfig()?.venues ?? [];
+    return new Map(venues.map((venue) => [venue.id, venue.name]));
+  });
+
   daysToGo = computed(() => {
     const configuration = this.weddingConfig();
     if (!configuration?.date) {
@@ -154,18 +162,38 @@ export class Invitee {
     );
   });
 
-  getEventTranslation(event: CreateWeddingConfigDtoAgendaItemsInner): {
-    id: string;
-    time: string;
-    title: string;
-    desc: string;
-  } {
+  /**
+   * Home preview's "key moments" — filtered to `highlight` *before* mapping,
+   * mirroring `schedule.ts`'s `items` pattern. The `@for` in the template
+   * used to filter on `event.highlight` *inside* the loop while computing
+   * `let last = $last` over every agenda item, so `last` reflected the final
+   * agenda item overall rather than the final *rendered* row — the trailing
+   * connector line only stayed hidden by coincidence, while the last agenda
+   * item happened to be a key moment. Filtering here first keeps `$last`
+   * correct regardless of which items are highlighted.
+   *
+   * Rows are put in clock order by `byAgendaTime`, shared with the schedule
+   * screen and the config manager's agenda tab.
+   */
+  protected readonly highlightedAgendaItems = computed(() => {
     const currentLang = this.translate.currentLang();
-    return {
-      id: event.id,
-      time: event.time,
-      title: event.title[currentLang],
-      desc: event.desc[currentLang],
-    };
-  }
+    const venueNameById = this.venueNameById();
+    return byAgendaTime(
+      (this.weddingConfig()?.agenda?.items ?? []).filter((item) => item.highlight),
+    ).map((item) => {
+      // Only a venue that actually resolves gets a name — and only a named
+      // venue gets an id, so the row never links to a place the map cannot
+      // select. An unmatched or null id renders neither.
+      const venue = (item.venueId && venueNameById.get(item.venueId)) || '';
+      return {
+        id: item.id,
+        time: item.time,
+        title: item.title[currentLang],
+        desc: item.desc[currentLang],
+        venue,
+        venueId: venue ? (item.venueId ?? '') : '',
+        status: item.status,
+      };
+    });
+  });
 }

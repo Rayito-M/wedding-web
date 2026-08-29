@@ -91,16 +91,16 @@
       @if (weddingConfig()?.agenda?.items?.length === 0) {
         <div class="no-events">{{ 'invitee.schedule.noEvents' | translate }}</div>
       } @else {
-        @for (event of weddingConfig()?.agenda?.items; track event.id; let last = $last) {
-          @if (event.highlight) {
-            <app-timeline-item
-              [time]="getEventTranslation(event).time | agendaTime"
-              [heading]="getEventTranslation(event).title"
-              [sub]="getEventTranslation(event).desc"
-              [status]="event.status"
-              [last]="last"
-            />
-          }
+        @for (event of highlightedAgendaItems(); track event.id; let last = $last) {
+          <app-timeline-item
+            [time]="event.time | agendaTime"
+            [heading]="event.title"
+            [sub]="event.desc"
+            [venue]="event.venue"
+            [venueId]="event.venueId"
+            [status]="event.status"
+            [last]="last"
+          />
         }
       }
     </div>

@@ -310,8 +310,7 @@
       "saved": "Modifications enregistrées"
     },
     "nav": {
-      "ariaLabel": "Sections de configuration",
-      "langAriaLabel": "Langue d'édition"
+      "ariaLabel": "Sections de configuration"
     },
     "section": {
       "basics": "Informations",
@@ -330,7 +329,8 @@
       "hotels": "Hôtels recommandés près des lieux, affichés sur l'écran S'y rendre.",
       "dietary": "Options proposées aux invités lors de leur réponse. Libellés affichés par langue.",
       "appearance": "La palette et les libellés de langue vus par les invités.",
-      "weddingDateChanged": "Le calendrier des préparatifs garde ses dates existantes : les étapes ne se déplacent pas avec la date du mariage."
+      "weddingDateChanged": "Le calendrier des préparatifs garde ses dates existantes : les étapes ne se déplacent pas avec la date du mariage.",
+      "mapUrlEmbed": "Dans Google Maps, utilisez Partager → Intégrer une carte et collez le lien du code iframe. Un simple lien de partage ne peut pas s'afficher ; l'adresse du lieu est utilisée à la place."
     },
     "field": {
       "brideName": "Mariée",
@@ -411,7 +411,17 @@
       "scheduleStatus": "Statut de l'agenda",
       "scheduleStatusFinalNote": "Les invités voient un agenda définitif et verrouillé.",
       "scheduleStatusProvisionalNote": "Les invités voient un agenda provisoire — les horaires peuvent encore changer.",
-      "scheduleStatusCounts": "{{confirmed}} confirmés · {{planned}} prévus · {{cancelled}} annulés"
+      "scheduleStatusCounts": "{{confirmed}} confirmés · {{planned}} prévus · {{cancelled}} annulés",
+      "filterLabel": "Afficher",
+      "filter": {
+        "all": "Tous les moments ({{count}})",
+        "keyMoments": "Moments clés ({{count}})",
+        "optional": "Facultatifs ({{count}})"
+      },
+      "keyMoment": "Moment clé",
+      "emptyFilter": "Aucun moment dans ce filtre.",
+      "titleAllLangs": "Titre · toutes les langues",
+      "descAllLangs": "Description · toutes les langues"
     },
     "hotels": {
       "add": "Ajouter un hôtel",
@@ -420,12 +430,8 @@
     "dietary": {
       "preferencesTitle": "Préférences alimentaires",
       "allergiesTitle": "Allergies et intolérances",
-      "add": "Ajouter une étiquette",
-      "addAria": "Ajouter une nouvelle étiquette",
-      "addDietaryPreference": "Ajouter une préférence alimentaire",
-      "addAllergy": "Ajouter une allergie",
-      "remove": "Supprimer l'étiquette",
-      "placeholder": "Libellé · {{lang}}"
+      "remove": "Supprimer l'option",
+      "addOptionPlaceholder": "+ Ajouter une option — remplit les trois langues, à modifier ci-dessous"
     },
     "appearance": {
       "themeTitle": "Thème",
@@ -483,10 +489,13 @@
   },
   "travel": {
     "header": "ALBAICÍN · GR",
+    "badge": "ALBAICÍN · GRANADA",
     "title": "Comment venir",
     "subtitle": "Vol vers Grenade (GRX) · 20 min de la venue.",
-    "venue": "Palais des Córdova",
-    "river": "río Darro",
+    "venuesHeading": "Lieux",
+    "mapTitle": "Carte du lieu du mariage",
+    "distanceKm": "{{km}} km",
+    "noPlaces": "Aucun lieu à afficher pour l'instant.",
     "staysNearby": "Où rester à proximité"
   },
   "album": {
@@ -524,6 +533,7 @@
       "your": "Votre menu",
       "notAssigned": "À venir..."
     },
+    "venueOnMap": "{{name}} — voir sur la carte",
     "agendaStatus": {
       "planned": "Prévu",
       "confirmed": "Confirmé",
@@ -920,14 +930,18 @@
   },
   "privacyPolicy": {
     "title": "Politique de confidentialité",
-    "intro": "Cette page explique comment le site utilise Google Analytics pour comprendre le trafic global des visiteurs.",
+    "intro": "Cette page explique comment le site utilise les services Google : Analytics, pour comprendre le trafic global des visiteurs, et Maps, pour vous montrer où se déroule le mariage.",
     "analytics": {
       "title": "Google Analytics",
       "body": "Nous utilisons Google Analytics pour observer le trafic agrégé de ce site — visites, pages vues, et tendances générales d'appareil et de géographie. Nous ne suivons pas d'actions individuelles et ne configurons aucun suivi d'événement personnalisé."
     },
+    "maps": {
+      "title": "Google Maps",
+      "body": "La page « Comment venir » intègre une carte Google Maps afin que vous puissiez voir les lieux du mariage et les hébergements à proximité. Lorsque cette carte se charge, votre navigateur se connecte directement à Google, et Google reçoit votre adresse IP ainsi que des informations basiques sur votre appareil. Nous ne transmettons à Google ni votre nom ni aucune autre donnée que vous nous avez communiquée, et nous n'utilisons pas la carte pour vous suivre."
+    },
     "cookies": {
       "title": "Cookies",
-      "body": "Google Analytics place des cookies dans votre navigateur pour aider à mesurer les visites. Ces cookies ne sont déposés qu'après votre acceptation de l'analytique ci-dessous."
+      "body": "Google Analytics place des cookies dans votre navigateur pour aider à mesurer les visites. Ces cookies ne sont déposés qu'après votre acceptation de l'analytique ci-dessous. Google peut également déposer ses propres cookies lors du chargement de la carte intégrée."
     },
     "ipAnonymization": {
       "title": "Anonymisation de l'IP",
@@ -935,7 +949,7 @@
     },
     "googlePolicy": {
       "title": "Politique de confidentialité de Google",
-      "body": "Pour plus de détails sur la façon dont Google traite les données collectées via Analytics, consultez",
+      "body": "Pour plus de détails sur la façon dont Google traite les données collectées via Analytics et Maps, consultez",
       "link": "la politique de confidentialité de Google"
     },
     "changeChoice": {

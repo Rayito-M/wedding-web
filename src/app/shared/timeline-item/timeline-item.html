@@ -20,4 +20,17 @@
   @if (sub()) {
     <div class="item-sub">{{ sub() }}</div>
   }
+  @if (venue()) {
+    @if (venueId()) {
+      <a
+        class="item-venue is-link"
+        [routerLink]="travelRoute"
+        [queryParams]="venueQueryParams()"
+        [attr.aria-label]="'shared.venueOnMap' | translate: { name: venue() }"
+        >{{ venue() }}</a
+      >
+    } @else {
+      <div class="item-venue">{{ venue() }}</div>
+    }
+  }
 </div>

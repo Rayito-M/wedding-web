@@ -34,20 +34,48 @@
   white-space: nowrap;
 }
 
+// Address-driven pin embed (DS ScreenTravel.jsx `map()` — plain
+// `?q=…&output=embed` fallback only, per T296 out-of-scope: no `myMapId`).
 .map {
   margin: 0 t.$space-6 16px;
   position: relative;
-  height: 140px;
+  height: 150px;
   border-radius: t.$radius-card;
   overflow: hidden;
-  background: var(--chip);
+  background: var(--surface-chip);
   border: 1px solid var(--border-hairline);
+
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
 }
 
+.map-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: t.$text-caption;
+  text-align: center;
+  padding: 0 t.$space-4;
+}
+
+// Selected place name, overlaid on the map — pointer-events none per DS so it
+// never blocks map interaction.
 .map-label {
   position: absolute;
   top: 10px;
   left: 12px;
+  max-width: calc(100% - 24px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
   font-size: 9px;
   letter-spacing: 0.14em;
   color: var(--text-muted);
@@ -58,18 +86,7 @@
   border: 1px solid var(--border-hairline);
 }
 
-.river-label {
-  position: absolute;
-  bottom: 8px;
-  right: 12px;
-  font-size: 8px;
-  letter-spacing: 0.16em;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  font-style: italic;
-}
-
-.stays {
+.lists {
   padding: 0 t.$space-6 8px;
 }
 
@@ -77,50 +94,117 @@
   margin-bottom: 10px;
 }
 
-// Stay rows are the shared app-stay-card component (design system);
-// the divider between rows is screen-level layout.
-app-stay-card {
+.stays-heading {
+  margin-top: 22px;
+}
+
+// Hand-built selectable venue row — no DS list-item button equivalent
+// (StayCard's thumb+price layout doesn't fit a venue), so this is its own
+// row per DS ScreenTravel.jsx `venueRows`.
+.venue-list {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  margin-bottom: t.$space-2;
+}
+
+.venue-row {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  width: 100%;
+  min-height: 56px;
+  padding: t.$space-3;
+  border-radius: t.$radius-input;
+  border: 1px solid var(--border-hairline);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: t.$font-sans;
+  transition: border-color var(--transition-fast);
+
+  &.on {
+    border-color: var(--brand-accent);
+    background: var(--surface-chip);
+  }
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--border-hairline);
+
+  &.on {
+    background: var(--brand-accent);
+  }
+}
+
+.venue-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.venue-name {
+  display: block;
+  font-family: t.$font-serif;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--text-body-color);
+}
+
+.venue-meta {
+  display: block;
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.venue-tag {
+  flex: 0 0 auto;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border: 1px solid var(--border-hairline);
+  border-radius: t.$radius-pill;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+// Stay rows are the shared app-stay-card component (design system), wrapped
+// in a real button for selection (hard rule 14: keyboard-reachable, aria-pressed).
+.stays {
+  display: flex;
+  flex-direction: column;
+}
+
+.stay-btn {
+  display: block;
+  width: 100%;
+  padding: 0 t.$space-3;
+  border: none;
+  border-radius: t.$radius-card;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
   border-bottom: 1px solid var(--border-hairline);
+
+  &.on {
+    background: var(--surface-chip);
+    box-shadow: inset 0 0 0 1px var(--brand-accent);
+  }
 
   &.last {
     border-bottom: none;
   }
 }
 
-// SVG map illustration styles (extracted from inline style attributes for Hard Rule #2 compliance).
-svg {
-  .sierra-peaks {
-    fill: var(--accent-3);
-  }
-
-  .alhambra-hill {
-    fill: var(--accent-3);
-  }
-
-  .albaicin-hill {
-    fill: var(--accent-3);
-  }
-
-  .darro-river {
-    stroke: var(--brand-accent);
-  }
-
-  .roads {
-    stroke: var(--border-hairline);
-  }
-
-  .pin-dot {
-    fill: var(--brand-accent);
-  }
-
-  .pin-glow {
-    fill: var(--brand-accent);
-  }
-}
-
-// Desktop: two-column grid — map (taller) on the left, "Stays nearby" list on
-// the right — with the ALBAICÍN · GRANADA badge next to the title (DS
-// ScreenTravel.jsx `wide` fragment, maxWidth 880).
+// Desktop: two-column grid — sticky map (taller) on the left, lists on the
+// right — with the badge next to the title (DS ScreenTravel.jsx `wide`
+// fragment, maxWidth 880).
 @media (min-width: 900px) {
   :host {
     max-width: 880px;
@@ -142,10 +226,12 @@ svg {
 
   .map {
     margin: 0;
-    height: 250px;
+    height: 320px;
+    position: sticky;
+    top: 0;
   }
 
-  .stays {
+  .lists {
     padding: 0;
   }
 }

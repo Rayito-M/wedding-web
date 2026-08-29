@@ -313,8 +313,7 @@
       "saved": "All changes saved"
     },
     "nav": {
-      "ariaLabel": "Configuration sections",
-      "langAriaLabel": "Editing language"
+      "ariaLabel": "Configuration sections"
     },
     "section": {
       "basics": "Basics",
@@ -333,7 +332,8 @@
       "hotels": "Recommended hotels near the venues, shown on the Travel screen.",
       "dietary": "Options guests choose from when they RSVP. Labels shown per-language.",
       "appearance": "The palette and language labels guests experience.",
-      "weddingDateChanged": "The preparation timeline keeps its existing dates — milestones don't move with the wedding date."
+      "weddingDateChanged": "The preparation timeline keeps its existing dates — milestones don't move with the wedding date.",
+      "mapUrlEmbed": "In Google Maps, use Share → Embed a map and paste the link from the iframe code. A plain share link cannot be displayed; the venue address is used instead."
     },
     "field": {
       "brideName": "Bride",
@@ -414,7 +414,17 @@
       "scheduleStatus": "Schedule status",
       "scheduleStatusFinalNote": "Guests see a locked, final schedule.",
       "scheduleStatusProvisionalNote": "Guests see a provisional schedule — times may still shift.",
-      "scheduleStatusCounts": "{{confirmed}} confirmed · {{planned}} planned · {{cancelled}} cancelled"
+      "scheduleStatusCounts": "{{confirmed}} confirmed · {{planned}} planned · {{cancelled}} cancelled",
+      "filterLabel": "Show",
+      "filter": {
+        "all": "All moments ({{count}})",
+        "keyMoments": "Key moments ({{count}})",
+        "optional": "Optional ({{count}})"
+      },
+      "keyMoment": "Key moment",
+      "emptyFilter": "No moments in this filter.",
+      "titleAllLangs": "Title · all languages",
+      "descAllLangs": "Description · all languages"
     },
     "hotels": {
       "add": "Add hotel",
@@ -423,12 +433,8 @@
     "dietary": {
       "preferencesTitle": "Dietary preferences",
       "allergiesTitle": "Allergies & intolerances",
-      "add": "Add tag",
-      "addAria": "Add a new tag",
-      "addDietaryPreference": "Add dietary preference",
-      "addAllergy": "Add allergy",
-      "remove": "Remove tag",
-      "placeholder": "Label · {{lang}}"
+      "remove": "Remove option",
+      "addOptionPlaceholder": "+ Add option — fills every language, edit each below"
     },
     "appearance": {
       "themeTitle": "Theme",
@@ -486,10 +492,13 @@
   },
   "travel": {
     "header": "ALBAICÍN · GR",
+    "badge": "ALBAICÍN · GRANADA",
     "title": "Getting there",
     "subtitle": "Fly to Granada (GRX) · 20 min to venue.",
-    "venue": "Palacio de los Córdova",
-    "river": "río Darro",
+    "venuesHeading": "Venues",
+    "mapTitle": "Wedding location map",
+    "distanceKm": "{{km}} km",
+    "noPlaces": "No places to show yet.",
     "staysNearby": "Stays nearby"
   },
   "album": {
@@ -529,6 +538,7 @@
       "your": "Your menu",
       "notAssigned": "Stay tuned..."
     },
+    "venueOnMap": "{{name}} — see it on the map",
     "agendaStatus": {
       "planned": "Planned",
       "confirmed": "Confirmed",
@@ -924,14 +934,18 @@
   },
   "privacyPolicy": {
     "title": "Privacy policy",
-    "intro": "This page explains how the site uses Google Analytics to understand overall visitor traffic.",
+    "intro": "This page explains how the site uses Google services — Analytics, to understand overall visitor traffic, and Maps, to show you where the wedding takes place.",
     "analytics": {
       "title": "Google Analytics",
       "body": "We use Google Analytics to see aggregate traffic on this site — things like visits, page views, and general device and geographic trends. We do not track individual actions or set up custom event tracking."
     },
+    "maps": {
+      "title": "Google Maps",
+      "body": "The “Getting there” page embeds a map from Google Maps so you can see the wedding venues and nearby stays. When that map loads, your browser connects directly to Google, and Google receives your IP address and basic device information. We do not send Google your name or any other detail you have given us, and we do not use the map to track you."
+    },
     "cookies": {
       "title": "Cookies",
-      "body": "Google Analytics sets cookies in your browser to help measure visits. These cookies are only set after you accept analytics below."
+      "body": "Google Analytics sets cookies in your browser to help measure visits. These cookies are only set after you accept analytics below. Google may also store cookies of its own when the embedded map loads."
     },
     "ipAnonymization": {
       "title": "IP anonymization",
@@ -939,7 +953,7 @@
     },
     "googlePolicy": {
       "title": "Google's privacy policy",
-      "body": "For more detail on how Google handles data collected through Analytics, see",
+      "body": "For more detail on how Google handles data collected through Analytics and Maps, see",
       "link": "Google's privacy policy"
     },
     "changeChoice": {

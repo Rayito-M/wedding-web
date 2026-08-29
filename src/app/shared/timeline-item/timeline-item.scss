@@ -124,3 +124,27 @@
   color: var(--text-muted);
   margin-top: 2px;
 }
+
+.item-venue {
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+  margin-top: 3px;
+}
+
+// Linked venue (`venueId` set): still the quiet micro line, but discoverable —
+// a dotted underline that solidifies on hover, and `display: inline-block` so
+// the hit area is the text, not the full row width.
+a.item-venue {
+  display: inline-block;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--text);
+    opacity: 1;
+    text-decoration: underline solid;
+  }
+}
