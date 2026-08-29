@@ -127,7 +127,6 @@ export const routes: Routes = [
         canActivate: [rbacGuard, routeEnabledGuard],
         data: {
           id: 'people',
-          roles: ['groom', 'bride'],
           tabBar: true,
           topNav: true,
         } satisfies RouteChromeData,

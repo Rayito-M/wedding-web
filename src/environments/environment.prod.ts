@@ -22,5 +22,6 @@ export const environment: Environment = {
     'guests',
     'milestones',
     'people',
+    'travel',
   ],
 };
