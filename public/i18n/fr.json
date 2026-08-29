@@ -216,6 +216,9 @@
         "allergiesSummary": "Allergies : {{list}}",
         "firstNamePlaceholder": "Prénom",
         "lastNamePlaceholder": "Nom",
+        "nicknameLabel": "Surnom",
+        "nicknamePlaceholder": "par ex. Ju",
+        "nicknamePlaceholderChild": "par ex. Teo",
         "agePlaceholder": "Âge",
         "openProfile": "Ouvrir son profil",
         "customAllergy": {
@@ -557,6 +560,11 @@
       "ownAccount": "compte invité personnel",
       "plusOne": "accompagnant",
       "nameManaged": "Le nom est géré par son propre compte invité."
+    },
+    "nickname": {
+      "label": "Surnom",
+      "placeholder": "par ex. Lau",
+      "hint": "8 caractères maximum"
     }
   },
   "consentBanner": {

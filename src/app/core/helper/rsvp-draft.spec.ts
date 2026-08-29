@@ -139,6 +139,73 @@ describe('partner2.kind (ADR W-0004)', () => {
   });
 });
 
+describe('nickname (T299)', () => {
+  it('round-trips a partner1 nickname through toRsvpDraft and fromRsvpDraft', () => {
+    const dto = rsvpDto({
+      adults: {
+        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', nickname: 'Ad', options: {} },
+      },
+    });
+    const draftFromDto = toRsvpDraft(dto);
+    expect(draftFromDto.partner1.nickname).toBe('Ad');
+
+    const serialised = fromRsvpDraft(draftFromDto);
+    expect(serialised.adults?.partner1?.nickname).toBe('Ad');
+  });
+
+  it('round-trips a partner2 and a child nickname through toRsvpDraft and fromRsvpDraft', () => {
+    const dto = rsvpDto({
+      adults: {
+        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {} },
+        partner2: {
+          id: 'usr_partner',
+          firstName: 'Grace',
+          lastName: 'Hopper',
+          nickname: 'Gigi',
+          options: {},
+          kind: 'guest',
+        },
+      },
+      children: [{ firstName: 'Iris', age: 7, nickname: 'Iri', options: {} }],
+    });
+    const draftFromDto = toRsvpDraft(dto);
+    expect(draftFromDto.partner2?.nickname).toBe('Gigi');
+    expect(draftFromDto.children[0]?.nickname).toBe('Iri');
+
+    const serialised = fromRsvpDraft(draftFromDto);
+    expect(serialised.adults?.partner2?.nickname).toBe('Gigi');
+    expect(serialised.children?.[0]?.nickname).toBe('Iri');
+  });
+
+  it('trims a nickname on save', () => {
+    const value = draft({ partner1: adult({ id: 'usr_self', nickname: '  Ad  ' }) });
+    expect(fromRsvpDraft(value).adults?.partner1?.nickname).toBe('Ad');
+  });
+
+  it('omits (never sends "") a cleared partner1 nickname', () => {
+    const value = draft({ partner1: adult({ id: 'usr_self', nickname: '' }) });
+    const partner1 = fromRsvpDraft(value).adults?.partner1;
+    expect(partner1?.nickname).toBeUndefined();
+    expect(partner1).not.toEqual(expect.objectContaining({ nickname: '' }));
+  });
+
+  it('omits (never sends "") a cleared child nickname', () => {
+    const value = draft({ children: [child({ nickname: '   ' })] });
+    const [serialisedChild] = fromRsvpDraft(value).children ?? [];
+    expect(serialisedChild?.nickname).toBeUndefined();
+    expect(serialisedChild).not.toEqual(expect.objectContaining({ nickname: '' }));
+  });
+
+  it('omits (never sends "") a cleared partner2 nickname', () => {
+    const value = draft({
+      partner2: adult({ id: 'usr_partner', kind: 'guest', nickname: '' }),
+    });
+    const partner2 = fromRsvpDraft(value).adults?.partner2;
+    expect(partner2?.nickname).toBeUndefined();
+    expect(partner2).not.toEqual(expect.objectContaining({ nickname: '' }));
+  });
+});
+
 describe('declining never prunes the party (ADR W-0004 §Decision.6)', () => {
   it('keeps the party on a declined save', () => {
     // Regression guard: fromRsvpDraft() must not special-case status. It

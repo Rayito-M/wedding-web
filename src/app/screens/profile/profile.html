@@ -61,6 +61,28 @@
             </div>
           </div>
 
+          <!-- Nickname — its own row directly under the name pair, not
+               squeezed into the 2-col grid (mirrors guest-create-modal's
+               placement of the same field). -->
+          <div class="field">
+            <div class="field-label">Nickname</div>
+            @if (editing()) {
+              <input
+                app-input
+                type="text"
+                maxlength="8"
+                placeholder="e.g. Lau"
+                [value]="form().nickname"
+                (input)="setNickname(inputValue($event))"
+              />
+              <p class="field-hint">Max 8 characters</p>
+            } @else {
+              <div class="field-value" [class.empty]="!form().nickname">
+                {{ form().nickname || '—' }}
+              </div>
+            }
+          </div>
+
           <div class="field">
             <div class="field-label">Email</div>
             @if (editing()) {

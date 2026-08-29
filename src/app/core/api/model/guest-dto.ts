@@ -16,6 +16,7 @@ export interface GuestDto {
     firstName: string;
     lastName: string;
     email?: string;
+    nickname?: string;
     phoneNumber: string;
     role: string;
     preferredLang: GuestDto.PreferredLangEnum;

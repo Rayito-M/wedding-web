@@ -216,6 +216,9 @@
         "allergiesSummary": "Alergias: {{list}}",
         "firstNamePlaceholder": "Nombre",
         "lastNamePlaceholder": "Apellido",
+        "nicknameLabel": "Apodo",
+        "nicknamePlaceholder": "p. ej. Ju",
+        "nicknamePlaceholderChild": "p. ej. Teo",
         "agePlaceholder": "Edad",
         "openProfile": "Abrir su perfil",
         "customAllergy": {
@@ -557,6 +560,11 @@
       "ownAccount": "cuenta de invitado propia",
       "plusOne": "acompañante",
       "nameManaged": "El nombre lo gestiona su propia cuenta de invitado."
+    },
+    "nickname": {
+      "label": "Apodo",
+      "placeholder": "p. ej. Lau",
+      "hint": "Máximo 8 caracteres"
     }
   },
   "consentBanner": {

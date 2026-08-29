@@ -28,6 +28,10 @@ export interface AdultDraft {
   readonly id?: string;
   firstName: string;
   lastName: string;
+  /** Optional, max 8 characters client-side (DS `RSVPEditor.jsx`), shown in
+   *  quotes beside the name — never in place of it. Locked read-only in the
+   *  same case the name itself is (a `partner2` with their own account). */
+  nickname?: string;
   options: RsvpDtoAdultsPartner1Options;
   /**
    * `partner2`'s discriminated-union tag on the wire — typed plain `string`,
@@ -47,6 +51,8 @@ export interface AdultDraft {
 export interface ChildDraft {
   firstName: string;
   age: string;
+  /** Optional, max 8 characters client-side — see `AdultDraft.nickname`. */
+  nickname?: string;
   options: RsvpDtoAdultsPartner1Options;
 }
 
@@ -75,6 +81,7 @@ export function toRsvpDraft(rsvp: RsvpDto): RsvpDraft {
       id: rsvp.adults.partner1.id,
       firstName: rsvp.adults.partner1.firstName,
       lastName: rsvp.adults.partner1.lastName,
+      nickname: rsvp.adults.partner1.nickname,
       options: rsvp.adults.partner1.options ?? {},
     },
     partner2: rsvp.adults.partner2
@@ -82,6 +89,7 @@ export function toRsvpDraft(rsvp: RsvpDto): RsvpDraft {
           id: 'id' in rsvp.adults.partner2 ? rsvp.adults.partner2.id : undefined,
           firstName: rsvp.adults.partner2.firstName,
           lastName: rsvp.adults.partner2.lastName,
+          nickname: rsvp.adults.partner2.nickname,
           options: rsvp.adults.partner2.options ?? {},
           kind: rsvp.adults.partner2.kind,
         }
@@ -89,6 +97,7 @@ export function toRsvpDraft(rsvp: RsvpDto): RsvpDraft {
     children: (rsvp.children ?? []).map((c) => ({
       firstName: c.firstName,
       age: String(c.age),
+      nickname: c.nickname,
       options: c.options ?? {},
     })),
   };
@@ -99,6 +108,7 @@ export function fromRsvpDraft(draft: RsvpDraft): Partial<RsvpDto> {
     id: draft.partner1.id as string,
     firstName: draft.partner1.firstName.trim(),
     lastName: draft.partner1.lastName.trim(),
+    nickname: draft.partner1.nickname?.trim() || undefined,
     options: draft.partner1.options,
   };
   const partner2: RsvpDtoAdultsPartner2 | undefined = draft.partner2
@@ -107,12 +117,14 @@ export function fromRsvpDraft(draft: RsvpDraft): Partial<RsvpDto> {
           id: draft.partner2.id,
           firstName: draft.partner2.firstName.trim(),
           lastName: draft.partner2.lastName.trim(),
+          nickname: draft.partner2.nickname?.trim() || undefined,
           options: draft.partner2.options,
           kind: draft.partner2.kind as string,
         }
       : {
           firstName: draft.partner2.firstName.trim(),
           lastName: draft.partner2.lastName.trim(),
+          nickname: draft.partner2.nickname?.trim() || undefined,
           options: draft.partner2.options,
           kind: draft.partner2.kind as string,
         }
@@ -120,6 +132,7 @@ export function fromRsvpDraft(draft: RsvpDraft): Partial<RsvpDto> {
   const children: RsvpDtoChildrenInner[] = draft.children.map((c) => ({
     firstName: c.firstName.trim(),
     age: Number(c.age) || 0,
+    nickname: c.nickname?.trim() || undefined,
     options: c.options,
   }));
   return {

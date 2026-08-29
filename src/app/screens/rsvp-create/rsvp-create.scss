@@ -100,12 +100,26 @@ h2 {
   gap: 8px;
 }
 
+// One child's name/age row plus its own nickname field, stacked (DS
+// `ScreenRSVPCreate.jsx`'s per-child wrapper).
+.child {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+}
+
 .child-row {
   align-items: center;
 
   .age {
     flex: 0 0 78px;
   }
+}
+
+// Nudges the partner's nickname label down from the name row/hint above it —
+// the rest of the field (input, hint) already carries its own spacing.
+.nickname-field {
+  margin-top: t.$space-3;
 }
 
 .remove-btn {

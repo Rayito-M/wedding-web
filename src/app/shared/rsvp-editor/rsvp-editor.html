@@ -43,6 +43,9 @@
         <span class="info">
           <span class="name-row">
             <span class="name">{{ fullName(card) || ('rsvp.editor.person.newGuest' | translate) }}</span>
+            @if (card.nickname) {
+              <span class="header-nickname">“{{ card.nickname }}”</span>
+            }
             <app-pill [tone]="card.role === 'primary' ? 'accent' : 'soft'">
               {{ card.roleKey | translate }}
             </app-pill>
@@ -57,7 +60,10 @@
           <div class="name-fields">
             @if (card.nameLocked) {
               <!-- Their own guest account owns this name: show it, never offer
-                   to edit it (ADR W-0002 §Decision.3). Remove stays allowed. -->
+                   to edit it (ADR W-0002 §Decision.3). Remove stays allowed.
+                   The nickname is shown separately, below (DS `RSVPEditor.jsx`
+                   — it is not inline with the name here; that's the
+                   collapsed-header treatment above). -->
               <span class="locked-name">{{ fullName(card) }}</span>
             } @else if (card.role === 'child') {
               <input
@@ -104,6 +110,43 @@
               </button>
             }
           </div>
+
+          @if (card.nameLocked) {
+            @if (card.nickname) {
+              <!-- Read-only, its own labelled block below the name — not
+                   inline with it (DS `RSVPEditor.jsx`: the inline quote is
+                   the collapsed-header treatment above, a different spot). -->
+              <div class="locked-nickname-block">
+                <div class="label">{{ 'rsvp.editor.person.nicknameLabel' | translate }}</div>
+                <div class="locked-nickname-value">“{{ card.nickname }}”</div>
+              </div>
+            }
+          } @else {
+            <!-- Optional, max 8 characters — never editable once the name
+                 itself is locked (that card shows its read-only value above
+                 instead). -->
+            <div class="label nickname-label">{{ 'rsvp.editor.person.nicknameLabel' | translate }}</div>
+            @if (card.role === 'child') {
+              <input
+                app-input
+                type="text"
+                maxlength="8"
+                [value]="card.nickname"
+                [placeholder]="nicknamePlaceholderKey(card) | translate"
+                (input)="setChildNickname(childIndex(card.key), inputValue($event))"
+              />
+            } @else {
+              <input
+                app-input
+                type="text"
+                maxlength="8"
+                [value]="card.nickname"
+                [placeholder]="nicknamePlaceholderKey(card) | translate"
+                (input)="setAdultNickname(card.key, inputValue($event))"
+              />
+            }
+            <p class="nickname-hint">{{ 'shared.nickname.hint' | translate }}</p>
+          }
 
           @if (card.nameLocked) {
             <!-- The hint, and — for the couple only — the jump to that guest's

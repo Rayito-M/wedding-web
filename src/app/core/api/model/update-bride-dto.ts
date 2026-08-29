@@ -14,6 +14,7 @@ export interface UpdateBrideDto {
     version: number;
     firstName?: string;
     lastName?: string;
+    nickname?: string;
     googleSub?: string;
     appleSub?: string;
     preferredLang?: UpdateBrideDto.PreferredLangEnum;

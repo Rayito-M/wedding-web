@@ -14,6 +14,7 @@ export interface CreateGuestDto {
     firstName: string;
     lastName: string;
     email?: string;
+    nickname?: string;
     phoneNumber: string;
     preferredLang: CreateGuestDto.PreferredLangEnum;
     delegateTo?: Array<string>;

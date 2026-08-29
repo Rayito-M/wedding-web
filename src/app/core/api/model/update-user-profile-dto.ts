@@ -14,6 +14,7 @@ export interface UpdateUserProfileDto {
     id: string;
     firstName?: string;
     lastName?: string;
+    nickname?: string;
     preferredLang?: UpdateUserProfileDto.PreferredLangEnum;
     role: UpdateUserProfileDto.RoleEnum;
     lastSeen?: string;

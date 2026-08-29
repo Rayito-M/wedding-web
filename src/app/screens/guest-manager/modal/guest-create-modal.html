@@ -29,6 +29,21 @@
       </div>
     </div>
 
+    <!-- Nickname — its own row beside first/last name, DS `Field label="Nickname"`
+         directly under the name pair (not squeezed into the same 2-col grid). -->
+    <div class="field">
+      <span class="info-label">{{ 'shared.nickname.label' | translate }}</span>
+      <input
+        app-input
+        type="text"
+        formControlName="nickname"
+        maxlength="8"
+        [placeholder]="'shared.nickname.placeholder' | translate"
+        (input)="clampNickname()"
+      />
+      <p class="field-hint">{{ 'shared.nickname.hint' | translate }}</p>
+    </div>
+
     <div class="field-row">
       <div class="field">
         <span class="info-label">{{ 'guest_manager.form.email' | translate }}</span>

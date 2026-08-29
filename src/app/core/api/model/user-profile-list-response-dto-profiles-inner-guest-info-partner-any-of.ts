@@ -13,6 +13,7 @@ export interface UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf {
     id: string;
     firstName: string;
     lastName: string;
+    nickname?: string;
     kind: string;
     attending?: boolean;
 }

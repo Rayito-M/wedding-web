@@ -34,6 +34,11 @@ interface Relation {
 interface ProfileForm {
   readonly firstName: string;
   readonly lastName: string;
+  /** Optional, max 8 characters client-side (DS `ScreenGuestManager.jsx` /
+   *  Phase S convention — see `rsvp-create.ts`'s `PartnerDraft.nickname`),
+   *  shown in quotes beside the name elsewhere in the app. Fixture-only here:
+   *  T302 wires the field for shape parity, not persistence. */
+  readonly nickname: string;
   readonly email: string;
   readonly phoneNumber: string;
 }
@@ -49,6 +54,7 @@ const ME_SEED = {
 const FORM_SEED: ProfileForm = {
   firstName: 'Laura',
   lastName: 'Ortega',
+  nickname: 'Lau',
   email: 'laura.ortega@example.com',
   phoneNumber: '+34 655 908 771',
 };
@@ -88,6 +94,12 @@ export class Profile {
   protected setField(key: keyof ProfileForm, value: string): void {
     this.form.update((form) => ({ ...form, [key]: value }));
     this.saved.set(false);
+  }
+
+  /** Same 8-character clamp as `rsvp-create.ts`'s `setPartnerNickname` — the
+   *  DS's narrower cap is deliberate (Phase S intro), not a bug. */
+  protected setNickname(value: string): void {
+    this.setField('nickname', value.slice(0, 8));
   }
 
   protected setLang(code: LangCode): void {

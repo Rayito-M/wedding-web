@@ -24,7 +24,11 @@ import { RsvpEditor } from './rsvp-editor';
  * component asks for the *right key*, not what the key says.
  */
 const TRANSLATIONS = {
-  shared: { remove: 'Remove', partner: { nameManaged: 'Name managed by their own guest account.' } },
+  shared: {
+    remove: 'Remove',
+    partner: { nameManaged: 'Name managed by their own guest account.' },
+    nickname: { hint: 'Max 8 characters' },
+  },
   rsvp: {
     editor: {
       attendingLabel: 'Attending?',
@@ -32,6 +36,9 @@ const TRANSLATIONS = {
       choice: { attending: 'With joy', pending: 'Pending', declined: 'Sadly no' },
       person: {
         openProfile: 'Open their profile',
+        nicknameLabel: 'Nickname',
+        nicknamePlaceholder: 'e.g. Ju',
+        nicknamePlaceholderChild: 'e.g. Teo',
         customAllergy: { label: 'Anything else?', placeholder: 'Type an allergy…', remove: 'Remove {{name}}' },
       },
       remove: {
@@ -225,6 +232,102 @@ describe('RsvpEditor', () => {
     await fixture.whenStable();
 
     expect(emitted.length).toBe(0);
+  });
+
+  describe('nickname (T299)', () => {
+    it('offers an editable, 8-character-clamped nickname field for the primary guest', async () => {
+      await create(draftWith());
+
+      const nicknameInput = query<HTMLInputElement>('.card-body input[maxlength="8"]');
+      expect(nicknameInput).not.toBeNull();
+      expect(nicknameInput!.placeholder).toBe('e.g. Ju');
+
+      await type(nicknameInput!, 'AVeryLongNickname');
+      expect(emitted[emitted.length - 1].partner1.nickname).toBe('AVeryLon');
+    });
+
+    it('offers an editable nickname field for a child, with the child-specific placeholder', async () => {
+      await create(draftWith({ children: [{ firstName: 'Kit', age: '7', options: {} }] }));
+      queryAll<HTMLButtonElement>('.card-head')[1].click();
+      await fixture.whenStable();
+
+      const nicknameInput = query<HTMLInputElement>('.card-body input[maxlength="8"]');
+      expect(nicknameInput).not.toBeNull();
+      expect(nicknameInput!.placeholder).toBe('e.g. Teo');
+
+      await type(nicknameInput!, 'AVeryLongNickname');
+      expect(emitted[emitted.length - 1].children[0].nickname).toBe('AVeryLon');
+    });
+
+    it("renders a locked partner2's nickname read-only, in quotes, beside the name in the collapsed header — no input at all", async () => {
+      await create(
+        draftWith({
+          partner2: {
+            id: 'guest-2',
+            firstName: 'Grace',
+            lastName: 'Hopper',
+            nickname: 'Gigi',
+            options: {},
+            kind: 'guest',
+          },
+        }),
+      );
+
+      // The header quote is always visible — even before the card opens (DS
+      // `RSVPEditor.jsx` L146, the collapsed-header treatment). `partner1`
+      // has no nickname in this fixture, so this is the only one rendered.
+      expect(queryAll('.header-nickname').length).toBe(1);
+      expect(query('.header-nickname')?.textContent?.trim()).toBe('“Gigi”');
+
+      queryAll<HTMLButtonElement>('.card-head')[1].click();
+      await fixture.whenStable();
+
+      // Expanded body: its own read-only labelled block, not inline with the
+      // name (DS `RSVPEditor.jsx` L164) — and no editable input at all.
+      expect(query('.locked-nickname-value')?.textContent?.trim()).toBe('“Gigi”');
+      expect(queryAll('.card-body input[app-input]').length).toBe(1); // the allergy entry only
+      expect(query('.card-body input[maxlength="8"]')).toBeNull();
+    });
+
+    it('renders no nickname elements when the locked partner has none', async () => {
+      await create(
+        draftWith({
+          partner2: { id: 'guest-2', firstName: 'Grace', lastName: 'Hopper', options: {}, kind: 'guest' },
+        }),
+      );
+
+      expect(queryAll('.header-nickname').length).toBe(0); // neither party has one
+
+      queryAll<HTMLButtonElement>('.card-head')[1].click();
+      await fixture.whenStable();
+
+      expect(query('.locked-nickname-value')).toBeNull();
+      expect(query('.locked-nickname-block')).toBeNull();
+    });
+
+    it('keeps a locked partner nickname unchanged when the setter is called programmatically', async () => {
+      await create(
+        draftWith({
+          partner2: {
+            id: 'guest-2',
+            firstName: 'Grace',
+            lastName: 'Hopper',
+            nickname: 'Gigi',
+            options: {},
+            kind: 'guest',
+          },
+        }),
+      );
+      // reason: `setAdultNickname` is `protected` — the guard it backs (ADR
+      // W-0002 §Decision.3) exists precisely for callers that bypass the template.
+      const editor = fixture.componentInstance as unknown as {
+        setAdultNickname(key: 'partner2', value: string): void;
+      };
+      editor.setAdultNickname('partner2', 'Renamed');
+      await fixture.whenStable();
+
+      expect(emitted.length).toBe(0);
+    });
   });
 
   describe('"Open their profile" (couple perspective only)', () => {

@@ -13,6 +13,7 @@ import { RsvpDtoAdultsPartner1Options } from './rsvp-dto-adults-partner1-options
 export interface RsvpDtoAdultsPartner2OneOf1 { 
     firstName: string;
     lastName: string;
+    nickname?: string;
     kind: string;
     options?: RsvpDtoAdultsPartner1Options;
 }

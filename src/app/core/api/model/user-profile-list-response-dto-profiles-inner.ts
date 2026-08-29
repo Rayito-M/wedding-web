@@ -14,6 +14,7 @@ export interface UserProfileListResponseDtoProfilesInner {
     id: string;
     firstName: string;
     lastName: string;
+    nickname?: string;
     email?: string;
     phoneNumber?: string;
     preferredLang: UserProfileListResponseDtoProfilesInner.PreferredLangEnum;

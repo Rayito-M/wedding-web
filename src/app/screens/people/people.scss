@@ -165,6 +165,21 @@
   white-space: nowrap;
 }
 
+// Optional, quoted on its own line below the name — never in place of it,
+// never beside it. Matches DS `ProfileCard.jsx`'s `pseudo` div exactly
+// (fontSize 12 / italic / var(--sub) / marginTop 3), not `rsvp-editor`'s
+// `.header-nickname` (a same-row treatment for a different component).
+.nickname {
+  margin-top: var(--space-1);
+  font-family: t.$font-book;
+  font-style: italic;
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lang {
   flex-shrink: 0;
   font-size: 9px;

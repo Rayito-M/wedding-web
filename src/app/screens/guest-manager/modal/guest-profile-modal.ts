@@ -121,6 +121,12 @@ export class GuestProfileModal {
   protected readonly editForm = this.fb.group({
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
+    /** Optional, max 8 characters (T298's DS-narrowed cap) — always editable
+     *  here, unlike `rsvp-editor`'s locked-partner case: this admin form has
+     *  no lock concept (DS `ScreenGuestManager.jsx`'s `profDraft` fields are
+     *  all plain unlocked `Input`s). Clamped in `clampNickname`, mirroring
+     *  `rsvp-editor`'s `.slice(0, 8)` (T299). */
+    nickname: [''],
     side: this.fb.control<RelationSide>('bride'),
     kind: this.fb.control<RelationKind>('family'),
   });
@@ -229,6 +235,7 @@ export class GuestProfileModal {
     this.editForm.setValue({
       firstName: profile?.firstName ?? '',
       lastName: profile?.lastName ?? '',
+      nickname: profile?.nickname ?? '',
       side: (profile?.guestInfo?.relation?.side as RelationSide | undefined) ?? 'bride',
       kind: (profile?.guestInfo?.relation?.kind as RelationKind | undefined) ?? 'family',
     });
@@ -247,6 +254,13 @@ export class GuestProfileModal {
     this.editForm.controls.kind.setValue(kind);
   }
 
+  /** Belt-and-suspenders alongside the input's `maxlength="8"` — mirrors
+   *  `rsvp-editor`'s `.slice(0, 8)` clamp (T299). */
+  protected clampNickname(): void {
+    const control = this.editForm.controls.nickname;
+    if (control.value.length > 8) control.setValue(control.value.slice(0, 8));
+  }
+
   /**
    * Saves firstName/lastName/relation via the real profile-update endpoint
    * (`EntityCollectionService.update` → `UserProfileDataService` →
@@ -263,7 +277,7 @@ export class GuestProfileModal {
     const profile = this.guestProfile();
     if (!profile) return;
 
-    const { firstName, lastName, side, kind } = this.editForm.getRawValue();
+    const { firstName, lastName, nickname, side, kind } = this.editForm.getRawValue();
     const relation: CreateGuestDtoRelation = {
       side,
       kind,
@@ -271,7 +285,14 @@ export class GuestProfileModal {
     };
 
     this.userProfileCollection
-      .update({ id: profile.id, role: profile.role, firstName, lastName, guestInfo: { relation } })
+      .update({
+        id: profile.id,
+        role: profile.role,
+        firstName,
+        lastName,
+        nickname: nickname || undefined,
+        guestInfo: { relation },
+      })
       .subscribe({
         next: () => this.viewMode.set('profile'),
         error: (err: unknown) => console.error('Failed to save profile', err),

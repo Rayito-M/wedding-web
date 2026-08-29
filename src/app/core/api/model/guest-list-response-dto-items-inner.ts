@@ -16,6 +16,7 @@ export interface GuestListResponseDtoItemsInner {
     firstName: string;
     lastName: string;
     email?: string;
+    nickname?: string;
     phoneNumber: string;
     role: string;
     preferredLang: GuestListResponseDtoItemsInner.PreferredLangEnum;

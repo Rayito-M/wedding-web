@@ -150,6 +150,9 @@ export class GuestCreateModal {
   protected readonly createForm = this.fb.group({
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
+    /** Optional, max 8 characters (T298's DS-narrowed cap) — clamped in
+     *  `setNickname`, mirroring `rsvp-editor`'s `.slice(0, 8)` (T299). */
+    nickname: [''],
     phoneNumber: ['', [Validators.required, Validators.pattern(PHONE_PATTERN)]],
     email: ['', Validators.email],
     side: this.fb.control<RelationSide>('bride'),
@@ -249,6 +252,13 @@ export class GuestCreateModal {
 
   protected selectPreferredLang(lang: CreateGuestDto.PreferredLangEnum): void {
     this.createForm.controls.preferredLang.setValue(lang);
+  }
+
+  /** Belt-and-suspenders alongside the input's `maxlength="8"` — mirrors
+   *  `rsvp-editor`'s `.slice(0, 8)` clamp (T299). */
+  protected clampNickname(): void {
+    const control = this.createForm.controls.nickname;
+    if (control.value.length > 8) control.setValue(control.value.slice(0, 8));
   }
 
   /** The DS partner switch. Switching off drops the picker's state, so turning
@@ -403,7 +413,7 @@ export class GuestCreateModal {
   /** The form as `POST /v1/guests` takes it — identity, language and relation.
    *  The partner is not part of this payload; it is its own route. */
   private guestDraft(): CreateGuestDto {
-    const { firstName, lastName, phoneNumber, email, side, kind, preferredLang, link } =
+    const { firstName, lastName, nickname, phoneNumber, email, side, kind, preferredLang, link } =
       this.createForm.getRawValue();
 
     // `CreateGuestDtoRelation` is a union: the family variant's `link` is the
@@ -417,6 +427,7 @@ export class GuestCreateModal {
     return {
       firstName,
       lastName,
+      nickname: nickname || undefined,
       phoneNumber,
       preferredLang,
       email: email || undefined,

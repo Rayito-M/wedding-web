@@ -13,6 +13,7 @@ import { CreateGuestDtoRelation } from './create-guest-dto-relation';
 export interface UpdateGuestDto { 
     firstName?: string;
     lastName?: string;
+    nickname?: string;
     preferredLang?: UpdateGuestDto.PreferredLangEnum;
     delegateTo?: Array<string>;
     relation?: CreateGuestDtoRelation;

@@ -89,6 +89,17 @@
           @if (hasLinkedPartner()) {
             <p class="hint">{{ 'rsvp.create.party.partnerLinkedHint' | translate }}</p>
           }
+          <div class="label nickname-field">{{ 'shared.nickname.label' | translate }}</div>
+          <input
+            app-input
+            type="text"
+            maxlength="8"
+            [value]="draft().partner.nickname"
+            [placeholder]="'shared.nickname.placeholder' | translate"
+            [disabled]="hasLinkedPartner()"
+            (input)="setPartnerNickname(inputValue($event))"
+          />
+          <p class="hint">{{ 'shared.nickname.hint' | translate }}</p>
         </div>
       }
 
@@ -97,32 +108,42 @@
           <div class="label">{{ 'rsvp.create.party.childrenLabel' | translate }}</div>
           <div class="children">
             @for (child of draft().children; track $index) {
-              <div class="row child-row">
+              <div class="child">
+                <div class="row child-row">
+                  <input
+                    app-input
+                    type="text"
+                    [value]="child.firstName"
+                    [placeholder]="
+                      'rsvp.create.party.childFirstName' | translate: { index: $index + 1 }
+                    "
+                    (input)="setChildFirstName($index, inputValue($event))"
+                  />
+                  <input
+                    app-input
+                    type="text"
+                    class="age"
+                    [value]="child.age"
+                    [placeholder]="'rsvp.create.party.age' | translate"
+                    (input)="setChildAge($index, inputValue($event))"
+                  />
+                  <button
+                    type="button"
+                    class="remove-btn"
+                    [attr.aria-label]="'rsvp.create.party.removeChild' | translate"
+                    (click)="removeChild($index)"
+                  >
+                    ×
+                  </button>
+                </div>
                 <input
                   app-input
                   type="text"
-                  [value]="child.firstName"
-                  [placeholder]="
-                    'rsvp.create.party.childFirstName' | translate: { index: $index + 1 }
-                  "
-                  (input)="setChildFirstName($index, inputValue($event))"
+                  maxlength="8"
+                  [value]="child.nickname"
+                  [placeholder]="'shared.nickname.placeholder' | translate"
+                  (input)="setChildNickname($index, inputValue($event))"
                 />
-                <input
-                  app-input
-                  type="text"
-                  class="age"
-                  [value]="child.age"
-                  [placeholder]="'rsvp.create.party.age' | translate"
-                  (input)="setChildAge($index, inputValue($event))"
-                />
-                <button
-                  type="button"
-                  class="remove-btn"
-                  [attr.aria-label]="'rsvp.create.party.removeChild' | translate"
-                  (click)="removeChild($index)"
-                >
-                  ×
-                </button>
               </div>
             }
           </div>

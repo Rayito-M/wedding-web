@@ -55,6 +55,9 @@
                 <span class="lang">{{ person.preferredLang.toUpperCase() }}</span>
               }
             </div>
+            @if (person.nickname) {
+              <div class="nickname">“{{ person.nickname }}”</div>
+            }
             <div class="badges">
               <app-pill [tone]="isCouple(person) ? 'accent' : 'soft'">{{
                 'roles.' + person.role | translate

@@ -219,6 +219,9 @@
         "allergiesSummary": "Allergies: {{list}}",
         "firstNamePlaceholder": "First name",
         "lastNamePlaceholder": "Last name",
+        "nicknameLabel": "Nickname",
+        "nicknamePlaceholder": "e.g. Ju",
+        "nicknamePlaceholderChild": "e.g. Teo",
         "agePlaceholder": "Age",
         "openProfile": "Open their profile",
         "customAllergy": {
@@ -562,6 +565,11 @@
       "ownAccount": "own guest account",
       "plusOne": "plus-one",
       "nameManaged": "Name managed by their own guest account."
+    },
+    "nickname": {
+      "label": "Nickname",
+      "placeholder": "e.g. Lau",
+      "hint": "Max 8 characters"
     }
   },
   "consentBanner": {

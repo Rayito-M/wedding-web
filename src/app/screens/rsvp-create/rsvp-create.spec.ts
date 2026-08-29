@@ -21,7 +21,11 @@ import { RsvpCreate } from './rsvp-create';
  * left hanging behind it).
  */
 const TRANSLATIONS = {
-  shared: { continue: 'Continue', back: 'Back' },
+  shared: {
+    continue: 'Continue',
+    back: 'Back',
+    nickname: { label: 'Nickname', placeholder: 'e.g. Lau', hint: 'Max 8 characters' },
+  },
   rsvp: {
     header: 'RSVP',
     create: {
@@ -208,6 +212,122 @@ describe('RsvpCreate', () => {
       adults: { partner2: { firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one' } },
     });
     expect(text()).toContain('See you in June');
+  });
+
+  describe('nickname (T299)', () => {
+    /** A typed-in partner (no `id`) so the name/nickname fields stay editable. */
+    async function toPartyStepWithPartner(): Promise<void> {
+      await create();
+      await click('button[app-choice-card]', 0);
+      await click('button[app-toggle]', 0); // With my partner
+      await clickPrimary();
+    }
+
+    it("submits the partner's nickname trimmed, and omits it when left blank", async () => {
+      await toPartyStepWithPartner();
+      const [firstName, lastName, nickname] =
+        fixture.nativeElement.querySelectorAll('input[app-input]');
+      (firstName as HTMLInputElement).value = 'Grace';
+      firstName.dispatchEvent(new Event('input'));
+      (lastName as HTMLInputElement).value = 'Hopper';
+      lastName.dispatchEvent(new Event('input'));
+      (nickname as HTMLInputElement).value = '  Gigi ';
+      nickname.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+
+      await clickPrimary();
+
+      expect(update.mock.calls[0][0].adults?.partner2).toMatchObject({ nickname: 'Gigi' });
+
+      // Left blank instead: the field is absent from the payload, never sent as "".
+      update.mockClear();
+      await create();
+      await click('button[app-choice-card]', 0);
+      await click('button[app-toggle]', 0);
+      await clickPrimary();
+      const [firstName2, lastName2] = fixture.nativeElement.querySelectorAll('input[app-input]');
+      (firstName2 as HTMLInputElement).value = 'Grace';
+      firstName2.dispatchEvent(new Event('input'));
+      (lastName2 as HTMLInputElement).value = 'Hopper';
+      lastName2.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+      await clickPrimary();
+
+      const partner2 = update.mock.calls[0][0].adults?.partner2;
+      expect(partner2?.nickname).toBeUndefined();
+      expect(partner2).not.toEqual(expect.objectContaining({ nickname: '' }));
+    });
+
+    it("clamps the partner's nickname input to 8 characters", async () => {
+      await toPartyStepWithPartner();
+      const [, , nickname] = fixture.nativeElement.querySelectorAll('input[app-input]');
+      (nickname as HTMLInputElement).value = 'AVeryLongNickname';
+      nickname.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+
+      const [, , clamped] = fixture.nativeElement.querySelectorAll('input[app-input]');
+      expect((clamped as HTMLInputElement).value).toBe('AVeryLon');
+    });
+
+    it('renders the nickname read-only, never an editable input, for a linked partner', async () => {
+      const rsvp: RsvpDto = {
+        ...pendingRsvp(),
+        adults: {
+          partner1: pendingRsvp().adults.partner1,
+          partner2: { id: 'guest-2', firstName: 'Grace', lastName: 'Hopper', nickname: 'Gigi', options: {}, kind: 'guest' },
+        },
+      };
+      await create(rsvp);
+      await click('button[app-choice-card]', 0);
+      await clickPrimary(); // party step: withPartner is pre-filled true
+
+      const [firstName, lastName, nickname] =
+        fixture.nativeElement.querySelectorAll('input[app-input]');
+      expect((firstName as HTMLInputElement).disabled).toBe(true);
+      expect((lastName as HTMLInputElement).disabled).toBe(true);
+      expect((nickname as HTMLInputElement).disabled).toBe(true);
+      expect((nickname as HTMLInputElement).value).toBe('Gigi');
+    });
+
+    it("submits each child's nickname trimmed, and omits it when left blank", async () => {
+      await create();
+      await click('button[app-choice-card]', 0);
+      await click('button[app-toggle]', 1); // With children
+      await clickPrimary();
+
+      const inputs = fixture.nativeElement.querySelectorAll('input[app-input]');
+      const [firstName, age, nickname] = inputs; // one child row: name, age, nickname
+      (firstName as HTMLInputElement).value = 'Iris';
+      firstName.dispatchEvent(new Event('input'));
+      (age as HTMLInputElement).value = '7';
+      age.dispatchEvent(new Event('input'));
+      (nickname as HTMLInputElement).value = ' Iri ';
+      nickname.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+
+      await clickPrimary();
+
+      const [child] = update.mock.calls[0][0].children;
+      expect(child).toMatchObject({ firstName: 'Iris', age: 7, nickname: 'Iri' });
+
+      // Left blank instead: absent from the payload, never sent as "".
+      update.mockClear();
+      await create();
+      await click('button[app-choice-card]', 0);
+      await click('button[app-toggle]', 1);
+      await clickPrimary();
+      const [firstName2, age2] = fixture.nativeElement.querySelectorAll('input[app-input]');
+      (firstName2 as HTMLInputElement).value = 'Iris';
+      firstName2.dispatchEvent(new Event('input'));
+      (age2 as HTMLInputElement).value = '7';
+      age2.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+      await clickPrimary();
+
+      const [childBlank] = update.mock.calls[0][0].children;
+      expect(childBlank.nickname).toBeUndefined();
+      expect(childBlank).not.toEqual(expect.objectContaining({ nickname: '' }));
+    });
   });
 
   it('stays on the form and shows the error when the save fails', async () => {

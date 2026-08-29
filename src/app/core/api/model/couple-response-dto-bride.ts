@@ -15,6 +15,7 @@ export interface CoupleResponseDtoBride {
     firstName: string;
     lastName: string;
     email?: string;
+    nickname?: string;
     googleSub?: string;
     appleSub?: string;
     phoneNumber: string;

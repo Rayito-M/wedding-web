@@ -39,11 +39,13 @@ export class UserProfileDataService implements EntityCollectionDataService<UserP
   }
 
   /**
-   * `PATCH /v1/profile/{id}` — only `firstName`, `lastName`, `preferredLang`,
-   * `role` and `relation` are editable per `UpdateUserProfileDto` (`email` /
-   * `phoneNumber` are read-only server-side; the profile edit view keeps them
-   * display-only for that reason). `role` is required by the DTO even though
-   * this app never changes it, so callers must pass the existing value through.
+   * `PATCH /v1/profile/{id}` — only `firstName`, `lastName`, `nickname`,
+   * `preferredLang`, `role` and `relation` are editable per `UpdateUserProfileDto`
+   * (`email` / `phoneNumber` are read-only server-side; the profile edit view
+   * keeps them display-only for that reason). `role` is required by the DTO
+   * even though this app never changes it, so callers must pass the existing
+   * value through. The wire requires `nickname` to be `minLength: 1` whenever
+   * present, so a cleared/empty nickname is sent as `undefined`, never `''`.
    */
   update(update: { id: string; changes: Partial<UserProfileDto> }): Observable<UserProfileDto> {
     const changes = update.changes;
@@ -56,6 +58,7 @@ export class UserProfileDataService implements EntityCollectionDataService<UserP
       id: update.id,
       firstName: changes.firstName,
       lastName: changes.lastName,
+      nickname: changes.nickname || undefined,
       preferredLang: changes.preferredLang,
       role: changes.role,
       guestInfo: changes.guestInfo ? { relation: changes.guestInfo.relation } : undefined,

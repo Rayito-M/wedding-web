@@ -30,6 +30,10 @@ import { Toggle } from '@app/shared/toggle/toggle';
 type PartnerDraft = Omit<RsvpDtoAdultsPartner2, 'options' | 'id'> & {
   readonly firstName: string;
   readonly lastName: string;
+  /** Optional, max 8 characters client-side (DS `ScreenRSVPCreate.jsx`),
+   *  shown in quotes beside the name — never in place of it. Read-only for a
+   *  linked partner (`hasLinkedPartner()`), same as their name. */
+  readonly nickname?: string;
 };
 
 type ChildDraft = Omit<RsvpDtoChildrenInner, 'age'> & {
@@ -37,6 +41,8 @@ type ChildDraft = Omit<RsvpDtoChildrenInner, 'age'> & {
   /** Kept as free text while editing (mirrors the DS reference); parsed to a
    *  number only when building the API payload. */
   readonly age: string;
+  /** Optional, max 8 characters client-side — see `PartnerDraft.nickname`. */
+  readonly nickname?: string;
 };
 
 interface CreateDraft {
@@ -78,9 +84,18 @@ function toCreateDraft(rsvp: RsvpDto): CreateDraft {
     withPartner: !!partner2,
     withChildren: (rsvp.children?.length ?? 0) > 0,
     partner: partner2
-      ? { firstName: partner2.firstName, lastName: partner2.lastName, kind: partner2.kind }
+      ? {
+          firstName: partner2.firstName,
+          lastName: partner2.lastName,
+          nickname: partner2.nickname,
+          kind: partner2.kind,
+        }
       : { firstName: '', lastName: '', kind: 'plus-one' },
-    children: (rsvp.children ?? []).map((c) => ({ firstName: c.firstName, age: String(c.age) })),
+    children: (rsvp.children ?? []).map((c) => ({
+      firstName: c.firstName,
+      age: String(c.age),
+      nickname: c.nickname,
+    })),
   };
 }
 
@@ -244,6 +259,15 @@ export class RsvpCreate {
     this.draft.update((d) => ({ ...d, partner: { ...d.partner, lastName: value } }));
   }
 
+  /** Mirrors `setPartnerFirstName`'s shape, plus the DS's 8-character clamp
+   *  (`ScreenRSVPCreate.jsx`'s `v.slice(0, 8)`) — the wire allows up to 30,
+   *  but the DS's narrower cap is deliberate (see Phase S intro). */
+  protected setPartnerNickname(value: string): void {
+    if (this.hasLinkedPartner()) return;
+    const nickname = value.slice(0, 8);
+    this.draft.update((d) => ({ ...d, partner: { ...d.partner, nickname } }));
+  }
+
   protected setChildFirstName(index: number, value: string): void {
     this.draft.update((d) => ({
       ...d,
@@ -256,6 +280,16 @@ export class RsvpCreate {
     this.draft.update((d) => ({
       ...d,
       children: d.children.map((c, i) => (i === index ? { ...c, age: digits } : c)),
+    }));
+  }
+
+  /** Mirrors `setChildFirstName`'s shape, plus the same 8-character clamp as
+   *  `setPartnerNickname`. */
+  protected setChildNickname(index: number, value: string): void {
+    const nickname = value.slice(0, 8);
+    this.draft.update((d) => ({
+      ...d,
+      children: d.children.map((c, i) => (i === index ? { ...c, nickname } : c)),
     }));
   }
 
@@ -318,6 +352,7 @@ export class RsvpCreate {
           {
             firstName: d.partner.firstName.trim(),
             lastName: d.partner.lastName.trim(),
+            nickname: d.partner.nickname?.trim() || undefined,
             kind: 'plus-one',
           }
         : undefined;
@@ -338,7 +373,11 @@ export class RsvpCreate {
       // isn't editable here — carried forward verbatim rather than replaced.
       partner2 = d.withPartner ? (typedPartner ?? rsvp.adults.partner2) : undefined;
       children = d.withChildren
-        ? d.children.map((c) => ({ firstName: c.firstName.trim(), age: Number(c.age) }))
+        ? d.children.map((c) => ({
+            firstName: c.firstName.trim(),
+            age: Number(c.age),
+            nickname: c.nickname?.trim() || undefined,
+          }))
         : undefined;
     }
 

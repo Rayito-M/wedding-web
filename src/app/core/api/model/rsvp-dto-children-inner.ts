@@ -12,6 +12,7 @@ import { RsvpDtoAdultsPartner1Options } from './rsvp-dto-adults-partner1-options
 
 export interface RsvpDtoChildrenInner { 
     firstName: string;
+    nickname?: string;
     options?: RsvpDtoAdultsPartner1Options;
     age: number;
 }

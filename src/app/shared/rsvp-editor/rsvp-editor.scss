@@ -129,6 +129,18 @@
   white-space: nowrap;
 }
 
+// Optional, quoted beside the name in the collapsed header — every card,
+// locked or not (DS `RSVPEditor.jsx` L146). Never in the expanded
+// `.name-fields` row; that spot has its own read-only block instead, below.
+.header-nickname {
+  flex: 0 0 auto;
+  font-family: t.$font-book;
+  font-style: italic;
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 // Chevron built from two borders (rotates open/closed), same precedent as
 // `shared/tab-bar`'s "More" chevron.
 .chevron {
@@ -176,6 +188,34 @@
 }
 
 .name-hint {
+  margin: t.$space-2 0 0;
+  font-size: t.$text-micro;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+// The read-only nickname block on a locked partner's card — its own labelled
+// row below `.name-fields`, plain ink (not muted/italic — DS `RSVPEditor.jsx`
+// L164: `{ fontSize: 13, color: 'var(--ink)' }`, unlike `ProfileCard.jsx`'s
+// treatment used elsewhere in the app).
+.locked-nickname-block {
+  margin-top: t.$space-3;
+
+  .label {
+    margin-bottom: t.$space-1;
+  }
+}
+
+.locked-nickname-value {
+  font-size: t.$text-body;
+  color: var(--text-body-color);
+}
+
+.nickname-label {
+  margin: 14px 0 t.$space-2;
+}
+
+.nickname-hint {
   margin: t.$space-2 0 0;
   font-size: t.$text-micro;
   line-height: 1.5;

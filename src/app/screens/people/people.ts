@@ -26,19 +26,19 @@ import { TextInput } from '@app/shared/input/input';
 import { Avatar } from '@app/shared/avatar/avatar';
 
 /**
- * Presentational scaffold only (T237). Per design reference `ScreenPeople.jsx`
- * — the guest directory: a single-column card list on mobile, and on desktop
- * (`wide`) a header + right-aligned search/filter column followed by a
+ * Per design reference `ScreenPeople.jsx` — the guest directory: a
+ * single-column card list on mobile, and on desktop (`wide`) a header +
+ * right-aligned search/filter column followed by a
  * `repeat(auto-fill, minmax(280px,1fr))` grid of profile cards, at
  * `maxWidth: 980`. One template, switched purely by CSS
  * (`@media (min-width: 900px)`), same approach as `seating-plan` (T229) /
  * `config-manager`.
  *
- * `PEOPLE_SEED` below is a small hardcoded fixture mirroring the shape of the
- * reference's `WEDDING_PEOPLE` — not a service, not wired to any API. Local
- * signals (`query`, `filter`) only drive the search/filter visual states
- * already shown in the reference; there is no persistence layer, no
- * `HttpClient`, no `EntityCollectionService`.
+ * Real screen since at least T290/T292: `userProfileList` is backed by
+ * `EntityCollectionService<UserProfileDto>` (`GET /v1/profile` via
+ * `EntityNamesEnum.USER_PROFILE`), `showContact` is wired to
+ * `LoginService.isCouple`, and `lastSeenLabel` formats against
+ * `todayInMadrid()` — there is no local fixture and no scaffold layer left.
  */
 
 type FilterId = 'all' | 'bride' | 'groom' | 'provider';
@@ -120,7 +120,12 @@ export class People {
     const query = this.query().trim().toLowerCase();
     const filter = this.filter();
     return this.userProfileList().filter((person) => {
-      const name = `${person.firstName} ${person.lastName}`.toLowerCase();
+      // DS `ScreenPeople.jsx` folds the nickname into the same joined string
+      // it searches on name (`${firstName} ${lastName} ${pseudo || ''}`),
+      // unlike `guest-manager`'s parallel nickname check — this screen
+      // matches its own reference exactly.
+      const name =
+        `${person.firstName} ${person.lastName} ${person.nickname ?? ''}`.toLowerCase();
       const rel = person.guestInfo?.relation
         ? this.translateService.instant(person.guestInfo.relation.link).toLowerCase()
         : '';

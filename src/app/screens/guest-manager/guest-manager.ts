@@ -89,7 +89,13 @@ export class GuestManager {
       if (profile.role !== 'guest') return false;
 
       const guestName = `${profile.firstName} ${profile.lastName}`.toLowerCase();
-      if (searchValue && !guestName.includes(searchValue)) return false;
+      // Nickname is a parallel match, not folded into `guestName` — DS
+      // `ScreenGuestManager.jsx`'s `(r.pseudo || '')` clause is its own
+      // `.includes()` check alongside the name's.
+      const nickname = (profile.nickname ?? '').toLowerCase();
+      if (searchValue && !guestName.includes(searchValue) && !nickname.includes(searchValue)) {
+        return false;
+      }
 
       const rsvp = profile.guestInfo?.rsvp;
       if (!rsvp) {

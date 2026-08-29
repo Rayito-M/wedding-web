@@ -154,6 +154,15 @@
   color: var(--text-muted);
 }
 
+// Nickname's "(max 8 characters)" hint — same treatment as
+// `guest-manager`'s `_shared-modal-form.scss` `.field-hint`.
+.field-hint {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-micro);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 // ── Preferred language ──
 .lang-options {
   display: flex;

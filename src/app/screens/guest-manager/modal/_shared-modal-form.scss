@@ -79,6 +79,16 @@
   color: var(--text-muted);
 }
 
+// A field's plain (non-error) hint — the nickname's "(max 8 characters)"
+// (DS `ScreenGuestManager.jsx`), same treatment as `shared/rsvp-editor`'s
+// `.nickname-hint`/`.name-hint`.
+.field-hint {
+  margin: t.$space-2 0 0;
+  font-size: t.$text-micro;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 // Hand-built native select — no Select component exists in the design system
 // yet; styled to match app-input's hairline/radius/token language, same
 // treatment as `.select-native` in `config-manager.scss`/`seating-plan.scss`

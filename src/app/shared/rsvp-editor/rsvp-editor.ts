@@ -58,6 +58,9 @@ interface PersonCard {
   readonly roleKey: string;
   readonly firstName: string;
   readonly lastName: string;
+  /** Optional, max 8 characters, shown in quotes beside the name — never in
+   *  place of it. Read-only whenever `nameLocked` is true. */
+  readonly nickname: string;
   /** `null` for adults — children only. */
   readonly age: string | null;
   /**
@@ -191,6 +194,7 @@ export class RsvpEditor {
         roleKey: `rsvp.editor.perspective.${perspective}.primaryHint`,
         firstName: draft.partner1.firstName,
         lastName: draft.partner1.lastName,
+        nickname: draft.partner1.nickname ?? '',
         age: null,
         nameLocked: false,
         accountId: null,
@@ -204,6 +208,7 @@ export class RsvpEditor {
         roleKey: 'rsvp.editor.kind.partner',
         firstName: draft.partner2.firstName,
         lastName: draft.partner2.lastName,
+        nickname: draft.partner2.nickname ?? '',
         age: null,
         nameLocked: partnerHasAccount(draft.partner2),
         accountId: partnerHasAccount(draft.partner2) ? (draft.partner2.id ?? null) : null,
@@ -217,6 +222,7 @@ export class RsvpEditor {
         roleKey: 'rsvp.editor.kind.child',
         firstName: child.firstName,
         lastName: '',
+        nickname: child.nickname ?? '',
         age: child.age,
         nameLocked: false,
         accountId: null,
@@ -235,6 +241,15 @@ export class RsvpEditor {
   /** Key into the perspective copy table, e.g. `…perspective.owner.party`. */
   protected perspectiveKey(name: string): string {
     return `rsvp.editor.perspective.${this.perspective()}.${name}`;
+  }
+
+  /** The DS differentiates the nickname placeholder by row kind
+   *  (`RSVPEditor.jsx`: "e.g. Teo" for a child, "e.g. Lau" for an adult) —
+   *  this picks the matching key. */
+  protected nicknamePlaceholderKey(card: PersonCard): string {
+    return card.role === 'child'
+      ? 'rsvp.editor.person.nicknamePlaceholderChild'
+      : 'rsvp.editor.person.nicknamePlaceholder';
   }
 
   constructor() {
@@ -317,6 +332,21 @@ export class RsvpEditor {
     this.draftChange.emit({ ...draft, partner2: { ...draft.partner2, lastName: value } });
   }
 
+  /** Mirrors `setAdultFirstName`'s shape, plus the DS's 8-character clamp
+   *  (`RSVPEditor.jsx`'s `v.slice(0, 8)`) — the wire allows up to 30, but the
+   *  DS's narrower cap is deliberate (see Phase S intro). A locked partner2's
+   *  nickname is owned by their own account too, same as their name. */
+  protected setAdultNickname(key: PersonKey, value: string): void {
+    const nickname = value.slice(0, 8);
+    const draft = this.draft();
+    if (key === 'partner1') {
+      this.draftChange.emit({ ...draft, partner1: { ...draft.partner1, nickname } });
+      return;
+    }
+    if (key !== 'partner2' || !draft.partner2 || this.partner2NameLocked()) return;
+    this.draftChange.emit({ ...draft, partner2: { ...draft.partner2, nickname } });
+  }
+
   /** The template renders a locked partner's name as static text; this backs
    *  it up so a programmatic call cannot rename another guest's account
    *  (ADR W-0002 §Decision.3). */
@@ -351,6 +381,17 @@ export class RsvpEditor {
     this.draftChange.emit({
       ...draft,
       children: draft.children.map((c, i) => (i === index ? { ...c, age: digits } : c)),
+    });
+  }
+
+  /** Mirrors `setChildFirstName`'s shape, plus the same 8-character clamp as
+   *  `setAdultNickname`. */
+  protected setChildNickname(index: number, value: string): void {
+    const nickname = value.slice(0, 8);
+    const draft = this.draft();
+    this.draftChange.emit({
+      ...draft,
+      children: draft.children.map((c, i) => (i === index ? { ...c, nickname } : c)),
     });
   }
 
