@@ -44,101 +44,20 @@
         </div>
       </div>
 
-      <!-- Field list -->
+      <!-- Field list — `app-profile-fields` (T310/T312): `lockContact` keeps
+           email/phone read-only-looking (T303, carried forward); `showRelation`
+           is off (Phase U intro — this call site keeps its "link out to
+           People, read-only there" behavior verbatim, not silently upgraded
+           to self-service relation editing). -->
       <div class="details">
-        <div class="field">
-          <div class="field-label">{{ 'profileModal.firstName' | translate }}</div>
-          @if (editing()) {
-            <input
-              app-input
-              type="text"
-              [value]="firstName()"
-              (input)="setField('firstName', inputValue($event))"
-            />
-          } @else {
-            <div class="field-value" [class.empty]="!firstName()">{{ firstName() || '—' }}</div>
-          }
-        </div>
-
-        <div class="field">
-          <div class="field-label">{{ 'profileModal.lastName' | translate }}</div>
-          @if (editing()) {
-            <input
-              app-input
-              type="text"
-              [value]="lastName()"
-              (input)="setField('lastName', inputValue($event))"
-            />
-          } @else {
-            <div class="field-value" [class.empty]="!lastName()">{{ lastName() || '—' }}</div>
-          }
-        </div>
-
-        <div class="field">
-          <div class="field-label">{{ 'shared.nickname.label' | translate }}</div>
-          @if (editing()) {
-            <input
-              app-input
-              type="text"
-              maxlength="8"
-              [attr.placeholder]="'shared.nickname.placeholder' | translate"
-              [value]="nickname()"
-              (input)="setNickname(inputValue($event))"
-            />
-            <p class="field-hint">{{ 'shared.nickname.hint' | translate }}</p>
-          } @else {
-            <div class="field-value" [class.empty]="!nickname()">{{ nickname() || '—' }}</div>
-          }
-        </div>
-
-        <div class="field">
-          <div class="field-label">{{ 'profileModal.email' | translate }}</div>
-          @if (editing()) {
-            <input
-              app-input
-              type="email"
-              [value]="email()"
-              (input)="setField('email', inputValue($event))"
-            />
-          } @else {
-            <div class="field-value" [class.empty]="!email()">{{ email() || '—' }}</div>
-          }
-        </div>
-
-        <div class="field">
-          <div class="field-label">{{ 'profileModal.phone' | translate }}</div>
-          @if (editing()) {
-            <input
-              app-input
-              type="tel"
-              [value]="phoneNumber()"
-              (input)="setField('phoneNumber', inputValue($event))"
-            />
-          } @else {
-            <div class="field-value" [class.empty]="!phoneNumber()">
-              {{ phoneNumber() || '—' }}
-            </div>
-          }
-        </div>
-
-        <div class="field">
-          <div class="field-label">{{ 'profileModal.language' | translate }}</div>
-          @if (languages(); as langs) {
-            <div class="lang-options">
-              @for (entry of langs | keyvalue; track entry.key) {
-                <button
-                  type="button"
-                  class="lang-chip"
-                  [class.on]="preferredLang() === entry.key"
-                  [disabled]="!editing()"
-                  (click)="setLang(entry.key)"
-                >
-                  {{ entry.value }}
-                </button>
-              }
-            </div>
-          }
-        </div>
+        <app-profile-fields
+          [value]="fieldsValue()"
+          [readOnly]="!editing()"
+          [lockContact]="true"
+          [showRelation]="false"
+          [contactHint]="contactHint()"
+          (valueChange)="onFieldsChange($event)"
+        />
 
         <p class="visibility-text">
           {{ 'profileModal.visibility.prefix' | translate }}

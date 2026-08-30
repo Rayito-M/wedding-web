@@ -206,13 +206,23 @@ export class GuestManager {
   }
 
   /**
-   * A row click opens the guest profile overlay — it owns fetching the full
-   * RSVP behind the summary card it shows. The same entry point serves the
-   * manage-RSVP overlay's "Back" and its "Open their profile" jump from a
-   * linked partner's locked name (T269): one swap, one code path.
+   * A row click opens the guest profile overlay read-only-first — it owns
+   * fetching the full RSVP behind the summary card it shows. The manage-RSVP
+   * overlay's "Back" also uses this entry point (T269): both land on the
+   * read-only profile view.
    */
   openGuestProfile(userId: string): void {
     this.profileModal.open(userId);
+  }
+
+  /**
+   * The manage-RSVP overlay's "Open their profile" jump from a linked
+   * partner's locked name (T269) — the couple followed it specifically to
+   * fix something about that guest's own account, so it opens straight into
+   * edit mode instead of the read-only view (T308).
+   */
+  openGuestProfileEdit(userId: string): void {
+    this.profileModal.open(userId, { edit: true });
   }
 
   /**

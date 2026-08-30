@@ -28,7 +28,7 @@ export interface AdultDraft {
   readonly id?: string;
   firstName: string;
   lastName: string;
-  /** Optional, max 8 characters client-side (DS `RSVPEditor.jsx`), shown in
+  /** Optional, max 30 characters client-side (DS `RSVPEditor.jsx`), shown in
    *  quotes beside the name — never in place of it. Locked read-only in the
    *  same case the name itself is (a `partner2` with their own account). */
   nickname?: string;
@@ -51,7 +51,7 @@ export interface AdultDraft {
 export interface ChildDraft {
   firstName: string;
   age: string;
-  /** Optional, max 8 characters client-side — see `AdultDraft.nickname`. */
+  /** Optional, max 30 characters client-side — see `AdultDraft.nickname`. */
   nickname?: string;
   options: RsvpDtoAdultsPartner1Options;
 }

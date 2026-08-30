@@ -88,7 +88,19 @@ describe('ProfileModal', () => {
         shared: { myProfile: 'My profile', cancel: 'Cancel', nickname: { label: 'Nickname' } },
         roles: { guest: 'Guest', bride: 'Bride', groom: 'Groom' },
         nav: { people: 'Contacts' },
+        // `app-profile-fields`' own labels (T310) — reused here, not
+        // re-declared, same keys the shared component's template reads.
+        guest_manager: {
+          form: {
+            firstName: 'First name',
+            lastName: 'Last name',
+            email: 'Email',
+            phone: 'Phone',
+            preferredLang: 'Preferred language',
+          },
+        },
         profileModal: {
+          contactHint: 'Contact details are managed by the couple.',
           actions: {
             editProfile: 'Edit profile',
             saveChanges: 'Save changes',
@@ -137,7 +149,7 @@ describe('ProfileModal', () => {
     expect(closed).toBe(1);
   });
 
-  it('emits only the writable fields on save — never email or phone', async () => {
+  it('emits only the writable fields on save — never email, phone, or relation', async () => {
     await create();
     findButton('Edit profile')!.click();
     await fixture.whenStable();
@@ -154,6 +166,51 @@ describe('ProfileModal', () => {
     });
     expect(Object.keys(saved[0] as object)).not.toContain('email');
     expect(Object.keys(saved[0] as object)).not.toContain('phoneNumber');
+    expect(Object.keys(saved[0] as object)).not.toContain('relation');
+  });
+
+  it('T312: composes app-profile-fields with showRelation off — no relation controls render, even while editing', async () => {
+    await create();
+    findButton('Edit profile')!.click();
+    await fixture.whenStable();
+
+    expect(query('app-relation-fields')).toBeNull();
+    expect(query('.relation-block')).toBeNull();
+  });
+
+  it('T312: lockContact renders email/phone as static values, even while editing', async () => {
+    await create();
+    findButton('Edit profile')!.click();
+    await fixture.whenStable();
+
+    const values = Array.from(fixture.nativeElement.querySelectorAll('.value')).map((el) =>
+      (el as HTMLElement).textContent?.trim(),
+    );
+    expect(values).toContain('laura.ortega@example.com');
+    expect(values).toContain('+34 655 908 771');
+    expect(query('input[type="email"]')).toBeNull();
+    expect(query('input[type="tel"]')).toBeNull();
+  });
+
+  it('T312: nickname clamps at 30 characters, not the old 8-character cap', async () => {
+    await create();
+    findButton('Edit profile')!.click();
+    await fixture.whenStable();
+
+    const inputs = Array.from(
+      fixture.nativeElement.querySelectorAll('input[app-input]'),
+    ) as HTMLInputElement[];
+    const nicknameInput = inputs.find((el) => el.maxLength > 0)!;
+    expect(nicknameInput.maxLength).toBe(30);
+
+    nicknameInput.value = 'x'.repeat(40);
+    nicknameInput.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    findButton('Save changes')!.click();
+    await fixture.whenStable();
+
+    expect(saved[0]).toMatchObject({ nickname: 'x'.repeat(30) });
   });
 
   it('exits edit mode and shows "Saved." once the host reports a successful save (T305)', async () => {

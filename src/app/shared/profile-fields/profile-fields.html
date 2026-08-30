@@ -1,0 +1,120 @@
+<div class="field-row" [class.cols-1]="columns() === 1">
+  <div class="field">
+    <span class="info-label">{{ 'guest_manager.form.firstName' | translate }}</span>
+    @if (readOnly()) {
+      <div class="value" [class.muted]="!value().firstName">{{ value().firstName || '—' }}</div>
+    } @else {
+      <input
+        app-input
+        type="text"
+        [value]="value().firstName"
+        (input)="setField('firstName', inputValue($event))"
+      />
+    }
+  </div>
+
+  <div class="field">
+    <span class="info-label">{{ 'guest_manager.form.lastName' | translate }}</span>
+    @if (readOnly()) {
+      <div class="value" [class.muted]="!value().lastName">{{ value().lastName || '—' }}</div>
+    } @else {
+      <input
+        app-input
+        type="text"
+        [value]="value().lastName"
+        (input)="setField('lastName', inputValue($event))"
+      />
+    }
+  </div>
+</div>
+
+<div class="field">
+  <span class="info-label">{{ 'shared.nickname.label' | translate }}</span>
+  @if (readOnly()) {
+    <div class="value" [class.muted]="!value().nickname">{{ value().nickname || '—' }}</div>
+  } @else {
+    <input
+      app-input
+      type="text"
+      [attr.maxlength]="nicknameMaxLength"
+      [attr.placeholder]="'shared.nickname.placeholder' | translate"
+      [value]="value().nickname"
+      (input)="setNickname(inputValue($event))"
+    />
+    <p class="field-hint">{{ 'shared.nickname.hint' | translate }}</p>
+  }
+</div>
+
+<div class="field-row" [class.cols-1]="columns() === 1">
+  <div class="field">
+    <span class="info-label">{{ 'guest_manager.form.email' | translate }}</span>
+    @if (readOnly() || lockContact()) {
+      <div class="value" [class.muted]="!value().email">{{ value().email || '—' }}</div>
+      @if (lockContact() && !readOnly() && contactHint()) {
+        <p class="field-hint">{{ contactHint() }}</p>
+      }
+    } @else {
+      <input
+        app-input
+        type="email"
+        [value]="value().email"
+        (input)="setField('email', inputValue($event))"
+      />
+    }
+  </div>
+
+  <div class="field">
+    <span class="info-label">{{ 'guest_manager.form.phone' | translate }}</span>
+    @if (readOnly() || lockContact()) {
+      <div class="value" [class.muted]="!value().phoneNumber">
+        {{ value().phoneNumber || '—' }}
+      </div>
+      @if (lockContact() && !readOnly() && contactHint()) {
+        <p class="field-hint">{{ contactHint() }}</p>
+      }
+    } @else {
+      <input
+        app-input
+        type="tel"
+        [value]="value().phoneNumber"
+        (input)="setField('phoneNumber', inputValue($event))"
+      />
+    }
+  </div>
+</div>
+
+@if (showLanguage()) {
+  <div class="field">
+    <span class="info-label">{{ 'guest_manager.form.preferredLang' | translate }}</span>
+    <div class="seg-row">
+      @for (lang of preferredLangs; track lang) {
+        <button
+          type="button"
+          app-guest-seg
+          [selected]="value().preferredLang === lang"
+          [disabled]="readOnly()"
+          (click)="selectLang(lang)"
+        >
+          {{ langDescription[lang] }}
+        </button>
+      }
+    </div>
+  </div>
+}
+
+@if (showRelation()) {
+  <div class="relation-block">
+    @if (relationTitle()) {
+      <span class="info-label relation-title">{{ relationTitle() }}</span>
+    }
+    <app-relation-fields
+      [value]="relationValue()"
+      [columns]="columns()"
+      [readOnly]="readOnly()"
+      [sideLabel]="'guest_manager.form.side' | translate"
+      [groupLabel]="'guest_manager.form.group' | translate"
+      [hint]="relationHint()"
+      (valueChange)="onRelationChange($event)"
+    />
+  </div>
+}

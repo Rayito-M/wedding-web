@@ -17,131 +17,18 @@
 
   <!-- New guest — DS ScreenGuestManager "New guest" draft -->
   <form [formGroup]="createForm" (ngSubmit)="createGuest()">
-    <div class="field-row">
-      <div class="field">
-        <span class="info-label">{{ 'guest_manager.form.firstName' | translate }}</span>
-        <input app-input type="text" formControlName="firstName" />
-      </div>
-
-      <div class="field">
-        <span class="info-label">{{ 'guest_manager.form.lastName' | translate }}</span>
-        <input app-input type="text" formControlName="lastName" />
-      </div>
-    </div>
-
-    <!-- Nickname — its own row beside first/last name, DS `Field label="Nickname"`
-         directly under the name pair (not squeezed into the same 2-col grid). -->
-    <div class="field">
-      <span class="info-label">{{ 'shared.nickname.label' | translate }}</span>
-      <input
-        app-input
-        type="text"
-        formControlName="nickname"
-        maxlength="8"
-        [placeholder]="'shared.nickname.placeholder' | translate"
-        (input)="clampNickname()"
-      />
-      <p class="field-hint">{{ 'shared.nickname.hint' | translate }}</p>
-    </div>
-
-    <div class="field-row">
-      <div class="field">
-        <span class="info-label">{{ 'guest_manager.form.email' | translate }}</span>
-        <input app-input type="email" formControlName="email" placeholder="name@mail.com" />
-        @if (createForm.controls.email.touched && createForm.controls.email.invalid) {
-          <span class="field-error">{{ 'guest_manager.form.emailHint' | translate }}</span>
-        }
-      </div>
-
-      <div class="field">
-        <span class="info-label">{{ 'guest_manager.form.phone' | translate }}</span>
-        <input app-input type="tel" formControlName="phoneNumber" placeholder="+34 600 00 00 00" />
-        @if (createForm.controls.phoneNumber.touched && createForm.controls.phoneNumber.invalid) {
-          <span class="field-error">{{ 'guest_manager.form.phoneHint' | translate }}</span>
-        }
-      </div>
-    </div>
-
-    <div class="field-row">
-      <div class="field">
-        <span class="info-label">{{ 'guest_manager.form.side' | translate }}</span>
-        <div class="seg-row">
-          @for (side of relationSides; track side) {
-            <button
-              type="button"
-              app-guest-seg
-              [selected]="createForm.controls.side.value === side"
-              (click)="selectSide(side)"
-            >
-              {{ 'guest_manager.relation.side.' + side | translate }}
-            </button>
-          }
-        </div>
-      </div>
-
-      <div class="field">
-        <span class="info-label">{{ 'guest_manager.form.preferredLang' | translate }}</span>
-        <div class="seg-row">
-          @for (lang of preferredLangs; track lang) {
-            <button
-              type="button"
-              app-guest-seg
-              [selected]="createForm.controls.preferredLang.value === lang"
-              (click)="selectPreferredLang(lang)"
-            >
-              {{ langDescription[lang] }}
-            </button>
-          }
-        </div>
-      </div>
-    </div>
-
-    <div class="field-row">
-      <div class="field">
-        <span class="info-label">{{ 'guest_manager.form.group' | translate }}</span>
-        <div class="seg-row">
-          @for (kind of relationKinds; track kind) {
-            <button
-              type="button"
-              app-guest-seg
-              [selected]="createForm.controls.kind.value === kind"
-              (click)="selectKind(kind)"
-            >
-              {{ 'guest_manager.relation.kind.' + kind | translate }}
-            </button>
-          }
-        </div>
-      </div>
-
-      <div class="field">
-        <span class="info-label">
-          {{ 'guest_manager.form.link' | translate }} ·
-          {{ 'guest_manager.relation.kind.' + createForm.controls.kind.value | translate }}
-        </span>
-        @if (createForm.controls.kind.value === 'family') {
-          <select class="select-native" formControlName="link">
-            <option value="" disabled>
-              {{ 'guest_manager.form.linkSelectPlaceholder' | translate }}
-            </option>
-            @for (relation of familyRelations; track relation) {
-              <option [value]="relation">
-                {{ 'guest_manager.relation.link.' + relation | translate }}
-              </option>
-            }
-          </select>
-        } @else {
-          <input
-            app-input
-            type="text"
-            formControlName="link"
-            [placeholder]="linkPlaceholderKey() | translate"
-          />
-        }
-        @if (createForm.controls.link.touched && createForm.controls.link.invalid) {
-          <span class="field-error">{{ 'guest_manager.form.linkHint' | translate }}</span>
-        }
-      </div>
-    </div>
+    <!-- Identity/contact/language/relation fields (T310's `app-profile-fields`,
+         composing `app-relation-fields`, T309) — `lockContact` off (this modal
+         creates the guest's account, so email/phone stay editable, unlike the
+         other two call sites), `showRelation` on. `createForm` stays the
+         validated source of truth (`onProfileFieldsChange` mirrors every
+         emitted value onto its controls); the partner-linking section below
+         is not part of `ProfileFields` in the DS either, so it stays outside. -->
+    <app-profile-fields
+      [value]="profileFieldsValue()"
+      [showRelation]="true"
+      (valueChange)="onProfileFieldsChange($event)"
+    />
 
     <!-- Partner — DS ScreenGuestManager `partnerDraft` section: a switch over a
          single choice, since a partner must already be on the guest list. -->

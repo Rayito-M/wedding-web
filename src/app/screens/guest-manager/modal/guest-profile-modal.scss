@@ -1,13 +1,13 @@
 @use '../../../../styles/tokens' as t;
 @use 'status-cell' as *;
-@use 'shared-modal-form' as *;
 
 // Dialog chrome (overlay, card, header, footer, buttons) is owned by the
 // shared `app-modal` (size="xl") + `app-btn` components — this file only
-// styles the content projected into the modal body. Form controls reuse the
-// shared `app-input` components and this folder's local `app-guest-seg` (see
-// `guest-seg/`) for their own chrome (border, radius, focus state); only
-// layout lives here.
+// styles the content projected into the modal body. The edit form's fields
+// are now the shared `app-profile-fields`/`app-relation-fields` (T311),
+// which own their own layout/chrome — this file no longer needs
+// `shared-modal-form`'s `.field`/`.field-row`/`.seg-row`/`.select-native`/
+// `.field-hint`/`.field-error` partial.
 
 // Own scroll container for the profile/edit content, independent of the
 // shared `app-modal`'s body sizing — caps at a fraction of the viewport and
@@ -40,13 +40,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: t.$space-4 t.$space-3;
-}
-
-.readonly-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: t.$space-3;
-  margin-top: t.$space-2;
 }
 
 .info-item {
@@ -188,6 +181,3 @@
     flex-direction: column-reverse;
   }
 }
-
-// Edit-profile form's `.field`/`.seg-row`/`.field-row` come from
-// `shared-modal-form` (shared with `guest-create-modal`).

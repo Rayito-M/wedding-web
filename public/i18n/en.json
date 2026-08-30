@@ -1026,6 +1026,7 @@
     "email": "Email",
     "phone": "Phone number",
     "language": "Preferred language",
+    "contactHint": "Contact details are managed by the couple — ask them to change these.",
     "visibility": {
       "prefix": "Your name, role and relation always appear in",
       "suffix": ". Email and phone are shared with the couple only."

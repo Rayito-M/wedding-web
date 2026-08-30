@@ -1,0 +1,77 @@
+@use '../../../styles/tokens' as t;
+
+// Self-contained copy of `relation-fields.scss`'s `.field`/`.field-row`/
+// `.info-label`/`.value`/`.field-hint`/`.seg-row` patterns — this component
+// now owns the identity/contact/language block the three call sites used to
+// hand-roll (T310), and Angular's per-component style encapsulation means it
+// needs its own copy rather than reaching into `shared/relation-fields/` or
+// `screens/`. Same accepted duplication `relation-fields.scss` itself already
+// flagged (see that file's own comment).
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-3;
+  margin-bottom: t.$space-5;
+
+  &.cols-1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  margin-bottom: t.$space-5;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.info-label {
+  display: block;
+  font-size: t.$text-label;
+  color: var(--text-muted);
+  margin-bottom: t.$space-2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.value {
+  font-size: t.$text-body;
+  color: var(--text-body-color);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+
+  &.muted {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+}
+
+.field-hint {
+  margin: t.$space-2 0 0;
+  font-size: t.$text-micro;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+// Segmented-pill row — same treatment as `relation-fields.scss`'s
+// `.seg-row`, reused here for the preferred-language pills instead of a
+// bespoke third pill class (see the component's language-picker doc comment).
+.seg-row {
+  display: flex;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--surface-page);
+}
+
+// ── Relation block (composes `app-relation-fields`) ──
+.relation-block {
+  border-top: 1px solid var(--border-hairline);
+  padding-top: t.$space-4;
+}
+
+.relation-title {
+  margin-bottom: t.$space-3;
+}

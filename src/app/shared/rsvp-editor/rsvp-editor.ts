@@ -58,7 +58,7 @@ interface PersonCard {
   readonly roleKey: string;
   readonly firstName: string;
   readonly lastName: string;
-  /** Optional, max 8 characters, shown in quotes beside the name — never in
+  /** Optional, max 30 characters, shown in quotes beside the name — never in
    *  place of it. Read-only whenever `nameLocked` is true. */
   readonly nickname: string;
   /** `null` for adults — children only. */
@@ -332,12 +332,12 @@ export class RsvpEditor {
     this.draftChange.emit({ ...draft, partner2: { ...draft.partner2, lastName: value } });
   }
 
-  /** Mirrors `setAdultFirstName`'s shape, plus the DS's 8-character clamp
-   *  (`RSVPEditor.jsx`'s `v.slice(0, 8)`) — the wire allows up to 30, but the
-   *  DS's narrower cap is deliberate (see Phase S intro). A locked partner2's
-   *  nickname is owned by their own account too, same as their name. */
+  /** Mirrors `setAdultFirstName`'s shape, plus the DS's 30-character clamp
+   *  (`RSVPEditor.jsx`'s `v.slice(0, 30)`), matching the wire's `maxLength: 30`.
+   *  A locked partner2's nickname is owned by their own account too, same as
+   *  their name. */
   protected setAdultNickname(key: PersonKey, value: string): void {
-    const nickname = value.slice(0, 8);
+    const nickname = value.slice(0, 30);
     const draft = this.draft();
     if (key === 'partner1') {
       this.draftChange.emit({ ...draft, partner1: { ...draft.partner1, nickname } });
@@ -384,10 +384,10 @@ export class RsvpEditor {
     });
   }
 
-  /** Mirrors `setChildFirstName`'s shape, plus the same 8-character clamp as
+  /** Mirrors `setChildFirstName`'s shape, plus the same 30-character clamp as
    *  `setAdultNickname`. */
   protected setChildNickname(index: number, value: string): void {
-    const nickname = value.slice(0, 8);
+    const nickname = value.slice(0, 30);
     const draft = this.draft();
     this.draftChange.emit({
       ...draft,

@@ -20,23 +20,25 @@ import {
   GuestListResponseDtoItemsInnerRelationOneOf,
   WeddingGuestsService,
 } from '@app/core';
-import { langDescription } from '@app/model';
 import { Modal } from '@app/shared/modal/modal';
 import { Btn } from '@app/shared/button/button';
 import { TextInput } from '@app/shared/input/input';
 import { DecorFish } from '@app/shared/decor/fish';
 import { Toggle } from '@app/shared/toggle/toggle';
-import { GuestSeg } from './guest-seg/guest-seg';
+import { ProfileFields, type ProfileFieldsValue } from '@app/shared/profile-fields/profile-fields';
+import type { RelationFieldsValue, RelationKind } from '@app/shared/relation-fields/relation-fields';
 
-type RelationSide = 'bride' | 'groom' | 'both';
-type RelationKind = 'family' | 'friends' | 'colleagues' | 'other';
+/** Generated enum, never a hand-copied `'bride' | 'groom' | 'both'` union
+ *  (phase-U intro, hard rule 15) — `guest-profile-modal.ts`'s identical alias
+ *  is dropped the same way in T311. */
+const SIDE_ENUM = GuestListResponseDtoItemsInnerRelationOneOf.SideEnum;
 
 /** A guest the new guest can be linked to, as the DS candidate list shows them
  *  (name + "side · group" meta). */
 interface PartnerCandidate {
   id: string;
   name: string;
-  side: RelationSide;
+  side: GuestListResponseDtoItemsInnerRelationOneOf.SideEnum;
   kind: RelationKind;
 }
 
@@ -46,6 +48,20 @@ const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 /** The family variant of `CreateGuestDtoRelation`, whose `link` is the closed
  *  relationship enum (the other variants take free text). */
 type FamilyRelation = GuestListResponseDtoItemsInnerRelationOneOf;
+
+/** Blank `app-profile-fields` draft — `open()`'s reset target, mirroring
+ *  `createForm.reset()`'s own blank defaults. */
+function blankProfileFieldsValue(): ProfileFieldsValue {
+  return {
+    firstName: '',
+    lastName: '',
+    nickname: '',
+    email: '',
+    phoneNumber: '',
+    preferredLang: CreateGuestDto.PreferredLangEnum.EN,
+    relation: { side: SIDE_ENUM.BRIDE, kind: 'family', link: '' },
+  };
+}
 
 /**
  * Standalone "New guest" overlay (DS `ScreenGuestManager`/`ScreenGuestManagerMobile`
@@ -74,7 +90,16 @@ type FamilyRelation = GuestListResponseDtoItemsInnerRelationOneOf;
   selector: 'app-guest-create-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [TranslatePipe, Modal, Btn, ReactiveFormsModule, TextInput, GuestSeg, Toggle, DecorFish],
+  imports: [
+    TranslatePipe,
+    Modal,
+    Btn,
+    ReactiveFormsModule,
+    TextInput,
+    Toggle,
+    DecorFish,
+    ProfileFields,
+  ],
   templateUrl: './guest-create-modal.html',
   styleUrl: './guest-create-modal.scss',
 })
@@ -86,30 +111,13 @@ export class GuestCreateModal {
    *  guest is on the list either way. */
   readonly guestCreated = output<string>();
 
-  protected readonly relationSides: RelationSide[] = ['bride', 'groom', 'both'];
-  protected readonly relationKinds: RelationKind[] = ['family', 'friends', 'colleagues', 'other'];
-
-  /**
-   * DS `LANG_OPTS` order (English, Español, Français) — 'en' first since it is
-   * this app's actual default (`provideTranslateService({ lang: 'en' })` in
-   * `app.config.ts`, also `TranslateLanguageService`'s browser-detect fallback
-   * and `<html lang="en">`), not the 'es' the DS mock happens to default to.
-   */
-  protected readonly preferredLangs: CreateGuestDto.PreferredLangEnum[] = [
-    CreateGuestDto.PreferredLangEnum.EN,
-    CreateGuestDto.PreferredLangEnum.ES,
-    CreateGuestDto.PreferredLangEnum.FR,
-  ];
-
-  /** Native language names (DS `LANG_OPTS`) — not translated: a language's own
-   *  name doesn't change with the admin's UI language. */
-  protected readonly langDescription = langDescription;
-
-  /** Full API enum (the family relation's `LinkEnum`) — richer than the DS
-   *  mock's shortened `FAMILY_RELATIONS` list. */
-  protected readonly familyRelations: FamilyRelation['link'][] = Object.values(
-    GuestListResponseDtoItemsInnerRelationOneOf.LinkEnum,
-  );
+  /** Drives `<app-profile-fields>`'s `[value]` — kept in sync with `createForm`
+   *  at this component's two write sites (`open()`'s reset,
+   *  `onProfileFieldsChange()`'s patch) rather than derived from it, so the
+   *  form's `Validators`/`invalid`/`markAllAsTouched()` gating (`createGuest()`)
+   *  stays exactly as it was before this migration — this signal only feeds
+   *  the child component's rendering. */
+  protected readonly profileFieldsValue = signal<ProfileFieldsValue>(blankProfileFieldsValue());
 
   /** In-flight guard for the create chain — keeps the footer button disabled. */
   protected readonly saving = signal(false);
@@ -150,12 +158,13 @@ export class GuestCreateModal {
   protected readonly createForm = this.fb.group({
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
-    /** Optional, max 8 characters (T298's DS-narrowed cap) — clamped in
-     *  `setNickname`, mirroring `rsvp-editor`'s `.slice(0, 8)` (T299). */
+    /** Optional, max 30 characters (T307's DS-widened cap) — clamped by
+     *  `<app-profile-fields>` (T310) before it ever reaches
+     *  `onProfileFieldsChange()`. */
     nickname: [''],
     phoneNumber: ['', [Validators.required, Validators.pattern(PHONE_PATTERN)]],
     email: ['', Validators.email],
-    side: this.fb.control<RelationSide>('bride'),
+    side: this.fb.control<GuestListResponseDtoItemsInnerRelationOneOf.SideEnum>(SIDE_ENUM.BRIDE),
     kind: this.fb.control<RelationKind>('family'),
     preferredLang: this.fb.control<CreateGuestDto.PreferredLangEnum>(
       CreateGuestDto.PreferredLangEnum.EN,
@@ -226,6 +235,7 @@ export class GuestCreateModal {
     // `reset()` restores values, not the enabled/disabled state the previous
     // partner switch left behind.
     this.syncPartnerControls();
+    this.profileFieldsValue.set(blankProfileFieldsValue());
     this.createFailed.set(false);
     this.partnerLinkFailed.set(false);
     this.createdGuestId.set(null);
@@ -238,27 +248,33 @@ export class GuestCreateModal {
     this.closeModal.emit();
   }
 
-  protected selectSide(side: RelationSide): void {
-    this.createForm.controls.side.setValue(side);
-  }
+  /** `<app-profile-fields>`'s `(valueChange)` — mirrors the emitted value
+   *  onto the signal that feeds it back (so the child stays controlled) and
+   *  onto `createForm`'s matching controls, so `createGuest()`'s existing
+   *  `Validators`/`invalid`/`markAllAsTouched()` gating and `guestDraft()`'s
+   *  `getRawValue()` read keep working unchanged. `relation` is always set —
+   *  `showRelation` is on for this call site (see the class doc) — but the
+   *  fallback keeps this assignment total rather than partial. */
+  protected onProfileFieldsChange(value: ProfileFieldsValue): void {
+    this.profileFieldsValue.set(value);
 
-  protected selectKind(kind: RelationKind): void {
-    this.createForm.controls.kind.setValue(kind);
-    // The previous `link` (a family-relation enum member, or free text for a
-    // different kind) no longer matches the new kind's field shape — DS's
-    // `setGroup` clears it the same way.
-    this.createForm.controls.link.setValue('');
-  }
+    const relation: RelationFieldsValue = value.relation ?? {
+      side: SIDE_ENUM.BRIDE,
+      kind: 'family',
+      link: '',
+    };
 
-  protected selectPreferredLang(lang: CreateGuestDto.PreferredLangEnum): void {
-    this.createForm.controls.preferredLang.setValue(lang);
-  }
-
-  /** Belt-and-suspenders alongside the input's `maxlength="8"` — mirrors
-   *  `rsvp-editor`'s `.slice(0, 8)` clamp (T299). */
-  protected clampNickname(): void {
-    const control = this.createForm.controls.nickname;
-    if (control.value.length > 8) control.setValue(control.value.slice(0, 8));
+    this.createForm.patchValue({
+      firstName: value.firstName,
+      lastName: value.lastName,
+      nickname: value.nickname,
+      email: value.email,
+      phoneNumber: value.phoneNumber,
+      preferredLang: value.preferredLang,
+      side: relation.side,
+      kind: relation.kind,
+      link: relation.link,
+    });
   }
 
   /** The DS partner switch. Switching off drops the picker's state, so turning
@@ -304,13 +320,6 @@ export class GuestCreateModal {
       controls.existingId.disable(opts);
       controls.search.disable(opts);
     }
-  }
-
-  /** i18n key for the free-text relation-link placeholder — copy adapts per
-   *  non-family `kind` (DS: "Worked together at Novatek" for colleagues,
-   *  "Childhood friend from Girona" for friends). */
-  protected linkPlaceholderKey(): string {
-    return `guest_manager.form.linkPlaceholder.${this.createForm.controls.kind.value}`;
   }
 
   /** Modal title — the guest's name as it is typed (DS shows the name as the

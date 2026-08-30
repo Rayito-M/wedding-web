@@ -153,10 +153,10 @@ export class PrivateLayout {
    * `app-profile-modal`'s `(save)` — writes through the real profile-update
    * endpoint (`EntityCollectionService.update()` → `UserProfileDataService`
    * → `PATCH /v1/profile/{id}`), mirroring `guest-profile-modal.ts`'s
-   * `saveProfile()` call shape. `id`/`role` are carried forward unchanged
-   * from the resolved profile; `preferredLang` is forwarded too — it is a
-   * real writable field on `UpdateUserProfileDto` and the modal's `save`
-   * payload already always includes it (T303), so leaving it out here would
+   * `saveProfile()` call shape. `id` is carried forward unchanged from the
+   * resolved profile; `preferredLang` is forwarded too — it is a real
+   * writable field on `UpdateUserProfileDto` and the modal's `save` payload
+   * already always includes it (T303), so leaving it out here would
    * silently discard a language change the guest just made in the form.
    * `email`/`phoneNumber` are never part of this payload (T303).
    */
@@ -173,7 +173,6 @@ export class PrivateLayout {
     this.userProfileCollection
       .update({
         id: profile.id,
-        role: profile.role,
         firstName: changes.firstName,
         lastName: changes.lastName,
         nickname: changes.nickname,

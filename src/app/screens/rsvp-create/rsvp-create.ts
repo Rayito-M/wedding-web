@@ -30,7 +30,7 @@ import { Toggle } from '@app/shared/toggle/toggle';
 type PartnerDraft = Omit<RsvpDtoAdultsPartner2, 'options' | 'id'> & {
   readonly firstName: string;
   readonly lastName: string;
-  /** Optional, max 8 characters client-side (DS `ScreenRSVPCreate.jsx`),
+  /** Optional, max 30 characters client-side (DS `ScreenRSVPCreate.jsx`),
    *  shown in quotes beside the name — never in place of it. Read-only for a
    *  linked partner (`hasLinkedPartner()`), same as their name. */
   readonly nickname?: string;
@@ -41,7 +41,7 @@ type ChildDraft = Omit<RsvpDtoChildrenInner, 'age'> & {
   /** Kept as free text while editing (mirrors the DS reference); parsed to a
    *  number only when building the API payload. */
   readonly age: string;
-  /** Optional, max 8 characters client-side — see `PartnerDraft.nickname`. */
+  /** Optional, max 30 characters client-side — see `PartnerDraft.nickname`. */
   readonly nickname?: string;
 };
 
@@ -259,12 +259,12 @@ export class RsvpCreate {
     this.draft.update((d) => ({ ...d, partner: { ...d.partner, lastName: value } }));
   }
 
-  /** Mirrors `setPartnerFirstName`'s shape, plus the DS's 8-character clamp
-   *  (`ScreenRSVPCreate.jsx`'s `v.slice(0, 8)`) — the wire allows up to 30,
-   *  but the DS's narrower cap is deliberate (see Phase S intro). */
+  /** Mirrors `setPartnerFirstName`'s shape, plus the DS's 30-character clamp
+   *  (`ScreenRSVPCreate.jsx`'s `v.slice(0, 30)`), matching the wire's
+   *  `maxLength: 30`. */
   protected setPartnerNickname(value: string): void {
     if (this.hasLinkedPartner()) return;
-    const nickname = value.slice(0, 8);
+    const nickname = value.slice(0, 30);
     this.draft.update((d) => ({ ...d, partner: { ...d.partner, nickname } }));
   }
 
@@ -283,10 +283,10 @@ export class RsvpCreate {
     }));
   }
 
-  /** Mirrors `setChildFirstName`'s shape, plus the same 8-character clamp as
+  /** Mirrors `setChildFirstName`'s shape, plus the same 30-character clamp as
    *  `setPartnerNickname`. */
   protected setChildNickname(index: number, value: string): void {
-    const nickname = value.slice(0, 8);
+    const nickname = value.slice(0, 30);
     this.draft.update((d) => ({
       ...d,
       children: d.children.map((c, i) => (i === index ? { ...c, nickname } : c)),

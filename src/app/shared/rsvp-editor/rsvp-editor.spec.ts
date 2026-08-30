@@ -27,7 +27,7 @@ const TRANSLATIONS = {
   shared: {
     remove: 'Remove',
     partner: { nameManaged: 'Name managed by their own guest account.' },
-    nickname: { hint: 'Max 8 characters' },
+    nickname: { hint: 'Max 30 characters' },
   },
   rsvp: {
     editor: {
@@ -235,15 +235,15 @@ describe('RsvpEditor', () => {
   });
 
   describe('nickname (T299)', () => {
-    it('offers an editable, 8-character-clamped nickname field for the primary guest', async () => {
+    it('offers an editable, 30-character-clamped nickname field for the primary guest', async () => {
       await create(draftWith());
 
-      const nicknameInput = query<HTMLInputElement>('.card-body input[maxlength="8"]');
+      const nicknameInput = query<HTMLInputElement>('.card-body input[maxlength="30"]');
       expect(nicknameInput).not.toBeNull();
       expect(nicknameInput!.placeholder).toBe('e.g. Ju');
 
-      await type(nicknameInput!, 'AVeryLongNickname');
-      expect(emitted[emitted.length - 1].partner1.nickname).toBe('AVeryLon');
+      await type(nicknameInput!, 'AVeryLongNicknameThatExceedsThirtyCharacters');
+      expect(emitted[emitted.length - 1].partner1.nickname).toBe('AVeryLongNicknameThatExceedsTh');
     });
 
     it('offers an editable nickname field for a child, with the child-specific placeholder', async () => {
@@ -251,12 +251,12 @@ describe('RsvpEditor', () => {
       queryAll<HTMLButtonElement>('.card-head')[1].click();
       await fixture.whenStable();
 
-      const nicknameInput = query<HTMLInputElement>('.card-body input[maxlength="8"]');
+      const nicknameInput = query<HTMLInputElement>('.card-body input[maxlength="30"]');
       expect(nicknameInput).not.toBeNull();
       expect(nicknameInput!.placeholder).toBe('e.g. Teo');
 
-      await type(nicknameInput!, 'AVeryLongNickname');
-      expect(emitted[emitted.length - 1].children[0].nickname).toBe('AVeryLon');
+      await type(nicknameInput!, 'AVeryLongNicknameThatExceedsThirtyCharacters');
+      expect(emitted[emitted.length - 1].children[0].nickname).toBe('AVeryLongNicknameThatExceedsTh');
     });
 
     it("renders a locked partner2's nickname read-only, in quotes, beside the name in the collapsed header — no input at all", async () => {
@@ -286,7 +286,7 @@ describe('RsvpEditor', () => {
       // name (DS `RSVPEditor.jsx` L164) — and no editable input at all.
       expect(query('.locked-nickname-value')?.textContent?.trim()).toBe('“Gigi”');
       expect(queryAll('.card-body input[app-input]').length).toBe(1); // the allergy entry only
-      expect(query('.card-body input[maxlength="8"]')).toBeNull();
+      expect(query('.card-body input[maxlength="30"]')).toBeNull();
     });
 
     it('renders no nickname elements when the locked partner has none', async () => {

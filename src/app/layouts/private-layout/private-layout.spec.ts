@@ -208,12 +208,10 @@ describe('PrivateLayout — wires "Save changes" to the real profile-update endp
     expect(call.id).toBe('u1');
     expect(call.updateUserProfileDto).toEqual({
       id: 'u1',
-      role: 'guest',
       firstName: 'Laura',
       lastName: 'Ortega',
       nickname: 'Lu',
       preferredLang: 'en',
-      guestInfo: undefined,
     });
   });
 

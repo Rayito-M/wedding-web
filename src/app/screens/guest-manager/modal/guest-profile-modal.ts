@@ -1,13 +1,5 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  signal,
-  computed,
-  inject,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, computed, inject, output } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
@@ -16,6 +8,7 @@ import {
   RsvpDto,
   RsvpDtoAdultsPartner1Options,
   UserProfileDto,
+  UpdateUserProfileDto,
   CreateGuestDtoRelation,
   GuestListResponseDtoItemsInnerRelationOneOf,
   TranslateLanguageService,
@@ -25,17 +18,29 @@ import {
 } from '@app/core';
 import { Modal } from '@app/shared/modal/modal';
 import { Btn } from '@app/shared/button/button';
-import { TextInput } from '@app/shared/input/input';
 import { DecorFish } from '@app/shared/decor/fish';
-import { GuestSeg } from './guest-seg/guest-seg';
-
-type RelationSide = 'bride' | 'groom' | 'both';
-type RelationKind = 'family' | 'friends' | 'colleagues' | 'other';
+import { ProfileFields, ProfileFieldsValue } from '@app/shared/profile-fields/profile-fields';
+import { RelationKind } from '@app/shared/relation-fields/relation-fields';
 
 /** The family variant of `CreateGuestDtoRelation`, whose `link` is the closed
  *  relationship enum (the other variants take free text) — mirrors
  *  `guest-create-modal`'s `FamilyRelation`. */
 type FamilyRelation = GuestListResponseDtoItemsInnerRelationOneOf;
+
+const SIDE_ENUM = GuestListResponseDtoItemsInnerRelationOneOf.SideEnum;
+
+/** Seed for `editDraft` before `startEdit()` runs — `preferredLang` is never
+ *  shown or edited here (`showLanguage` is off, see the class doc), so its
+ *  value is inert; it only exists to satisfy `ProfileFieldsValue`'s shape. */
+const EMPTY_DRAFT: ProfileFieldsValue = {
+  firstName: '',
+  lastName: '',
+  nickname: '',
+  email: '',
+  phoneNumber: '',
+  preferredLang: UpdateUserProfileDto.PreferredLangEnum.ES,
+  relation: { side: SIDE_ENUM.BRIDE, kind: 'family', link: '' },
+};
 
 /**
  * Guest profile overlay — what a row click in the guest-manager table opens
@@ -53,7 +58,7 @@ type FamilyRelation = GuestListResponseDtoItemsInnerRelationOneOf;
   selector: 'app-guest-profile-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [TranslatePipe, Modal, Btn, ReactiveFormsModule, TextInput, GuestSeg, DecorFish],
+  imports: [TranslatePipe, Modal, Btn, DecorFish, ProfileFields],
   templateUrl: './guest-profile-modal.html',
   styleUrl: './guest-profile-modal.scss',
 })
@@ -69,21 +74,11 @@ export class GuestProfileModal {
    */
   protected readonly partnerHasAccount = partnerHasAccount;
 
-  protected readonly relationSides: RelationSide[] = ['bride', 'groom', 'both'];
-  protected readonly relationKinds: RelationKind[] = ['family', 'friends', 'colleagues', 'other'];
-
-  /** Full API enum (the family relation's `LinkEnum`) — same list
-   *  `guest-create-modal` offers. */
-  protected readonly familyRelations: FamilyRelation['link'][] = Object.values(
-    GuestListResponseDtoItemsInnerRelationOneOf.LinkEnum,
-  );
-
   /** `'profile'` — read-only guest info + RSVP summary; `'edit'` — profile-edit form. */
   protected readonly viewMode = signal<'profile' | 'edit'>('profile');
 
   /** Set by `open(userId)` — the RSVP's `id` equals its primary guest's user id. */
   private readonly userId = signal<string | null>(null);
-  private readonly fb = inject(NonNullableFormBuilder);
   private readonly translate = inject(TranslateService);
 
   private readonly translateLanguageService = inject(TranslateLanguageService);
@@ -130,24 +125,38 @@ export class GuestProfileModal {
     return this.userProfiles().find((p) => p.id === userId);
   });
 
-  protected readonly editForm = this.fb.group({
-    firstName: ['', Validators.required],
-    lastName: ['', Validators.required],
-    /** Optional, max 8 characters (T298's DS-narrowed cap) — always editable
-     *  here, unlike `rsvp-editor`'s locked-partner case: this admin form has
-     *  no lock concept (DS `ScreenGuestManager.jsx`'s `profDraft` fields are
-     *  all plain unlocked `Input`s). Clamped in `clampNickname`, mirroring
-     *  `rsvp-editor`'s `.slice(0, 8)` (T299). */
-    nickname: [''],
-    side: this.fb.control<RelationSide>('bride'),
-    kind: this.fb.control<RelationKind>('family'),
-    /**
-     * A select value (a family `LinkEnum` member) when `kind === 'family'`,
-     * free text otherwise — `saveProfile()` shapes whichever
-     * `CreateGuestDtoRelation` variant matches, same as `guest-create-modal`.
-     */
-    link: ['', Validators.required],
-  });
+  /**
+   * Edit-form state (implementer's call, T311's acceptance criteria):
+   * `app-profile-fields` speaks plain input/output "patch" semantics, not
+   * `FormGroup`/`formControlName` — bridging it back onto a `FormGroup` would
+   * mean keeping two sources of truth in sync (`FormGroup` ⇄ component
+   * value/valueChange) for no benefit, so this host now owns a plain draft
+   * signal instead, matching `rsvp-editor`'s existing draft-signal precedent.
+   * Validation (`firstName`/`lastName`/`relation.link` required) moves into
+   * `saveProfile()`; `submitAttempted` stands in for `markAllAsTouched()`,
+   * gating `linkErrorHint` below.
+   */
+  protected readonly editDraft = signal<ProfileFieldsValue>(EMPTY_DRAFT);
+
+  /** Set once a save has been attempted while the form was invalid — mirrors
+   *  `FormGroup.markAllAsTouched()`'s role, but as this host's own state
+   *  rather than a form-control flag (see `editDraft`'s doc). */
+  protected readonly submitAttempted = signal(false);
+
+  /**
+   * `app-relation-fields` (composed inside `app-profile-fields`) has no
+   * built-in "touched && invalid" error slot of its own — only the plain
+   * `hint` it's always handed (phase-U's T309/T310, already built and out of
+   * this task's scope). Reusing that same slot for the required-link message,
+   * shown only once a save has actually been attempted with no link, is the
+   * closest equivalent this component boundary allows to the old
+   * `editForm.controls.link.touched && invalid` error line.
+   */
+  protected readonly linkErrorHint = computed<string | undefined>(() =>
+    this.submitAttempted() && !this.editDraft().relation?.link.trim()
+      ? this.translate.instant('guest_manager.form.linkHint')
+      : undefined,
+  );
 
   protected readonly participantsCount = computed(() => {
     const rsvp = this.rsvp();
@@ -223,14 +232,23 @@ export class GuestProfileModal {
    * Open the overlay for this guest and fetch their RSVP fresh — but only if
    * the profile says there is one: `GET /v1/rsvp/{id}` answers 204 for a guest
    * who never replied, which @ngrx/data can only report as a failed query.
+   *
+   * `opts.edit` skips the read-only view and seeds the edit form straight
+   * away, reusing `startEdit()`'s seeding rather than duplicating it — the
+   * RSVP editor's "open their profile" jump (T308) uses this; a normal
+   * guest-table row click (`guest-manager.ts`'s `openGuestProfile`) does not.
    */
-  open(userId: string): void {
+  open(userId: string, opts?: { edit?: boolean }): void {
     this.userId.set(userId);
     if (this.userProfiles().find((p) => p.id === userId)?.guestInfo?.rsvp) {
       this.rsvpCollection.getByKey(userId);
     }
-    this.viewMode.set('profile');
     this.isOpen.set(true);
+    if (opts?.edit) {
+      this.startEdit();
+    } else {
+      this.viewMode.set('profile');
+    }
   }
 
   close(): void {
@@ -250,14 +268,21 @@ export class GuestProfileModal {
   /** Enter the profile-edit view, seeded from the currently loaded profile. */
   protected startEdit(): void {
     const profile = this.guestProfile();
-    this.editForm.setValue({
+    const relation = profile?.guestInfo?.relation;
+    this.editDraft.set({
       firstName: profile?.firstName ?? '',
       lastName: profile?.lastName ?? '',
       nickname: profile?.nickname ?? '',
-      side: (profile?.guestInfo?.relation?.side as RelationSide | undefined) ?? 'bride',
-      kind: (profile?.guestInfo?.relation?.kind as RelationKind | undefined) ?? 'family',
-      link: profile?.guestInfo?.relation?.link ?? '',
+      email: profile?.email ?? '',
+      phoneNumber: profile?.phoneNumber ?? '',
+      preferredLang: profile?.preferredLang ?? UpdateUserProfileDto.PreferredLangEnum.ES,
+      relation: {
+        side: relation?.side ?? SIDE_ENUM.BRIDE,
+        kind: (relation?.kind as RelationKind | undefined) ?? 'family',
+        link: relation?.link ?? '',
+      },
     });
+    this.submitAttempted.set(false);
     this.viewMode.set('edit');
   }
 
@@ -265,29 +290,17 @@ export class GuestProfileModal {
     this.viewMode.set('profile');
   }
 
-  protected selectSide(side: RelationSide): void {
-    this.editForm.controls.side.setValue(side);
-  }
-
-  protected selectKind(kind: RelationKind): void {
-    this.editForm.controls.kind.setValue(kind);
-    // The previous `link` (a family-relation enum member, or free text for a
-    // different kind) no longer matches the new kind's field shape —
-    // `guest-create-modal`'s `selectKind` clears it the same way.
-    this.editForm.controls.link.setValue('');
-  }
-
-  /** i18n key for the free-text relation-link placeholder — copy adapts per
-   *  non-family `kind`, same as `guest-create-modal`. */
-  protected linkPlaceholderKey(): string {
-    return `guest_manager.form.linkPlaceholder.${this.editForm.controls.kind.value}`;
-  }
-
-  /** Belt-and-suspenders alongside the input's `maxlength="8"` — mirrors
-   *  `rsvp-editor`'s `.slice(0, 8)` clamp (T299). */
-  protected clampNickname(): void {
-    const control = this.editForm.controls.nickname;
-    if (control.value.length > 8) control.setValue(control.value.slice(0, 8));
+  /**
+   * Handles the edit form's native `submit` event (Enter inside a field, hard
+   * rule 9's "submit on Enter") — a plain `(submit)` listener, not `(ngSubmit)`:
+   * with no `FormGroup`/`NgForm` in this view any more (see `editDraft`'s
+   * doc), there is no Angular forms directive left to provide `ngSubmit`, so
+   * this host prevents the browser's own default full-page form submission
+   * itself and calls `saveProfile()`.
+   */
+  protected onSubmit(event: Event): void {
+    event.preventDefault();
+    this.saveProfile();
   }
 
   /**
@@ -297,33 +310,41 @@ export class GuestProfileModal {
    * not editable here: `UpdateUserProfileDto` (the actual API contract) has
    * no fields for them, so this view shows them read-only instead of wiring
    * up form controls that could never be saved.
+   *
+   * Required-field validation (`firstName`/`lastName`/`relation.link`) now
+   * lives here rather than on a `FormGroup` (see `editDraft`'s doc) —
+   * `submitAttempted` stands in for the old `markAllAsTouched()` call, same
+   * "required fields block save" behavior as before the migration.
    */
   protected saveProfile(): void {
-    if (this.editForm.invalid) {
-      this.editForm.markAllAsTouched();
+    const draft = this.editDraft();
+    const relation = draft.relation;
+    if (!draft.firstName.trim() || !draft.lastName.trim() || !relation || !relation.link.trim()) {
+      this.submitAttempted.set(true);
       return;
     }
+
     const profile = this.guestProfile();
     if (!profile) return;
 
-    const { firstName, lastName, nickname, side, kind, link } = this.editForm.getRawValue();
+    const { firstName, lastName, nickname } = draft;
     // `CreateGuestDtoRelation` is a union: the family variant's `link` is the
-    // strict `LinkEnum` (the `<select>` only ever assigns one of its
-    // members), the other variants take free text — same split as
-    // `guest-create-modal`'s `guestDraft()`.
-    const relation: CreateGuestDtoRelation =
-      kind === 'family'
-        ? { side, kind, link: link as FamilyRelation['link'] }
-        : { side, kind, link };
+    // strict `LinkEnum` (the family `<select>`, ported into
+    // `app-relation-fields`, only ever assigns one of its members), the other
+    // variants take free text — same split as `guest-create-modal`'s
+    // `guestDraft()`.
+    const relationPayload: CreateGuestDtoRelation =
+      relation.kind === 'family'
+        ? { side: relation.side, kind: relation.kind, link: relation.link as FamilyRelation['link'] }
+        : { side: relation.side, kind: relation.kind, link: relation.link };
 
     this.userProfileCollection
       .update({
         id: profile.id,
-        role: profile.role,
         firstName,
         lastName,
         nickname: nickname || undefined,
-        guestInfo: { relation },
+        guestInfo: { relation: relationPayload },
       })
       .subscribe({
         next: () => this.viewMode.set('profile'),

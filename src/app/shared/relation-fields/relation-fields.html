@@ -1,0 +1,84 @@
+@if (readOnly()) {
+  <div class="field-row" [class.cols-1]="columns() === 1">
+    @if (showSide()) {
+      <div class="info-item">
+        <span class="info-label">{{ sideLabel() }}</span>
+        <div class="value">{{ 'guest_manager.relation.side.' + value().side | translate }}</div>
+      </div>
+    }
+    <div class="info-item">
+      <span class="info-label">{{ groupLabel() }}</span>
+      <div class="value">{{ 'guest_manager.relation.kind.' + value().kind | translate }}</div>
+    </div>
+  </div>
+  <div class="info-item">
+    <span class="info-label">{{ 'guest_manager.form.link' | translate }}</span>
+    @if (relationLinkLabel(); as link) {
+      <div class="value">{{ link }}</div>
+    } @else {
+      <div class="value muted">—</div>
+    }
+  </div>
+} @else {
+  <div class="field-row" [class.cols-1]="columns() === 1">
+    @if (showSide()) {
+      <div class="field">
+        <span class="info-label">{{ sideLabel() }}</span>
+        <div class="seg-row">
+          @for (side of sides; track side) {
+            <button
+              type="button"
+              app-guest-seg
+              [selected]="value().side === side"
+              (click)="selectSide(side)"
+            >
+              {{ 'guest_manager.relation.side.' + side | translate }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="field">
+      <span class="info-label">{{ groupLabel() }}</span>
+      <div class="seg-row">
+        @for (kind of kinds; track kind) {
+          <button
+            type="button"
+            app-guest-seg
+            [selected]="value().kind === kind"
+            (click)="selectKind(kind)"
+          >
+            {{ 'guest_manager.relation.kind.' + kind | translate }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="field">
+    <span class="info-label">
+      {{ 'guest_manager.form.link' | translate }} ·
+      {{ 'guest_manager.relation.kind.' + value().kind | translate }}
+    </span>
+    @if (isFamily()) {
+      <select class="select-native" [value]="value().link" (change)="onLinkSelect($event)">
+        <option value="" disabled>{{ 'guest_manager.form.linkSelectPlaceholder' | translate }}</option>
+        @for (link of familyLinks; track link) {
+          <option [value]="link">{{ 'guest_manager.relation.link.' + link | translate }}</option>
+        }
+      </select>
+    } @else {
+      <input
+        app-input
+        type="text"
+        [value]="value().link"
+        [placeholder]="linkPlaceholderKey() | translate"
+        (input)="onLinkInput($event)"
+      />
+    }
+    @if (hint()) {
+      <p class="field-hint">{{ hint() }}</p>
+    }
+  </div>
+}

@@ -93,7 +93,7 @@
           <input
             app-input
             type="text"
-            maxlength="8"
+            maxlength="30"
             [value]="draft().partner.nickname"
             [placeholder]="'shared.nickname.placeholder' | translate"
             [disabled]="hasLinkedPartner()"
@@ -139,7 +139,7 @@
                 <input
                   app-input
                   type="text"
-                  maxlength="8"
+                  maxlength="30"
                   [value]="child.nickname"
                   [placeholder]="'shared.nickname.placeholder' | translate"
                   (input)="setChildNickname($index, inputValue($event))"

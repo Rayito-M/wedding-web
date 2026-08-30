@@ -1,0 +1,97 @@
+@use '../../../styles/tokens' as t;
+
+// Self-contained copy of the guest-manager modals' `_shared-modal-form.scss`
+// patterns (`.field`/`.info-label`/`.seg-row`/`.select-native`/`.field-hint`)
+// plus `guest-profile-modal.scss`'s read-only `.info-item`/`.value` pair —
+// this component now owns the whole side/kind/link block those two modals
+// used to hand-roll (T309), and Angular's per-component style encapsulation
+// means it needs its own copy rather than reaching into `screens/`. The
+// modals keep their own copies too: those partials style unrelated fields
+// (name, nickname, notes, …) that stay in the host form. Same accepted
+// duplication as `.select-native` itself (see that class's own comment) —
+// flagged, not new.
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: t.$space-3;
+  margin-bottom: t.$space-5;
+
+  &.cols-1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  margin-bottom: t.$space-5;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.info-label {
+  display: block;
+  font-size: t.$text-label;
+  color: var(--text-muted);
+  margin-bottom: t.$space-2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.info-item .info-label {
+  margin-bottom: t.$space-1;
+}
+
+.value {
+  font-size: t.$text-body;
+  color: var(--text-body-color);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+
+  &.muted {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+}
+
+// Segmented-pill row (DS `ScreenGuestManager.jsx` local `GuestSeg` helper) —
+// a single joined pill container holding borderless `app-guest-seg` option
+// buttons, used for Side/Group. One hairline border around the whole row, no
+// gap between options, corners clipped so the selected option's accent fill
+// follows the pill shape.
+.seg-row {
+  display: flex;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--surface-page);
+}
+
+// Hand-built native select — no Select component exists in the design system
+// yet; styled to match app-input's hairline/radius/token language, same
+// treatment as `.select-native` in `_shared-modal-form.scss`/
+// `config-manager.scss`/`seating-plan.scss` (no shared home for this pattern
+// yet — flagged for a DS consolidation task, not fixed here).
+.select-native {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-input);
+  font-family: var(--font-sans);
+  font-size: var(--text-body-lg);
+  color: var(--text-body-color);
+  appearance: none;
+  cursor: pointer;
+}
+
+// A field's plain (non-error) hint — the relationship control's helper line,
+// same treatment as `_shared-modal-form.scss`'s `.field-hint`.
+.field-hint {
+  margin: t.$space-2 0 0;
+  font-size: t.$text-micro;
+  line-height: 1.5;
+  color: var(--text-muted);
+}

@@ -246,7 +246,7 @@ export class WeddingUserProfileService extends BaseService {
 
     /**
      * Update any user profile
-     * Updates a user profile. Only the user themselves, admins (bride/groom), or delegated users can update. Use \&quot;me\&quot; to refer to the current user.
+     * Updates a user profile. Only the user themselves, admins (bride/groom), delegated users, or a linked partner can update. Use \&quot;me\&quot; to refer to the current user. &#x60;firstName&#x60;, &#x60;lastName&#x60;, &#x60;preferredLang&#x60;, and &#x60;nickname&#x60; are merged for any role when present; &#x60;relation&#x60; (the whole object — &#x60;side&#x60;, &#x60;kind&#x60;, and &#x60;link&#x60; together) is merged only for a guest target. Any field omitted from the request body leaves the stored value untouched.
      * @endpoint patch /v1/profile/{id}
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

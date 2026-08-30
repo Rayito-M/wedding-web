@@ -1,5 +1,4 @@
 @use '../../../styles/tokens' as t;
-@use '../../../styles/primitives';
 
 // Per DS `ProfileModal.jsx`. `app-modal`'s `size="lg"` already supplies the
 // bordered header/scrollable body/bordered footer chrome and the mobile
@@ -71,78 +70,12 @@
   flex-wrap: wrap;
 }
 
-// ── Field list ──
+// ── Field list — `app-profile-fields` (T312) owns its own field styling;
+// this wrapper only spaces it against the "Visible in People" note below. ──
 .details {
   display: flex;
   flex-direction: column;
   gap: t.$space-4;
-}
-
-.field {
-  min-width: 0;
-}
-
-.field-label {
-  @extend %eyebrow-wide;
-  margin-bottom: t.$space-2;
-}
-
-.field-value {
-  font-family: t.$font-serif;
-  font-size: 16px;
-  color: var(--ink);
-  padding: 4px 0 8px;
-  border-bottom: 1px solid var(--border-hairline);
-}
-
-.field-value.empty {
-  color: var(--text-muted);
-}
-
-// Nickname's "(max 8 characters)" hint — same treatment as `profile.scss` /
-// `guest-manager`'s `_shared-modal-form.scss` `.field-hint`.
-.field-hint {
-  margin: t.$space-2 0 0;
-  font-size: t.$text-micro;
-  line-height: 1.5;
-  color: var(--text-muted);
-}
-
-// ── Preferred language ──
-.lang-options {
-  display: flex;
-  gap: t.$space-2;
-  flex-wrap: wrap;
-}
-
-.lang-chip {
-  border: 1px solid var(--border-hairline);
-  background: var(--surface-card);
-  color: var(--text-muted);
-  padding: 7px 14px;
-  border-radius: var(--radius-pill);
-  font-size: 11.5px;
-  cursor: default;
-  font-family: t.$font-sans;
-  transition:
-    background var(--transition-fast),
-    color var(--transition-fast),
-    border-color var(--transition-fast);
-}
-
-.lang-chip:not(:disabled) {
-  cursor: pointer;
-}
-
-.lang-chip:disabled {
-  opacity: 0.6;
-}
-
-.lang-chip.on {
-  border-color: transparent;
-  background: var(--brand-accent);
-  color: var(--on-accent);
-  opacity: 1;
 }
 
 // ── "Visible in People" note ──

@@ -39,29 +39,23 @@ export class UserProfileDataService implements EntityCollectionDataService<UserP
   }
 
   /**
-   * `PATCH /v1/profile/{id}` — only `firstName`, `lastName`, `nickname`,
-   * `preferredLang`, `role` and `relation` are editable per `UpdateUserProfileDto`
-   * (`email` / `phoneNumber` are read-only server-side; the profile edit view
-   * keeps them display-only for that reason). `role` is required by the DTO
-   * even though this app never changes it, so callers must pass the existing
-   * value through. The wire requires `nickname` to be `minLength: 1` whenever
-   * present, so a cleared/empty nickname is sent as `undefined`, never `''`.
+   * `PATCH /v1/profile/{id}` — `firstName`, `lastName`, `nickname` and
+   * `preferredLang` are merged for any role when present; `relation` is
+   * merged only for a guest target. `role` is no longer accepted by the DTO
+   * at all. (`email` / `phoneNumber` are read-only server-side; the profile
+   * edit view keeps them display-only for that reason.) The wire requires
+   * `nickname` to be `minLength: 1` whenever present, so a cleared/empty
+   * nickname is sent as `undefined`, never `''`.
    */
   update(update: { id: string; changes: Partial<UserProfileDto> }): Observable<UserProfileDto> {
     const changes = update.changes;
-    if (!changes.role) {
-      return throwError(
-        () => new Error('UserProfile update requires "role" to be included in changes.'),
-      );
-    }
     const updateUserProfileDto: UpdateUserProfileDto = {
       id: update.id,
       firstName: changes.firstName,
       lastName: changes.lastName,
       nickname: changes.nickname || undefined,
       preferredLang: changes.preferredLang,
-      role: changes.role,
-      guestInfo: changes.guestInfo ? { relation: changes.guestInfo.relation } : undefined,
+      relation: changes.guestInfo?.relation,
     };
     return this.serviceApi.profileControllerUpdateProfileByIdV1({
       id: update.id,

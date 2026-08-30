@@ -21,6 +21,34 @@ function profile(overrides: Partial<UserProfileDto> = {}): UserProfileDto {
   };
 }
 
+async function createGuestManager(profiles: UserProfileDto[]): Promise<ComponentFixture<GuestManager>> {
+  await TestBed.configureTestingModule({
+    imports: [GuestManager],
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      provideTranslateService({ lang: 'en', fallbackLang: 'en' }),
+      provideStore(),
+      provideEffects(),
+      provideEntityData(entityConfig, withEffects()),
+      provideEntityDataServices(),
+    ],
+  }).compileComponents();
+
+  TestBed.inject(TranslateService).setTranslation('en', {}, true);
+
+  const collection = TestBed.inject(EntityServices).getEntityCollectionService<UserProfileDto>(
+    EntityNamesEnum.USER_PROFILE,
+  );
+  for (const p of profiles) collection.addOneToCache(p);
+
+  const fixture = TestBed.createComponent(GuestManager);
+  fixture.detectChanges();
+  await fixture.whenStable();
+  fixture.detectChanges();
+  return fixture;
+}
+
 /**
  * T300 — the `filteredGuests` search predicate also matches `profile.nickname`,
  * case-insensitively, mirroring DS `ScreenGuestManager.jsx`'s
@@ -94,5 +122,34 @@ describe('GuestManager — search matches on nickname (T300)', () => {
     search('zzz');
 
     expect(rowNames()).toEqual([]);
+  });
+});
+
+/**
+ * T308 — a normal guest-table row click still opens the profile read-only,
+ * while the RSVP editor's "open their profile" jump (relayed through
+ * `app-manage-rsvp-modal`'s `(openProfile)`) opens straight into edit mode.
+ */
+describe('GuestManager — "open their profile" edit-mode jump (T308)', () => {
+  let fixture: ComponentFixture<GuestManager>;
+
+  beforeEach(async () => {
+    fixture = await createGuestManager([profile()]);
+  });
+
+  it('a row click (openGuestProfile) opens the profile read-only', () => {
+    const openSpy = vi.spyOn(fixture.componentInstance.profileModal, 'open');
+
+    fixture.componentInstance.openGuestProfile('guest-1');
+
+    expect(openSpy).toHaveBeenCalledWith('guest-1');
+  });
+
+  it('the RSVP editor jump (openGuestProfileEdit) opens straight into edit mode', () => {
+    const openSpy = vi.spyOn(fixture.componentInstance.profileModal, 'open');
+
+    fixture.componentInstance.openGuestProfileEdit('guest-1');
+
+    expect(openSpy).toHaveBeenCalledWith('guest-1', { edit: true });
   });
 });

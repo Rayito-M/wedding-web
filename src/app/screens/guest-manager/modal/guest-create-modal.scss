@@ -4,8 +4,8 @@
 // Dialog chrome (overlay, card, header, footer, buttons) is owned by the
 // shared `app-modal` (size="lg") + `app-btn` components — this file only
 // styles the content projected into the modal body. Form controls reuse the
-// shared `app-input` component and this folder's local `app-guest-seg`
-// (see `guest-seg/`) for their own chrome (border, radius, focus state);
+// shared `app-input` component and `shared/guest-seg`'s `app-guest-seg`
+// (moved there in T309) for their own chrome (border, radius, focus state);
 // only layout lives here.
 
 // Partner section (DS `ScreenGuestManager.jsx` `partnerDraft` block). Local to

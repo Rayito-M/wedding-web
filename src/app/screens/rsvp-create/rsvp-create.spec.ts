@@ -24,7 +24,7 @@ const TRANSLATIONS = {
   shared: {
     continue: 'Continue',
     back: 'Back',
-    nickname: { label: 'Nickname', placeholder: 'e.g. Lau', hint: 'Max 8 characters' },
+    nickname: { label: 'Nickname', placeholder: 'e.g. Lau', hint: 'Max 30 characters' },
   },
   rsvp: {
     header: 'RSVP',
@@ -258,15 +258,15 @@ describe('RsvpCreate', () => {
       expect(partner2).not.toEqual(expect.objectContaining({ nickname: '' }));
     });
 
-    it("clamps the partner's nickname input to 8 characters", async () => {
+    it("clamps the partner's nickname input to 30 characters", async () => {
       await toPartyStepWithPartner();
       const [, , nickname] = fixture.nativeElement.querySelectorAll('input[app-input]');
-      (nickname as HTMLInputElement).value = 'AVeryLongNickname';
+      (nickname as HTMLInputElement).value = 'AVeryLongNicknameThatExceedsThirtyCharacters';
       nickname.dispatchEvent(new Event('input'));
       await fixture.whenStable();
 
       const [, , clamped] = fixture.nativeElement.querySelectorAll('input[app-input]');
-      expect((clamped as HTMLInputElement).value).toBe('AVeryLon');
+      expect((clamped as HTMLInputElement).value).toBe('AVeryLongNicknameThatExceedsTh');
     });
 
     it('renders the nickname read-only, never an editable input, for a linked partner', async () => {

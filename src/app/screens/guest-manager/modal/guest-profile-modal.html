@@ -175,102 +175,20 @@
     @case ('edit') {
       <ng-container>
         <div class="modal-scroll">
-          <!-- Edit profile -->
-          <form [formGroup]="editForm" (ngSubmit)="saveProfile()">
-            <div class="field">
-              <span class="info-label">{{ 'guest_manager.form.firstName' | translate }}</span>
-              <input app-input type="text" formControlName="firstName" />
-            </div>
-
-            <div class="field">
-              <span class="info-label">{{ 'guest_manager.form.lastName' | translate }}</span>
-              <input app-input type="text" formControlName="lastName" />
-            </div>
-
-            <div class="field">
-              <span class="info-label">{{ 'shared.nickname.label' | translate }}</span>
-              <input
-                app-input
-                type="text"
-                formControlName="nickname"
-                maxlength="8"
-                [placeholder]="'shared.nickname.placeholder' | translate"
-                (input)="clampNickname()"
-              />
-              <p class="field-hint">{{ 'shared.nickname.hint' | translate }}</p>
-            </div>
-
-            <div class="field">
-              <span class="info-label">{{ 'guest_manager.form.side' | translate }}</span>
-              <div class="seg-row">
-                @for (side of relationSides; track side) {
-                  <button
-                    type="button"
-                    app-guest-seg
-                    [selected]="editForm.controls.side.value === side"
-                    (click)="selectSide(side)"
-                  >
-                    {{ 'guest_manager.relation.side.' + side | translate }}
-                  </button>
-                }
-              </div>
-            </div>
-
-            <div class="field">
-              <span class="info-label">{{ 'guest_manager.form.group' | translate }}</span>
-              <div class="seg-row">
-                @for (kind of relationKinds; track kind) {
-                  <button
-                    type="button"
-                    app-guest-seg
-                    [selected]="editForm.controls.kind.value === kind"
-                    (click)="selectKind(kind)"
-                  >
-                    {{ 'guest_manager.relation.kind.' + kind | translate }}
-                  </button>
-                }
-              </div>
-            </div>
-
-            <div class="field">
-              <span class="info-label">
-                {{ 'guest_manager.form.link' | translate }} ·
-                {{ 'guest_manager.relation.kind.' + editForm.controls.kind.value | translate }}
-              </span>
-              @if (editForm.controls.kind.value === 'family') {
-                <select class="select-native" formControlName="link">
-                  <option value="" disabled>
-                    {{ 'guest_manager.form.linkSelectPlaceholder' | translate }}
-                  </option>
-                  @for (relation of familyRelations; track relation) {
-                    <option [value]="relation">
-                      {{ 'guest_manager.relation.link.' + relation | translate }}
-                    </option>
-                  }
-                </select>
-              } @else {
-                <input
-                  app-input
-                  type="text"
-                  formControlName="link"
-                  [placeholder]="linkPlaceholderKey() | translate"
-                />
-              }
-              @if (editForm.controls.link.touched && editForm.controls.link.invalid) {
-                <span class="field-error">{{ 'guest_manager.form.linkHint' | translate }}</span>
-              }
-            </div>
-
-            <div class="readonly-grid">
-              <div class="info-item">
-                <span class="info-label">{{ 'guest_manager.profile.email' | translate }}</span>
-                <div class="value muted">{{ guestProfile()?.email || '—' }}</div>
-              </div>
-              <div class="info-item">
-                <span class="info-label">{{ 'guest_manager.profile.phone' | translate }}</span>
-                <div class="value muted">{{ guestProfile()?.phoneNumber || '—' }}</div>
-              </div>
-            </div>
+          <!-- Edit profile — firstName/lastName/nickname/relation via the
+             shared `app-profile-fields` (T310, composing `app-relation-fields`,
+             T309). Email/phone are locked read-only (`lockContact`): this
+             admin form never writes them (`UpdateUserProfileDto` has no
+             fields for them). No language control (`showLanguage` off): an
+             admin does not set a guest's `preferredLang`. -->
+          <form (submit)="onSubmit($event)">
+            <app-profile-fields
+              [value]="editDraft()"
+              [lockContact]="true"
+              [showLanguage]="false"
+              [relationHint]="linkErrorHint()"
+              (valueChange)="editDraft.set($event)"
+            />
           </form>
         </div>
 

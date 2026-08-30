@@ -1,4 +1,3 @@
-import { KeyValuePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,27 +11,12 @@ import {
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { ConfigurationService, UserProfileDto, TranslateLanguageService } from '@app/core';
+import { UpdateUserProfileDto, UserProfileDto, TranslateLanguageService } from '@app/core';
 import { Avatar } from '@app/shared/avatar/avatar';
 import { Btn } from '@app/shared/button/button';
-import { TextInput } from '@app/shared/input/input';
 import { Modal } from '@app/shared/modal/modal';
 import { Pill } from '@app/shared/pill/pill';
-
-/** Local editable draft — a subset of {@link UserProfileDto}'s writable-looking
- *  fields, plus `email`/`phoneNumber`, which stay visually editable but are
- *  never part of the payload {@link ProfileModal.save} emits (T303: preserved
- *  verbatim from `profile.ts`'s `ProfileForm`/`UpdateUserProfileDto` gap —
- *  the API has no fields for them). Not a redeclaration of any generated API
- *  model: this only ever holds a draft of plain strings for in-progress edits. */
-interface ProfileDraft {
-  firstName: string;
-  lastName: string;
-  nickname: string;
-  email: string;
-  phoneNumber: string;
-  preferredLang: UserProfileDto.PreferredLangEnum;
-}
+import { ProfileFields, ProfileFieldsValue } from '@app/shared/profile-fields/profile-fields';
 
 /**
  * "My profile" modal (DS `76aa9fa` → `ProfileModal.jsx`), the account-dropdown
@@ -72,11 +56,23 @@ interface ProfileDraft {
  * same "stay in edit mode + visible message" shape as `rsvp-edit.ts`'s
  * `saveFailed`, just split across host/child since this modal never calls
  * the API itself.
+ *
+ * **Field list (T312):** the hand-rolled firstName/lastName/nickname/email/
+ * phone/language fields are `<app-profile-fields>` (T310) with `lockContact`
+ * on — email/phone render as read-only rows even while editing, carrying
+ * forward T303's "visually present but never part of `save`'s payload"
+ * behavior, now owned by the shared component — and **`showRelation` off**:
+ * this call site keeps its existing "link out to `/people`, read-only there"
+ * behavior verbatim (Phase U intro's explicit decision — self-service
+ * relation editing here is a separate, explicitly-scoped follow-up, not a
+ * side effect of this dedup). The identity block above the field list
+ * (avatar/name/nickname/role/relation pills) is not part of `ProfileFields`
+ * in the DS either, so it stays hand-rolled here.
  */
 @Component({
   selector: 'app-profile-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Modal, Btn, Avatar, Pill, TextInput, RouterLink, TranslatePipe, KeyValuePipe],
+  imports: [Modal, Btn, Avatar, Pill, ProfileFields, RouterLink, TranslatePipe],
   templateUrl: './profile-modal.html',
   styleUrl: './profile-modal.scss',
   host: {
@@ -109,7 +105,6 @@ export class ProfileModal {
 
   private readonly translateService = inject(TranslateService);
   private readonly langService = inject(TranslateLanguageService);
-  private readonly config = inject(ConfigurationService);
 
   /** Read reactively so the resolved header title re-translates on a language
    *  switch while the modal happens to stay open — same hazard/fix as
@@ -123,15 +118,17 @@ export class ProfileModal {
     return this.translateService.instant('shared.myProfile');
   });
 
-  /** Languages enabled for this wedding (code → native display name), or
-   *  undefined until config loads — same source `screen-header.ts`'s own
-   *  language switcher reads, avoiding a hardcoded "Español/English/
-   *  Français" literal set here. */
-  protected readonly languages = computed(() => this.config.weddingConfigPublic()?.language);
+  /** Pre-translated, forwarded to `app-profile-fields`' `contactHint` input —
+   *  shown under the locked email/phone rows while editing (DS
+   *  `ProfileModal.jsx`'s own `contactHint` string). */
+  protected readonly contactHint = computed(() => {
+    this.lang();
+    return this.translateService.instant('profileModal.contactHint');
+  });
 
   protected readonly editing = signal(false);
   protected readonly saved = signal(false);
-  private readonly draft = signal<ProfileDraft | null>(null);
+  private readonly draft = signal<ProfileFieldsValue | null>(null);
 
   /** Not a signal on purpose — plain instance state used only to detect the
    *  `saving` `true → false` edge inside the effect below; re-running the
@@ -158,16 +155,31 @@ export class ProfileModal {
     return `${p.firstName.charAt(0)}${p.lastName.charAt(0)}`.toUpperCase() || '·';
   });
 
-  protected readonly firstName = computed(() => this.draft()?.firstName ?? this.profile()?.firstName ?? '');
-  protected readonly lastName = computed(() => this.draft()?.lastName ?? this.profile()?.lastName ?? '');
-  protected readonly nickname = computed(() => this.draft()?.nickname ?? this.profile()?.nickname ?? '');
-  protected readonly email = computed(() => this.draft()?.email ?? this.profile()?.email ?? '');
-  protected readonly phoneNumber = computed(
-    () => this.draft()?.phoneNumber ?? this.profile()?.phoneNumber ?? '',
-  );
-  protected readonly preferredLang = computed(
-    () => this.draft()?.preferredLang ?? this.profile()?.preferredLang,
-  );
+  /** The value handed to `<app-profile-fields>`: the in-progress `draft` while
+   *  editing, otherwise the loaded `profile` mapped onto the same shape (T312
+   *  — `ProfileFieldsValue` replaces the old local `ProfileDraft`, per this
+   *  task's acceptance). `relation` is never set here — `showRelation` is off
+   *  for this call site (see the class doc comment), so `app-profile-fields`
+   *  never reads it. */
+  protected readonly fieldsValue = computed<ProfileFieldsValue>(() => {
+    const d = this.draft();
+    if (d) return d;
+    const p = this.profile();
+    return {
+      firstName: p?.firstName ?? '',
+      lastName: p?.lastName ?? '',
+      nickname: p?.nickname ?? '',
+      email: p?.email ?? '',
+      phoneNumber: p?.phoneNumber ?? '',
+      preferredLang: p?.preferredLang ?? UpdateUserProfileDto.PreferredLangEnum.EN,
+    };
+  });
+
+  /** Read by the identity block only — the field list itself is rendered by
+   *  `<app-profile-fields>`, which reads `fieldsValue()` directly. */
+  protected readonly firstName = computed(() => this.fieldsValue().firstName);
+  protected readonly lastName = computed(() => this.fieldsValue().lastName);
+  protected readonly nickname = computed(() => this.fieldsValue().nickname);
 
   protected onEscape(event: Event): void {
     if (!this.open()) return;
@@ -201,32 +213,21 @@ export class ProfileModal {
     this.draft.set(null);
   }
 
-  protected setField(key: keyof ProfileDraft, value: string): void {
-    this.draft.update((d) => (d ? { ...d, [key]: value } : d));
-    this.saved.set(false);
-  }
-
-  /** Same 8-character clamp as `profile.ts`'s `setNickname` / `rsvp-editor`'s
-   *  `.slice(0, 8)` (Phase S, T298-T300). */
-  protected setNickname(value: string): void {
-    this.setField('nickname', value.slice(0, 8));
-  }
-
-  /** `code` is a config-supplied language key (`screen-header.ts`'s own
-   *  `selectLanguage(code: string)` takes the same shape) — cast to the DTO's
-   *  narrower enum, which the wedding config's language codes always satisfy. */
-  protected setLang(code: string): void {
-    if (!this.editing()) return;
-    this.draft.update((d) =>
-      d ? { ...d, preferredLang: code as UserProfileDto.PreferredLangEnum } : d,
-    );
+  /** `app-profile-fields`' `(valueChange)` handler — it always emits the full
+   *  next value ("patch" semantics, same as `rsvp-editor`'s `draftChange`),
+   *  including the already-clamped-at-30 nickname (T310 owns that clamp now,
+   *  T307's corrected cap — this component no longer slices it itself). */
+  protected onFieldsChange(value: ProfileFieldsValue): void {
+    this.draft.set(value);
     this.saved.set(false);
   }
 
   /**
    * Emits only the fields this form can actually change — `email`/
-   * `phoneNumber` are deliberately excluded (see {@link ProfileDraft}'s doc
-   * comment): `UpdateUserProfileDto` has no fields for them.
+   * `phoneNumber`/`relation` are deliberately excluded: `UpdateUserProfileDto`
+   * has no fields for the former two, and `showRelation` is off for this call
+   * site (see the class doc comment), so the latter is never wired into
+   * `save` as a side effect of this migration (T312's explicit acceptance).
    *
    * Does not itself leave edit mode or show "Saved." — the host owns the
    * actual write and reports its outcome back through `saving`/`saveError`;
@@ -241,9 +242,5 @@ export class ProfileModal {
       nickname: d.nickname || undefined,
       preferredLang: d.preferredLang,
     });
-  }
-
-  protected inputValue(event: Event): string {
-    return (event.target as HTMLInputElement).value;
   }
 }
