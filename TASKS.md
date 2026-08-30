@@ -6040,3 +6040,467 @@
   (mirroring the granularity T304/T305 and T308 already established for the equivalent self-edit
   and couple-edit paths) are judged sufficient; unlike Part 1, there was no specific user report of
   this exact chain failing to motivate the extra integration-test cost.
+
+> **DS re-sync: solo decline (commit `2bf80a927e347422dbbc5a595251aaaa2c704824`).** The design
+> system's `RSVPEditor.jsx` gained `rsvpCanDeclineAlone`/`rsvpComing`/`rsvpAttending`/`selfCard` —
+> an adult who has their **own guest account** can mark themselves not attending without leaving
+> the RSVP (their meal/allergy data and, in this app, their account stay; the rest of the party is
+> unaffected), a "Not attending" pill/summary line, and the party-total line becoming conditional
+> ("Attending: X of N" vs "Total: N").
+>
+> **What already exists on the wire, so this is not a contract change:** `RsvpDtoAdultsPartner1`
+> and `RsvpDtoAdultsPartner2OneOf` (the account-holder variant of the `partner2` union) already
+> carry `attending?: boolean` — added when `kind` landed (ADR W-0004) and, per that ADR's amendment,
+> deliberately unused since: *"nothing in this app reads or writes `attending` on `partner1`… a
+> member-level `attending` flag has only ever had a purpose on `partner2`."* `RsvpDtoAdultsPartner2OneOf1`
+> (the plus-one variant, no account) and `RsvpDtoChildrenInner` correctly have **no** `attending`
+> field at all — which already matches the DS gate (`hasAccount` required). No `pnpm gen:api` is
+> needed for any task below.
+>
+> **What is *not* settled** — flagged once as T320, not repeated per task — is what a solo decline
+> *means* next to `RsvpDto.status` and the hub's audience/headcount logic. ADR W-0002
+> ("Explicitly not decided") raised exactly this in 2026-08-21 and it was never picked up; T320 is
+> that follow-up. Every implementation task below is scoped to stay clear of that undecided ground:
+> this app's shape caps a party at two adults (`partner1` + optional `partner2`), so "an adult with
+> their own account, in a party of more than one adult" collapses to **`partner2`, only when
+> `partnerHasAccount(partner2)`** — `partner1` is never eligible (see T320 for why the DS's more
+> general rule would technically allow it, and why that's excluded here), and neither are children
+> (the contract already forbids it structurally).
+>
+> Sequence: T320 (escalate, non-blocking) can run any time. T321 (foundation: draft field, pure
+> helpers, ADR, i18n keys) blocks T322–T324 (the three pieces of visible UI), which are otherwise
+> independent of each other. T325 (aggregate surfaces — guest-list headcount, guest-manager partner
+> line) is **blocked** on T320's answer and must not start before it lands.
+
+### T320 — [ESCALATION → hub] RSVP solo decline: does it change audience / headcount semantics?
+- **Status:** todo — **escalated, non-blocking** for T321–T324 (they only add UI over a wire field
+  that already exists and write it as opaque guest-entered data). **Blocking** for T325.
+- **Owner:** system-architect (decision, likely with `wedding-api`) → wedding-web implementer (mirror)
+- **Depends on:** —
+- **The gap, concretely:**
+  - DS `rsvpCanDeclineAlone(p, people)` lets an adult with their own guest account independently
+    set `attending: 'no'` while the RSVP's own `status` stays `attending` and the rest of the party
+    is untouched. Translated to this repo's contract, that is `RsvpDtoAdultsPartner2OneOf.attending
+    = false` sitting alongside `RsvpDto.status === 'attending'` on the same document.
+  - Hub ADR-0030 §8 defines the `attending` and `attending-no-menu` announcement audiences purely
+    off `RsvpDto.status`. Today a solo-declined partner would still be counted in both — still
+    targeted by a "menu selection reminder" or a "thank you" they explicitly said they weren't
+    coming to.
+  - The couple's guest-list headcount (`StatisticService.guestStatistics`, this repo,
+    `src/app/core/service/statistic.service.ts`) sums `ProfileRsvp.adults` — a raw count off
+    `UserProfileListResponseDtoProfilesInnerGuestInfoRsvp`, which has no per-adult breakdown at
+    all — so a solo decline would not reduce it either, at either the profile-summary or the
+    `RsvpListResponseDtoItemsInner` (guest-manager table row) shape.
+  - Nothing server-side is known to validate `rsvpCanDeclineAlone`'s eligibility rule (adult ∧
+    has-own-account ∧ more than one adult in the party) — a client could in principle PATCH
+    `attending: false` onto a plus-one's slot if the wire ever allowed it (it structurally doesn't,
+    for `partner1`/`partner2` OneOf1/children — see the re-sync note above — which is the one
+    piece of enforcement that does already exist, for free, as a side effect of ADR W-0004).
+  - ADR W-0002 §"Explicitly not decided" already flagged the general question ("`attending` on the
+    partner variant… deciding what it means next to the RSVP's own status is a modelling question
+    for the API side") on 2026-08-21; it was never actioned. This is that follow-up, now with a
+    concrete DS behaviour attached to it.
+  - **Whether `partner1` is ever eligible.** The DS's rule is generic over "adults in the party";
+    applied literally to this app's two-adult-max shape, `partner1` (the RSVP's own primary/owner)
+    would qualify too whenever a `partner2` is present, since the primary always "has an account".
+    That reading conflicts with ADR W-0004's amendment, which treats `partner1.attending` as inert
+    and treats `RsvpDto.status` as the sole authority on the primary's own attendance. This repo's
+    tasks below assume **`partner1` is never eligible** (T321's `canDeclineAlone` hard-codes it),
+    but that is this repo's interim reading, not a hub ruling — confirm or correct it.
+    **RESOLVED 2026-08-30 by the user**, who was asked this question directly and answered that
+    `partner1` **should** be eligible — they are concurrently hand-editing `rsvp-create.ts` to seed
+    `partner1.attending = true` on a "yes" answer, which only makes sense if the primary can later
+    step back out. Recorded as ADR W-0007 §Amendment; the code change is **T326**. This resolves
+    *only* the `partner1`-eligibility sub-question — everything else in this escalation (audiences,
+    headcount, server-side validation) is still open and still blocks T325.
+- **PARTIALLY RESOLVED 2026-08-30 by the user** (second ruling, after the `partner1` one above):
+  *"an RSVP is declined when both adults have declined. If only one of them comes the RSVP is still
+  confirmed."* So `status` is the party-level roll-up of the per-adult flags — see ADR W-0007
+  §Amendment2.5, implementation is **T328**. This settles the `status` half. It does **not** settle
+  the audience/headcount half below: knowing that a one-adult-declined party is still `attending`
+  does not say whether the declined adult is still in the `attending-no-menu` audience, or still
+  counted in the couple's headcount tiles. Those stay open and still block T325.
+- **The question for the hub:** when an adult solo-declines, is their seat still counted in
+  `attending`/`attending-no-menu` (and in the guest-list headcount, and in whatever a "final
+  headcount to the caterer" internal milestone reads), or excluded from all of them? Does
+  `partner1` ever get to solo-decline, or is that solely `partner2`'s affordance in this app's
+  two-adult shape? Either answer is workable; it needs to be decided once, centrally, not implied
+  by whichever repo ships a UI for it first.
+- **Interim rule (in force until the hub says otherwise, recorded as in-repo ADR W-0007 in T321):**
+  wedding-web renders and writes the toggle as opaque guest-entered data only. `StatisticService`,
+  the guest-manager row/partner line, the profile modal's partner row, and any other
+  count/audience-adjacent surface are **explicitly not touched** by T321–T324 — that follow-up is
+  T325, and it stays `blocked` until this escalation resolves.
+- **Refs:** hub ADR-0022 (single mutable RSVP, `status`), ADR-0024 (participants), ADR-0030 §8
+  (`attending`/`attending-no-menu` audiences), `GLOSSARY.md` §RSVP / Response, §Audience,
+  §Participant; in-repo ADR W-0002 §"Explicitly not decided", ADR W-0004 (where `attending` first
+  landed on the wire, unused); DS commit `2bf80a927e347422dbbc5a595251aaaa2c704824`
+  (`ui_kits/wedding-app/RSVPEditor.jsx`); `src/app/core/service/statistic.service.ts`;
+  `src/app/core/api/model/{rsvp-dto-adults-partner1,rsvp-dto-adults-partner2-one-of,rsvp-dto-adults-partner2-one-of1,user-profile-list-response-dto-profiles-inner-guest-info-rsvp}.ts`
+
+### T321 — Foundation: `attending` on the draft, pure helpers, in-repo ADR W-0007, i18n keys
+- **Status:** done — implemented as specified below (`partner2`-only), then **immediately widened by
+  T326** after the user resolved T320's `partner1` sub-question the other way. The acceptance
+  criteria below are left as-written for the audit trail; where they say "never `partner1`", read
+  T326 as the correction. Gate at time of completion: `typecheck` clean, `lint` = only the 4 known
+  pre-existing `shared/modal` errors, `gen:api:check` clean, `test` = 7 pre-existing failures on
+  `main` (unrelated: `people`/`rsvp-editor`/`rsvp-edit`/`manage-rsvp-modal` specs, verified present
+  at clean HEAD), all 15 new `rsvp-draft.spec.ts` tests passing.
+- **Owner:** agent (implementer)
+- **Depends on:** —
+- **Why:** Same shape as T264/T283's "foundation" tasks — land the model, the pure logic and the
+  copy in one commit with **no template changes**, so T322–T324 each touch `rsvp-editor.html` for
+  one concern and cannot conflict with each other in `public/i18n/*.json`.
+- **Acceptance:**
+  - `AdultDraft` (`src/app/core/helper/rsvp-draft.ts`) gains an optional `attending?: boolean`,
+    typed exactly as the generated `RsvpDtoAdultsPartner1.attending` / `RsvpDtoAdultsPartner2OneOf.attending`
+    already are — no new type, no hand-written union (Hard rule 15). Document, next to the field,
+    that it is only ever meaningful on `partner2` and only when `partnerHasAccount(partner2)` is
+    true, mirroring the existing doc comment on `AdultDraft.kind`.
+  - `toRsvpDraft`: read `partner2.attending` with an `in` check (`'attending' in rsvp.adults.partner2
+    ? rsvp.adults.partner2.attending : undefined`) — the same pattern ADR W-0004 already established
+    for reading `.id` off the non-discriminating union. **`partner1.attending` is deliberately not
+    read** (stays `undefined` in the draft) — carrying forward a field this repo does not act on
+    would silently resurrect the "dead weight" ADR W-0004 documented.
+  - `fromRsvpDraft`: the `partner2` object-literal branch that already carries an `id` (i.e. builds
+    the `…OneOf` shape) gains `attending: draft.partner2.attending`. The `id`-less branch (`…OneOf1`)
+    is **not** touched — that interface has no `attending` field, so adding one would not compile,
+    which is the point: the wire already refuses this for a plus-one. `partner1`'s object literal is
+    unchanged (still never emits `attending`).
+  - New pure functions, exported from `rsvp-draft.ts` (or a sibling helper file under
+    `src/app/core/helper/`, consistent with where `partnerHasAccount` already lives):
+    - `canDeclineAlone(draft: RsvpDraft, key: PersonKey): boolean` — `true` **only** for
+      `key === 'partner2'` when `draft.partner2` exists and `partnerHasAccount(draft.partner2)` is
+      true. Hard-codes "never `partner1`, never a child" per T320's interim reading — doc comment
+      says so and points at T320.
+    - `isPersonComing(person: { attending?: boolean } | undefined): boolean` — `person?.attending
+      !== false` (absent or `true` ⇒ coming; this is the boolean mirror of the DS's `rsvpComing`).
+    - `attendingCount(draft: RsvpDraft): number` — total party size minus one when `partner2` both
+      `canDeclineAlone` and has explicitly declined (`draft.partner2.attending === false`); the
+      mirror of the DS's `rsvpAttending`, specialised to this app's fixed two-adult-max shape rather
+      than a generic `people[]` walk.
+  - New in-repo **ADR W-0007** (`docs/decisions/W-0007-partner-solo-decline.md`) recording: the
+    scope decision (solo decline is `partner2`-with-account only, never `partner1`, never a child),
+    the pointer to T320 as an open, non-blocking hub question, and the interim rule that
+    count/audience-adjacent surfaces are untouched until T320 resolves (T325).
+  - New i18n keys, all three of `public/i18n/{en,es,fr}.json`, under `rsvp.editor`:
+    - `attendingOfTotal`: `"Attending: {{attending}} of {{total}}"` (existing `total`:
+      `"Total: {{count}}"` is kept, for the equal case)
+    - `person.notAttending`: `"Not attending"`
+    - `attending.sectionLabel`: `"Attending"` (the small uppercase label, matching `person.meal` /
+      `person.allergies`'s register)
+    - `attending.label`: `"{{name}} will be there"` and `attending.fallbackName`: `"They"` — used
+      together the same way `removeDialogMessage()` already composes `fullName(card) ||
+      translate.instant(fallbackKey)`
+    - `attending.hint.coming`: `"Switch this off if they cannot make it — their account, meal and
+      allergy details stay, so they can be switched back any time."`
+    - `attending.hint.declined`: `"They stay on this RSVP and can be switched back to attending
+      right up to the day."`
+    - **No first-person (`I will be there` / "your account…") variant is added.** The DS's
+      `selfCard()` first-person copy is only reachable when the person viewing the card *is* the
+      account it belongs to — in this app that would require the DS's unbuilt `partner` perspective
+      (ADR W-0003 §Decision.3: not added until a call site exists). Adding unreachable copy here
+      repeats the exact mistake that decision already named ("an unreachable perspective means
+      untranslated keys nobody notices"). If/when a `partner` perspective is built, this is a copy
+      addition, not a template change — `attending.label`/`attending.hint.*` become
+      perspective-keyed the same way `party`/`note`/etc. already are.
+  - Unit spec additions (`rsvp-draft.spec.ts`): `canDeclineAlone` — false for `partner1`, false for
+    a child key, false for an absent `partner2`, false for a plus-one `partner2`, true only for an
+    account-holding `partner2`; `isPersonComing` — true when `attending` is `undefined`/`true`,
+    false only when explicitly `false`; `attendingCount` — matches `cards().length` (i.e. `total`)
+    whenever nobody has solo-declined, drops by exactly one when an account-holding `partner2` has
+    `attending: false`, and is unaffected by a plus-one `partner2` or a child ever "declining"
+    (they structurally cannot). `toRsvpDraft`/`fromRsvpDraft` round-trip spec: an account-holding
+    `partner2.attending: false` survives `toRsvpDraft` → `fromRsvpDraft`; a plus-one `partner2`'s
+    serialised output has no `attending` key at all (mirrors the existing "no `kind` on a serialised
+    child" assertion from ADR W-0004's consequences).
+  - `pnpm typecheck && pnpm lint && pnpm test` green; `pnpm gen:api:check` clean (no client
+    regeneration is needed or expected — confirm this explicitly rather than assuming it).
+- **Refs:** in-repo ADR W-0004 (`attending`'s origin, the `in`-check precedent), ADR W-0002
+  ("Explicitly not decided"), new ADR W-0007; T320; DS `RSVPEditor.jsx` `rsvpCanDeclineAlone`,
+  `rsvpComing`, `rsvpAttending` (commit `2bf80a927e347422dbbc5a595251aaaa2c704824`);
+  `src/app/core/helper/{rsvp-draft.ts,partner-account.ts}`; `public/i18n/{en,es,fr}.json`
+
+### T322 — `app-rsvp-editor`: per-person "Attending" toggle (any adult `canDeclineAlone` allows)
+- **Status:** done — verified independently by the coordinator (diff reviewed, gate re-run):
+  `typecheck` clean, `lint` 4 known pre-existing errors only, `test` 395 passed / 7 failed (the same
+  7 pre-existing; +7 new tests all passing). Template gates on `@if (canDeclineAlone(draft(),
+  card.key))` with no key special-casing; `setAttending` writes to `partner1` or `partner2` per
+  `key`. Reuses `button[app-toggle]` (which owns its own `aria-checked`) and the existing
+  `.label.options-label`; one new SCSS class (`.attending-hint`), tokens only.
+- **Owner:** agent (implementer)
+- **Depends on:** T321, **T326**
+- **⚠️ Scope corrected 2026-08-30:** written when solo decline was `partner2`-only; the user has
+  since ruled `partner1` eligible (ADR W-0007 §Amendment, T326). Every "only ever the `partner2`
+  card" phrasing below is superseded. **Gate purely on `canDeclineAlone(draft(), card.key)` and do
+  not special-case any key in the template or the component** — that helper is the single source of
+  truth and T326 has already widened it. `setAttending(key, …)` must therefore write to whichever
+  adult slot `key` names (`partner1` or `partner2`), not to `partner2` unconditionally; guard it the
+  way `setAdultFirstName` already guards, and no-op for a child key. Spec coverage must include the
+  primary card's toggle rendering and working — the opposite of what the bullets below assert.
+- **Why:** The DS's `Toggle` section inside an open card — "Anyone with their own guest account
+  can decline on their own without leaving the RSVP." This repo already has the exact component
+  the DS calls for: `button[app-toggle]` (`src/app/shared/toggle/toggle.ts`), already used
+  elsewhere in this app (`rsvp-create.html`'s "With my partner" / "With children" rows) — no new
+  shared component is needed, this is wiring only.
+- **Acceptance:**
+  - `RsvpEditor`'s `imports` gains `Toggle`.
+  - In `rsvp-editor.html`, inside an open card's body, a new "Attending" block renders **only**
+    when `canDeclineAlone(draft(), card.key)` is true (in this app: only ever the `partner2` card,
+    and only when it's the account-holding branch) — positioned after the existing name-hint /
+    "Open their profile" block and before the "Meal" chips, matching the DS's structural order.
+  - The block: the `attending.sectionLabel` uppercase label, a `button[app-toggle] [checked]="!
+    <declined>" (toggled)="setAttending(card.key, $event)"` whose projected content is
+    `attending.label` translated with `{ name: fullName(card) || translate.instant('rsvp.editor.attending.fallbackName') }`,
+    and a hint paragraph switching between `attending.hint.coming` / `attending.hint.declined` on
+    the current value. Third-person copy only, per T321 (no perspective branch here).
+  - New protected method `setAttending(key: PersonKey, comingChecked: boolean): void` — emits a
+    fresh draft with `partner2.attending` set to `comingChecked` (`true` clears any prior decline;
+    `false` records it). Guard exactly like `setAdultFirstName`/`toggleDiet`: no-op for any key
+    other than `partner2`, and no-op if `!draft.partner2`.
+  - `PersonCard` (or a new computed keyed off it) exposes whatever the template needs to gate the
+    block — reuse `canDeclineAlone(this.draft(), card.key)` directly rather than adding a redundant
+    `PersonCard` field, unless the template ergonomics genuinely need one (judgment call, but don't
+    duplicate the source of truth).
+  - Unit spec additions (`rsvp-editor.spec.ts`): the block is absent for the primary card and for
+    a child card in every fixture; absent for a plus-one `partner2`; present for an account-holding
+    `partner2`, defaulting to checked/"coming" when `attending` is `undefined`; clicking it emits a
+    draft with `partner2.attending: false` and the hint switches to `attending.hint.declined`;
+    clicking again restores `attending: true` (not `undefined` — an explicit `true` is fine, the
+    component does not need to reproduce "absent means yes" on write, only on read via
+    `isPersonComing`). **Re-verify** the existing "Open their profile" suite (the `linkedPartner`
+    fixture, lines ~334–400) still passes unmodified — the new block sits in the same card body and
+    must not perturb its class-name-scoped queries.
+  - `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** T321; DS `RSVPEditor.jsx` L229-235 (the `Toggle` block), L27 (`rsvpComing`);
+  `src/app/shared/rsvp-editor/{rsvp-editor.ts,rsvp-editor.html,rsvp-editor.spec.ts}`;
+  `src/app/shared/toggle/toggle.ts`; precedent `src/app/screens/rsvp-create/rsvp-create.html` L36-48
+
+### T323 — `app-rsvp-editor`: "Not attending" pill and summary line
+- **Status:** done — verified independently by the coordinator (diff reviewed, gate re-run):
+  `typecheck` clean, `lint` 4 known pre-existing errors only, `test` 399 passed / 7 failed (the same
+  7 pre-existing; +4 new tests all passing). One `isDeclinedSolo(card)` gate feeds both the header
+  pill and `summaryFor`'s leading bit, built from `canDeclineAlone` + T322's `isAttending` so it
+  cannot drift from the toggle. `app-pill tone="soft"` — an existing tone (`'soft' | 'accent'`), the
+  component's own default; none invented. No SCSS needed (`.name-row`'s flex+gap already fits a
+  second pill).
+- **Owner:** agent (implementer)
+- **Depends on:** T321, **T326**
+- **⚠️ Scope corrected 2026-08-30:** as T322 — `partner1` is now eligible (ADR W-0007 §Amendment).
+  `isDeclinedSolo(card)` must read `canDeclineAlone(draft(), card.key)` for **any** card and look up
+  that card's own draft person, so the pill and the summary prefix render on the primary card too.
+  The bullets below saying the primary never shows them are superseded.
+- **Why:** DS `summary(p)` prepends `'Not attending'` when `rsvpCanDeclineAlone(p, people) &&
+  !rsvpComing(p)`, and the collapsed card header shows the same text as a second `<app-pill>`
+  beside the role pill (`RSVPEditor.jsx` L141, L161).
+- **Acceptance:**
+  - `summaryFor(card)` (`rsvp-editor.ts`) prepends `translate.instant('rsvp.editor.person.notAttending')`
+    as the **first** bit whenever `canDeclineAlone(this.draft(), card.key) && !isPersonComing(<that
+    person's draft data>)` — ahead of age/diet/allergy bits, matching the DS's ordering.
+  - `rsvp-editor.html`'s card header gains a second `<app-pill tone="soft">` (or whichever tone
+    reads correctly against the existing role pill — check the DS's untoned `<Pill>` against this
+    repo's `app-pill` tone options and pick the one the design spec calls for; do **not** invent a
+    new tone) rendered under the same gate, immediately after the existing role pill.
+  - Both gates read the same underlying condition — factor it into one `protected` method on the
+    component (e.g. `isDeclinedSolo(card: PersonCard): boolean`) built from `canDeclineAlone` +
+    `isPersonComing`, rather than duplicating the boolean expression in two template/TS spots.
+  - Unit spec additions: for an account-holding `partner2` with `attending: false` — the pill
+    renders in the collapsed header with the exact translated text, and `summaryFor` (or the
+    rendered `.summary` text) leads with "Not attending" ahead of any diet/allergy bits. For the
+    same partner2 with `attending: true`/`undefined`, and for every plus-one/child/primary
+    fixture — neither the pill nor the summary prefix renders, regardless of whatever stale
+    `attending` value might exist in the fixture (children/plus-ones can never reach this gate,
+    but a test asserting that explicitly is cheap insurance against a future refactor of the gate).
+  - `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** T321, T322 (shares the same `canDeclineAlone`/`isPersonComing` gate); DS `RSVPEditor.jsx`
+  L139-148 (`summary`), L161 (header pill); `src/app/shared/pill/pill.ts` (tone options);
+  `src/app/shared/rsvp-editor/{rsvp-editor.ts,rsvp-editor.html,rsvp-editor.spec.ts}`
+
+### T324 — `app-rsvp-editor`: party total line — "Attending: X of N" vs "Total: N"
+- **Status:** done — verified independently by the coordinator (diff reviewed, gate re-run):
+  `typecheck` clean, `lint` 4 known pre-existing errors only, `test` 405 passed / 7 failed (the same
+  7 pre-existing; +6 new tests all passing), `gen:api:check` no drift. `.total` span is conditional
+  on `attendingCount(draft()) === total()`; `total()` unchanged (declined members stay on the
+  roster). Completes the port of DS commit `2bf80a9`.
+- **Owner:** agent (implementer)
+- **Depends on:** T321, **T326**
+- **⚠️ Scope corrected 2026-08-30:** `attendingCount` now subtracts for `partner1` too, and can
+  subtract twice (ADR W-0007 §Amendment, T326). Add a spec case for both adults declined in a party
+  with children — e.g. 2 adults + 2 children renders `"Attending: 2 of 4"`. The template change
+  itself is unaffected: it already reads `attendingCount(draft())` and needs no key awareness.
+- **Why:** DS L260: `rsvpAttending(value) === rsvpTotal(value) ? 'Total: ' + rsvpTotal(value) :
+  'Attending: ' + rsvpAttending(value) + ' of ' + rsvpTotal(value)`. Today `rsvp-editor.html` L30
+  always renders `'rsvp.editor.total' | translate: { count: total() }` — unconditionally.
+- **Acceptance:**
+  - `rsvp-editor.html`'s `.party-meta .total` span becomes conditional: when
+    `attendingCount(draft()) === total()`, render the existing `rsvp.editor.total` key unchanged
+    (no visible regression for every party with nobody solo-declined — i.e. every party today);
+    otherwise render the new `rsvp.editor.attendingOfTotal` key with `{ attending:
+    attendingCount(draft()), total: total() }`.
+  - `total()` itself is unchanged (`cards().length` — still the full party size, declined-solo
+    members are **not** removed from the roster, only reflected in the count text and the pill/
+    summary from T323).
+  - Unit spec additions: a party with no `partner2`, or a `partner2` who is a plus-one, or an
+    account-holding `partner2` with `attending` `true`/`undefined` — renders `"Total: N"` exactly as
+    before (regression guard — this is the overwhelmingly common case and must not visibly change).
+    An account-holding `partner2` with `attending: false` — renders `"Attending: {{N-1}} of {{N}}"`
+    with the correct numbers for a party of primary + declined partner (2 → "Attending: 1 of 2")
+    and for primary + declined partner + children (verifies children are never subtracted).
+  - `pnpm typecheck && pnpm lint && pnpm test` green.
+- **Refs:** T321; DS `RSVPEditor.jsx` L258-261; `src/app/shared/rsvp-editor/{rsvp-editor.ts,
+  rsvp-editor.html,rsvp-editor.spec.ts}`; `public/i18n/{en,es,fr}.json` (`rsvp.editor.attendingOfTotal`)
+
+### T325 — [blocked on T320] Reflect solo decline in count/audience-adjacent surfaces
+- **Status:** blocked — do not start before T320 resolves.
+- **Owner:** agent (implementer), decision inherited from T320
+- **Depends on:** T320 (hub answer), T321–T324 (the toggle/pill/total must exist first)
+- **Why:** T320 identified at least three surfaces this repo owns that read RSVP attendance without
+  any awareness a party member can now solo-decline, and deliberately left them untouched pending
+  the hub's answer: `StatisticService.guestStatistics` (guest-list headcount tiles), the
+  guest-manager row / guest-profile-modal partner line (which currently shows account-vs-plus-one
+  status only, per T257/T258, with no attendance state), and anything reading `RsvpListResponseDtoItemsInner`
+  for a per-row party summary. This task is a placeholder for whichever of those the hub's answer
+  says must change — it cannot be scoped in detail until that answer exists.
+- **Acceptance (to be finalised once T320 resolves — do not treat the below as final):**
+  - If the hub rules that a solo-declined adult is excluded from `attending`/`attending-no-menu`
+    and from headcount: `StatisticService` and any admin-facing "N adults attending" surface must
+    stop counting them, sourced from whatever contract shape the hub's answer implies (this may
+    itself require a `wedding-api` contract change and a `pnpm gen:api`, since
+    `UserProfileListResponseDtoProfilesInnerGuestInfoRsvp.adults` is currently an opaque count with
+    no per-adult breakdown — flag that explicitly rather than inventing a client-side workaround).
+  - If the hub rules it is *not* excluded (a display-only affordance with no aggregate effect):
+    this task closes with no code change beyond a one-line note in ADR W-0007 recording the
+    decision and why nothing changed.
+  - Either way: no change here may alter `RsvpDto.status` itself or its meaning — that stays the
+    RSVP's own single source of truth for "did this party answer, and how" (hub ADR-0022).
+- **Refs:** T320 (the question), ADR W-0007 (T321, records the interim rule this task closes out);
+  `src/app/core/service/statistic.service.ts`; `src/app/screens/guest-manager/`;
+  hub ADR-0030 §8
+
+### T326 — Widen solo decline to `partner1` (ADR W-0007 §Amendment)
+- **Status:** done — verified independently by the coordinator (diff reviewed, gate re-run):
+  `typecheck` clean, `lint` 4 known pre-existing `shared/modal` errors only, `test` 388 passed /
+  7 failed — the same 7 pre-existing failures on `main`, no new ones. `canDeclineAlone` now returns
+  `!!draft.partner2` for `partner1`; `attendingCount` subtracts per declined eligible adult;
+  `partner1.attending` is read and written symmetrically with `partner2`.
+- **Owner:** agent (implementer)
+- **Depends on:** T321 (landed the narrow version this widens)
+- **Why:** T320's `partner1` sub-question was put to the user and **resolved 2026-08-30: `partner1`
+  is eligible.** T321 shipped the deliberately narrow `partner2`-only reading hours earlier; this is
+  the correction, recorded in ADR W-0007 §Amendment. Must land **before** T322–T324, so those three
+  build their UI over the final gate rather than over a rule that is about to change under them.
+- **Acceptance:**
+  - `canDeclineAlone(draft, key)` (`src/app/core/helper/rsvp-draft.ts`) becomes the design system's
+    rule applied literally, for this app's two-adult-max shape:
+    - `key === 'partner1'` → `true` **iff** `draft.partner2` exists (the DS's "more than one adult
+      in the party" clause; the primary always has an account, so there is no account check).
+      Deliberately **not** also requiring `partnerHasAccount(draft.partner2)` — see ADR W-0007
+      §Amendment.3, which flags the account-less-plus-one-attending-alone case as a known,
+      accepted-for-now consequence. Say so in the doc comment; do not quietly add the stricter gate.
+    - `key === 'partner2'` → unchanged (`!!draft.partner2 && partnerHasAccount(draft.partner2)`).
+    - any child key → unchanged `false` (structural: no `attending` on `RsvpDtoChildrenInner`).
+  - `toRsvpDraft` now **reads** `rsvp.adults.partner1.attending` into the draft (plain property
+    access — `RsvpDtoAdultsPartner1` is not a union, so no `in` check is needed or wanted here;
+    keep the `in` check for `partner2`, which is a union). Remove T321's "deliberately not read"
+    comment rather than leaving it to contradict the code.
+  - `fromRsvpDraft` now **writes** `attending: draft.partner1.attending` on the `partner1` object
+    literal, symmetrically with the account-holding `partner2` branch.
+  - `attendingCount(draft)` subtracts for **each** adult who both `canDeclineAlone` and has
+    `attending === false` — so a party of two adults who have both solo-declined counts 0 adults
+    (plus any children). Today's implementation subtracts at most one; that is now wrong.
+  - `AdultDraft.attending`'s doc comment is rewritten: it is meaningful on `partner1` (whenever a
+    `partner2` exists) and on an account-holding `partner2`; it does not exist on the wire for a
+    plus-one `partner2` or a child. Delete the "treat it as inert" / ADR W-0004 language — that is
+    what the amendment supersedes.
+  - **Do not touch** `src/app/screens/rsvp-create/rsvp-create.ts`. The user is hand-editing it
+    concurrently to seed `attending` on answer; it is theirs, it is in flux, and it is out of scope
+    here. If T326's changes appear to conflict with it, report that — do not resolve it.
+  - Spec updates (`rsvp-draft.spec.ts`): T321's `it('is false for partner1, even alongside an
+    account-holding partner2')` now asserts the **opposite** and must be flipped, not deleted.
+    Add: `partner1` is *not* eligible when there is no `partner2` (party of one adult); `partner1`
+    *is* eligible when `partner2` is a plus-one (the §Amendment.3 case — assert it explicitly so the
+    known-odd behaviour is pinned and visible, with a comment pointing at the ADR); `attendingCount`
+    drops by two when both adults have declined; round-trip — `partner1.attending: false` now
+    survives `toRsvpDraft` → `fromRsvpDraft` (T321's `it('never reads partner1.attending off the
+    DTO')` is now false and must be replaced, not left passing by coincidence).
+  - `pnpm typecheck && pnpm lint && pnpm test` — typecheck clean, lint no new errors beyond the 4
+    known `shared/modal` ones, and **no new test failures beyond the 7 pre-existing on `main`**
+    (`people`/`rsvp-editor`/`rsvp-edit`/`manage-rsvp-modal`). Report the counts, do not claim green.
+- **Refs:** ADR W-0007 §Amendment (the ruling); T320 (`partner1` sub-question, now resolved);
+  T321 (what this widens); DS `RSVPEditor.jsx` `rsvpCanDeclineAlone` (commit `2bf80a9`);
+  `src/app/core/helper/rsvp-draft.ts`, `rsvp-draft.spec.ts`
+
+### T327 — Restore the partner "Open their profile" jump in the `owner` perspective + repair stale spec doubles
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** —
+- **Why:** ADR W-0007 §Amendment2.6 — the user ruled that **every** edit to an account-holding adult
+  goes through their profile, never the RSVP editor. That makes the "Open their profile" jump the
+  *only* route to a locked name/nickname, so it must be reachable wherever a locked adult card
+  renders. It currently is not: `canOpenProfile` (`rsvp-editor.ts` L431-436) reads
+  `perspective() === 'couple' || card.accountId === loginService.currentUserClaims()?.sub`. The
+  self-clause was evidently added so the primary (always `nameLocked`) can reach their own profile —
+  correct and wanted — but it **replaced** T318's `owner`-perspective clause instead of joining it,
+  so a guest can no longer open their *partner's* profile from their own RSVP. That is precisely
+  what commit `da89aeb` ("generalize profile editing to allow guests to edit linked partner
+  profiles") and T318/T319 shipped, and T318's own test now fails.
+- **This is also the whole of the 7-failure red baseline on `main`.** All 7 trace to one incomplete
+  refactor: production code moved to `LoginService.currentUserClaims()` (which does exist,
+  `login.service.ts` L283) while the spec doubles were not updated to implement it.
+- **Acceptance:**
+  - `canOpenProfile` returns `true` for: the `couple` perspective (any account-holding card,
+    unchanged); **and** any card whose `accountId` is set when the perspective is `owner` — which
+    covers both the viewer's own card and their linked partner's. Keep the self-match clause or
+    fold it into the `owner` clause, whichever reads cleaner, but do **not** regress the couple path
+    and do **not** offer the jump for a plus-one or child (no `accountId` — the existing
+    `!!card.accountId` gate in `requestProfile` and the template already handle this; verify).
+  - Spec doubles for `LoginService` in `people.spec.ts` and `rsvp-editor.spec.ts` implement
+    `currentUserClaims()` returning a shaped `AppJwtClaimsDto | undefined`. Do not weaken the
+    assertions to make them pass — the 3 `people.spec.ts` nickname-search tests and the 2
+    `rsvp-editor.spec.ts` tests assert real behaviour and must pass **as written**, except:
+  - `it('offers an editable, 30-character-clamped nickname field for the primary guest')`
+    (`rsvp-editor.spec.ts` ~L254, from T299) asserts the **opposite** of ADR W-0007 §Amendment2.6 —
+    the primary is `nameLocked`, so their nickname renders as the read-only `.locked-nickname-block`,
+    not an `input`. Flip it to assert the locked block (mirroring whatever the partner-with-account
+    case already asserts), and note the ADR in the test name. Do not delete it.
+  - Investigate and fix `rsvp-edit.spec.ts` (1) and `manage-rsvp-modal.spec.ts` (1) — the latter
+    ("discards unsaved edits when the couple jumps to the partner profile") depends on the jump
+    firing at all, so it may resolve with `canOpenProfile`; confirm rather than assume.
+  - **`pnpm test` reaches 0 failures.** This task's whole point is a green baseline; report the
+    count. `pnpm typecheck` clean; `pnpm lint` no new errors beyond the 4 known `shared/modal` ones.
+- **Refs:** ADR W-0007 §Amendment2.6; T318, T319 (what regressed), commit `da89aeb`;
+  `src/app/shared/rsvp-editor/rsvp-editor.ts` (`canOpenProfile` L431-436, `cards()` `nameLocked`
+  L206/L220); `src/app/core/service/login.service.ts` L283; `people.spec.ts`, `rsvp-editor.spec.ts`,
+  `rsvp-edit.spec.ts`, `guest-manager/modal/manage-rsvp-modal.spec.ts`
+
+### T328 — Derive `RsvpDto.status` from the per-adult `attending` flags
+- **Status:** todo
+- **Owner:** agent (implementer) — but see the open API question below before starting
+- **Depends on:** T321–T326 (the flags and the UI exist); T327 (green baseline) strongly preferred
+- **Why:** ADR W-0007 §Amendment2.5, decided by the user: **an RSVP is `declined` when every
+  eligible adult has declined; if at least one adult still comes it stays confirmed.** `status` is
+  the party-level roll-up of the per-adult flags, not an independent axis. Today nothing enforces
+  this — T322's toggle can drive `attendingCount` to 0 adults while `status` stays `attending`,
+  which §Amendment2.5 defines as an inconsistent state.
+- **Acceptance (design first — do not code before the open question below is settled):**
+  - A pure helper alongside the others in `src/app/core/helper/rsvp-draft.ts` deriving the implied
+    status from a draft: every eligible adult declined ⇒ `declined`; otherwise the existing
+    `status` stands. Children never affect it (they cannot decline; a party of declined adults plus
+    children is still a declined party — confirm this reading with the user if it feels wrong).
+  - Decide and document **where** the roll-up is applied: on write in the editor's own
+    `setAttending`, or at the screen/save boundary (`rsvp-edit`, `manage-rsvp-modal`). Prefer the
+    save boundary — the editor is a controlled component over a draft and silently rewriting
+    `status` mid-edit would surprise, and would fight the explicit status control the editor already
+    renders when `showStatus` is true.
+  - The inverse must also hold or be explicitly ruled out: if a `declined` party re-toggles one
+    adult to attending, does `status` flip back to `attending`? §Amendment2.5's wording ("if only
+    one of them comes the RSVP is still confirmed") implies yes. Confirm with the user; do not
+    guess.
+  - Unit specs for every branch, including the both-declined-plus-children case.
+- **OPEN — ask before implementing:** does the **API** enforce this roll-up, or is the client the
+  only thing maintaining the invariant? Per CLAUDE.md hard rule 17 this bundle is not redeployed
+  with the API, so a client-only invariant means an older bundle can write an inconsistent state
+  the newer API accepts. This is the natural companion to T320's still-open audience/headcount half
+  and probably wants answering in the same pass, in `wedding-api`.
+- **Refs:** ADR W-0007 §Amendment2.5; T320 (still-open audience/headcount half); hub ADR-0022
+  (`status` as the RSVP's single source of truth); `src/app/core/helper/rsvp-draft.ts`

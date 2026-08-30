@@ -23,6 +23,9 @@ import {
   RsvpDtoAdultsPartner1Options,
   TranslateLanguageService,
   WeddingConfigResponseDto,
+  attendingCount,
+  canDeclineAlone,
+  isPersonComing,
   partnerHasAccount,
   toggleOptionId,
   withPersonOptions,
@@ -33,6 +36,7 @@ import { ConfirmDialog } from '@app/shared/confirm-dialog/confirm-dialog';
 import { Pill } from '@app/shared/pill/pill';
 import { TextInput } from '@app/shared/input/input';
 import { TextareaInput } from '@app/shared/textarea/textarea';
+import { Toggle } from '@app/shared/toggle/toggle';
 
 /**
  * Who is filling this editor in. Pure presentation — it indexes the
@@ -104,7 +108,7 @@ interface PersonCard {
   selector: 'app-rsvp-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Avatar, ChoiceCard, ConfirmDialog, Pill, TextInput, TextareaInput, TranslatePipe],
+  imports: [Avatar, ChoiceCard, ConfirmDialog, Pill, TextInput, TextareaInput, Toggle, TranslatePipe],
   templateUrl: './rsvp-editor.html',
   styleUrl: './rsvp-editor.scss',
 })
@@ -237,6 +241,11 @@ export class RsvpEditor {
 
   protected readonly total = computed(() => this.cards().length);
 
+  /** Exposed so the template can read the solo-decline-aware party total
+   *  directly off the single source of truth, the same pattern as
+   *  `canDeclineAlone` above (T324 acceptance). */
+  protected readonly attendingCount = attendingCount;
+
   protected readonly canAddPartner = computed(() => !this.draft().partner2);
 
   protected readonly noteText = computed(() => this.draft().partner1.options.comments ?? '');
@@ -279,9 +288,15 @@ export class RsvpEditor {
     return (this.fullName(card) || '?').charAt(0).toUpperCase();
   }
 
-  /** Age · diets · allergies, else "No meal details yet" (DS `summary`). */
+  /** Age · diets · allergies, else "No meal details yet" (DS `summary`). The
+   *  "Not attending" bit — when `isDeclinedSolo(card)` — leads, ahead of every
+   *  other bit, matching the DS's `summary(p)` ordering (`RSVPEditor.jsx`
+   *  L139-148). */
   protected summaryFor(card: PersonCard): string {
     const bits: string[] = [];
+    if (this.isDeclinedSolo(card)) {
+      bits.push(this.translate.instant('rsvp.editor.person.notAttending'));
+    }
     if (card.role === 'child' && card.age) {
       bits.push(this.translate.instant('rsvp.editor.person.yearsOld', { age: card.age }));
     }
@@ -311,6 +326,59 @@ export class RsvpEditor {
 
   protected setStatus(status: RsvpDto.StatusEnum): void {
     this.draftChange.emit({ ...this.draft(), status });
+  }
+
+  // ── per-person "Attending" toggle (solo decline, ADR W-0007) ────────────
+
+  /** Exposed so the template can gate the block directly off the single
+   *  source of truth, rather than a redundant `PersonCard` field
+   *  (T322 acceptance). */
+  protected readonly canDeclineAlone = canDeclineAlone;
+
+  /** Is this card's own person currently coming? Reads straight off the
+   *  draft signal so it never drifts from `setAttending`'s write. A child
+   *  key never reaches the template gate (`canDeclineAlone` is structurally
+   *  `false` for one), so the fallback here is inert. */
+  protected isAttending(card: PersonCard): boolean {
+    const draft = this.draft();
+    if (card.key === 'partner1') return isPersonComing(draft.partner1);
+    if (card.key === 'partner2') return isPersonComing(draft.partner2);
+    return true;
+  }
+
+  /**
+   * Has this card's own person solo-declined? The single gate for **both**
+   * the collapsed header's "Not attending" pill and `summaryFor`'s prefix
+   * (T323 acceptance) — built from the same `canDeclineAlone`/`isAttending`
+   * this card's own toggle already reads, so it can never drift from the
+   * toggle's own state. No key special-casing: `canDeclineAlone` (ADR W-0007
+   * §Amendment) already covers `partner1` and `partner2` alike, and is
+   * structurally `false` for a child, so `isAttending`'s child fallback of
+   * `true` never matters here.
+   */
+  protected isDeclinedSolo(card: PersonCard): boolean {
+    return this.canDeclineAlone(this.draft(), card.key) && !this.isAttending(card);
+  }
+
+  /** `attending.label`, third-person copy with the card's own name — or the
+   *  DS's fallback ("They") when it has none yet (T321: no perspective
+   *  branch here, unlike the DS's `selfCard` first-person copy). */
+  protected attendingLabel(card: PersonCard): string {
+    const name = this.fullName(card) || this.translate.instant('rsvp.editor.attending.fallbackName');
+    return this.translate.instant('rsvp.editor.attending.label', { name });
+  }
+
+  /** Writes to whichever adult slot `key` names — `partner1` or `partner2`,
+   *  guarded exactly like `setAdultFirstName`: a no-op for a child key, and
+   *  a no-op for `partner2` when the party doesn't have one. */
+  protected setAttending(key: PersonKey, comingChecked: boolean): void {
+    const draft = this.draft();
+    if (key === 'partner1') {
+      this.draftChange.emit({ ...draft, partner1: { ...draft.partner1, attending: comingChecked } });
+      return;
+    }
+    if (key !== 'partner2' || !draft.partner2) return;
+    this.draftChange.emit({ ...draft, partner2: { ...draft.partner2, attending: comingChecked } });
   }
 
   // ── names ──────────────────────────────────────────────────────────────

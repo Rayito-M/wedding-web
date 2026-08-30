@@ -44,6 +44,21 @@ export interface AdultDraft {
    * and `fromRsvpDraft` never emits one for it (ADR W-0004 §Decision.2).
    */
   kind?: string;
+  /**
+   * Independent decline flag — typed exactly as the generated
+   * `RsvpDtoAdultsPartner1.attending` / `RsvpDtoAdultsPartner2OneOf.attending`
+   * already are (both plain `boolean | undefined`; CLAUDE.md Hard rule 15).
+   * Meaningful on `partner1` whenever a `partner2` exists, and on `partner2`
+   * whenever `partnerHasAccount(partner2)` is `true` (ADR W-0007 §Amendment,
+   * superseding the original §Decision.1/.2 read): any adult with their own
+   * account, in a party of more than one adult, can decline independently of
+   * the RSVP's own `status`. It does not exist at all for a plus-one
+   * `partner2` or for a child — the contract has no `attending` field on
+   * `RsvpDtoAdultsPartner2OneOf1`/`RsvpDtoChildrenInner` — which is why
+   * `canDeclineAlone()` below still gates structurally on which slot the key
+   * names rather than deriving eligibility from the DTO shape alone.
+   */
+  attending?: boolean;
 }
 
 /** Age is kept as free text while editing so an empty field reads as empty,
@@ -83,6 +98,9 @@ export function toRsvpDraft(rsvp: RsvpDto): RsvpDraft {
       lastName: rsvp.adults.partner1.lastName,
       nickname: rsvp.adults.partner1.nickname,
       options: rsvp.adults.partner1.options ?? {},
+      // `RsvpDtoAdultsPartner1` is not a union — `attending` is a plain
+      // optional field, so no `in` check is needed (ADR W-0007 §Amendment).
+      attending: rsvp.adults.partner1.attending,
     },
     partner2: rsvp.adults.partner2
       ? {
@@ -92,6 +110,11 @@ export function toRsvpDraft(rsvp: RsvpDto): RsvpDraft {
           nickname: rsvp.adults.partner2.nickname,
           options: rsvp.adults.partner2.options ?? {},
           kind: rsvp.adults.partner2.kind,
+          // `attending` only exists on the `…OneOf` (account-holding) member of
+          // the union; the plus-one `…OneOf1` member has no such field at all,
+          // so the `in` check (not plain access, unlike partner1 above) is
+          // still needed here.
+          attending: 'attending' in rsvp.adults.partner2 ? rsvp.adults.partner2.attending : undefined,
         }
       : undefined,
     children: (rsvp.children ?? []).map((c) => ({
@@ -110,6 +133,7 @@ export function fromRsvpDraft(draft: RsvpDraft): Partial<RsvpDto> {
     lastName: draft.partner1.lastName.trim(),
     nickname: draft.partner1.nickname?.trim() || undefined,
     options: draft.partner1.options,
+    attending: draft.partner1.attending,
   };
   const partner2: RsvpDtoAdultsPartner2 | undefined = draft.partner2
     ? draft.partner2.id
@@ -120,6 +144,7 @@ export function fromRsvpDraft(draft: RsvpDraft): Partial<RsvpDto> {
           nickname: draft.partner2.nickname?.trim() || undefined,
           options: draft.partner2.options,
           kind: draft.partner2.kind as string,
+          attending: draft.partner2.attending,
         }
       : {
           firstName: draft.partner2.firstName.trim(),
@@ -197,4 +222,65 @@ export function unnamedAdultCount(draft: RsvpDraft): number {
   const adults: AdultDraft[] = [draft.partner1];
   if (draft.partner2 && !partnerHasAccount(draft.partner2)) adults.push(draft.partner2);
   return adults.filter((a) => !a.firstName.trim() || !a.lastName.trim()).length;
+}
+
+/**
+ * Can this party member decline independently, leaving the RSVP's own
+ * `status` and the rest of the party untouched?
+ *
+ * The design system's `rsvpCanDeclineAlone(p, people)` rule ("any adult with
+ * their own account, in a party of more than one adult") applied literally to
+ * this app's fixed two-adult-max shape (ADR W-0007 §Amendment, superseding
+ * the original §Decision.1/.2 narrowing to `partner2`-only):
+ * - `partner1` → `true` whenever `draft.partner2` exists. The primary always
+ *   has an account, so there is no separate account check for this branch —
+ *   **deliberately not** also requiring `partnerHasAccount(draft.partner2)`.
+ *   This means `partner1` is eligible even when the only other adult is an
+ *   account-less plus-one, which produces an odd state (that plus-one
+ *   attending alone with no way to reach the app themselves). ADR W-0007
+ *   §Amendment.3 accepts this knowingly as a consequence of following the DS
+ *   rule literally, flagged to revisit if it proves wrong in practice — do
+ *   not quietly add the stricter gate here.
+ * - `partner2` → unchanged: `draft.partner2` exists and
+ *   `partnerHasAccount(draft.partner2)` is `true`.
+ * - any child key → unchanged `false`, structurally: `RsvpDtoChildrenInner`
+ *   has no `attending` field to toggle.
+ */
+export function canDeclineAlone(draft: RsvpDraft, key: PersonKey): boolean {
+  if (key === 'partner1') return !!draft.partner2;
+  if (key === 'partner2') return !!draft.partner2 && partnerHasAccount(draft.partner2);
+  return false;
+}
+
+/**
+ * Is this person coming? Absent or explicit `true` both mean "yes" — only an
+ * explicit `false` means "no". Boolean mirror of the design system's
+ * `rsvpComing(p)` (`p.attending !== 'no'`), specialised to this app's
+ * `boolean | undefined` wire representation instead of the DS's
+ * `'yes' | 'no'` string.
+ */
+export function isPersonComing(person: { attending?: boolean } | undefined): boolean {
+  return person?.attending !== false;
+}
+
+/**
+ * How many of the party are attending, once independent solo declines are
+ * accounted for?
+ *
+ * Mirror of the design system's `rsvpAttending(v)`, specialised to this
+ * app's fixed two-adult-max shape (`partner1` + optional `partner2` +
+ * `children[]`) rather than a generic `people[]` walk: the total party size
+ * (`1 + (partner2 ? 1 : 0) + children.length`, matching the editor's own
+ * `total` computed) minus one for **each** adult who both `canDeclineAlone`
+ * and has explicitly declined (`attending === false`) — so a party of two
+ * adults who have both solo-declined counts 0 adults (plus any children).
+ * A plus-one `partner2` or a child can never reduce this count — they
+ * structurally cannot decline alone (see `canDeclineAlone` above).
+ */
+export function attendingCount(draft: RsvpDraft): number {
+  const total = 1 + (draft.partner2 ? 1 : 0) + draft.children.length;
+  const declinedAdults = (['partner1', 'partner2'] as const).filter(
+    (key) => canDeclineAlone(draft, key) && draft[key]?.attending === false,
+  ).length;
+  return total - declinedAdults;
 }

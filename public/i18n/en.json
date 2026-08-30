@@ -206,6 +206,7 @@
         "declined": "Sadly no"
       },
       "total": "Total: {{count}}",
+      "attendingOfTotal": "Attending: {{attending}} of {{total}}",
       "kind": {
         "partner": "Partner",
         "child": "Child"
@@ -224,10 +225,20 @@
         "nicknamePlaceholderChild": "e.g. Teo",
         "agePlaceholder": "Age",
         "openProfile": "Open their profile",
+        "notAttending": "Not attending",
         "customAllergy": {
           "label": "Anything else?",
           "placeholder": "Type an allergy and press Enter…",
           "remove": "Remove {{name}}"
+        }
+      },
+      "attending": {
+        "sectionLabel": "Attending",
+        "label": "{{name}} will be there",
+        "fallbackName": "They",
+        "hint": {
+          "coming": "Switch this off if they cannot make it — their account, meal and allergy details stay, so they can be switched back any time.",
+          "declined": "They stay on this RSVP and can be switched back to attending right up to the day."
         }
       },
       "remove": {

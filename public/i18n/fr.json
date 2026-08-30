@@ -203,6 +203,7 @@
         "declined": "Hélas non"
       },
       "total": "Total : {{count}}",
+      "attendingOfTotal": "Présents : {{attending}} sur {{total}}",
       "kind": {
         "partner": "Partenaire",
         "child": "Enfant"
@@ -221,10 +222,20 @@
         "nicknamePlaceholderChild": "par ex. Teo",
         "agePlaceholder": "Âge",
         "openProfile": "Ouvrir son profil",
+        "notAttending": "N'assistera pas",
         "customAllergy": {
           "label": "Autre chose ?",
           "placeholder": "Saisissez une allergie et appuyez sur Entrée…",
           "remove": "Retirer {{name}}"
+        }
+      },
+      "attending": {
+        "sectionLabel": "Présence",
+        "label": "{{name}} sera là",
+        "fallbackName": "Cette personne",
+        "hint": {
+          "coming": "Désactivez ceci si cette personne ne peut pas venir — son compte, son repas et ses allergies restent enregistrés, elle peut être réactivée à tout moment.",
+          "declined": "Elle reste sur cette confirmation et peut redevenir présente jusqu'au jour J."
         }
       },
       "remove": {

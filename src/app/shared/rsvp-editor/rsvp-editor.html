@@ -27,7 +27,16 @@
 
 <div class="party-meta">
   <span class="label">{{ perspectiveKey('partyMeta') | translate }}</span>
-  <span class="total">{{ 'rsvp.editor.total' | translate: { count: total() } }}</span>
+  <span class="total">
+    @if (attendingCount(draft()) === total()) {
+      {{ 'rsvp.editor.total' | translate: { count: total() } }}
+    } @else {
+      {{
+        'rsvp.editor.attendingOfTotal'
+          | translate: { attending: attendingCount(draft()), total: total() }
+      }}
+    }
+  </span>
 </div>
 
 <div class="cards">
@@ -49,6 +58,9 @@
             <app-pill [tone]="card.role === 'primary' ? 'accent' : 'soft'">
               {{ card.roleKey | translate }}
             </app-pill>
+            @if (isDeclinedSolo(card)) {
+              <app-pill tone="soft">{{ 'rsvp.editor.person.notAttending' | translate }}</app-pill>
+            }
           </span>
           <span class="summary">{{ summaryFor(card) }}</span>
         </span>
@@ -158,6 +170,27 @@
                   {{ 'rsvp.editor.person.openProfile' | translate }}
                 </button>
               }
+            </p>
+          }
+
+          <!-- Anyone with their own guest account, in a party of more than one
+               adult, can decline independently of the RSVP's own answer (ADR
+               W-0007 §Amendment) — never a child, structurally. -->
+          @if (canDeclineAlone(draft(), card.key)) {
+            <div class="label options-label">{{ 'rsvp.editor.attending.sectionLabel' | translate }}</div>
+            <button
+              type="button"
+              app-toggle
+              [checked]="isAttending(card)"
+              (toggled)="setAttending(card.key, $event)"
+            >
+              {{ attendingLabel(card) }}
+            </button>
+            <p class="attending-hint">
+              {{
+                (isAttending(card) ? 'rsvp.editor.attending.hint.coming' : 'rsvp.editor.attending.hint.declined')
+                  | translate
+              }}
             </p>
           }
 

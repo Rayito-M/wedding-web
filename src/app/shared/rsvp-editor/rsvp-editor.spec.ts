@@ -33,9 +33,21 @@ const TRANSLATIONS = {
     editor: {
       attendingLabel: 'Attending?',
       total: 'Total: {{count}}',
+      attendingOfTotal: 'Attending: {{attending}} of {{total}}',
       choice: { attending: 'With joy', pending: 'Pending', declined: 'Sadly no' },
+      attending: {
+        sectionLabel: 'Attending',
+        label: '{{name}} will be there',
+        fallbackName: 'They',
+        hint: {
+          coming:
+            'Switch this off if they cannot make it — their account, meal and allergy details stay, so they can be switched back any time.',
+          declined: 'They stay on this RSVP and can be switched back to attending right up to the day.',
+        },
+      },
       person: {
         openProfile: 'Open their profile',
+        notAttending: 'Not attending',
         nicknameLabel: 'Nickname',
         nicknamePlaceholder: 'e.g. Ju',
         nicknamePlaceholderChild: 'e.g. Teo',
@@ -410,6 +422,261 @@ describe('RsvpEditor', () => {
       expect(ids).toEqual(['guest-2']);
       // A jump is not an edit: the draft is untouched.
       expect(emitted.length).toBe(0);
+    });
+  });
+
+  describe('per-person "Attending" toggle (T322, ADR W-0007 §Amendment)', () => {
+    const accountPartner = {
+      partner2: {
+        id: 'guest-2',
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        options: {},
+        kind: 'guest',
+      },
+    };
+    /** Plus-one: no account, so never eligible itself — but its mere presence
+     *  (a party of more than one adult) is what makes the *primary* eligible
+     *  (ADR W-0007 §Amendment.1). */
+    const plusOnePartner = {
+      partner2: {
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        options: {},
+        kind: 'plus-one',
+      },
+    };
+
+    function toggle(): HTMLButtonElement | null {
+      return query<HTMLButtonElement>('.card-body button[app-toggle]');
+    }
+
+    it('is absent for the primary card when the party has no partner2', async () => {
+      await create(draftWith());
+      expect(toggle()).toBeNull();
+    });
+
+    it('is absent for a child card, even when a partner2 makes the rest of the party eligible', async () => {
+      await create(
+        draftWith({ ...accountPartner, children: [{ firstName: 'Kit', age: '7', options: {} }] }),
+      );
+      // partner1, partner2, child — the child card is index 2.
+      queryAll<HTMLButtonElement>('.card-head')[2].click();
+      await fixture.whenStable();
+      expect(toggle()).toBeNull();
+    });
+
+    it('is absent for a plus-one partner2 (no account of their own)', async () => {
+      await create(draftWith(plusOnePartner));
+      queryAll<HTMLButtonElement>('.card-head')[1].click();
+      await fixture.whenStable();
+      expect(toggle()).toBeNull();
+    });
+
+    it('is present on the primary card whenever a partner2 exists — the ADR W-0007 amendment: partner1 is eligible too, even next to an account-less plus-one', async () => {
+      // partner1's card is open by default.
+      await create(draftWith(plusOnePartner));
+      const t = toggle();
+      expect(t).not.toBeNull();
+      expect(t!.getAttribute('aria-checked')).toBe('true'); // undefined attending reads as "coming"
+    });
+
+    it('is present for an account-holding partner2, defaulting to checked/"coming" when attending is undefined', async () => {
+      await create(draftWith(accountPartner));
+      queryAll<HTMLButtonElement>('.card-head')[1].click();
+      await fixture.whenStable();
+
+      const t = toggle();
+      expect(t).not.toBeNull();
+      expect(t!.getAttribute('aria-checked')).toBe('true');
+      expect(t!.textContent?.trim()).toBe('Grace Hopper will be there');
+      expect(query('.attending-hint')?.textContent?.trim()).toBe(
+        'Switch this off if they cannot make it — their account, meal and allergy details stay, so they can be switched back any time.',
+      );
+    });
+
+    it('clicking emits partner2.attending: false and switches the hint to "declined"; clicking again restores true', async () => {
+      await create(draftWith(accountPartner));
+      queryAll<HTMLButtonElement>('.card-head')[1].click();
+      await fixture.whenStable();
+
+      toggle()!.click();
+      await fixture.whenStable();
+
+      expect(emitted[emitted.length - 1].partner2?.attending).toBe(false);
+      expect(toggle()!.getAttribute('aria-checked')).toBe('false');
+      expect(query('.attending-hint')?.textContent?.trim()).toBe(
+        'They stay on this RSVP and can be switched back to attending right up to the day.',
+      );
+
+      toggle()!.click();
+      await fixture.whenStable();
+
+      expect(emitted[emitted.length - 1].partner2?.attending).toBe(true);
+      expect(toggle()!.getAttribute('aria-checked')).toBe('true');
+    });
+
+    it('writes to partner1, not partner2, when the primary declines alone', async () => {
+      await create(draftWith(plusOnePartner)); // partner1's card is open by default
+      toggle()!.click();
+      await fixture.whenStable();
+
+      expect(emitted[emitted.length - 1].partner1.attending).toBe(false);
+      expect(emitted[emitted.length - 1].partner2?.attending).toBeUndefined();
+    });
+  });
+
+  describe('"Not attending" pill and summary prefix (T323, ADR W-0007 §Amendment)', () => {
+    const accountPartner = {
+      partner2: {
+        id: 'guest-2',
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        options: {},
+        kind: 'guest',
+      },
+    };
+    const plusOnePartner = {
+      partner2: {
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        options: {},
+        kind: 'plus-one',
+      },
+    };
+
+    it('renders the pill with the exact translated text and leads the summary with it, for an account-holding partner2 who declined', async () => {
+      await create(draftWith({ ...accountPartner, partner2: { ...accountPartner.partner2, attending: false } }));
+      const heads = queryAll<HTMLButtonElement>('.card-head');
+      const partnerPills = heads[1].querySelectorAll('app-pill');
+
+      expect(partnerPills.length).toBe(2);
+      expect(partnerPills[1].textContent?.trim()).toBe('Not attending');
+      expect(heads[1].querySelector('.summary')?.textContent?.trim()).toBe('Not attending');
+    });
+
+    it('omits the pill and the summary prefix for the same partner2 with attending true or undefined', async () => {
+      await create(draftWith({ ...accountPartner, partner2: { ...accountPartner.partner2, attending: true } }));
+      let heads = queryAll<HTMLButtonElement>('.card-head');
+      expect(heads[1].querySelectorAll('app-pill').length).toBe(1);
+      expect(heads[1].querySelector('.summary')?.textContent?.trim()).not.toContain('Not attending');
+
+      await create(draftWith(accountPartner)); // attending: undefined
+      heads = queryAll<HTMLButtonElement>('.card-head');
+      expect(heads[1].querySelectorAll('app-pill').length).toBe(1);
+      expect(heads[1].querySelector('.summary')?.textContent?.trim()).not.toContain('Not attending');
+    });
+
+    it('renders the pill and summary prefix on the primary card too, when partner1 declines alone', async () => {
+      await create(
+        draftWith({
+          ...plusOnePartner,
+          partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: false },
+        }),
+      );
+      const heads = queryAll<HTMLButtonElement>('.card-head');
+      const primaryPills = heads[0].querySelectorAll('app-pill');
+
+      expect(primaryPills.length).toBe(2);
+      expect(primaryPills[1].textContent?.trim()).toBe('Not attending');
+      expect(heads[0].querySelector('.summary')?.textContent?.trim()).toBe('Not attending');
+    });
+
+    it('never renders the pill or summary prefix for a plus-one, a child, or the primary/partner2 without an eligible partner2 — regardless of a stale attending value', async () => {
+      // Plus-one partner2, even with a stale attending: false — structurally ineligible.
+      await create(draftWith({ ...plusOnePartner, partner2: { ...plusOnePartner.partner2, attending: false } }));
+      let heads = queryAll<HTMLButtonElement>('.card-head');
+      expect(heads[1].querySelectorAll('app-pill').length).toBe(1);
+
+      // Child with a stale, structurally-impossible attending-like field — never eligible.
+      await create(
+        draftWith({
+          ...accountPartner,
+          partner2: { ...accountPartner.partner2, attending: false },
+          children: [{ firstName: 'Kit', age: '7', options: {} }],
+        }),
+      );
+      heads = queryAll<HTMLButtonElement>('.card-head');
+      expect(heads[2].querySelectorAll('app-pill').length).toBe(1); // role pill only — no "not attending" pill for a child
+
+      // Primary alone, no partner2 at all — not eligible to decline solo.
+      await create(draftWith());
+      heads = queryAll<HTMLButtonElement>('.card-head');
+      expect(heads[0].querySelectorAll('app-pill').length).toBe(1);
+    });
+  });
+
+  describe('party total line — "Attending: X of N" vs "Total: N" (T324, ADR W-0007 §Amendment)', () => {
+    const accountPartner = {
+      partner2: {
+        id: 'guest-2',
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        options: {},
+        kind: 'guest',
+      },
+    };
+    const plusOnePartner = {
+      partner2: {
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        options: {},
+        kind: 'plus-one',
+      },
+    };
+
+    it('renders "Total: N" for a party with no partner2 — the overwhelmingly common case, no regression', async () => {
+      await create(draftWith());
+      expect(query('.total')?.textContent?.trim()).toBe('Total: 1');
+    });
+
+    it('renders "Total: N" for a party with a plus-one partner2, who can never solo-decline', async () => {
+      await create(draftWith(plusOnePartner));
+      expect(query('.total')?.textContent?.trim()).toBe('Total: 2');
+    });
+
+    it('renders "Total: N" for an account-holding partner2 with attending true or undefined', async () => {
+      await create(draftWith({ ...accountPartner, partner2: { ...accountPartner.partner2, attending: true } }));
+      expect(query('.total')?.textContent?.trim()).toBe('Total: 2');
+
+      await create(draftWith(accountPartner)); // attending: undefined
+      expect(query('.total')?.textContent?.trim()).toBe('Total: 2');
+    });
+
+    it('renders "Attending: N-1 of N" for a party of primary + declined account-holding partner2', async () => {
+      await create(
+        draftWith({ ...accountPartner, partner2: { ...accountPartner.partner2, attending: false } }),
+      );
+      expect(query('.total')?.textContent?.trim()).toBe('Attending: 1 of 2');
+    });
+
+    it('renders "Attending: N-1 of N" for primary + declined partner2 + children, verifying children are never subtracted', async () => {
+      await create(
+        draftWith({
+          ...accountPartner,
+          partner2: { ...accountPartner.partner2, attending: false },
+          children: [
+            { firstName: 'Kit', age: '7', options: {} },
+            { firstName: 'Rex', age: '4', options: {} },
+          ],
+        }),
+      );
+      expect(query('.total')?.textContent?.trim()).toBe('Attending: 3 of 4');
+    });
+
+    it('renders "Attending: N-2 of N" when both partner1 and partner2 solo-decline, in a party with children (ADR W-0007 §Amendment — attendingCount can subtract twice)', async () => {
+      await create(
+        draftWith({
+          ...accountPartner,
+          partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: false },
+          partner2: { ...accountPartner.partner2, attending: false },
+          children: [
+            { firstName: 'Kit', age: '7', options: {} },
+            { firstName: 'Rex', age: '4', options: {} },
+          ],
+        }),
+      );
+      expect(query('.total')?.textContent?.trim()).toBe('Attending: 2 of 4');
     });
   });
 

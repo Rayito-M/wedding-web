@@ -3,7 +3,10 @@ import {
   AdultDraft,
   ChildDraft,
   RsvpDraft,
+  attendingCount,
+  canDeclineAlone,
   fromRsvpDraft,
+  isPersonComing,
   toRsvpDraft,
   unnamedAdultCount,
 } from './rsvp-draft';
@@ -274,5 +277,145 @@ describe('declining never prunes the party (ADR W-0004 §Decision.6)', () => {
     expect(attendingAgainDraft.status).toBe('attending');
     expect(attendingAgainDraft.partner2).toEqual(attendingDraft.partner2);
     expect(attendingAgainDraft.children).toEqual(attendingDraft.children);
+  });
+});
+
+describe('canDeclineAlone (ADR W-0007 §Amendment, T326)', () => {
+  it('is true for partner1 alongside an account-holding partner2', () => {
+    const value = draft({ partner2: adult({ id: 'usr_partner', kind: 'guest' }) });
+    expect(canDeclineAlone(value, 'partner1')).toBe(true);
+  });
+
+  it('is false for partner1 when there is no partner2 (party of one adult)', () => {
+    expect(canDeclineAlone(draft(), 'partner1')).toBe(false);
+  });
+
+  it('is true for partner1 even when the only other adult is an account-less plus-one (ADR W-0007 §Amendment.3 — known, accepted-for-now consequence: applying the DS rule literally does not require partner2 to have an account for partner1 to be eligible)', () => {
+    const value = draft({ partner2: adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one' }) });
+    expect(canDeclineAlone(value, 'partner1')).toBe(true);
+  });
+
+  it('is false for a child key', () => {
+    const value = draft({ children: [child()] });
+    expect(canDeclineAlone(value, 'child:0')).toBe(false);
+  });
+
+  it('is false when partner2 is absent', () => {
+    expect(canDeclineAlone(draft(), 'partner2')).toBe(false);
+  });
+
+  it('is false for a plus-one partner2', () => {
+    const value = draft({ partner2: adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one' }) });
+    expect(canDeclineAlone(value, 'partner2')).toBe(false);
+  });
+
+  it('is true only for an account-holding partner2', () => {
+    const value = draft({ partner2: adult({ id: 'usr_partner', firstName: 'Grace', lastName: 'Hopper', kind: 'guest' }) });
+    expect(canDeclineAlone(value, 'partner2')).toBe(true);
+  });
+});
+
+describe('isPersonComing', () => {
+  it('is true when attending is undefined', () => {
+    expect(isPersonComing({ attending: undefined })).toBe(true);
+    expect(isPersonComing(undefined)).toBe(true);
+  });
+
+  it('is true when attending is explicitly true', () => {
+    expect(isPersonComing({ attending: true })).toBe(true);
+  });
+
+  it('is false only when attending is explicitly false', () => {
+    expect(isPersonComing({ attending: false })).toBe(false);
+  });
+});
+
+describe('attendingCount (ADR W-0007, T320)', () => {
+  it('matches total party size when nobody has solo-declined', () => {
+    const value = draft({
+      partner2: adult({ id: 'usr_partner', kind: 'guest' }),
+      children: [child(), child({ firstName: 'Alan' })],
+    });
+    expect(attendingCount(value)).toBe(4);
+  });
+
+  it('drops by exactly one when an account-holding partner2 has declined', () => {
+    const value = draft({
+      partner2: adult({ id: 'usr_partner', kind: 'guest', attending: false }),
+      children: [child()],
+    });
+    expect(attendingCount(value)).toBe(2);
+  });
+
+  it('is unaffected by a plus-one partner2 (cannot solo-decline)', () => {
+    const value = draft({
+      partner2: adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one' }),
+    });
+    expect(attendingCount(value)).toBe(2);
+  });
+
+  it('is unaffected by a child (cannot solo-decline)', () => {
+    const value = draft({ children: [child()] });
+    expect(attendingCount(value)).toBe(2);
+  });
+
+  it('drops by two when both adults have solo-declined (T326)', () => {
+    const value = draft({
+      partner1: adult({ id: 'usr_self', attending: false }),
+      partner2: adult({ id: 'usr_partner', kind: 'guest', attending: false }),
+      children: [child()],
+    });
+    expect(attendingCount(value)).toBe(1);
+  });
+});
+
+describe('attending (ADR W-0007, T320) round-trip', () => {
+  it('survives an account-holding partner2.attending: false through toRsvpDraft and back through fromRsvpDraft', () => {
+    const dto = rsvpDto({
+      adults: {
+        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {} },
+        partner2: {
+          id: 'usr_partner',
+          firstName: 'Grace',
+          lastName: 'Hopper',
+          options: {},
+          kind: 'guest',
+          attending: false,
+        },
+      },
+    });
+    const draftFromDto = toRsvpDraft(dto);
+    expect(draftFromDto.partner2?.attending).toBe(false);
+
+    const serialised = fromRsvpDraft(draftFromDto);
+    expect(serialised.adults?.partner2).toEqual({
+      id: 'usr_partner',
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      options: {},
+      kind: 'guest',
+      attending: false,
+    });
+  });
+
+  it('reads and round-trips partner1.attending: false through toRsvpDraft and back through fromRsvpDraft (T326)', () => {
+    const dto = rsvpDto({
+      adults: {
+        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: false },
+      },
+    });
+    const draftFromDto = toRsvpDraft(dto);
+    expect(draftFromDto.partner1.attending).toBe(false);
+
+    const serialised = fromRsvpDraft(draftFromDto);
+    expect(serialised.adults?.partner1?.attending).toBe(false);
+  });
+
+  it('serialises a plus-one partner2 with no attending key at all', () => {
+    const value = draft({
+      partner2: adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one' }),
+    });
+    const partner2 = fromRsvpDraft(value).adults?.partner2;
+    expect(partner2 && 'attending' in partner2).toBe(false);
   });
 });

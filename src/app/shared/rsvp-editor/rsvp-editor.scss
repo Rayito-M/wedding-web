@@ -222,6 +222,19 @@
   color: var(--text-muted);
 }
 
+// ── Per-person "Attending" toggle ────────────────────────────────────────
+
+// Same rule set as `.name-hint`/`.nickname-hint`/`.declined-hint` above —
+// kept as its own named class for readability, matching this file's existing
+// one-class-per-block convention rather than sharing one of those names for
+// an unrelated block.
+.attending-hint {
+  margin: t.$space-2 0 0;
+  font-size: t.$text-micro;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 // "Open their profile", inline at the end of the hint — couple perspective
 // only. Inherits the hint's size so it reads as part of the sentence.
 .profile-link {

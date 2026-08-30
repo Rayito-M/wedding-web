@@ -198,11 +198,12 @@
     "editor": {
       "attendingLabel": "¿Asistirá?",
       "choice": {
-        "attending": "Con alegría",
+        "attending": "Sí, con mucho gusto",
         "pending": "Pendiente",
         "declined": "Lamentablemente no"
       },
       "total": "Total: {{count}}",
+      "attendingOfTotal": "Asisten: {{attending}} de {{total}}",
       "kind": {
         "partner": "Pareja",
         "child": "Niño"
@@ -221,10 +222,20 @@
         "nicknamePlaceholderChild": "p. ej. Teo",
         "agePlaceholder": "Edad",
         "openProfile": "Abrir su perfil",
+        "notAttending": "No asistirá",
         "customAllergy": {
           "label": "¿Algo más?",
           "placeholder": "Escribe una alergia y pulsa Enter…",
           "remove": "Quitar {{name}}"
+        }
+      },
+      "attending": {
+        "sectionLabel": "Asistencia",
+        "label": "{{name}} estará allí",
+        "fallbackName": "Esta persona",
+        "hint": {
+          "coming": "Desactiva esto si no puede asistir — su cuenta, comida y detalles de alergias se conservan, así que puede reactivarse en cualquier momento.",
+          "declined": "Sigue formando parte de esta confirmación y puede volver a marcarse como asistente hasta el mismo día."
         }
       },
       "remove": {
