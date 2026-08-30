@@ -18,14 +18,25 @@ export class ProfileModalService {
   /** Whether the "My profile" modal should be mounted/open. */
   readonly isOpen: Signal<boolean> = this._isOpen.asReadonly();
 
-  /** Open the modal — called from the account dropdown's "My profile" row
-   *  and the People screen's "isMine" card. */
-  open(): void {
+  private readonly _targetUserId = signal<string | null>(null);
+  /** Whose profile is being edited — `null` means "the signed-in user's own
+   *  profile" (ADR W-0006 Decision 1). Set by {@link open}, reset by
+   *  {@link close}. */
+  readonly targetUserId: Signal<string | null> = this._targetUserId.asReadonly();
+
+  /** Open the modal — called from the account dropdown's "My profile" row,
+   *  the People screen's "isMine" card (both omit `targetUserId`, meaning
+   *  "self"), and the RSVP editor's "Open their profile" link for a linked
+   *  partner (passes the partner's user id, ADR W-0006 Decision 3). */
+  open(targetUserId?: string): void {
+    this._targetUserId.set(targetUserId ?? null);
     this._isOpen.set(true);
   }
 
-  /** Close the modal — called on `(close)` from `app-profile-modal`. */
+  /** Close the modal — called on `(close)` from `app-profile-modal`. Resets
+   *  the target so a stale partner id can't leak into the next self open. */
   close(): void {
     this._isOpen.set(false);
+    this._targetUserId.set(null);
   }
 }

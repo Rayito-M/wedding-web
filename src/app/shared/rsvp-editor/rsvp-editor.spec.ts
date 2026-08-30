@@ -330,7 +330,7 @@ describe('RsvpEditor', () => {
     });
   });
 
-  describe('"Open their profile" (couple perspective only)', () => {
+  describe('"Open their profile" (couple and owner perspectives)', () => {
     const linkedPartner = {
       partner2: {
         id: 'guest-2',
@@ -388,28 +388,28 @@ describe('RsvpEditor', () => {
       expect(query('.profile-link')).toBeNull();
     });
 
-    it('renders no trigger in the owner perspective, even for a linked partner', async () => {
-      await create(draftWith(linkedPartner));
+    it('renders the trigger for a partner with their own account and emits their id, in the owner perspective too', async () => {
+      const ids: string[] = [];
+      await create(draftWith(linkedPartner), { perspective: 'owner' });
+      fixture.componentInstance.openProfile.subscribe((id: string) => ids.push(id));
       await openPartnerCard();
 
-      expect(query('.name-hint')).not.toBeNull();
-      expect(query('.profile-link')).toBeNull();
-    });
+      const trigger = query<HTMLButtonElement>('.name-hint .profile-link');
+      expect(trigger).not.toBeNull();
+      expect(trigger!.tagName).toBe('BUTTON');
+      expect(trigger!.type).toBe('button');
+      expect(trigger!.textContent?.trim()).toBe('Open their profile');
+      // It sits *inside* the "name managed by their own account" hint and reads
+      // as part of that sentence, per the DS — hence the space between them.
+      expect(query('.name-hint')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        'Name managed by their own guest account. Open their profile',
+      );
 
-    it('emits nothing when the guest surface calls the action programmatically', async () => {
-      const ids: string[] = [];
-      await create(draftWith(linkedPartner));
-      fixture.componentInstance.openProfile.subscribe((id: string) => ids.push(id));
-      // reason: `requestProfile` is `protected` — the perspective guard it
-      // backs must hold for callers that bypass the template too.
-      const editor = fixture.componentInstance as unknown as {
-        cards(): { key: string }[];
-        requestProfile(card: unknown): void;
-      };
-      editor.requestProfile(editor.cards()[1]);
+      trigger!.click();
       await fixture.whenStable();
-
-      expect(ids).toEqual([]);
+      expect(ids).toEqual(['guest-2']);
+      // A jump is not an edit: the draft is untouched.
+      expect(emitted.length).toBe(0);
     });
   });
 

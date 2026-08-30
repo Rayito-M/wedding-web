@@ -5731,7 +5731,8 @@
   is a real, already-shipped API capability, but nothing in the DS commit adds UI for it either —
   there is no "edit my partner's profile" entry point in this app today (profile editing is scoped to
   "my own profile" via `ProfileModalService`/`LoginService`, or "the couple editing any guest" via
-  guest-manager). Building that entry point is a separate, explicitly-scoped follow-up.
+  guest-manager). Building that entry point is a separate, explicitly-scoped follow-up. **Superseded
+  by Phase V (T315-T319), which builds exactly this.**
 - **Self-service relation editing in `profile-modal`.** See the phase intro's flagged decision —
   `app-profile-fields` gains `showRelation` support (T310) because `guest-profile-modal`/
   `guest-create-modal` need it, but T312 explicitly passes it off, preserving the guest's own profile
@@ -5741,3 +5742,301 @@
   this app has no separate mobile screens: responsive CSS in the one component handles it. The DS's
   3-way duplication (desktop, mobile, `ProfileModal`) only ever mapped to this app's 3 call sites, not
   6.
+
+## Phase V — Partner-account profile editing from both RSVP surfaces
+
+> **Why this phase exists.** A guest reported: "I don't see the RSVP edit using the profile edit.
+> All the partner with a 'guest' account should open the modal for profile edit. Only plus-one
+> partner should be editable directly in the rsvp edit." Confirmed to apply to **both** RSVP-editing
+> surfaces this app has.
+>
+> **Part 1 — the couple's guest manager** (`screens/guest-manager` → `app-manage-rsvp-modal` →
+> `app-rsvp-editor perspective="couple"`). Static code review says this already works as described,
+> via two features shipped earlier (T269, then T308 this session): a locked partner2 card
+> (`partnerHasAccount(draft.partner2)`) renders an "Open their profile" link
+> (`rsvp-editor.ts`'s `requestProfile()`/`canOpenProfile()`) that the chain
+> `manage-rsvp-modal.ts`'s `onOpenProfile()` → `guest-manager.ts`'s `openGuestProfileEdit()` →
+> `guest-profile-modal.ts`'s `open(userId, { edit: true })` resolves into `GuestProfileModal`
+> landing straight in edit mode, seeded with that partner's own data. No bug was found in this
+> chain by static review, and the full pre-merge gate is green including specs that cover each
+> link of it. **T314 is a re-verification task**, not a rewrite: this repo's agent has no way to
+> launch a browser or dev server (no Bash tool, and per CLAUDE.md this repo has no e2e suite —
+> `pnpm test:e2e` does not exist), so instead of a live repro it does the most rigorous static
+> re-verification available — closing a real gap found while reading the existing specs: every
+> test that covers this chain (`guest-manager.spec.ts`'s T308 describe block,
+> `guest-profile-modal.spec.ts`'s `open(userId, { edit: true })` case) exercises its own link in
+> isolation, calling the *next* component's method directly rather than clicking through a really
+> rendered DOM tree that has `GuestManager`, `ManageRsvpModal` and `GuestProfileModal` all mounted
+> together — exactly the kind of gap that would hide an integration bug a user could actually hit.
+> T314 closes it.
+>
+> **Part 2 — self-service "My RSVP"** (`screens/rsvp-edit` → `app-rsvp-editor
+> perspective="owner"`) has no equivalent today — confirmed via code: `rsvp-edit.html` does not
+> bind `app-rsvp-editor`'s `(openProfile)` output at all, and `canOpenProfile()` in
+> `rsvp-editor.ts` gates the link on `perspective() === 'couple'` only. This is not a bug; Phase U
+> explicitly scoped it out ("A linked-partner profile-editing UI … is a separate, explicitly-scoped
+> follow-up") because nothing in the app could act on it yet. The user's request is exactly that
+> follow-up, and it is now buildable: `PATCH /v1/profile/{id}`'s `assertCanActOnUser`
+> (`wedding-api/src/common/policy/user-delegation.ts`) already authorizes a guest to edit a linked
+> partner's profile (`targetUser.role === 'guest' && targetUser.partnerId === requester.id`), and
+> `GET /v1/profile/{id}` has no authorization check beyond authentication. **In-repo ADR W-0006**
+> (`docs/decisions/W-0006-self-service-partner-profile-edit.md`) records the design decisions this
+> phase's intro would otherwise leave to the implementer to guess: generalize
+> `ProfileModalService`/`app-profile-modal` (widen the existing "My profile" overlay to accept an
+> optional edit target) rather than build a third profile-editing surface; keep `lockContact` on
+> and `showRelation` off, matching the guest's own profile-modal call site's existing behavior
+> unchanged (T312's precedent — not silently upgraded here either); the modal's fixed-header title
+> distinguishes "My profile" from a partner's; and `PrivateLayout` — the only place that performs
+> the actual write — resolves and fetches whichever profile is the real edit target instead of
+> hardcoding "the signed-in user," since this is the first "edit someone else, as a non-admin" call
+> site in this app. T315–T319 implement it, read ADR W-0006 first.
+
+### T314 — Guest manager "open their profile" jump: full-chain re-verification + close the integration-test gap
+- **Status:** done
+- **Owner:** agent (implementer)
+- **Depends on:** nothing
+- **Why:** the user reported this flow "not working." Static review of the whole chain — the
+  component code, T269's and T308's own acceptance criteria, and every existing spec — found no
+  defect. This agent has no Bash tool and this repo has no e2e suite (`pnpm test:e2e` does not
+  exist per CLAUDE.md), so a live browser repro is not available; the mandate instead is the most
+  rigorous static re-verification available, which surfaced a real, specific gap: **no existing
+  test renders `GuestManager`, `ManageRsvpModal` and `GuestProfileModal` together and clicks
+  through the real DOM from the RSVP editor's "Open their profile" link to the rendered edit
+  form** — every existing test calls the next component's method directly instead
+  (`guest-manager.spec.ts`'s `it('the RSVP editor jump (openGuestProfileEdit) opens straight into
+  edit mode', …)` calls `fixture.componentInstance.openGuestProfileEdit('guest-1')` directly, not a
+  simulated click; `guest-profile-modal.spec.ts`'s `it('open(userId, { edit: true }) lands
+  straight into edit mode, seeded like startEdit()', …)` calls `.open()` directly on a
+  `GuestProfileModal` mounted alone). This is exactly the kind of gap that would hide a real
+  integration bug (an event never actually bound in the rendered template, a `ViewChild` resolved
+  before the child it targets exists, a change-detection edge under zoneless/OnPush) while every
+  per-link unit test still passes.
+- **Acceptance:**
+  - A new test (extend `guest-manager.spec.ts`'s existing `describe('GuestManager — "open their
+    profile" edit-mode jump (T308)', …)` block, or a new sibling `describe`, implementer's call)
+    mounts `GuestManager` alone (it already declares `GuestProfileModal`, `ManageRsvpModal`,
+    `GuestCreateModal` as `imports` and resolves them via `@ViewChild`, so no extra host harness is
+    needed — `guest-manager.html` mounts both `app-guest-profile-modal` and `app-manage-rsvp-modal`
+    unconditionally as siblings, lines ~276–283).
+  - Seeds the `UserProfileDto` collection with **two** profiles — the primary guest (`id: 'guest-1'`)
+    and their linked partner (`id: 'guest-2'`, distinct `firstName`/`lastName`/`nickname`/
+    `guestInfo.relation` so a seeding mismatch would be visible in the assertion) — and the `RsvpDto`
+    collection with one record shaped like `manage-rsvp-modal.spec.ts`'s existing
+    `rsvpWithLinkedPartner()` fixture (`adults.partner2: { id: 'guest-2', kind: 'guest', ... }`),
+    reusing that exact shape rather than inventing a parallel one.
+  - Drives the flow through real DOM events end to end, not component-instance method calls: open
+    the manage-RSVP overlay (either `fixture.componentInstance.openManageRsvp('guest-1')`, which is
+    itself a real production entry point — the "Manage RSVP" button — or a simulated row click,
+    implementer's call), expand the partner's card (`.card-head` click, mirroring
+    `manage-rsvp-modal.spec.ts`'s `openPartnerCard()` helper), click the real
+    `app-rsvp-editor .name-hint .profile-link` button rendered in the DOM — **not**
+    `requestProfile()` or `openGuestProfileEdit()` called directly.
+  - Asserts, after the click, on the real rendered output of `GuestProfileModal`: its edit-mode
+    form is showing (not the read-only `'profile'` view), and the visible field values are
+    guest-2's — e.g. the rendered `firstName`/`lastName` inputs' `.value`, not
+    `fixture.componentInstance.profileModal.editDraft()` read internally. This is the assertion
+    that would have caught a data-shape mismatch or an unbound event that `.editDraft()` read
+    directly could not.
+  - If this test fails against the current code (i.e. this task does find the bug the user
+    reported that static review missed): fix it, and the PR description states plainly what was
+    wrong and why static review didn't catch it — do not just make the new test pass by weakening
+    the assertion.
+  - If this test passes on the first try against unmodified code: say so explicitly in the PR
+    description, and note that the user's report could not be reproduced by any means available in
+    this environment — this closes the coverage gap regardless, but does not confirm or rule out an
+    environment-specific issue (a stale deployed bundle, a data shape only the real API produces,
+    browser-specific behavior) outside this repo's reach.
+  - Full pre-merge gate green (`pnpm typecheck && pnpm lint && pnpm test`).
+- **Refs:** T269, T308; `src/app/screens/guest-manager/guest-manager.ts`
+  (`openGuestProfile`/`openGuestProfileEdit`, L214-226), `guest-manager.html` (L275-283);
+  `src/app/screens/guest-manager/modal/manage-rsvp-modal.ts` (`onOpenProfile`, L172-177),
+  `manage-rsvp-modal.spec.ts` (`rsvpWithLinkedPartner()`, `openPartnerCard()`);
+  `src/app/screens/guest-manager/modal/guest-profile-modal.ts` (`open()`, L241-252);
+  `src/app/shared/rsvp-editor/rsvp-editor.ts` (`canOpenProfile`/`requestProfile`, L359-368),
+  `rsvp-editor.html` (L151-162, the `.profile-link` button)
+
+### T315 — `ProfileModalService`: accept an optional edit target
+- **Status:** done
+- **Owner:** agent (implementer)
+- **Depends on:** nothing
+- **Why:** ADR W-0006 Decision 1 — the "My profile" overlay's open/close service currently only
+  ever means "the signed-in user's own profile." This task widens it to also carry *whose* profile
+  is being edited, with no behavior change for either existing call site.
+- **Acceptance:**
+  - `ProfileModalService.open()` becomes `open(targetUserId?: string): void`. A new private signal
+    (e.g. `_targetUserId = signal<string | null>(null)`) is set to `targetUserId ?? null` on every
+    call; a new public `readonly targetUserId: Signal<string | null>` is exposed
+    (`asReadonly()`, mirroring `isOpen`'s existing pattern).
+  - `close()` also resets `_targetUserId` back to `null` — so a stale partner id from a previous
+    open cannot leak into the next no-argument (self) open. (`isOpen` already goes back to
+    `false`; this is the equivalent reset for the new signal.)
+  - `ScreenHeader`'s account-dropdown call site (`screen-header.ts:135`, `this.profileModal.open()`)
+    and `People`'s "isMine" card (`people.ts:200`, `this.profileModal.open()`) are **not** touched —
+    both keep calling `open()` with no argument, which continues to mean "self" (`targetUserId()`
+    stays `null`).
+  - Unit tests (`profile-modal.service.spec.ts`): `open()` with no argument leaves `targetUserId()`
+    `null` (existing self-only behavior, now asserted explicitly); `open('u2')` sets `targetUserId()`
+    to `'u2'`; `close()` resets both `isOpen()` and `targetUserId()`.
+  - Full pre-merge gate green.
+- **Refs:** ADR W-0006 (this repo) Decision 1; `src/app/core/service/profile-modal.service.ts`;
+  `src/app/shared/screen-header/screen-header.ts:135`; `src/app/screens/people/people.ts:200`; T304
+  (original service)
+
+### T316 — `ProfileModal`: distinguish "My profile" from a partner's in the fixed header
+- **Status:** done
+- **Owner:** agent (implementer)
+- **Depends on:** nothing (touches `profile-modal.ts`/`.html` only; independent of T315's service
+  change, though both land before T317 wires them together)
+- **Why:** ADR W-0006 Decision 5 — `resolvedTitle` always reads `shared.myProfile` today. Once this
+  same component can be opened on a partner's profile (T317), claiming "My profile" while showing
+  someone else's data would be actively misleading, not just imprecise.
+- **Acceptance:**
+  - `ProfileModal` gains `readonly isOwnProfile = input(true)` — defaulting `true` preserves every
+    existing call site's behavior (there is exactly one today, `private-layout.html`) with no
+    binding change required until T317.
+  - `resolvedTitle` (currently `computed(() => { this.lang(); return
+    this.translateService.instant('shared.myProfile'); })`, L116-119) branches on `isOwnProfile()`:
+    `true` keeps `shared.myProfile`; `false` reads a new key, `profileModal.partnerTitle`.
+  - New i18n key `profileModal.partnerTitle` in `public/i18n/{es,en,fr}.json` — "Partner's profile"
+    / "Perfil de tu pareja" / "Profil de votre partenaire" (or equivalent; implementer's call on
+    exact wording, matching this app's existing tone — no DS mock exists for this string since the
+    DS's `ProfileModal.jsx` has no partner-edit mode, so there is nothing to match verbatim).
+  - The identity block (avatar, name, nickname, role/relation pills, `profile-modal.html` L10-45)
+    is **not** changed — it already reads reactively off `profile()`/`firstName()`/`lastName()`/
+    `nickname()`, so it will correctly show the partner's identity once `profile()` is a partner's
+    `UserProfileDto` (T317's job); confirm this in the PR rather than re-deriving it.
+  - Unit tests (`profile-modal.spec.ts`): `resolvedTitle()` (or the rendered `app-modal[title]`)
+    reads "My profile" when `isOwnProfile` is left at its default; reads the new partner copy when
+    `isOwnProfile` is bound `false`.
+  - Full pre-merge gate green.
+- **Refs:** ADR W-0006 Decision 5; `src/app/shared/profile-modal/profile-modal.ts` (`resolvedTitle`,
+  L116-119); `public/i18n/{es,en,fr}.json`; T303 (original build)
+
+### T317 — `PrivateLayout`: resolve, fetch and write the real edit target, not always self
+- **Status:** done
+- **Owner:** agent (implementer)
+- **Depends on:** T315 (`ProfileModalService.targetUserId()`), T316 (`isOwnProfile` input to bind)
+- **Why:** ADR W-0006 Decision 4 — this is the first "edit someone else, as a non-admin" write path
+  in this app. `PrivateLayout.onProfileSave()` and `ownProfile` both hardcode "the signed-in user,"
+  an assumption this task must retire explicitly rather than let a partner-targeted save silently
+  fall through to a self write.
+- **Acceptance:**
+  - `ownProfile` (`private-layout.ts` L101-109, currently keyed on
+    `LoginService.currentUserClaims()?.sub` alone) is joined by — or replaced by, implementer's
+    call, document which — a `resolvedProfile` computed keyed on
+    `this.profileModal.targetUserId() ?? currentUser?.sub`, looked up against the same
+    `userProfileCollection.entities$`.
+  - Unlike the self case (already guaranteed cached before this modal can open, per this file's own
+    existing doc comment on `ScreenHeader`'s init fetch), a partner's profile is **not**
+    pre-loaded anywhere in a guest's own session. A `constructor()` `effect()` (or equivalent)
+    calls `this.userProfileCollection.getByKey(targetUserId)` whenever
+    `profileModal.targetUserId()` is a non-null id not already present in the cache — mirroring
+    `guest-profile-modal.ts`'s existing "fetch by id if not already cached" shape, not a new
+    pattern.
+  - `<app-profile-modal>`'s binding in `private-layout.html` passes `[profile]="resolvedProfile()"`
+    (was `ownProfile()`) and a new `[isOwnProfile]="!profileModal.targetUserId()"` (T316's input).
+  - `onProfileSave()` (L163-189) reads `resolvedProfile()` instead of `ownProfile()` for both the
+    early-return guard and the `id` it sends — `id: profile.id` now correctly resolves to whichever
+    profile is the real target, partner or self, never assumed.
+  - Its doc comment (L60-70, L152-162) is corrected: "resolves the signed-in user's `UserProfileDto`"
+    becomes "resolves whichever profile `ProfileModalService.targetUserId()` points at, defaulting
+    to the signed-in user's own" — and the "id is carried forward unchanged" line is confirmed
+    still accurate (it is — `resolvedProfile().id` is still what's sent, just no longer assumed to
+    equal the signed-in user's own id).
+  - Unit tests (`private-layout.spec.ts`, extending the existing T304/T305 describe blocks or a new
+    sibling): opening with `profileModal.open('guest-2')` (a second `UserProfileDto` seeded in the
+    collection, distinct from the T305 fixture's `ownProfile()`) renders `app-profile-modal` with
+    guest-2's data and `isOwnProfile` false; if guest-2 is **not** pre-seeded in the cache,
+    `getByKey('guest-2')` is called (spy on `WeddingUserProfileService.profileControllerGetV1` or
+    equivalent, mirroring how T305's existing tests spy on
+    `profileControllerUpdateProfileByIdV1`); `save.emit(...)` while targeting guest-2 calls
+    `updateSpy` with `id: 'guest-2'`, not the signed-in user's own id — this is the one assertion
+    that would have caught a silently-reused self-only write. The existing T305 no-argument-`open()`
+    tests (asserting `call.id === 'u1'`) must still pass unmodified — self-edit is not regressed.
+  - Full pre-merge gate green.
+- **Refs:** ADR W-0006 Decision 4; `src/app/layouts/private-layout/private-layout.ts`
+  (`ownProfile` L101-109, `onProfileSave` L163-189), `private-layout.html`; T304/T305 (original
+  self-only build); `src/app/screens/guest-manager/modal/guest-profile-modal.ts` (fetch-if-not-cached
+  precedent)
+
+### T318 — `rsvp-editor`: offer "Open their profile" in the `owner` perspective too
+- **Status:** done
+- **Owner:** agent (implementer)
+- **Depends on:** nothing (touches only `rsvp-editor.ts`/`.html`/`.spec.ts`; independent of
+  T315-T317, though T319 needs this landed first to have any visible effect)
+- **Why:** ADR W-0006 Decision 3 — the gate that gave the couple's editor sole ownership of this
+  link ("the guest-manager is the one surface with a profile overlay to swap to") stops being true
+  once the owner-perspective screen has one too (T319).
+- **Acceptance:**
+  - `canOpenProfile()` (`rsvp-editor.ts` L360-362, currently `return this.perspective() === 'couple'
+    && !!card.accountId;`) widens to `return (this.perspective() === 'couple' || this.perspective()
+    === 'owner') && !!card.accountId;`.
+  - The `openProfile` output's class doc comment (L140-148, "it renders in the `couple` perspective
+    alone, because the guest-manager is the one surface with a profile overlay to swap to. The
+    guest's own screen binds nothing and gets no trigger.") is corrected to state both perspectives
+    now render it, and that the guest's own screen (`rsvp-edit`, T319) does bind it, to
+    `ProfileModalService.open()` (ADR W-0006) rather than an overlay swap.
+  - No template change is needed in `rsvp-editor.html` — the `@if (canOpenProfile(card))` gate
+    (L156) already renders `.profile-link` for whichever perspective the widened method now
+    permits; `requestProfile()` (L365-368) is unchanged, it already just emits `card.accountId`
+    regardless of perspective.
+  - Two existing tests in `rsvp-editor.spec.ts` currently assert the **old** (soon-to-be-wrong)
+    behavior and must flip: `it('renders no trigger in the owner perspective, even for a linked
+    partner', …)` (L391-397) becomes an assertion that the trigger **does** render and its click
+    **does** emit the partner's id, for the `owner` perspective — mirroring the existing `'couple'`
+    case's assertions just above it (L359-381) rather than being deleted; `it('emits nothing when
+    the guest surface calls the action programmatically', …)` (L399-413) is removed or repurposed —
+    the premise "the guest surface" no longer has a distinct behavior from the couple's, so this
+    test's name and intent are now false. Keep the plus-one case (`it('renders no trigger for a
+    plus-one partner', …)`, L383-389) unchanged — that gate is `!!card.accountId`, untouched by this
+    task, and still correctly excludes a plus-one in every perspective.
+  - Add (or extend the flipped test to cover) the couple-perspective case's full assertions for
+    `owner` too: trigger text, `.name-hint` sentence composition, and — critically — that a jump
+    does **not** touch `draftChange` (`emitted.length` stays `0`), same as the couple case already
+    asserts.
+  - Full pre-merge gate green.
+- **Refs:** ADR W-0006 Decision 3; `src/app/shared/rsvp-editor/rsvp-editor.ts` (`canOpenProfile`
+  L360-362, `openProfile` output doc L140-148); `rsvp-editor.spec.ts` (L359-413); T269/T308 (couple
+  perspective precedent, unchanged)
+
+### T319 — `rsvp-edit`: wire "Open their profile" to the generalized `ProfileModalService`
+- **Status:** done
+- **Owner:** agent (implementer)
+- **Depends on:** T315 (`ProfileModalService.open(targetUserId)`), T318 (the link now renders in
+  `owner` perspective)
+- **Why:** ADR W-0006 Decision 3 — this is the actual entry point the user asked for: from their
+  own "My RSVP" screen, a guest whose partner has their own guest account can now reach that
+  partner's profile-edit modal.
+- **Acceptance:**
+  - `rsvp-edit.ts` injects `ProfileModalService` and gains a handler (e.g. `onOpenProfile(userId:
+    string): void { this.profileModal.open(userId); }`) — no local state, this screen owns no
+    overlay of its own (ADR W-0006 Decision 3's shell-level pattern, same as `ScreenHeader`/`People`
+    already do for the self case).
+  - `rsvp-edit.html`'s `<app-rsvp-editor [draft]="draft()" perspective="owner" [showStatus]="true"
+    (draftChange)="onDraftChange($event)" />` (L29-34) gains `(openProfile)="onOpenProfile($event)"`.
+  - Unit tests (`rsvp-edit.spec.ts`): using a draft shaped like the couple-side fixture's
+    linked-partner case (T318's tests / `manage-rsvp-modal.spec.ts`'s `rsvpWithLinkedPartner()`
+    shape, ported to `RsvpDraft`), a real click on the rendered `app-rsvp-editor
+    .name-hint .profile-link` calls through to `ProfileModalService.open` with the partner's id —
+    inject `ProfileModalService` (or a test double with a spied `open`) into the `TestBed`, mirroring
+    how `private-layout.spec.ts` already injects and asserts against it. Also assert the existing
+    "no link for a plus-one partner" case still holds (T318's gate is unchanged for that path).
+  - Full pre-merge gate green.
+- **Refs:** ADR W-0006 Decision 3; `src/app/screens/rsvp-edit/rsvp-edit.ts`,
+  `rsvp-edit.html` (L29-34); `src/app/core/service/profile-modal.service.ts` (T315);
+  `src/app/layouts/private-layout/private-layout.spec.ts` (injection precedent)
+
+### Deliberately out of scope for Phase V
+- **Contact-field (`email`/`phoneNumber`) editing for a linked partner**, from either surface.
+  `lockContact` stays on wherever this phase touches a profile-edit form — ADR W-0006 Decision 2.
+- **Relation (`side`/`kind`/`link`) self-service editing**, from either surface — `showRelation`
+  stays off, ADR W-0006 Decision 2, same as T312's existing precedent for the guest's own profile.
+- **A live/browser repro of the user's original report for Part 1.** T314 is the most rigorous
+  re-verification available in this environment (no Bash tool, no e2e suite); if it passes clean
+  against unmodified code, the report is not reproduced here, but is not thereby proven wrong
+  either — see T314's acceptance for what that outcome does and doesn't establish.
+- **A full router-spanning integration test for Part 2** (mounting `PrivateLayout` with a routed
+  `RsvpEdit` child and clicking all the way through). T317's and T319's own component-level tests
+  (mirroring the granularity T304/T305 and T308 already established for the equivalent self-edit
+  and couple-edit paths) are judged sufficient; unlike Part 1, there was no specific user report of
+  this exact chain failing to motivate the extra integration-test cost.

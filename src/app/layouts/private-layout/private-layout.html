@@ -27,7 +27,8 @@
 @if (profileModal.isOpen()) {
   <app-profile-modal
     [open]="profileModal.isOpen()"
-    [profile]="ownProfile() ?? null"
+    [profile]="resolvedProfile() ?? null"
+    [isOwnProfile]="!profileModal.targetUserId()"
     [saving]="savingProfile()"
     [saveError]="profileSaveError()"
     (save)="onProfileSave($event)"

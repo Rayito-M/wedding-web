@@ -9,6 +9,7 @@ import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 
 import {
   EntityNamesEnum,
+  ProfileModalService,
   RsvpDto,
   WeddingConfigResponseDto,
   entityConfig,
@@ -26,7 +27,12 @@ import { RsvpEdit } from './rsvp-edit';
  * shared editor rather than from this host (T266, ADR W-0003 §Decision.9).
  */
 const TRANSLATIONS = {
-  shared: { save: 'Save', remove: 'Remove' },
+  shared: {
+    save: 'Save',
+    remove: 'Remove',
+    partner: { nameManaged: 'Name managed by their own guest account.' },
+    nickname: { hint: 'Max 30 characters' },
+  },
   rsvp: {
     header: 'RSVP',
     edit: {
@@ -45,6 +51,9 @@ const TRANSLATIONS = {
         none: 'No guest needs a first and last name',
         singular: '{{count}} guest needs a first and last name',
         plural: '{{count}} guests need a first and last name',
+      },
+      person: {
+        openProfile: 'Open their profile',
       },
       perspective: {
         owner: {
@@ -74,6 +83,29 @@ function rsvpWith(status: RsvpDto.StatusEnum, lastName = 'Lovelace'): RsvpDto {
     },
     children: [],
     submittedBy: 'guest-1',
+  };
+}
+
+/** A partner with their own guest account (T318's/`rsvp-editor.spec.ts`'s
+ *  `linkedPartner` shape, ported from `RsvpDraft` to the wire `RsvpDto`). */
+function rsvpWithLinkedPartner(): RsvpDto {
+  return {
+    ...rsvpWith(RsvpDto.StatusEnum.ATTENDING),
+    adults: {
+      partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {} },
+      partner2: { id: 'guest-2', firstName: 'Grace', lastName: 'Hopper', options: {}, kind: 'guest' },
+    },
+  };
+}
+
+/** Plus-one: no account, so `kind: 'plus-one'` and no locked name/link. */
+function rsvpWithPlusOnePartner(): RsvpDto {
+  return {
+    ...rsvpWith(RsvpDto.StatusEnum.ATTENDING),
+    adults: {
+      partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {} },
+      partner2: { firstName: 'Grace', lastName: 'Hopper', options: {}, kind: 'plus-one' },
+    },
   };
 }
 
@@ -190,5 +222,51 @@ describe('RsvpEdit', () => {
       .componentInstance as RsvpEditor;
     expect(editor.showStatus()).toBe(true);
     expect(editor.statusPending()).toBe(false);
+  });
+
+  /**
+   * T319 — the "owner" perspective now wires the shared editor's
+   * `(openProfile)` output to `ProfileModalService.open()` (ADR W-0006
+   * §Decision.3), mirroring T318's rendering gate and T308's couple-side
+   * wiring (`ManageRsvpModal`), and `private-layout.spec.ts`'s precedent for
+   * asserting against the injected service directly.
+   */
+  describe('"Open their profile" wired to ProfileModalService (T319)', () => {
+    /** The partner's card is second and collapsed by default — the primary
+     *  guest's card opens first. */
+    async function openPartnerCard(): Promise<void> {
+      const cardHeads = fixture.nativeElement.querySelectorAll(
+        'app-rsvp-editor .card-head',
+      ) as NodeListOf<HTMLButtonElement>;
+      cardHeads[1].click();
+      await fixture.whenStable();
+    }
+
+    it('a real click on the rendered "Open their profile" link calls through to ProfileModalService.open with the partner\'s id', async () => {
+      const profileModal = TestBed.inject(ProfileModalService);
+      const openSpy = vi.spyOn(profileModal, 'open');
+
+      await create(rsvpWithLinkedPartner());
+      await openPartnerCard();
+
+      const trigger = fixture.nativeElement.querySelector(
+        'app-rsvp-editor .name-hint .profile-link',
+      ) as HTMLButtonElement | null;
+      expect(trigger).not.toBeNull();
+
+      trigger!.click();
+      await fixture.whenStable();
+
+      expect(openSpy).toHaveBeenCalledTimes(1);
+      expect(openSpy).toHaveBeenCalledWith('guest-2');
+    });
+
+    it('renders no link for a plus-one partner — T318\'s gate is unchanged for that path', async () => {
+      await create(rsvpWithPlusOnePartner());
+      await openPartnerCard();
+
+      expect(fixture.nativeElement.querySelector('app-rsvp-editor .name-hint')).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-rsvp-editor .profile-link')).toBeNull();
+    });
   });
 });

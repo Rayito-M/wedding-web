@@ -101,6 +101,7 @@ describe('ProfileModal', () => {
         },
         profileModal: {
           contactHint: 'Contact details are managed by the couple.',
+          partnerTitle: "Partner's profile",
           actions: {
             editProfile: 'Edit profile',
             saveChanges: 'Save changes',
@@ -268,5 +269,15 @@ describe('ProfileModal', () => {
   it('renders nothing when open is false', async () => {
     await create({ open: false });
     expect(query('[role="dialog"]')).toBeNull();
+  });
+
+  it('T316: titles the fixed header "My profile" when isOwnProfile is left at its default', async () => {
+    await create();
+    expect(query('.modal-title')?.textContent?.trim()).toBe('My profile');
+  });
+
+  it('T316: titles the fixed header with the partner copy when isOwnProfile is bound false', async () => {
+    await create({ isOwnProfile: false });
+    expect(query('.modal-title')?.textContent?.trim()).toBe("Partner's profile");
   });
 });

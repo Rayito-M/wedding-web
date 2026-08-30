@@ -19,10 +19,29 @@ describe('ProfileModalService', () => {
     expect(service.isOpen()).toBe(true);
   });
 
+  it('open() with no argument leaves targetUserId() null (self)', () => {
+    const service = createService();
+    service.open();
+    expect(service.targetUserId()).toBeNull();
+  });
+
+  it("open('u2') sets targetUserId() to 'u2'", () => {
+    const service = createService();
+    service.open('u2');
+    expect(service.targetUserId()).toBe('u2');
+  });
+
   it('close() sets isOpen back to false', () => {
     const service = createService();
     service.open();
     service.close();
     expect(service.isOpen()).toBe(false);
+  });
+
+  it('close() resets targetUserId() back to null', () => {
+    const service = createService();
+    service.open('u2');
+    service.close();
+    expect(service.targetUserId()).toBeNull();
   });
 });

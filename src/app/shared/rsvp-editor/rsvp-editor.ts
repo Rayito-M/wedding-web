@@ -16,6 +16,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
   EntityNamesEnum,
+  LoginService,
   PersonKey,
   RsvpDraft,
   RsvpDto,
@@ -110,6 +111,7 @@ interface PersonCard {
 export class RsvpEditor {
   private readonly lang = inject(TranslateLanguageService);
   private readonly translate = inject(TranslateService);
+  private readonly loginService = inject(LoginService);
 
   private readonly weddingConfigCollection: EntityCollectionService<WeddingConfigResponseDto> =
     inject(EntityServices).getEntityCollectionService<WeddingConfigResponseDto>(
@@ -140,10 +142,11 @@ export class RsvpEditor {
   /**
    * "Open their profile" on a partner whose name is locked to their own guest
    * account — emits that guest's user id. The **only** perspective-specific
-   * action on this component (ADR W-0003 §Decision.6, amended): it renders in
-   * the `couple` perspective alone, because the guest-manager is the one
-   * surface with a profile overlay to swap to. The guest's own screen binds
-   * nothing and gets no trigger.
+   * action on this component (ADR W-0003 §Decision.6, amended by ADR W-0006
+   * §Decision.3): it renders in **both** the `couple` and `owner`
+   * perspectives now — the guest's own screen (`rsvp-edit`) binds it too,
+   * routing to `ProfileModalService.open()` rather than the couple surface's
+   * overlay swap.
    */
   readonly openProfile = output<string>();
 
@@ -196,8 +199,8 @@ export class RsvpEditor {
         lastName: draft.partner1.lastName,
         nickname: draft.partner1.nickname ?? '',
         age: null,
-        nameLocked: false,
-        accountId: null,
+        nameLocked: true,
+        accountId: draft.partner1.id ?? null,
         options: draft.partner1.options,
       },
     ];
@@ -354,11 +357,14 @@ export class RsvpEditor {
     return partnerHasAccount(this.draft().partner2);
   }
 
-  // ── open their profile (couple only) ───────────────────────────────────
+  // ── open their profile ─────────────────────────────────────────────────
 
   /** Does this card offer the jump to its own guest's profile? */
   protected canOpenProfile(card: PersonCard): boolean {
-    return this.perspective() === 'couple' && !!card.accountId;
+    return (
+      this.perspective() === 'couple' ||
+      card.accountId === this.loginService.currentUserClaims()?.sub
+    );
   }
 
   /** Hand the linked guest's id to the host, which owns the overlay swap. */
@@ -397,7 +403,11 @@ export class RsvpEditor {
 
   // ── meal options ───────────────────────────────────────────────────────
 
-  protected isSelected(card: PersonCard, field: 'dietaryPreferenceIds' | 'allergyIds', id: string): boolean {
+  protected isSelected(
+    card: PersonCard,
+    field: 'dietaryPreferenceIds' | 'allergyIds',
+    id: string,
+  ): boolean {
     return (card.options[field] ?? []).includes(id);
   }
 
@@ -526,7 +536,9 @@ export class RsvpEditor {
     const card = this.pendingCard();
     if (!card) return '';
     const fallbackKey =
-      card.role === 'child' ? 'rsvp.editor.remove.fallbackChild' : 'rsvp.editor.remove.fallbackPartner';
+      card.role === 'child'
+        ? 'rsvp.editor.remove.fallbackChild'
+        : 'rsvp.editor.remove.fallbackPartner';
     const name = this.fullName(card) || this.translate.instant(fallbackKey);
     return this.translate.instant('rsvp.editor.remove.message', { name });
   }

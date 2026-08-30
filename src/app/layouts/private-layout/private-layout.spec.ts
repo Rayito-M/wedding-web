@@ -258,3 +258,168 @@ describe('PrivateLayout — wires "Save changes" to the real profile-update endp
     expect(modal().saveError()).toBe(true);
   });
 });
+
+/**
+ * T317 — `PrivateLayout` resolves, fetches and writes the real edit target
+ * (`ProfileModalService.targetUserId()`), not always the signed-in user's
+ * own profile (ADR W-0006 Decision 4).
+ */
+describe('PrivateLayout — resolves and writes the real edit target, not always self (T317)', () => {
+  let fixture: ComponentFixture<PrivateLayout>;
+  let updateSpy: ReturnType<typeof vi.fn>;
+  let getSpy: ReturnType<typeof vi.fn>;
+
+  function ownProfile(): UserProfileDto {
+    return {
+      id: 'u1',
+      firstName: 'Laura',
+      lastName: 'Ortega',
+      nickname: 'Lau',
+      preferredLang: UserProfileDto.PreferredLangEnum.ES,
+      role: UserProfileDto.RoleEnum.GUEST,
+    };
+  }
+
+  function partnerProfile(): UserProfileDto {
+    return {
+      id: 'guest-2',
+      firstName: 'Marco',
+      lastName: 'Diaz',
+      nickname: 'Marco',
+      preferredLang: UserProfileDto.PreferredLangEnum.ES,
+      role: UserProfileDto.RoleEnum.GUEST,
+    };
+  }
+
+  async function create(options?: { preseedPartner?: boolean }): Promise<void> {
+    updateSpy = vi.fn((params: { updateUserProfileDto: UpdateUserProfileDto }) =>
+      of({ ...partnerProfile(), ...params.updateUserProfileDto } as UserProfileDto),
+    );
+    getSpy = vi.fn((params: { id: string }) =>
+      of(params.id === 'guest-2' ? partnerProfile() : ownProfile()),
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [PrivateLayout],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        provideTranslateService({ lang: 'en', fallbackLang: 'en' }),
+        provideStore(),
+        provideEffects(),
+        provideEntityData(entityConfig, withEffects()),
+        provideEntityDataServices(),
+        {
+          provide: LoginService,
+          useValue: {
+            currentUserClaims: () => ({ sub: 'u1', role: 'guest' }),
+            role: signal('guest'),
+            isCouple: signal(false),
+          },
+        },
+        {
+          provide: TranslateLanguageService,
+          useValue: { currentLang: signal('en') },
+        },
+        { provide: NotificationCenterService, useValue: createNotificationCenterStub() },
+        {
+          provide: WeddingUserProfileService,
+          useValue: {
+            profileControllerUpdateProfileByIdV1: updateSpy,
+            profileControllerGetV1: getSpy,
+          },
+        },
+      ],
+    }).compileComponents();
+
+    TestBed.inject(TranslateService).setTranslation('en', {}, true);
+
+    const collection = TestBed.inject(EntityServices).getEntityCollectionService<UserProfileDto>(
+      EntityNamesEnum.USER_PROFILE,
+    );
+    collection.addOneToCache(ownProfile());
+    if (options?.preseedPartner) {
+      collection.addOneToCache(partnerProfile());
+    }
+
+    fixture = TestBed.createComponent(PrivateLayout);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  function modal(): ProfileModal {
+    return fixture.debugElement.query(By.directive(ProfileModal)).componentInstance as ProfileModal;
+  }
+
+  it('opening with a partner target renders app-profile-modal with the partner\'s data and isOwnProfile false', async () => {
+    await create({ preseedPartner: true });
+
+    TestBed.inject(ProfileModalService).open('guest-2');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(modal().profile()).toEqual(partnerProfile());
+    expect(modal().isOwnProfile()).toBe(false);
+  });
+
+  it('opening on self (no argument) still renders isOwnProfile true', async () => {
+    await create();
+
+    TestBed.inject(ProfileModalService).open();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(modal().profile()).toEqual(ownProfile());
+    expect(modal().isOwnProfile()).toBe(true);
+  });
+
+  it('a partner not already cached is fetched via getByKey (profileControllerGetV1)', async () => {
+    await create({ preseedPartner: false });
+
+    TestBed.inject(ProfileModalService).open('guest-2');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(getSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 'guest-2' }));
+  });
+
+  it('a partner already cached is not re-fetched', async () => {
+    await create({ preseedPartner: true });
+
+    TestBed.inject(ProfileModalService).open('guest-2');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(getSpy).not.toHaveBeenCalledWith(expect.objectContaining({ id: 'guest-2' }));
+  });
+
+  it('save.emit(...) while targeting the partner calls update with the partner\'s id, not the signed-in user\'s own', async () => {
+    await create({ preseedPartner: true });
+
+    TestBed.inject(ProfileModalService).open('guest-2');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    modal().save.emit({
+      firstName: 'Marco',
+      lastName: 'Diaz',
+      nickname: 'Marquito',
+      preferredLang: UserProfileDto.PreferredLangEnum.ES,
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    const call = updateSpy.mock.calls[0][0] as { id: string; updateUserProfileDto: UpdateUserProfileDto };
+    expect(call.id).toBe('guest-2');
+    expect(call.id).not.toBe('u1');
+  });
+});

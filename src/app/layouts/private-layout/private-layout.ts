@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   signal,
@@ -59,15 +60,19 @@ interface RouteChrome {
  *
  * **Owns the real write (T305).** `app-profile-modal` itself never touches
  * `HttpClient`/`EntityCollectionService` (see its own class doc) — this
- * layout resolves the signed-in user's `UserProfileDto` the same way
- * `screen-header.ts` does (`LoginService.currentUserClaims()?.sub` against
- * the shared `EntityNamesEnum.USER_PROFILE` collection) and is the consumer
- * that calls `EntityCollectionService.update()` on `(save)`, reporting the
- * outcome back through the modal's `saving`/`saveError` inputs. No second
- * `getByKey()` fetch here: `ScreenHeader` is unconditionally mounted above
- * in this same template and already loads the signed-in user's profile into
- * this same shared collection in its own `ngOnInit`, well before a guest can
- * interact with anything that opens this modal.
+ * layout resolves whichever profile `ProfileModalService.targetUserId()`
+ * points at, defaulting to the signed-in user's own (`LoginService
+ * .currentUserClaims()?.sub`), against the shared `EntityNamesEnum
+ * .USER_PROFILE` collection, and is the consumer that calls
+ * `EntityCollectionService.update()` on `(save)`, reporting the outcome back
+ * through the modal's `saving`/`saveError` inputs (ADR W-0006 Decision 4).
+ * The signed-in user's own profile is guaranteed cached before this modal
+ * can open — `ScreenHeader` is unconditionally mounted above in this same
+ * template and already loads it into this same shared collection in its own
+ * `ngOnInit`. A partner's profile is not pre-loaded anywhere in a guest's own
+ * session, so a `constructor()` `effect()` fetches it (`getByKey()`) the
+ * first time `ProfileModalService.targetUserId()` points at an id not
+ * already present in the cache.
  */
 @Component({
   selector: 'app-private-layout',
@@ -94,19 +99,21 @@ export class PrivateLayout {
     EntityServices,
   ).getEntityCollectionService<UserProfileDto>(EntityNamesEnum.USER_PROFILE);
 
-  /** The signed-in user's own profile — same lookup `screen-header.ts` does
-   *  against the shared collection, typed `UserProfileDto` for consistency
-   *  with `app-profile-modal`'s own `profile` input (not `UserDto`, which
-   *  `screen-header.ts` uses for the same collection). */
-  protected readonly ownProfile: Signal<UserProfileDto | undefined> = toSignal(
-    this.userProfileCollection.entities$.pipe(
-      map((profiles) => {
-        const currentUser = this.login.currentUserClaims();
-        return currentUser?.sub ? profiles.find((p) => p.id === currentUser.sub) : undefined;
-      }),
-    ),
-    { initialValue: undefined },
+  /** Snapshot of the shared `UserProfileDto` collection, typed for
+   *  consistency with `app-profile-modal`'s own `profile` input (not
+   *  `UserDto`, which `screen-header.ts` uses for the same collection). */
+  private readonly profiles: Signal<UserProfileDto[]> = toSignal(
+    this.userProfileCollection.entities$,
+    { initialValue: [] },
   );
+
+  /** Whichever profile `ProfileModalService.targetUserId()` points at,
+   *  defaulting to the signed-in user's own (ADR W-0006 Decision 4) — never
+   *  hardcoded to "self" the way the pre-T317 `ownProfile` was. */
+  protected readonly resolvedProfile: Signal<UserProfileDto | undefined> = computed(() => {
+    const targetId = this.profileModal.targetUserId() ?? this.login.currentUserClaims()?.sub;
+    return targetId ? this.profiles().find((p) => p.id === targetId) : undefined;
+  });
 
   protected readonly savingProfile = signal(false);
   protected readonly profileSaveError = signal(false);
@@ -133,6 +140,18 @@ export class PrivateLayout {
       if (this.profileModal.isOpen()) {
         this.savingProfile.set(false);
         this.profileSaveError.set(false);
+      }
+    });
+
+    // A partner's profile is never pre-loaded anywhere in a guest's own
+    // session (unlike the self case, guaranteed cached by `ScreenHeader`'s
+    // init fetch) — fetch it the first time the target id isn't already in
+    // the shared collection, mirroring `guest-profile-modal.ts`'s "fetch by
+    // id if not already cached" shape (ADR W-0006 Decision 4).
+    effect(() => {
+      const targetId = this.profileModal.targetUserId();
+      if (targetId && !this.profiles().some((p) => p.id === targetId)) {
+        this.userProfileCollection.getByKey(targetId);
       }
     });
   }
@@ -166,7 +185,7 @@ export class PrivateLayout {
     nickname?: string;
     preferredLang: UserProfileDto.PreferredLangEnum;
   }): void {
-    const profile = this.ownProfile();
+    const profile = this.resolvedProfile();
     if (!profile || this.savingProfile()) return;
     this.savingProfile.set(true);
     this.profileSaveError.set(false);

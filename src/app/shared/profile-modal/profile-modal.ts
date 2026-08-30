@@ -84,6 +84,11 @@ import { ProfileFields, ProfileFieldsValue } from '@app/shared/profile-fields/pr
 export class ProfileModal {
   readonly open = input(false);
   readonly profile = input<UserProfileDto | null>(null);
+  /** `true` (default) means this modal shows the signed-in user's own
+   *  profile — every existing call site keeps calling this unbound.
+   *  `false` (T317) means it shows a linked partner's profile instead,
+   *  which `resolvedTitle` below must not label as "My profile". */
+  readonly isOwnProfile = input(true);
   /** True while the host's `save`-triggered update is in flight. */
   readonly saving = input(false);
   /** True if the host's last update attempt failed. The host resets this to
@@ -112,10 +117,15 @@ export class ProfileModal {
   protected readonly lang = this.langService.currentLang;
 
   /** Plain, already-resolved string — `Modal`'s `[title]` renders it raw
-   *  (no `translate` pipe inside `Modal`'s own template). */
+   *  (no `translate` pipe inside `Modal`'s own template). Branches on
+   *  `isOwnProfile` (ADR W-0006 Decision 5) so a partner's profile, opened
+   *  through this same component (T317), is never mislabeled as the
+   *  signed-in guest's own. */
   protected readonly resolvedTitle = computed(() => {
     this.lang();
-    return this.translateService.instant('shared.myProfile');
+    return this.translateService.instant(
+      this.isOwnProfile() ? 'shared.myProfile' : 'profileModal.partnerTitle',
+    );
   });
 
   /** Pre-translated, forwarded to `app-profile-fields`' `contactHint` input —

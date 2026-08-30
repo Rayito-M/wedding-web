@@ -1017,6 +1017,7 @@
   },
   "profileModal": {
     "changePhoto": "Cambiar foto",
+    "partnerTitle": "Perfil de tu pareja",
     "firstName": "Nombre",
     "lastName": "Apellidos",
     "email": "Correo electrónico",

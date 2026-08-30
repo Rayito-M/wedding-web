@@ -15,6 +15,7 @@ import {
   EMPTY_RSVP_DRAFT,
   EntityNamesEnum,
   HeaderService,
+  ProfileModalService,
   RsvpDraft,
   RsvpDto,
   PluralTranslatePipe,
@@ -59,6 +60,7 @@ import { RsvpEditor } from '@app/shared/rsvp-editor/rsvp-editor';
 export class RsvpEdit {
   private readonly translateService = inject(TranslateService);
   private readonly header = inject(HeaderService);
+  private readonly profileModal = inject(ProfileModalService);
 
   private readonly rsvpCollection: EntityCollectionService<RsvpDto> = inject(
     EntityServices,
@@ -111,6 +113,14 @@ export class RsvpEdit {
     this.draft.set(draft);
     this.dirty.set(true);
     this.saveFailed.set(false);
+  }
+
+  /** "Open their profile" on a linked partner (ADR W-0006 §Decision.3): this
+   *  screen owns no overlay of its own, so it hands the target id straight to
+   *  the shell-level service — the same pattern already used for the guest's
+   *  own profile (`ScreenHeader`, `People`). */
+  protected onOpenProfile(userId: string): void {
+    this.profileModal.open(userId);
   }
 
   protected async save(): Promise<void> {
