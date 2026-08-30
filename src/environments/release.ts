@@ -2,4 +2,4 @@
 // `pnpm build:prod` run from the current git commit hash (hub ADR-0026 / T253). Do not hand-edit;
 // any manual edit is overwritten on the next build. Committed with a 'dev' placeholder so
 // typecheck/lint/test — which don't invoke the build — always have a real file to import.
-export const RELEASE = '6f42de740e7512dbacc907349a9aa288d4aeaa4f';
+export const RELEASE = 'da89aeb21266f000b594bf2f9680a88b35f8f218';

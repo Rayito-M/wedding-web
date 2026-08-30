@@ -21,7 +21,6 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./screens/welcome/welcome').then((m) => m.Welcome),
     title: 'titles.welcome',
-    canActivate: [publicOnlyGuard],
   },
   {
     path: 'login',
