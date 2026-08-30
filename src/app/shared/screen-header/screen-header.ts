@@ -20,6 +20,7 @@ import {
   ConfigurationService,
   EntityNamesEnum,
   LoginService,
+  ProfileModalService,
   RouteConfigService,
   TranslateLanguageService,
   UserDto,
@@ -51,6 +52,7 @@ export class ScreenHeader implements OnInit {
   private readonly lang = inject(TranslateLanguageService);
   private readonly routeConfig = inject(RouteConfigService);
   private readonly router = inject(Router);
+  private readonly profileModal = inject(ProfileModalService);
 
   private readonly userProfileCollection: EntityCollectionService<UserDto> = inject(
     EntityServices,
@@ -124,11 +126,13 @@ export class ScreenHeader implements OnInit {
     this.menuOpen.update((open) => !open);
   }
 
-  /** "My profile" row (DS `AccountMenu`) — closes the dropdown; navigation is
-   *  handled by `routerLink`. */
-  protected goToProfile(event: MouseEvent): void {
+  /** "My profile" row (DS `AccountMenu`) — closes the dropdown and opens the
+   *  account-dropdown overlay (`ProfileModalService`, T304), replacing the
+   *  old `/profile` route. */
+  protected openProfile(event: MouseEvent): void {
     this.menuOpen.set(false);
     event.stopPropagation();
+    this.profileModal.open();
   }
 
   protected selectLanguage(code: string): void {

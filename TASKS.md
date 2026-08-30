@@ -5259,7 +5259,7 @@
 > never sent). T303 carries that resolution over verbatim; it does not re-litigate it.
 
 ### T303 — Build `app-profile-modal` (no call sites yet)
-- **Status:** todo
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** T298 (nickname field + copy)
 - **Why:** mirrors T284's "build the component standalone first" precedent — get the chrome and
@@ -5295,7 +5295,7 @@
   verbatim); T284 (standalone-component precedent)
 
 ### T304 — `ProfileModalService`, wire the account dropdown, mount in the shell, retire `/profile`
-- **Status:** todo
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** T303
 - **Acceptance:**
@@ -5331,7 +5331,7 @@
   `src/app/screens/people/{people.ts,people.html}`
 
 ### T305 — Wire "Save changes" to the real profile-update endpoint
-- **Status:** todo
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** T304
 - **Acceptance:**

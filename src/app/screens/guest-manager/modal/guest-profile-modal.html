@@ -19,138 +19,140 @@
   @switch (viewMode()) {
     @case ('profile') {
       <ng-container>
-        <!-- Guest information -->
-        <div class="info-section">
-          <h3 class="section-title">{{ 'guest_manager.modal.guestInfo' | translate }}</h3>
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="info-label">{{ 'guest_manager.profile.sideGroup' | translate }}</span>
-              @if (guestProfile()?.guestInfo?.relation; as relation) {
-                <div class="value">
-                  {{ 'guest_manager.relation.side.' + relation.side | translate }} ·
-                  {{ 'guest_manager.relation.kind.' + relation.kind | translate }}
-                </div>
-              } @else {
-                <div class="value muted">—</div>
-              }
-            </div>
-            <div class="info-item">
-              <span class="info-label">{{ 'guest_manager.form.link' | translate }}</span>
-              @if (relationLinkLabel(); as link) {
-                <div class="value">{{ link }}</div>
-              } @else {
-                <div class="value muted">—</div>
-              }
-            </div>
-            <!-- Optional, shown in quotes beside the other identity facts
+        <div class="modal-scroll">
+          <!-- Guest information -->
+          <div class="info-section">
+            <h3 class="section-title">{{ 'guest_manager.modal.guestInfo' | translate }}</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">{{ 'guest_manager.profile.sideGroup' | translate }}</span>
+                @if (guestProfile()?.guestInfo?.relation; as relation) {
+                  <div class="value">
+                    {{ 'guest_manager.relation.side.' + relation.side | translate }} ·
+                    {{ 'guest_manager.relation.kind.' + relation.kind | translate }}
+                  </div>
+                } @else {
+                  <div class="value muted">—</div>
+                }
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'guest_manager.form.link' | translate }}</span>
+                @if (relationLinkLabel(); as link) {
+                  <div class="value">{{ link }}</div>
+                } @else {
+                  <div class="value muted">—</div>
+                }
+              </div>
+              <!-- Optional, shown in quotes beside the other identity facts
                  (DS `ScreenGuestManager.jsx`'s `Info label="Nickname"`) —
                  never in place of the guest's name, which stays in the modal
                  title above. -->
-            <div class="info-item">
-              <span class="info-label">{{ 'shared.nickname.label' | translate }}</span>
-              @if (guestProfile()?.nickname; as nickname) {
-                <div class="value">“{{ nickname }}”</div>
-              } @else {
-                <div class="value muted">—</div>
-              }
-            </div>
-            <div class="info-item">
-              <span class="info-label">{{ 'guest_manager.profile.email' | translate }}</span>
-              <div class="value">{{ guestProfile()?.email || '—' }}</div>
-            </div>
-            <div class="info-item">
-              <span class="info-label">{{ 'guest_manager.profile.phone' | translate }}</span>
-              <div class="value">{{ guestProfile()?.phoneNumber || '—' }}</div>
-            </div>
-            <!-- Partner (DS `Info label="Partner"`): the name plus the account
+              <div class="info-item">
+                <span class="info-label">{{ 'shared.nickname.label' | translate }}</span>
+                @if (guestProfile()?.nickname; as nickname) {
+                  <div class="value">“{{ nickname }}”</div>
+                } @else {
+                  <div class="value muted">—</div>
+                }
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'guest_manager.profile.email' | translate }}</span>
+                <div class="value">{{ guestProfile()?.email || '—' }}</div>
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'guest_manager.profile.phone' | translate }}</span>
+                <div class="value">{{ guestProfile()?.phoneNumber || '—' }}</div>
+              </div>
+              <!-- Partner (DS `Info label="Partner"`): the name plus the account
                  status, so an admin can tell from the profile whether the
                  partner can sign in themselves or is a plus-one (ADR W-0002). -->
-            <div class="info-item">
-              <span class="info-label">{{ 'guest_manager.profile.partner' | translate }}</span>
-              @if (guestProfile()?.guestInfo?.partner; as partner) {
-                <div class="value">
-                  {{ partner.firstName }} {{ partner.lastName }} ·
-                  {{
-                    (partnerHasAccount(partner)
-                      ? 'shared.partner.ownAccount'
-                      : 'shared.partner.plusOne'
-                    ) | translate
-                  }}
-                </div>
-              } @else {
+              <div class="info-item">
+                <span class="info-label">{{ 'guest_manager.profile.partner' | translate }}</span>
+                @if (guestProfile()?.guestInfo?.partner; as partner) {
+                  <div class="value">
+                    {{ partner.firstName }} {{ partner.lastName }} ·
+                    {{
+                      (partnerHasAccount(partner)
+                        ? 'shared.partner.ownAccount'
+                        : 'shared.partner.plusOne'
+                      ) | translate
+                    }}
+                  </div>
+                } @else {
+                  <div class="value muted">—</div>
+                }
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'guest_manager.profile.table' | translate }}</span>
                 <div class="value muted">—</div>
-              }
-            </div>
-            <div class="info-item">
-              <span class="info-label">{{ 'guest_manager.profile.table' | translate }}</span>
-              <div class="value muted">—</div>
-            </div>
-            <!-- Read-only, admin-surface-only (hub ADR-0035 §6) — no edit
+              </div>
+              <!-- Read-only, admin-surface-only (hub ADR-0035 §6) — no edit
                  control anywhere: the API ignores the field on write. -->
-            <div class="info-item">
-              <span class="info-label">{{ 'guest_manager.profile.lastSeen' | translate }}</span>
-              <div class="value">{{ lastSeenLabel() }}</div>
+              <div class="info-item">
+                <span class="info-label">{{ 'guest_manager.profile.lastSeen' | translate }}</span>
+                <div class="value">{{ lastSeenLabel() }}</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- RSVP summary — the DS's clickable "resume card": opens the
+          <!-- RSVP summary — the DS's clickable "resume card": opens the
              manage-RSVP overlay, same as the footer's "Manage RSVP". -->
-        <div class="info-section">
-          <h3 class="section-title">{{ 'guest_manager.rsvp.summary' | translate }}</h3>
-          @if (rsvp(); as rsvp) {
-            <button type="button" class="summary-card" (click)="openRsvp()">
-              <span class="summary-head">
-                <span class="status-cell" [class]="'status-' + rsvp.status">
-                  <span class="status-dot"></span>
-                  {{ 'guest_manager.status.' + rsvp.status | translate }}
+          <div class="info-section">
+            <h3 class="section-title">{{ 'guest_manager.rsvp.summary' | translate }}</h3>
+            @if (rsvp(); as rsvp) {
+              <button type="button" class="summary-card" (click)="openRsvp()">
+                <span class="summary-head">
+                  <span class="status-cell" [class]="'status-' + rsvp.status">
+                    <span class="status-dot"></span>
+                    {{ 'guest_manager.status.' + rsvp.status | translate }}
+                  </span>
+                  <span class="summary-manage">{{ 'guest_manager.rsvp.manage' | translate }}</span>
                 </span>
-                <span class="summary-manage">{{ 'guest_manager.rsvp.manage' | translate }}</span>
-              </span>
 
-              <span class="mini-stats">
-                <span class="mini-stat">
-                  <span class="mini-stat-value">{{ participantsCount() }}</span>
-                  <span class="mini-stat-label">
-                    {{ 'guest_manager.rsvp.participants' | translate }}
+                <span class="mini-stats">
+                  <span class="mini-stat">
+                    <span class="mini-stat-value">{{ participantsCount() }}</span>
+                    <span class="mini-stat-label">
+                      {{ 'guest_manager.rsvp.participants' | translate }}
+                    </span>
+                  </span>
+                  <span class="mini-stat">
+                    <span class="mini-stat-value">{{ childrenCount() || '—' }}</span>
+                    <span class="mini-stat-label">
+                      {{ 'guest_manager.rsvp.children' | translate }}
+                    </span>
+                  </span>
+                  <span class="mini-stat">
+                    <span class="mini-stat-value">{{ dietaryPeopleCount() || '—' }}</span>
+                    <span class="mini-stat-label">
+                      {{ 'guest_manager.rsvp.dietary' | translate }}
+                    </span>
                   </span>
                 </span>
-                <span class="mini-stat">
-                  <span class="mini-stat-value">{{ childrenCount() || '—' }}</span>
-                  <span class="mini-stat-label">
-                    {{ 'guest_manager.rsvp.children' | translate }}
-                  </span>
-                </span>
-                <span class="mini-stat">
-                  <span class="mini-stat-value">{{ dietaryPeopleCount() || '—' }}</span>
-                  <span class="mini-stat-label">
-                    {{ 'guest_manager.rsvp.dietary' | translate }}
-                  </span>
-                </span>
-              </span>
 
-              @if (childrenNamesSummary(); as names) {
-                <span class="summary-line">
-                  {{ 'guest_manager.modal.childrenSummary' | translate: { names } }}
-                </span>
-              }
-              @if (dietarySummary(); as diet) {
-                <span class="summary-line">
-                  {{ 'guest_manager.modal.dietarySummary' | translate: { items: diet } }}
-                </span>
-              }
-              @if (allergySummary(); as allergies) {
-                <span class="summary-line">
-                  {{ 'guest_manager.modal.allergySummary' | translate: { items: allergies } }}
-                </span>
-              }
-              @if (guestNote(); as note) {
-                <span class="summary-note">“{{ note }}”</span>
-              }
-            </button>
-          } @else {
-            <p class="summary-empty">{{ 'guest_manager.rsvp.none' | translate }}</p>
-          }
+                @if (childrenNamesSummary(); as names) {
+                  <span class="summary-line">
+                    {{ 'guest_manager.modal.childrenSummary' | translate: { names } }}
+                  </span>
+                }
+                @if (dietarySummary(); as diet) {
+                  <span class="summary-line">
+                    {{ 'guest_manager.modal.dietarySummary' | translate: { items: diet } }}
+                  </span>
+                }
+                @if (allergySummary(); as allergies) {
+                  <span class="summary-line">
+                    {{ 'guest_manager.modal.allergySummary' | translate: { items: allergies } }}
+                  </span>
+                }
+                @if (guestNote(); as note) {
+                  <span class="summary-note">“{{ note }}”</span>
+                }
+              </button>
+            } @else {
+              <p class="summary-empty">{{ 'guest_manager.rsvp.none' | translate }}</p>
+            }
+          </div>
         </div>
 
         <div class="actions-row" modal-actions>
@@ -172,74 +174,105 @@
     }
     @case ('edit') {
       <ng-container>
-        <!-- Edit profile -->
-        <form [formGroup]="editForm" (ngSubmit)="saveProfile()">
-          <div class="field">
-            <span class="info-label">{{ 'guest_manager.form.firstName' | translate }}</span>
-            <input app-input type="text" formControlName="firstName" />
-          </div>
+        <div class="modal-scroll">
+          <!-- Edit profile -->
+          <form [formGroup]="editForm" (ngSubmit)="saveProfile()">
+            <div class="field">
+              <span class="info-label">{{ 'guest_manager.form.firstName' | translate }}</span>
+              <input app-input type="text" formControlName="firstName" />
+            </div>
 
-          <div class="field">
-            <span class="info-label">{{ 'guest_manager.form.lastName' | translate }}</span>
-            <input app-input type="text" formControlName="lastName" />
-          </div>
+            <div class="field">
+              <span class="info-label">{{ 'guest_manager.form.lastName' | translate }}</span>
+              <input app-input type="text" formControlName="lastName" />
+            </div>
 
-          <div class="field">
-            <span class="info-label">{{ 'shared.nickname.label' | translate }}</span>
-            <input
-              app-input
-              type="text"
-              formControlName="nickname"
-              maxlength="8"
-              [placeholder]="'shared.nickname.placeholder' | translate"
-              (input)="clampNickname()"
-            />
-            <p class="field-hint">{{ 'shared.nickname.hint' | translate }}</p>
-          </div>
+            <div class="field">
+              <span class="info-label">{{ 'shared.nickname.label' | translate }}</span>
+              <input
+                app-input
+                type="text"
+                formControlName="nickname"
+                maxlength="8"
+                [placeholder]="'shared.nickname.placeholder' | translate"
+                (input)="clampNickname()"
+              />
+              <p class="field-hint">{{ 'shared.nickname.hint' | translate }}</p>
+            </div>
 
-          <div class="field">
-            <span class="info-label">{{ 'guest_manager.form.side' | translate }}</span>
-            <div class="seg-row">
-              @for (side of relationSides; track side) {
-                <button
-                  type="button"
-                  app-guest-seg
-                  [selected]="editForm.controls.side.value === side"
-                  (click)="selectSide(side)"
-                >
-                  {{ 'guest_manager.relation.side.' + side | translate }}
-                </button>
+            <div class="field">
+              <span class="info-label">{{ 'guest_manager.form.side' | translate }}</span>
+              <div class="seg-row">
+                @for (side of relationSides; track side) {
+                  <button
+                    type="button"
+                    app-guest-seg
+                    [selected]="editForm.controls.side.value === side"
+                    (click)="selectSide(side)"
+                  >
+                    {{ 'guest_manager.relation.side.' + side | translate }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="info-label">{{ 'guest_manager.form.group' | translate }}</span>
+              <div class="seg-row">
+                @for (kind of relationKinds; track kind) {
+                  <button
+                    type="button"
+                    app-guest-seg
+                    [selected]="editForm.controls.kind.value === kind"
+                    (click)="selectKind(kind)"
+                  >
+                    {{ 'guest_manager.relation.kind.' + kind | translate }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="info-label">
+                {{ 'guest_manager.form.link' | translate }} ·
+                {{ 'guest_manager.relation.kind.' + editForm.controls.kind.value | translate }}
+              </span>
+              @if (editForm.controls.kind.value === 'family') {
+                <select class="select-native" formControlName="link">
+                  <option value="" disabled>
+                    {{ 'guest_manager.form.linkSelectPlaceholder' | translate }}
+                  </option>
+                  @for (relation of familyRelations; track relation) {
+                    <option [value]="relation">
+                      {{ 'guest_manager.relation.link.' + relation | translate }}
+                    </option>
+                  }
+                </select>
+              } @else {
+                <input
+                  app-input
+                  type="text"
+                  formControlName="link"
+                  [placeholder]="linkPlaceholderKey() | translate"
+                />
+              }
+              @if (editForm.controls.link.touched && editForm.controls.link.invalid) {
+                <span class="field-error">{{ 'guest_manager.form.linkHint' | translate }}</span>
               }
             </div>
-          </div>
 
-          <div class="field">
-            <span class="info-label">{{ 'guest_manager.form.group' | translate }}</span>
-            <div class="seg-row">
-              @for (kind of relationKinds; track kind) {
-                <button
-                  type="button"
-                  app-guest-seg
-                  [selected]="editForm.controls.kind.value === kind"
-                  (click)="selectKind(kind)"
-                >
-                  {{ 'guest_manager.relation.kind.' + kind | translate }}
-                </button>
-              }
+            <div class="readonly-grid">
+              <div class="info-item">
+                <span class="info-label">{{ 'guest_manager.profile.email' | translate }}</span>
+                <div class="value muted">{{ guestProfile()?.email || '—' }}</div>
+              </div>
+              <div class="info-item">
+                <span class="info-label">{{ 'guest_manager.profile.phone' | translate }}</span>
+                <div class="value muted">{{ guestProfile()?.phoneNumber || '—' }}</div>
+              </div>
             </div>
-          </div>
-
-          <div class="readonly-grid">
-            <div class="info-item">
-              <span class="info-label">{{ 'guest_manager.profile.email' | translate }}</span>
-              <div class="value muted">{{ guestProfile()?.email || '—' }}</div>
-            </div>
-            <div class="info-item">
-              <span class="info-label">{{ 'guest_manager.profile.phone' | translate }}</span>
-              <div class="value muted">{{ guestProfile()?.phoneNumber || '—' }}</div>
-            </div>
-          </div>
-        </form>
+          </form>
+        </div>
 
         <button app-btn modal-actions [primary]="false" type="button" (click)="cancelEdit()">
           {{ 'guest_manager.action.cancel' | translate }}

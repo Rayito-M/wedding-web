@@ -42,14 +42,10 @@
             </div>
           }
           <div class="menu-section">
-            <a
-              class="menu-item"
-              routerLink="/profile"
-              (click)="goToProfile($event)"
-            >
+            <button type="button" class="menu-item" (click)="openProfile($event)">
               <span class="menu-item-label">{{ 'shared.myProfile' | translate }}</span>
               <span class="menu-item-arrow">→</span>
-            </a>
+            </button>
           </div>
           @if (languages(); as langs) {
             <div class="menu-section">

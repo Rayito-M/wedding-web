@@ -1,0 +1,174 @@
+<app-modal [open]="open()" size="lg" [title]="resolvedTitle()" (close)="onClose()">
+  <!-- Single root per `@if` — a shared `@if` around this block and the
+       `[modal-actions]` block below would silently defeat `app-modal`'s
+       `[modal-actions]` projection (NG8011), same reasoning as
+       `notification-dialog.html`. -->
+  @if (profile(); as profile) {
+    <div class="profile-body">
+      <!-- Identity block — DS's fixed-header block, relocated to the top of
+           the scrollable body (see the class doc comment). -->
+      <div class="identity">
+        <div class="avatar-wrap">
+          <app-avatar [size]="58">{{ initials() }}</app-avatar>
+          @if (editing()) {
+            <button
+              type="button"
+              class="avatar-edit"
+              [attr.title]="'profileModal.changePhoto' | translate"
+              [attr.aria-label]="'profileModal.changePhoto' | translate"
+            >
+              ✎
+            </button>
+          }
+        </div>
+        <div class="identity-info">
+          <div class="name">{{ firstName() }} {{ lastName() }}</div>
+          @if (nickname()) {
+            <div class="nickname">"{{ nickname() }}"</div>
+          }
+          <div class="badges">
+            <app-pill
+              [tone]="profile.role === 'bride' || profile.role === 'groom' ? 'accent' : 'soft'"
+            >
+              {{ 'roles.' + profile.role | translate }}
+            </app-pill>
+            @if (profile.guestInfo?.relation; as relation) {
+              <app-pill>
+                {{ relation.link | translate }}
+                @if (relation.side) {
+                  · {{ 'roles.' + relation.side | translate }}
+                }
+              </app-pill>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Field list -->
+      <div class="details">
+        <div class="field">
+          <div class="field-label">{{ 'profileModal.firstName' | translate }}</div>
+          @if (editing()) {
+            <input
+              app-input
+              type="text"
+              [value]="firstName()"
+              (input)="setField('firstName', inputValue($event))"
+            />
+          } @else {
+            <div class="field-value" [class.empty]="!firstName()">{{ firstName() || '—' }}</div>
+          }
+        </div>
+
+        <div class="field">
+          <div class="field-label">{{ 'profileModal.lastName' | translate }}</div>
+          @if (editing()) {
+            <input
+              app-input
+              type="text"
+              [value]="lastName()"
+              (input)="setField('lastName', inputValue($event))"
+            />
+          } @else {
+            <div class="field-value" [class.empty]="!lastName()">{{ lastName() || '—' }}</div>
+          }
+        </div>
+
+        <div class="field">
+          <div class="field-label">{{ 'shared.nickname.label' | translate }}</div>
+          @if (editing()) {
+            <input
+              app-input
+              type="text"
+              maxlength="8"
+              [attr.placeholder]="'shared.nickname.placeholder' | translate"
+              [value]="nickname()"
+              (input)="setNickname(inputValue($event))"
+            />
+            <p class="field-hint">{{ 'shared.nickname.hint' | translate }}</p>
+          } @else {
+            <div class="field-value" [class.empty]="!nickname()">{{ nickname() || '—' }}</div>
+          }
+        </div>
+
+        <div class="field">
+          <div class="field-label">{{ 'profileModal.email' | translate }}</div>
+          @if (editing()) {
+            <input
+              app-input
+              type="email"
+              [value]="email()"
+              (input)="setField('email', inputValue($event))"
+            />
+          } @else {
+            <div class="field-value" [class.empty]="!email()">{{ email() || '—' }}</div>
+          }
+        </div>
+
+        <div class="field">
+          <div class="field-label">{{ 'profileModal.phone' | translate }}</div>
+          @if (editing()) {
+            <input
+              app-input
+              type="tel"
+              [value]="phoneNumber()"
+              (input)="setField('phoneNumber', inputValue($event))"
+            />
+          } @else {
+            <div class="field-value" [class.empty]="!phoneNumber()">
+              {{ phoneNumber() || '—' }}
+            </div>
+          }
+        </div>
+
+        <div class="field">
+          <div class="field-label">{{ 'profileModal.language' | translate }}</div>
+          @if (languages(); as langs) {
+            <div class="lang-options">
+              @for (entry of langs | keyvalue; track entry.key) {
+                <button
+                  type="button"
+                  class="lang-chip"
+                  [class.on]="preferredLang() === entry.key"
+                  [disabled]="!editing()"
+                  (click)="setLang(entry.key)"
+                >
+                  {{ entry.value }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <p class="visibility-text">
+          {{ 'profileModal.visibility.prefix' | translate }}
+          <a class="link" routerLink="/people">{{ 'nav.people' | translate }}</a
+          >{{ 'profileModal.visibility.suffix' | translate }}
+        </p>
+      </div>
+    </div>
+  }
+
+  @if (profile()) {
+    <div class="actions" modal-actions>
+      @if (editing()) {
+        @if (saveError()) {
+          <span class="error">{{ 'profileModal.actions.error' | translate }}</span>
+        }
+        <button app-btn [primary]="false" type="button" [disabled]="saving()" (click)="cancelEdit()">
+          {{ 'shared.cancel' | translate }}
+        </button>
+        <button app-btn type="button" [disabled]="saving()" (click)="onSave()">
+          {{ 'profileModal.actions.saveChanges' | translate }}
+        </button>
+      } @else {
+        @if (saved()) {
+          <span class="saved">{{ 'profileModal.actions.saved' | translate }}</span>
+        }
+        <button app-btn type="button" (click)="startEdit()">
+          {{ 'profileModal.actions.editProfile' | translate }}
+        </button>
+      }
+    </div>
+  }
+</app-modal>

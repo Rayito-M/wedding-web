@@ -9,6 +9,15 @@
 // `guest-seg/`) for their own chrome (border, radius, focus state); only
 // layout lives here.
 
+// Own scroll container for the profile/edit content, independent of the
+// shared `app-modal`'s body sizing — caps at a fraction of the viewport and
+// scrolls internally so a long profile/RSVP summary never pushes the
+// footer's actions off screen.
+.modal-scroll {
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
 .info-section {
   margin-bottom: t.$space-6;
 

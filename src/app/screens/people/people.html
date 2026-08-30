@@ -22,7 +22,7 @@
           (input)="setQuery(inputValue($event))"
         />
         <div class="filters">
-          @for (f of filters; track f.id) {
+          @for (f of filters(); track f.id) {
             <button
               type="button"
               class="filter-chip"
@@ -41,9 +41,9 @@
         <div
           class="card"
           [class.clickable]="isMine(person)"
-          [routerLink]="isMine(person) ? '/profile' : null"
           [attr.role]="isMine(person) ? 'link' : null"
           [attr.tabindex]="isMine(person) ? 0 : null"
+          (click)="goToProfile(person)"
           (keydown.enter)="goToProfile(person)"
           (keydown.space)="goToProfile(person)"
         >

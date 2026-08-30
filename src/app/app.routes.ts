@@ -197,21 +197,6 @@ export const routes: Routes = [
           topNav: true,
         } satisfies RouteChromeData,
       },
-      {
-        // Reached only from the account dropdown (ScreenHeader), never the tab
-        // bar / desktop nav — `id: 'profile'` deliberately matches no
-        // `NAV_TABS` entry, so nothing highlights, but the full chrome still
-        // renders around it.
-        path: 'profile',
-        loadComponent: () => import('./screens/profile/profile').then((m) => m.Profile),
-        title: 'titles.profile',
-        canActivate: [routeEnabledGuard],
-        data: {
-          id: 'profile',
-          tabBar: true,
-          topNav: true,
-        } satisfies RouteChromeData,
-      },
     ],
   },
   { path: '**', redirectTo: '' },

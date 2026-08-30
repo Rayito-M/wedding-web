@@ -564,7 +564,7 @@
     "nickname": {
       "label": "Apodo",
       "placeholder": "p. ej. Lau",
-      "hint": "Máximo 8 caracteres"
+      "hint": "Máximo 30 caracteres"
     }
   },
   "consentBanner": {
@@ -1014,5 +1014,23 @@
   },
   "toast": {
     "dismiss": "Descartar"
+  },
+  "profileModal": {
+    "changePhoto": "Cambiar foto",
+    "firstName": "Nombre",
+    "lastName": "Apellidos",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "language": "Idioma preferido",
+    "visibility": {
+      "prefix": "Tu nombre, rol y relación siempre aparecen en",
+      "suffix": ". El correo electrónico y el teléfono solo se comparten con la pareja."
+    },
+    "actions": {
+      "editProfile": "Editar perfil",
+      "saveChanges": "Guardar cambios",
+      "saved": "Guardado.",
+      "error": "Algo salió mal al guardar tus cambios. Inténtalo de nuevo."
+    }
   }
 }

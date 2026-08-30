@@ -6,7 +6,6 @@ import {
   signal,
   type Signal,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -16,6 +15,7 @@ import {
   EntityNamesEnum,
   UserProfileDto,
   LoginService,
+  ProfileModalService,
   TranslateLanguageService,
   lastSeenLabel as formatLastSeen,
   todayInMadrid,
@@ -47,28 +47,18 @@ interface FilterOption {
   readonly id: FilterId;
   /** i18n key under `people.filter.*`, resolved via the `translate` pipe in the template. */
   readonly labelKey: string;
-  readonly labelParams: Readonly<Record<string, string>>;
+  readonly labelParams: Readonly<Record<string, string | undefined>>;
 }
-
-// "Sara" / "Christophe" are the fixture's fixed couple names (matches the
-// `dashboard.greeting` template's own hardcoded `{ name: 'Sara' }` pattern) —
-// not sourced from wedding config, since this scaffold has no config wiring.
-const FILTERS: readonly FilterOption[] = [
-  { id: 'all', labelKey: 'people.filter.all', labelParams: {} },
-  { id: 'bride', labelKey: 'people.filter.side', labelParams: { name: 'Sara' } },
-  { id: 'groom', labelKey: 'people.filter.side', labelParams: { name: 'Christophe' } },
-  { id: 'provider', labelKey: 'people.filter.provider', labelParams: {} },
-];
 
 @Component({
   selector: 'app-people',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Avatar, Pill, TextInput, RouterLink, TranslatePipe],
+  imports: [Avatar, Pill, TextInput, TranslatePipe],
   templateUrl: './people.html',
   styleUrl: './people.scss',
 })
 export class People {
-  private readonly router = inject(Router);
+  private readonly profileModal = inject(ProfileModalService);
   private readonly translateService = inject(TranslateService);
   // Read inside `filteredPeople` so relation-label search stays correct after
   // a language switch — `translateService.instant()` isn't itself a signal.
@@ -106,7 +96,23 @@ export class People {
     },
   );
 
-  protected readonly filters = FILTERS;
+  protected readonly filters = computed((): FilterOption[] => {
+    const couple = this.userProfileList().filter((p) => p.role === 'bride' || p.role === 'groom');
+    return [
+      { id: 'all', labelKey: 'people.filter.all', labelParams: {} },
+      {
+        id: 'bride',
+        labelKey: 'people.filter.side',
+        labelParams: { name: couple.find((p) => p.role === 'bride')?.firstName },
+      },
+      {
+        id: 'groom',
+        labelKey: 'people.filter.side',
+        labelParams: { name: couple.find((p) => p.role === 'groom')?.firstName },
+      },
+      { id: 'provider', labelKey: 'people.filter.provider', labelParams: {} },
+    ];
+  });
 
   protected readonly query = signal('');
   protected readonly filter = signal<FilterId>('all');
@@ -119,26 +125,42 @@ export class People {
     this.langChange();
     const query = this.query().trim().toLowerCase();
     const filter = this.filter();
-    return this.userProfileList().filter((person) => {
-      // DS `ScreenPeople.jsx` folds the nickname into the same joined string
-      // it searches on name (`${firstName} ${lastName} ${pseudo || ''}`),
-      // unlike `guest-manager`'s parallel nickname check — this screen
-      // matches its own reference exactly.
-      const name =
-        `${person.firstName} ${person.lastName} ${person.nickname ?? ''}`.toLowerCase();
-      const rel = person.guestInfo?.relation
-        ? this.translateService.instant(person.guestInfo.relation.link).toLowerCase()
-        : '';
-      if (query && !name.includes(query) && !rel.includes(query)) return false;
-      if (filter === 'provider') return person.role === 'provider';
-      if (filter === 'bride' || filter === 'groom') {
-        if (person.role === 'provider') return false;
-        if (person.role === 'bride') return filter === 'bride';
-        if (person.role === 'groom') return filter === 'groom';
-        return person.guestInfo?.relation?.side === filter;
-      }
-      return true;
-    });
+    return this.userProfileList()
+      .filter((person) => {
+        // Exclude current user's profile
+        if (this.isMine(person)) return false;
+
+        // DS `ScreenPeople.jsx` folds the nickname into the same joined string
+        // it searches on name (`${firstName} ${lastName} ${pseudo || ''}`),
+        // unlike `guest-manager`'s parallel nickname check — this screen
+        // matches its own reference exactly.
+        const name =
+          `${person.firstName} ${person.lastName} ${person.nickname ?? ''}`.toLowerCase();
+        const rel = person.guestInfo?.relation
+          ? this.translateService.instant(person.guestInfo.relation.link).toLowerCase()
+          : '';
+        if (query && !name.includes(query) && !rel.includes(query)) return false;
+        if (filter === 'provider') return person.role === 'provider';
+        if (filter === 'bride' || filter === 'groom') {
+          if (person.role === 'provider') return false;
+          if (person.role === 'bride') return filter === 'bride';
+          if (person.role === 'groom') return filter === 'groom';
+          return person.guestInfo?.relation?.side === filter;
+        }
+        return true;
+      })
+      .sort((profileA, profileB) => {
+        const isCoupleA = profileA.role === 'bride' || profileA.role === 'groom';
+        const isCoupleB = profileB.role === 'bride' || profileB.role === 'groom';
+
+        // Bride and groom always first
+        if (isCoupleA && !isCoupleB) return -1;
+        if (!isCoupleA && isCoupleB) return 1;
+
+        const nameA = `${profileA.firstName} ${profileA.lastName}`.toLowerCase();
+        const nameB = `${profileB.firstName} ${profileB.lastName}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
   });
 
   constructor() {
@@ -162,16 +184,20 @@ export class People {
 
   // No real auth/role signal is wired into this scaffold (T237) — mirrors the
   // DS reference's guest-role rule (`ScreenPeople.jsx`): the signed-in user is
-  // fixture entry `u3` ("Laura Ortega"), so only that card links to `/profile`.
+  // fixture entry `u3` ("Laura Ortega"), so only that card opens the "My
+  // profile" modal. Fixing this placeholder to use the real signed-in user's
+  // id is a separate, pre-existing gap — out of scope for T304.
   protected isMine(person: UserProfileDto): boolean {
-    return person.id === 'u3';
+    return person.id === this.loginService.currentUserClaims()?.sub;
   }
 
-  /** Keyboard fallback for the "mine" card — `routerLink` only binds to
-   *  `click`, so Enter/Space on the focused card need an explicit trigger. */
+  /** The "mine" card opens the account-dropdown "My profile" overlay
+   *  (`ProfileModalService`, T304) instead of navigating to the old
+   *  `/profile` route — wired to both `click` and the existing Enter/Space
+   *  keyboard fallback. */
   protected goToProfile(person: UserProfileDto): void {
     if (!this.isMine(person)) return;
-    void this.router.navigate(['/profile']);
+    this.profileModal.open();
   }
 
   protected initials(person: UserProfileDto): string {

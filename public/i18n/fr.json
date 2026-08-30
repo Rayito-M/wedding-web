@@ -564,7 +564,7 @@
     "nickname": {
       "label": "Surnom",
       "placeholder": "par ex. Lau",
-      "hint": "8 caractères maximum"
+      "hint": "30 caractères maximum"
     }
   },
   "consentBanner": {
@@ -1014,5 +1014,23 @@
   },
   "toast": {
     "dismiss": "Ignorer"
+  },
+  "profileModal": {
+    "changePhoto": "Changer la photo",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "language": "Langue préférée",
+    "visibility": {
+      "prefix": "Votre nom, rôle et relation apparaissent toujours dans",
+      "suffix": ". L'e-mail et le téléphone ne sont partagés qu'avec le couple."
+    },
+    "actions": {
+      "editProfile": "Modifier le profil",
+      "saveChanges": "Enregistrer les modifications",
+      "saved": "Enregistré.",
+      "error": "Une erreur est survenue lors de l'enregistrement de vos modifications. Veuillez réessayer."
+    }
   }
 }

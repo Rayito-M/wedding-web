@@ -3,6 +3,7 @@ export * from './consent.service';
 export * from './header.service';
 export * from './login.service';
 export * from './notification-center.service';
+export * from './profile-modal.service';
 export * from './route-config.service';
 export * from './statistic.service';
 export * from './toast-center.service';

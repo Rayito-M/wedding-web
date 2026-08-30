@@ -140,6 +140,10 @@
 
 .modal-card.lg .modal-body {
   flex: 1;
+  // Flex items default to `min-height: auto`, which lets a tall body grow
+  // past the card's `max-height` instead of scrolling within it — override
+  // so `overflow-y: auto` below actually kicks in.
+  min-height: 0;
   overflow-y: auto;
   padding: t.$space-5 t.$space-6;
 

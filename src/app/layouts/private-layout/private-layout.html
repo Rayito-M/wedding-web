@@ -24,6 +24,17 @@
   <app-tab-bar class="tab-bar" [active]="chrome().tab ?? ''" />
 }
 
+@if (profileModal.isOpen()) {
+  <app-profile-modal
+    [open]="profileModal.isOpen()"
+    [profile]="ownProfile() ?? null"
+    [saving]="savingProfile()"
+    [saveError]="profileSaveError()"
+    (save)="onProfileSave($event)"
+    (close)="profileModal.close()"
+  />
+}
+
 @for (stack of toastCenter.stacks(); track stack.placement) {
   <app-toast-stack [placement]="stack.placement" [clearsTabBar]="true">
     @for (t of stack.toasts; track t.id) {

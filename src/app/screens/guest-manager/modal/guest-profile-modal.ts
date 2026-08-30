@@ -17,6 +17,7 @@ import {
   RsvpDtoAdultsPartner1Options,
   UserProfileDto,
   CreateGuestDtoRelation,
+  GuestListResponseDtoItemsInnerRelationOneOf,
   TranslateLanguageService,
   lastSeenLabel as formatLastSeen,
   todayInMadrid,
@@ -30,6 +31,11 @@ import { GuestSeg } from './guest-seg/guest-seg';
 
 type RelationSide = 'bride' | 'groom' | 'both';
 type RelationKind = 'family' | 'friends' | 'colleagues' | 'other';
+
+/** The family variant of `CreateGuestDtoRelation`, whose `link` is the closed
+ *  relationship enum (the other variants take free text) — mirrors
+ *  `guest-create-modal`'s `FamilyRelation`. */
+type FamilyRelation = GuestListResponseDtoItemsInnerRelationOneOf;
 
 /**
  * Guest profile overlay — what a row click in the guest-manager table opens
@@ -65,6 +71,12 @@ export class GuestProfileModal {
 
   protected readonly relationSides: RelationSide[] = ['bride', 'groom', 'both'];
   protected readonly relationKinds: RelationKind[] = ['family', 'friends', 'colleagues', 'other'];
+
+  /** Full API enum (the family relation's `LinkEnum`) — same list
+   *  `guest-create-modal` offers. */
+  protected readonly familyRelations: FamilyRelation['link'][] = Object.values(
+    GuestListResponseDtoItemsInnerRelationOneOf.LinkEnum,
+  );
 
   /** `'profile'` — read-only guest info + RSVP summary; `'edit'` — profile-edit form. */
   protected readonly viewMode = signal<'profile' | 'edit'>('profile');
@@ -129,6 +141,12 @@ export class GuestProfileModal {
     nickname: [''],
     side: this.fb.control<RelationSide>('bride'),
     kind: this.fb.control<RelationKind>('family'),
+    /**
+     * A select value (a family `LinkEnum` member) when `kind === 'family'`,
+     * free text otherwise — `saveProfile()` shapes whichever
+     * `CreateGuestDtoRelation` variant matches, same as `guest-create-modal`.
+     */
+    link: ['', Validators.required],
   });
 
   protected readonly participantsCount = computed(() => {
@@ -238,6 +256,7 @@ export class GuestProfileModal {
       nickname: profile?.nickname ?? '',
       side: (profile?.guestInfo?.relation?.side as RelationSide | undefined) ?? 'bride',
       kind: (profile?.guestInfo?.relation?.kind as RelationKind | undefined) ?? 'family',
+      link: profile?.guestInfo?.relation?.link ?? '',
     });
     this.viewMode.set('edit');
   }
@@ -252,6 +271,16 @@ export class GuestProfileModal {
 
   protected selectKind(kind: RelationKind): void {
     this.editForm.controls.kind.setValue(kind);
+    // The previous `link` (a family-relation enum member, or free text for a
+    // different kind) no longer matches the new kind's field shape —
+    // `guest-create-modal`'s `selectKind` clears it the same way.
+    this.editForm.controls.link.setValue('');
+  }
+
+  /** i18n key for the free-text relation-link placeholder — copy adapts per
+   *  non-family `kind`, same as `guest-create-modal`. */
+  protected linkPlaceholderKey(): string {
+    return `guest_manager.form.linkPlaceholder.${this.editForm.controls.kind.value}`;
   }
 
   /** Belt-and-suspenders alongside the input's `maxlength="8"` — mirrors
@@ -277,12 +306,15 @@ export class GuestProfileModal {
     const profile = this.guestProfile();
     if (!profile) return;
 
-    const { firstName, lastName, nickname, side, kind } = this.editForm.getRawValue();
-    const relation: CreateGuestDtoRelation = {
-      side,
-      kind,
-      link: profile.guestInfo?.relation?.link ?? '',
-    };
+    const { firstName, lastName, nickname, side, kind, link } = this.editForm.getRawValue();
+    // `CreateGuestDtoRelation` is a union: the family variant's `link` is the
+    // strict `LinkEnum` (the `<select>` only ever assigns one of its
+    // members), the other variants take free text — same split as
+    // `guest-create-modal`'s `guestDraft()`.
+    const relation: CreateGuestDtoRelation =
+      kind === 'family'
+        ? { side, kind, link: link as FamilyRelation['link'] }
+        : { side, kind, link };
 
     this.userProfileCollection
       .update({
