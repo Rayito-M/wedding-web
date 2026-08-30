@@ -38,7 +38,7 @@
             <span class="dot" [class.on]="selectedPlace()?.id === venue.id"></span>
             <span class="venue-info">
               <span class="venue-name">{{ venue.name }}</span>
-              <span class="venue-meta">{{ venue.address }} · {{ venue.city }}</span>
+              <span class="venue-meta">{{ venue.address }} · {{ venue.city | translate }}</span>
             </span>
             <span class="venue-tag">{{ 'configManager.venueType.' + venue.type | translate }}</span>
           </button>

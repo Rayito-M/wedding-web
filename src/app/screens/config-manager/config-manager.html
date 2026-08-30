@@ -318,7 +318,7 @@
                   <app-pill tone="accent">{{
                     'configManager.venueType.' + venue.type | translate
                   }}</app-pill>
-                  <span class="meta">{{ venue.city }} · {{ venue.postalCode }}</span>
+                  <span class="meta">{{ venue.city | translate }} · {{ venue.postalCode }}</span>
                 </div>
                 <label class="field">
                   <span class="field-label">{{ 'configManager.field.venueName' | translate }}</span>
@@ -427,8 +427,7 @@
                 (click)="selectAgendaFilter('all')"
               >
                 {{
-                  'configManager.agenda.filter.all'
-                    | translate: { count: agendaFilterCounts().all }
+                  'configManager.agenda.filter.all' | translate: { count: agendaFilterCounts().all }
                 }}
               </button>
               <button
@@ -735,7 +734,9 @@
                         type="text"
                         [value]="tag.label[code]"
                         [placeholder]="code.toUpperCase()"
-                        (input)="setTagLabel('dietaryPreferences', tag.id, code, inputValue($event))"
+                        (input)="
+                          setTagLabel('dietaryPreferences', tag.id, code, inputValue($event))
+                        "
                       />
                     }
                     <button
