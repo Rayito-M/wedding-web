@@ -53,8 +53,10 @@ describe('People — search matches on nickname (T301)', () => {
         {
           // Not relevant to the nickname search predicate — kept off so the
           // couple-only last-seen block never renders in this test.
+          // `currentUserClaims` backs `isMine`; no profile here matches its
+          // fixed `id`, so it stays a no-op for these assertions.
           provide: LoginService,
-          useValue: { isCouple: signal(false) },
+          useValue: { isCouple: signal(false), currentUserClaims: () => undefined },
         },
         {
           provide: TranslateLanguageService,

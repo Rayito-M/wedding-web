@@ -25,6 +25,9 @@ import {
 import { Btn } from '@app/shared/button/button';
 import { GuestProfileModal, ManageRsvpModal, GuestCreateModal } from './modal';
 
+/** Columns backed by real per-guest data — the only ones the table can sort by. */
+type SortColumn = 'lastName' | 'status' | 'adults' | 'children' | 'lastSeen';
+
 @Component({
   selector: 'app-guest-manager',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -81,6 +84,16 @@ export class GuestManager {
   private readonly currentPage = signal(0);
   private readonly pageSize = 10;
 
+  /**
+   * SPEC.md's admin capability list promises "Filter, sort, search" — filter and
+   * search are already wired above; this is that column-sort piece. Only columns
+   * backed by real per-guest data are sortable — `.col-dietary`/`.col-table`
+   * stay static placeholders (see the template) because the list summary DTO
+   * doesn't carry that data yet.
+   */
+  private readonly sortColumn = signal<SortColumn>('lastName');
+  private readonly sortDirection = signal<'asc' | 'desc'>('asc');
+
   protected readonly filteredGuests = computed(() => {
     const filterValue = this.filter();
     const searchValue = this.searchQuery().toLowerCase();
@@ -113,12 +126,25 @@ export class GuestManager {
     });
   });
 
+  /**
+   * `filteredGuests` re-ordered per the active column/direction. Default is
+   * lastname ascending — the table's baseline order before anyone touches a
+   * header.
+   */
+  protected readonly sortedGuests = computed(() => {
+    const column = this.sortColumn();
+    const direction = this.sortDirection() === 'asc' ? 1 : -1;
+    return [...this.filteredGuests()].sort(
+      (a, b) => this.compareByColumn(a, b, column) * direction,
+    );
+  });
+
   protected readonly paginatedGuests = computed(() => {
-    const filtered = this.filteredGuests();
+    const sorted = this.sortedGuests();
     const page = this.currentPage();
     const start = page * this.pageSize;
     const end = start + this.pageSize;
-    return filtered.slice(start, end);
+    return sorted.slice(start, end);
   });
 
   protected readonly totalPages = computed(() => {
@@ -150,6 +176,89 @@ export class GuestManager {
       this.translateLanguageService.currentLang(),
       (key) => this.translateService.instant(key),
     );
+  }
+
+  /**
+   * `-1 / 0 / 1` for one column between two rows, ascending. `toggleSort`
+   * applies direction on top of this.
+   */
+  private compareByColumn(a: UserProfileDto, b: UserProfileDto, column: SortColumn): number {
+    switch (column) {
+      case 'lastName':
+        // Tie-break on first name so same-surname rows (e.g. siblings) don't
+        // land in an arbitrary order.
+        return a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName);
+      case 'status':
+        return this.statusRank(a) - this.statusRank(b);
+      case 'adults':
+        return (a.guestInfo?.rsvp?.adults ?? 0) - (b.guestInfo?.rsvp?.adults ?? 0);
+      case 'children':
+        return (a.guestInfo?.rsvp?.children ?? 0) - (b.guestInfo?.rsvp?.children ?? 0);
+      case 'lastSeen':
+        // ISO date strings compare correctly as plain strings; a guest who has
+        // never signed in sorts before anyone with a real date.
+        return (a.lastSeen ?? '').localeCompare(b.lastSeen ?? '');
+    }
+  }
+
+  /**
+   * Attending first, then pending, then a guest with no RSVP record at all
+   * (distinct from an explicit "pending" answer), then declined last —
+   * roughly "how much attention this row still needs".
+   */
+  private statusRank(profile: UserProfileDto): number {
+    const status = profile.guestInfo?.rsvp?.status;
+    switch (status) {
+      case 'attending':
+        return 0;
+      case 'pending':
+        return 1;
+      case 'declined':
+        return 3;
+      default:
+        return 2;
+    }
+  }
+
+  /**
+   * Clicking a header: same column toggles direction, a new column starts
+   * ascending. Pagination resets, same as changing the filter or search does.
+   */
+  toggleSort(column: SortColumn): void {
+    if (this.sortColumn() === column) {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortColumn.set(column);
+      this.sortDirection.set('asc');
+    }
+    this.currentPage.set(0);
+  }
+
+  /** Get the current sort column (for template) */
+  getSortColumn(): SortColumn {
+    return this.sortColumn();
+  }
+
+  /** Get the current sort direction (for template) */
+  getSortDirection(): 'asc' | 'desc' {
+    return this.sortDirection();
+  }
+
+  /**
+   * Accessible name for a sortable header button — announces the column and,
+   * once it's the active one, its current direction, so a screen-reader user
+   * gets the same state the visual arrow carries.
+   */
+  sortAriaLabel(column: SortColumn, columnLabelKey: string): string {
+    const columnLabel = this.translateService.instant(columnLabelKey);
+    if (this.sortColumn() !== column) {
+      return this.translateService.instant('guest_manager.sort.by', { column: columnLabel });
+    }
+    const stateKey =
+      this.sortDirection() === 'asc'
+        ? 'guest_manager.sort.ascending'
+        : 'guest_manager.sort.descending';
+    return this.translateService.instant(stateKey, { column: columnLabel });
   }
 
   /** Set the active filter and reset pagination */

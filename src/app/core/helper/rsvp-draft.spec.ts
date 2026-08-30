@@ -6,6 +6,7 @@ import {
   attendingCount,
   canDeclineAlone,
   fromRsvpDraft,
+  impliedStatus,
   isPersonComing,
   toRsvpDraft,
   unnamedAdultCount,
@@ -211,10 +212,15 @@ describe('nickname (T299)', () => {
 
 describe('declining never prunes the party (ADR W-0004 §Decision.6)', () => {
   it('keeps the party on a declined save', () => {
-    // Regression guard: fromRsvpDraft() must not special-case status. It
-    // already behaves — this exists so a future "a declined RSVP has no
-    // party" simplification fails loudly, and so does a caller who starts
-    // withholding partner2/children before calling this when declining.
+    // Regression guard: fromRsvpDraft() must not special-case status wrongly.
+    // It does now special-case `status` (T328's impliedStatus), but this
+    // fixture deliberately declares `status: DECLINED` with no explicit
+    // per-adult `attending` flags at all — the shape of an RSVP declined
+    // before this feature existed (CLAUDE.md hard rule 17: old documents
+    // coexist with new bundles). impliedStatus's clause 5 (ADR W-0007
+    // §Amendment3.8, "absent flags are not evidence") must leave `status`
+    // standing as DECLINED rather than rolling it up to `attending`, and the
+    // rest of the party (partner2, children) must still serialise untouched.
     const value = draft({
       status: RsvpDto.StatusEnum.DECLINED,
       partner2: adult({
@@ -248,6 +254,16 @@ describe('declining never prunes the party (ADR W-0004 §Decision.6)', () => {
     // draft (full party, attending) -> fromRsvpDraft -> toRsvpDraft
     // (declined) -> fromRsvpDraft -> toRsvpDraft (attending again) -> the
     // party is unchanged throughout, at the draft layer only (no live API).
+    // Both adults have their own account here, so both are eligible for the
+    // roll-up (T328, impliedStatus) — the decline/re-attend below is driven
+    // by their `attending` flags, not by poking `status` directly. This is
+    // still the honest call flow to exercise at this layer (T329): the
+    // per-adult toggle (`setAttending` in `rsvp-editor.ts`) writes exactly
+    // these flags one at a time and is a real, distinct UI path from the
+    // party-level status control (`setStatus`, now bidirectional per ADR
+    // W-0007 §Amendment3.7) — that control's own sync behaviour belongs in
+    // `rsvp-editor.spec.ts`, not here, since this file only ever imports the
+    // pure `rsvp-draft.ts` helpers and has no handle on `setStatus` to drive.
     const attendingDraft = draft({
       status: RsvpDto.StatusEnum.ATTENDING,
       partner2: adult({
@@ -262,20 +278,22 @@ describe('declining never prunes the party (ADR W-0004 §Decision.6)', () => {
 
     const asDto = (partial: Partial<RsvpDto>): RsvpDto => rsvpDto(partial);
 
-    const declinedDto = asDto({
-      ...fromRsvpDraft({ ...attendingDraft, status: RsvpDto.StatusEnum.DECLINED }),
-    });
+    const bothDeclined = {
+      ...attendingDraft,
+      partner1: { ...attendingDraft.partner1, attending: false },
+      partner2: attendingDraft.partner2 && { ...attendingDraft.partner2, attending: false },
+    };
+    const declinedDto = asDto({ ...fromRsvpDraft(bothDeclined) });
     const declinedDraft = toRsvpDraft(declinedDto);
     expect(declinedDraft.status).toBe('declined');
-    expect(declinedDraft.partner2).toEqual(attendingDraft.partner2);
+    expect(declinedDraft.partner2).toEqual({ ...attendingDraft.partner2, attending: false });
     expect(declinedDraft.children).toEqual(attendingDraft.children);
 
-    const attendingAgainDto = asDto({
-      ...fromRsvpDraft({ ...declinedDraft, status: RsvpDto.StatusEnum.ATTENDING }),
-    });
+    const partner1ComesBack = { ...declinedDraft, partner1: { ...declinedDraft.partner1, attending: true } };
+    const attendingAgainDto = asDto({ ...fromRsvpDraft(partner1ComesBack) });
     const attendingAgainDraft = toRsvpDraft(attendingAgainDto);
     expect(attendingAgainDraft.status).toBe('attending');
-    expect(attendingAgainDraft.partner2).toEqual(attendingDraft.partner2);
+    expect(attendingAgainDraft.partner2).toEqual({ ...attendingDraft.partner2, attending: false });
     expect(attendingAgainDraft.children).toEqual(attendingDraft.children);
   });
 });
@@ -417,5 +435,117 @@ describe('attending (ADR W-0007, T320) round-trip', () => {
     });
     const partner2 = fromRsvpDraft(value).adults?.partner2;
     expect(partner2 && 'attending' in partner2).toBe(false);
+  });
+});
+
+describe('impliedStatus (ADR W-0007 §Amendment2.5, T328)', () => {
+  it('stays attending when one of two eligible adults has declined', () => {
+    const value = draft({
+      status: RsvpDto.StatusEnum.ATTENDING,
+      partner1: adult({ id: 'usr_self', attending: false }),
+      partner2: adult({ id: 'usr_partner', kind: 'guest' }), // attending undefined => coming
+    });
+    expect(impliedStatus(value)).toBe('attending');
+  });
+
+  it('becomes declined when both eligible adults have declined', () => {
+    const value = draft({
+      status: RsvpDto.StatusEnum.ATTENDING,
+      partner1: adult({ id: 'usr_self', attending: false }),
+      partner2: adult({ id: 'usr_partner', kind: 'guest', attending: false }),
+    });
+    expect(impliedStatus(value)).toBe('declined');
+  });
+
+  it('stays declined when both eligible adults have declined and children are present', () => {
+    const value = draft({
+      status: RsvpDto.StatusEnum.ATTENDING,
+      partner1: adult({ id: 'usr_self', attending: false }),
+      partner2: adult({ id: 'usr_partner', kind: 'guest', attending: false }),
+      children: [child(), child({ firstName: 'Alan' })],
+    });
+    expect(impliedStatus(value)).toBe('declined');
+  });
+
+  it('flips a previously-declined party back to attending when one adult re-toggles to coming', () => {
+    const value = draft({
+      status: RsvpDto.StatusEnum.DECLINED,
+      partner1: adult({ id: 'usr_self', attending: true }),
+      partner2: adult({ id: 'usr_partner', kind: 'guest', attending: false }),
+    });
+    expect(impliedStatus(value)).toBe('attending');
+  });
+
+  it('is never touched when status is pending, however the flags read', () => {
+    const bothDeclined = draft({
+      status: RsvpDto.StatusEnum.PENDING,
+      partner1: adult({ id: 'usr_self', attending: false }),
+      partner2: adult({ id: 'usr_partner', kind: 'guest', attending: false }),
+    });
+    expect(impliedStatus(bothDeclined)).toBe('pending');
+
+    const bothComing = draft({
+      status: RsvpDto.StatusEnum.PENDING,
+      partner1: adult({ id: 'usr_self' }),
+      partner2: adult({ id: 'usr_partner', kind: 'guest' }),
+    });
+    expect(impliedStatus(bothComing)).toBe('pending');
+
+    const noPartner2 = draft({ status: RsvpDto.StatusEnum.PENDING });
+    expect(impliedStatus(noPartner2)).toBe('pending');
+  });
+
+  it('stands as-is for a lone partner1 with no partner2 — nobody is eligible to decline', () => {
+    // canDeclineAlone('partner1') requires a partner2 to exist; with none,
+    // there is no one this draft's status could roll up from.
+    const attending = draft({ status: RsvpDto.StatusEnum.ATTENDING, partner1: adult({ id: 'usr_self', attending: false }) });
+    expect(impliedStatus(attending)).toBe('attending');
+
+    const declined = draft({ status: RsvpDto.StatusEnum.DECLINED, partner1: adult({ id: 'usr_self' }) });
+    expect(impliedStatus(declined)).toBe('declined');
+  });
+
+  it('is a no-op through fromRsvpDraft when nobody has declined (round trip lands "attending" on the wire)', () => {
+    const value = draft({
+      status: RsvpDto.StatusEnum.ATTENDING,
+      partner2: adult({ id: 'usr_partner', kind: 'guest' }),
+    });
+    expect(fromRsvpDraft(value).status).toBe('attending');
+  });
+
+  it('lands "declined" on the wire payload when both eligible adults have declined', () => {
+    const value = draft({
+      status: RsvpDto.StatusEnum.ATTENDING,
+      partner1: adult({ id: 'usr_self', attending: false }),
+      partner2: adult({ id: 'usr_partner', kind: 'guest', attending: false }),
+      children: [child()],
+    });
+    expect(fromRsvpDraft(value).status).toBe('declined');
+  });
+});
+
+describe('absent flags are not evidence (ADR W-0007 §Amendment3.8, T329) — permanent regression guard', () => {
+  it('a party of two account-holding adults with status: declined and no flags at all stays declined', () => {
+    // The exact defect T328 shipped: two eligible adults, neither carrying an
+    // explicit `attending`, on a party that already declined before this
+    // feature existed. A plain roll-up ("no explicit decline ⇒ coming") would
+    // silently promote this back to `attending` on the next save.
+    const value = draft({
+      status: RsvpDto.StatusEnum.DECLINED,
+      partner1: adult({ id: 'usr_self' }),
+      partner2: adult({ id: 'usr_partner', kind: 'guest' }),
+    });
+    expect(impliedStatus(value)).toBe('declined');
+    expect(fromRsvpDraft(value).status).toBe('declined');
+  });
+
+  it('the same shape with status: attending and no flags stays attending', () => {
+    const value = draft({
+      status: RsvpDto.StatusEnum.ATTENDING,
+      partner1: adult({ id: 'usr_self' }),
+      partner2: adult({ id: 'usr_partner', kind: 'guest' }),
+    });
+    expect(impliedStatus(value)).toBe('attending');
+    expect(fromRsvpDraft(value).status).toBe('attending');
   });
 });

@@ -37,7 +37,11 @@ const TRANSLATIONS = {
   rsvp: {
     editor: {
       total: 'Total: {{count}}',
-      person: { openProfile: 'Open their profile' },
+      person: {
+        openProfile: 'Open their profile',
+        noMealDetails: 'No meal details yet',
+        allergiesSummary: 'Allergic to {{list}}',
+      },
       kind: { partner: 'Partner', child: 'Child' },
       unnamed: {
         none: 'No guest needs a first and last name',
@@ -203,18 +207,23 @@ describe('ManageRsvpModal', () => {
   it('discards unsaved edits when the couple jumps to the partner profile', async () => {
     await open(rsvpWithLinkedPartner());
 
-    // Edit the note-less draft through the editor: toggle nothing, rename the
-    // primary guest, which is the cheapest observable dirty edit.
-    const firstName = fixture.nativeElement.querySelector(
+    // Edit the note-less draft through the editor: commit a custom allergy
+    // for the primary guest — the cheapest observable dirty edit now that the
+    // primary's name and nickname are locked (ADR W-0007 §Amendment2.6) and
+    // cannot be edited from here at all.
+    const customAllergyInput = fixture.nativeElement.querySelector(
       'app-rsvp-editor .card-body input[app-input]',
     ) as HTMLInputElement;
-    firstName.value = 'Edited';
-    firstName.dispatchEvent(new Event('input'));
+    customAllergyInput.value = 'Kiwi';
+    customAllergyInput.dispatchEvent(new Event('input'));
+    customAllergyInput.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+    );
     await fixture.whenStable();
     expect(
-      (fixture.nativeElement.querySelector('app-rsvp-editor .card-head .name') as HTMLElement)
+      (fixture.nativeElement.querySelector('app-rsvp-editor .card-head .summary') as HTMLElement)
         .textContent,
-    ).toContain('Edited');
+    ).toContain('Kiwi');
 
     const heads = fixture.nativeElement.querySelectorAll('app-rsvp-editor .card-head');
     (heads[1] as HTMLButtonElement).click();
@@ -231,8 +240,8 @@ describe('ManageRsvpModal', () => {
     fixture.componentInstance.open('guest-1');
     await fixture.whenStable();
     expect(
-      (fixture.nativeElement.querySelector('app-rsvp-editor .card-head .name') as HTMLElement)
+      (fixture.nativeElement.querySelector('app-rsvp-editor .card-head .summary') as HTMLElement)
         .textContent,
-    ).toContain('Ada');
+    ).not.toContain('Kiwi');
   });
 });

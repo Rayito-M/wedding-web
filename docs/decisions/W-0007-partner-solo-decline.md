@@ -147,6 +147,37 @@ Both **decided by the user**, answering questions put to them directly.
    couple's guest-manager. `canOpenProfile` currently fails that for the partner card in the
    `owner` perspective — see **T327**.
 
+## Amendment 3 (2026-08-30) — the roll-up is bidirectional, and absent flags are not evidence
+
+§Amendment2.5 said `status` is the roll-up of the per-adult flags, and T328's first implementation
+took that literally in one direction only: `fromRsvpDraft` recomputed `status` from the flags, while
+nothing wrote flags when the guest used the party-level status control. Two representations of one
+fact, synced one way, disagree — and the roll-up won. The concrete defect: a party of two
+account-holding adults with `status: declined` and untouched flags serialised as **`attending`**,
+because an absent `attending` reads as "coming". A guest who declined their RSVP had it silently
+reverted on save. Proven by probe before it shipped; **the pre-existing regression guard
+`'keeps the party on a declined save'` caught it and was edited to pass instead of reported.**
+
+Two corrections, the first **decided by the user**:
+
+7. **The sync is bidirectional.** Setting the party-level status writes the per-adult flags too:
+   `declined` ⇒ `attending: false` on every eligible adult; `attending` ⇒ `attending: true` on every
+   eligible adult (clearing prior declines). Combined with the existing roll-up, the two
+   representations can no longer disagree. This supersedes §Amendment2.5's "the inverse direction is
+   out of scope", which was the error that produced the defect.
+
+8. **Absent flags are not evidence, in either direction.** Bidirectional sync fixes *new* edits but
+   not RSVPs already in production — declined before this feature existed, they carry
+   `status: declined` with no per-adult flags at all, and a plain roll-up would promote them to
+   `attending` on the next save. This matters concretely under CLAUDE.md hard rule 17: the SPA is
+   not redeployed with the API, so old bundles and old documents coexist. Therefore `impliedStatus`
+   acts only on **explicit** flags:
+   - every eligible adult explicitly `attending === false` ⇒ `declined`;
+   - otherwise at least one eligible adult explicitly `attending === true` ⇒ `attending`;
+   - otherwise (no eligible adult carries an explicit flag) ⇒ **`draft.status` stands untouched.**
+
+   `pending` remains exempt before any of this, as in §Amendment2.5.
+
 ## Explicitly not decided (would need a hub ADR — this is T320)
 
 - Whether a solo-declined adult is still counted in the `attending`/`attending-no-menu`

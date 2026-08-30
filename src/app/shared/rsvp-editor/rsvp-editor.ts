@@ -16,7 +16,6 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
   EntityNamesEnum,
-  LoginService,
   PersonKey,
   RsvpDraft,
   RsvpDto,
@@ -29,6 +28,7 @@ import {
   partnerHasAccount,
   toggleOptionId,
   withPersonOptions,
+  LoginService,
 } from '@app/core';
 import { Avatar } from '@app/shared/avatar/avatar';
 import { ChoiceCard } from '@app/shared/choice-card/choice-card';
@@ -76,9 +76,11 @@ interface PersonCard {
    */
   readonly nameLocked: boolean;
   /**
-   * The guest account this card belongs to, when it has one — `partner2`'s
-   * linked account id, otherwise `null`. Backs the couple's "Open their
-   * profile" jump; the primary guest and children never carry one here.
+   * The guest account this card belongs to, when it has one — the primary
+   * guest's own id, `partner2`'s linked account id when they have one, or
+   * `null` for a plus-one or a child. Backs the "Open their profile" jump
+   * (T327, ADR W-0007 §Amendment2.6): every account-holding adult's identity
+   * is edited there, never in this editor.
    */
   readonly accountId: string | null;
   readonly options: RsvpDtoAdultsPartner1Options;
@@ -108,14 +110,23 @@ interface PersonCard {
   selector: 'app-rsvp-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [Avatar, ChoiceCard, ConfirmDialog, Pill, TextInput, TextareaInput, Toggle, TranslatePipe],
+  imports: [
+    Avatar,
+    ChoiceCard,
+    ConfirmDialog,
+    Pill,
+    TextInput,
+    TextareaInput,
+    Toggle,
+    TranslatePipe,
+  ],
   templateUrl: './rsvp-editor.html',
   styleUrl: './rsvp-editor.scss',
 })
 export class RsvpEditor {
   private readonly lang = inject(TranslateLanguageService);
   private readonly translate = inject(TranslateService);
-  private readonly loginService = inject(LoginService);
+  private readonly loggingService = inject(LoginService);
 
   private readonly weddingConfigCollection: EntityCollectionService<WeddingConfigResponseDto> =
     inject(EntityServices).getEntityCollectionService<WeddingConfigResponseDto>(
@@ -194,11 +205,15 @@ export class RsvpEditor {
   protected readonly cards = computed<PersonCard[]>(() => {
     const draft = this.draft();
     const perspective = this.perspective();
+    const role1 = draft.partner1.id === this.loggingService.currentUserId() ? 'primary' : 'partner';
     const list: PersonCard[] = [
       {
         key: 'partner1',
-        role: 'primary',
-        roleKey: `rsvp.editor.perspective.${perspective}.primaryHint`,
+        role: role1,
+        roleKey:
+          role1 === 'primary'
+            ? `rsvp.editor.perspective.${perspective}.primaryHint`
+            : 'rsvp.editor.kind.partner',
         firstName: draft.partner1.firstName,
         lastName: draft.partner1.lastName,
         nickname: draft.partner1.nickname ?? '',
@@ -209,10 +224,15 @@ export class RsvpEditor {
       },
     ];
     if (draft.partner2) {
+      const role2 =
+        draft.partner2.id === this.loggingService.currentUserId() ? 'primary' : 'partner';
       list.push({
         key: 'partner2',
-        role: 'partner',
-        roleKey: 'rsvp.editor.kind.partner',
+        role: role2,
+        roleKey:
+          role2 === 'primary'
+            ? `rsvp.editor.perspective.${perspective}.primaryHint`
+            : 'rsvp.editor.kind.partner',
         firstName: draft.partner2.firstName,
         lastName: draft.partner2.lastName,
         nickname: draft.partner2.nickname ?? '',
@@ -324,8 +344,32 @@ export class RsvpEditor {
     return this.draft().status === status;
   }
 
+  /**
+   * Party-level status control. Writes `status` and, symmetrically, the
+   * per-adult `attending` flags (ADR W-0007 §Amendment3.7 — the roll-up is
+   * bidirectional): `declined` sets `attending: false` on every eligible
+   * adult (`canDeclineAlone`); `attending` sets `attending: true` on the same
+   * set, clearing any prior solo decline. `pending` leaves flags untouched —
+   * there is nothing to roll back to. An adult who is not eligible (a
+   * plus-one `partner2`, or `partner1` in a party of one) is never written
+   * to: the wire has no `attending` field for them. One draft emitted, as
+   * before.
+   */
   protected setStatus(status: RsvpDto.StatusEnum): void {
-    this.draftChange.emit({ ...this.draft(), status });
+    const draft = this.draft();
+    if (status === RsvpDto.StatusEnum.PENDING) {
+      this.draftChange.emit({ ...draft, status });
+      return;
+    }
+    const attending = status === RsvpDto.StatusEnum.ATTENDING;
+    const partner1 = canDeclineAlone(draft, 'partner1')
+      ? { ...draft.partner1, attending }
+      : draft.partner1;
+    const partner2 =
+      draft.partner2 && canDeclineAlone(draft, 'partner2')
+        ? { ...draft.partner2, attending }
+        : draft.partner2;
+    this.draftChange.emit({ ...draft, status, partner1, partner2 });
   }
 
   // ── per-person "Attending" toggle (solo decline, ADR W-0007) ────────────
@@ -364,7 +408,8 @@ export class RsvpEditor {
    *  DS's fallback ("They") when it has none yet (T321: no perspective
    *  branch here, unlike the DS's `selfCard` first-person copy). */
   protected attendingLabel(card: PersonCard): string {
-    const name = this.fullName(card) || this.translate.instant('rsvp.editor.attending.fallbackName');
+    const name =
+      this.fullName(card) || this.translate.instant('rsvp.editor.attending.fallbackName');
     return this.translate.instant('rsvp.editor.attending.label', { name });
   }
 
@@ -374,7 +419,10 @@ export class RsvpEditor {
   protected setAttending(key: PersonKey, comingChecked: boolean): void {
     const draft = this.draft();
     if (key === 'partner1') {
-      this.draftChange.emit({ ...draft, partner1: { ...draft.partner1, attending: comingChecked } });
+      this.draftChange.emit({
+        ...draft,
+        partner1: { ...draft.partner1, attending: comingChecked },
+      });
       return;
     }
     if (key !== 'partner2' || !draft.partner2) return;
@@ -427,12 +475,18 @@ export class RsvpEditor {
 
   // ── open their profile ─────────────────────────────────────────────────
 
-  /** Does this card offer the jump to its own guest's profile? */
+  /**
+   * Does this card offer the jump to its own guest's profile? Every
+   * account-holding card qualifies in the `couple` perspective (T318); in the
+   * `owner` perspective every account-holding card qualifies too — that
+   * covers both the viewer's own primary card and their linked partner's
+   * (T327, ADR W-0007 §Amendment2.6) — so the self-match clause folds into
+   * the `owner` clause rather than replacing it. A plus-one or child never
+   * reaches here with a usable id: `card.accountId` is `null` for both, and
+   * `requestProfile`'s own `!card.accountId` guard covers a stray call.
+   */
   protected canOpenProfile(card: PersonCard): boolean {
-    return (
-      this.perspective() === 'couple' ||
-      card.accountId === this.loginService.currentUserClaims()?.sub
-    );
+    return this.perspective() === 'couple' || !!card.accountId;
   }
 
   /** Hand the linked guest's id to the host, which owns the overlay swap. */

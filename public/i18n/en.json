@@ -667,6 +667,11 @@
       "table": "Table",
       "lastSeen": "Last seen"
     },
+    "sort": {
+      "by": "Sort by {{column}}",
+      "ascending": "Sort by {{column}}, ascending",
+      "descending": "Sort by {{column}}, descending"
+    },
     "pagination": {
       "noResults": "No results",
       "prev": "← Prev",

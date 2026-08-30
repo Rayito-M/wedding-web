@@ -12,7 +12,9 @@ import {
   RsvpDto,
   WeddingConfigResponseDto,
   entityConfig,
+  fromRsvpDraft,
   provideEntityDataServices,
+  toRsvpDraft,
 } from '@app/core';
 
 import { RsvpEditor } from './rsvp-editor';
@@ -247,15 +249,18 @@ describe('RsvpEditor', () => {
   });
 
   describe('nickname (T299)', () => {
-    it('offers an editable, 30-character-clamped nickname field for the primary guest', async () => {
-      await create(draftWith());
+    it('renders the primary guest\'s nickname read-only, in quotes — the primary is always nameLocked (ADR W-0007 §Amendment2.6: identity edits go through the profile, never this editor)', async () => {
+      await create(draftWith({ partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', nickname: 'Ada', options: {} } }));
 
-      const nicknameInput = query<HTMLInputElement>('.card-body input[maxlength="30"]');
-      expect(nicknameInput).not.toBeNull();
-      expect(nicknameInput!.placeholder).toBe('e.g. Ju');
+      // The header quote is always visible — even before the card opens (DS
+      // `RSVPEditor.jsx` L146, the collapsed-header treatment).
+      expect(query('.header-nickname')?.textContent?.trim()).toBe('“Ada”');
 
-      await type(nicknameInput!, 'AVeryLongNicknameThatExceedsThirtyCharacters');
-      expect(emitted[emitted.length - 1].partner1.nickname).toBe('AVeryLongNicknameThatExceedsTh');
+      // Expanded body (the primary's card is open by default): its own
+      // read-only labelled block, not inline with the name (DS
+      // `RSVPEditor.jsx` L164) — and no editable input at all.
+      expect(query('.locked-nickname-value')?.textContent?.trim()).toBe('“Ada”');
+      expect(queryAll('.card-body input[maxlength="30"]').length).toBe(0);
     });
 
     it('offers an editable nickname field for a child, with the child-specific placeholder', async () => {
@@ -523,6 +528,141 @@ describe('RsvpEditor', () => {
 
       expect(emitted[emitted.length - 1].partner1.attending).toBe(false);
       expect(emitted[emitted.length - 1].partner2?.attending).toBeUndefined();
+    });
+  });
+
+  describe('party-level status control writes the per-adult flags too (T329, ADR W-0007 §Amendment3.7)', () => {
+    const accountPartner = {
+      partner2: {
+        id: 'guest-2',
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        options: {},
+        kind: 'guest',
+      },
+    };
+    const plusOnePartner = {
+      partner2: {
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        options: {},
+        kind: 'plus-one',
+      },
+    };
+
+    function clickStatus(label: string): void {
+      const button = queryAll<HTMLButtonElement>('.choice-row button').find(
+        (b) => b.textContent?.trim() === label,
+      );
+      button!.click();
+    }
+
+    it('setStatus("declined") sets every eligible adult\'s flag false and leaves a plus-one untouched', async () => {
+      await create(draftWith(accountPartner), { showStatus: true });
+
+      clickStatus('Sadly no');
+      await fixture.whenStable();
+
+      const last = emitted[emitted.length - 1];
+      expect(last.status).toBe('declined');
+      expect(last.partner1.attending).toBe(false);
+      expect(last.partner2?.attending).toBe(false);
+    });
+
+    it('setStatus("declined") leaves an account-less plus-one partner2 untouched (not eligible)', async () => {
+      await create(draftWith(plusOnePartner), { showStatus: true });
+
+      clickStatus('Sadly no');
+      await fixture.whenStable();
+
+      const last = emitted[emitted.length - 1];
+      expect(last.status).toBe('declined');
+      // partner1 is eligible (a partner2 exists) and gets the flag; the
+      // plus-one partner2 itself is never eligible and is never written to.
+      expect(last.partner1.attending).toBe(false);
+      expect(last.partner2?.attending).toBeUndefined();
+    });
+
+    it('setStatus("declined") leaves a child untouched — children cannot decline', async () => {
+      await create(
+        draftWith({ ...accountPartner, children: [{ firstName: 'Kit', age: '7', options: {} }] }),
+        { showStatus: true },
+      );
+
+      clickStatus('Sadly no');
+      await fixture.whenStable();
+
+      const last = emitted[emitted.length - 1];
+      expect(last.children).toEqual([{ firstName: 'Kit', age: '7', options: {} }]);
+    });
+
+    it('setStatus("attending") clears prior declines on every eligible adult', async () => {
+      await create(
+        draftWith({
+          status: RsvpDto.StatusEnum.DECLINED,
+          partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: false },
+          partner2: { ...accountPartner.partner2, attending: false },
+        }),
+        { showStatus: true },
+      );
+
+      clickStatus('With joy');
+      await fixture.whenStable();
+
+      const last = emitted[emitted.length - 1];
+      expect(last.status).toBe('attending');
+      expect(last.partner1.attending).toBe(true);
+      expect(last.partner2?.attending).toBe(true);
+    });
+
+    it('setStatus("pending") touches no flags', async () => {
+      await create(
+        draftWith({
+          status: RsvpDto.StatusEnum.DECLINED,
+          partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: false },
+          partner2: { ...accountPartner.partner2, attending: false },
+        }),
+        { showStatus: true, statusPending: true },
+      );
+
+      clickStatus('Pending');
+      await fixture.whenStable();
+
+      const last = emitted[emitted.length - 1];
+      expect(last.status).toBe('pending');
+      expect(last.partner1.attending).toBe(false);
+      expect(last.partner2?.attending).toBe(false);
+    });
+
+    it('round-trips a party-level decline through save and reload and it is still declined', async () => {
+      await create(draftWith(accountPartner), { showStatus: true });
+
+      clickStatus('Sadly no');
+      await fixture.whenStable();
+
+      // "Save": serialise the emitted draft the way the host's PATCH does.
+      const saved = fromRsvpDraft(emitted[emitted.length - 1]);
+      const dto: RsvpDto = {
+        id: 'rsvp-1',
+        version: 3,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        submittedBy: 'guest-1',
+        status: RsvpDto.StatusEnum.ATTENDING,
+        adults: { partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {} } },
+        children: [],
+        ...saved,
+      };
+
+      // "Reload": mount a fresh editor off the round-tripped draft.
+      const reloaded = toRsvpDraft(dto);
+      expect(reloaded.status).toBe('declined');
+      await create(reloaded, { showStatus: true });
+
+      const declinedButton = queryAll<HTMLButtonElement>('.choice-row button').find(
+        (b) => b.textContent?.trim() === 'Sadly no',
+      );
+      expect(declinedButton!.getAttribute('aria-pressed')).toBe('true');
     });
   });
 

@@ -362,6 +362,7 @@ export class RsvpCreate {
     // verbatim so switching back to attending finds everyone again. Explicit
     // removal — un-ticking "With my partner"/"With children" while attending
     // — is a separate condition and must not be widened into this one.
+    const partner1 = { ...rsvp.adults.partner1 };
     let partner2: RsvpDtoAdultsPartner2 | undefined;
     let children: RsvpDtoChildrenInner[] | undefined;
 
@@ -369,9 +370,14 @@ export class RsvpCreate {
       partner2 = rsvp.adults.partner2;
       children = rsvp.children;
     } else {
+      partner1.attending = true; // A guest attending is always attending themselves, even if they don't RSVP for their partner/children.
       // A partner account already linked server-side (`hasLinkedPartner`)
       // isn't editable here — carried forward verbatim rather than replaced.
-      partner2 = d.withPartner ? (typedPartner ?? rsvp.adults.partner2) : undefined;
+      partner2 = d.withPartner
+        ? (typedPartner ?? (rsvp.adults.partner2 ? { ...rsvp.adults.partner2 } : undefined))
+        : undefined;
+      if (partner2?.kind == 'guest')
+        (partner2 as RsvpDtoAdultsPartner2 & { attending: true }).attending = true; // A linked partner is always attending if the guest is.
       children = d.withChildren
         ? d.children.map((c) => ({
             firstName: c.firstName.trim(),
@@ -391,7 +397,7 @@ export class RsvpCreate {
           id: rsvp.id,
           version: rsvp.version,
           status,
-          adults: { partner1: rsvp.adults.partner1, partner2 },
+          adults: { partner1: partner1, partner2 },
           children,
         }),
       );

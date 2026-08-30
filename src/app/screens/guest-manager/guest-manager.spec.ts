@@ -132,6 +132,130 @@ describe('GuestManager — search matches on nickname (T300)', () => {
 });
 
 /**
+ * Column sort — `SPEC.md`'s admin capability list promises "Filter, sort,
+ * search"; filter and search already existed, this is the sort piece. The
+ * table defaults to lastname ascending; clicking a sortable header re-orders
+ * `paginatedGuests` in place, toggling direction on a repeat click of the
+ * same column and resetting to ascending on a switch to a different one.
+ */
+describe('GuestManager — column sort', () => {
+  const relation = { side: 'bride', kind: 'family', link: 'sister' } as const;
+
+  function rowNames(fixture: ComponentFixture<GuestManager>): string[] {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll('.table-row .guest-name') as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent?.trim() ?? '');
+  }
+
+  function clickHeader(fixture: ComponentFixture<GuestManager>, column: string): void {
+    const btn = fixture.nativeElement.querySelector(
+      `.table-header .col-${column}`,
+    ) as HTMLButtonElement;
+    btn.click();
+    fixture.detectChanges();
+  }
+
+  it('defaults to lastname ascending, tie-broken by first name', async () => {
+    const fixture = await createGuestManager([
+      profile({ id: 'g1', firstName: 'Zoe', lastName: 'Alvarez' }),
+      profile({ id: 'g2', firstName: 'Bea', lastName: 'Alvarez' }),
+      profile({ id: 'g3', firstName: 'Ana', lastName: 'Perez' }),
+    ]);
+
+    expect(rowNames(fixture)).toEqual(['Bea Alvarez', 'Zoe Alvarez', 'Ana Perez']);
+  });
+
+  it('clicking the adults header sorts numerically, ascending', async () => {
+    const fixture = await createGuestManager([
+      profile({
+        id: 'g1',
+        firstName: 'Zoe',
+        lastName: 'Alvarez',
+        guestInfo: { relation, rsvp: { id: 'g1', status: 'attending', adults: 3 } },
+      }),
+      profile({
+        id: 'g2',
+        firstName: 'Ana',
+        lastName: 'Perez',
+        guestInfo: { relation, rsvp: { id: 'g2', status: 'attending', adults: 1 } },
+      }),
+    ]);
+
+    clickHeader(fixture, 'adults');
+
+    expect(rowNames(fixture)).toEqual(['Ana Perez', 'Zoe Alvarez']);
+  });
+
+  it('clicking the already-active header reverses direction', async () => {
+    const fixture = await createGuestManager([
+      profile({ id: 'g1', firstName: 'Zoe', lastName: 'Alvarez' }),
+      profile({ id: 'g2', firstName: 'Ana', lastName: 'Perez' }),
+    ]);
+
+    // The guest column is already the (default) active sort, so this click
+    // reverses lastname order rather than restarting ascending.
+    clickHeader(fixture, 'guest');
+
+    expect(rowNames(fixture)).toEqual(['Ana Perez', 'Zoe Alvarez']);
+  });
+
+  it('switching to a different column starts ascending, not carrying over the previous direction', async () => {
+    const fixture = await createGuestManager([
+      profile({
+        id: 'g1',
+        firstName: 'Zoe',
+        lastName: 'Alvarez',
+        guestInfo: { relation, rsvp: { id: 'g1', status: 'attending', adults: 3 } },
+      }),
+      profile({
+        id: 'g2',
+        firstName: 'Ana',
+        lastName: 'Perez',
+        guestInfo: { relation, rsvp: { id: 'g2', status: 'attending', adults: 1 } },
+      }),
+    ]);
+
+    clickHeader(fixture, 'guest'); // lastname descending: Perez, Alvarez
+    clickHeader(fixture, 'adults'); // new column: back to ascending
+
+    expect(rowNames(fixture)).toEqual(['Ana Perez', 'Zoe Alvarez']);
+  });
+
+  it('on the status column, a guest with no RSVP record ranks between pending and declined', async () => {
+    const fixture = await createGuestManager([
+      profile({
+        id: 'g1',
+        firstName: 'Ana',
+        lastName: 'Attending',
+        guestInfo: { relation, rsvp: { id: 'g1', status: 'attending', adults: 1 } },
+      }),
+      profile({ id: 'g2', firstName: 'Nora', lastName: 'NoRsvp' }),
+      profile({
+        id: 'g3',
+        firstName: 'Deb',
+        lastName: 'Declined',
+        guestInfo: { relation, rsvp: { id: 'g3', status: 'declined', adults: 1 } },
+      }),
+      profile({
+        id: 'g4',
+        firstName: 'Pat',
+        lastName: 'Pending',
+        guestInfo: { relation, rsvp: { id: 'g4', status: 'pending', adults: 1 } },
+      }),
+    ]);
+
+    clickHeader(fixture, 'status');
+
+    expect(rowNames(fixture)).toEqual([
+      'Ana Attending',
+      'Pat Pending',
+      'Nora NoRsvp',
+      'Deb Declined',
+    ]);
+  });
+});
+
+/**
  * T308 — a normal guest-table row click still opens the profile read-only,
  * while the RSVP editor's "open their profile" jump (relayed through
  * `app-manage-rsvp-modal`'s `(openProfile)`) opens straight into edit mode.

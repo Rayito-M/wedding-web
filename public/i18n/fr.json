@@ -663,6 +663,11 @@
       "table": "Table",
       "lastSeen": "Dernière connexion"
     },
+    "sort": {
+      "by": "Trier par {{column}}",
+      "ascending": "Trier par {{column}}, ordre croissant",
+      "descending": "Trier par {{column}}, ordre décroissant"
+    },
     "pagination": {
       "noResults": "Aucun résultat",
       "prev": "← Précédent",

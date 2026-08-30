@@ -6492,10 +6492,19 @@
     save boundary — the editor is a controlled component over a draft and silently rewriting
     `status` mid-edit would surprise, and would fight the explicit status control the editor already
     renders when `showStatus` is true.
-  - The inverse must also hold or be explicitly ruled out: if a `declined` party re-toggles one
-    adult to attending, does `status` flip back to `attending`? §Amendment2.5's wording ("if only
-    one of them comes the RSVP is still confirmed") implies yes. Confirm with the user; do not
-    guess.
+  - **RESOLVED — the roll-up is symmetric, both directions.** §Amendment2.5's wording ("declined
+    when both adults have declined … if only one of them comes the RSVP is still confirmed") states
+    a biconditional, so: every eligible adult declined ⇒ `declined`; at least one adult coming ⇒
+    `attending`, including re-toggling a previously-`declined` party back. Read from the user's own
+    words rather than re-asked.
+  - **`pending` is not touched by the roll-up.** A party that has not answered yet has no declines
+    to roll up (`attending` defaults to absent ⇒ coming, so `attendingCount` is always the full
+    party), and silently promoting `pending` to `attending` would fabricate an answer the guest
+    never gave. Guard on this explicitly and test it.
+  - **Out of scope — the inverse direction (`status` → per-adult flags).** Choosing "declined" on
+    the party-level status control does **not** write `attending: false` onto each adult here. Note
+    the user is separately hand-editing `rsvp-create.ts` to seed flags from the party answer on that
+    screen; if the two need to agree, that is a follow-up, not this task.
   - Unit specs for every branch, including the both-declined-plus-children case.
 - **OPEN — ask before implementing:** does the **API** enforce this roll-up, or is the client the
   only thing maintaining the invariant? Per CLAUDE.md hard rule 17 this bundle is not redeployed
@@ -6504,3 +6513,52 @@
   and probably wants answering in the same pass, in `wedding-api`.
 - **Refs:** ADR W-0007 §Amendment2.5; T320 (still-open audience/headcount half); hub ADR-0022
   (`status` as the RSVP's single source of truth); `src/app/core/helper/rsvp-draft.ts`
+
+### T329 — Fix T328's roll-up: bidirectional sync + "absent flags are not evidence"
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** T328 (whose implementation is in the working tree, uncommitted, and **defective**)
+- **Why:** T328 shipped a data-corrupting defect, caught by probe before commit. `impliedStatus`
+  recomputes `status` from the per-adult flags, but nothing writes flags when the guest uses the
+  party-level status control, and an absent `attending` reads as "coming". Result, verified:
+  a party of two account-holding adults with `status: declined` and untouched flags serialises as
+  **`attending`**. Reachable from `rsvp-edit` (`[showStatus]="true"`, `setStatus` writes only
+  `status`, then `fromRsvpDraft` overwrites it) — **a guest who declines has the decline silently
+  reverted on save.** Fails toward the expensive direction: a headcount that includes people who
+  said no. See ADR W-0007 §Amendment3.
+- **Acceptance:**
+  - **`impliedStatus` acts only on explicit flags** (ADR W-0007 §Amendment3.8), in this order:
+    1. `draft.status === 'pending'` ⇒ return unchanged (existing guard, keep).
+    2. no eligible adult (`canDeclineAlone` false for both keys) ⇒ return `draft.status` unchanged
+       (existing guard, keep).
+    3. every eligible adult explicitly `attending === false` ⇒ `declined`.
+    4. otherwise at least one eligible adult explicitly `attending === true` ⇒ `attending`.
+    5. **otherwise return `draft.status` unchanged** — this is the new clause, and the one that
+       protects RSVPs already in production that predate the flags entirely.
+  - **`setStatus` writes the flags too** (`rsvp-editor.ts` L327-329, ADR W-0007 §Amendment3.7):
+    `declined` ⇒ `attending: false` on every adult for which `canDeclineAlone` is true;
+    `attending` ⇒ `attending: true` on the same set. `pending` leaves flags untouched. Adults who
+    are not eligible (a plus-one `partner2`; `partner1` in a party of one) are never written to —
+    the wire has no field for them. Emit one draft, as `setStatus` already does; do not emit twice.
+  - **Restore the masked regression guard.** `'keeps the party on a declined save'`
+    (`rsvp-draft.spec.ts`) had `partner1: adult({ id: 'usr_self', attending: false })` added to its
+    fixture so it would pass. Remove that addition, returning the fixture to a declared
+    `status: DECLINED` with **no** explicit flags, and let it assert — correctly — that the
+    serialised status is still `declined`. Under clause 5 it now passes honestly. Restore its
+    original comment intent (a guard against `fromRsvpDraft` special-casing status wrongly) rather
+    than the replacement comment that rationalised the failure.
+  - Re-check the other test T328 rewrote, `'round-trips the party through a decline and back to
+    attending'`: with `setStatus` now syncing flags, decide whether driving it via explicit flags is
+    still the honest representation of what the app does, or whether it should drive `status` and
+    let the sync do the work. Prefer whichever matches real call flow; say which you chose and why.
+  - New specs: the exact defect as a permanent guard (two account-holding adults, `status: declined`,
+    no flags ⇒ serialises `declined`); the same with `status: attending` and no flags ⇒ `attending`;
+    `setStatus('declined')` sets both eligible adults' flags false and leaves a plus-one/child
+    untouched; `setStatus('attending')` clears prior declines; `setStatus('pending')` touches no
+    flags; and a full round trip proving party-level decline → save → reload → still declined.
+  - `pnpm typecheck && pnpm lint && pnpm test` — 0 failures (baseline before T328 was 412/412; T328
+    added 8, this task adds more). `lint` no new errors beyond the 4 known `shared/modal` ones.
+- **Refs:** ADR W-0007 §Amendment3 (both clauses), §Amendment2.5 (superseded in part); T328;
+  `src/app/core/helper/rsvp-draft.ts` (`impliedStatus`, `fromRsvpDraft`), `rsvp-draft.spec.ts`;
+  `src/app/shared/rsvp-editor/rsvp-editor.ts` (`setStatus` L327-329);
+  CLAUDE.md hard rule 17 (why legacy documents matter here)

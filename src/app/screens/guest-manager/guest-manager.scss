@@ -204,11 +204,50 @@
   border-bottom: 1px solid var(--border-hairline);
 }
 
-.table-header>div {
+.table-header>div,
+.table-header>button {
   font-size: t.$text-label;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+// Sortable header cells are real <button>s (keyboard/AT get click semantics
+// for free) reset to look like the plain label divs beside them. Scoped under
+// `.table-header` so it beats the desktop `.col-status`/`.col-adults`/etc.
+// `display: block` rules below, which target the same class names' *row*
+// (data-cell) use, not this header use.
+.table-header .col-sort {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: t.$font-sans;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+
+  &:hover,
+  &.active {
+    color: var(--text-body-color);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand-accent);
+    outline-offset: 2px;
+  }
+}
+
+.sort-icon {
+  font-size: 8px;
+  color: var(--brand-accent);
+  // Reserve the arrow's width on every sortable header so the label doesn't
+  // shift horizontally when a column becomes/stops being the active one.
+  width: 8px;
+  display: inline-block;
+  text-align: center;
 }
 
 .table-body {

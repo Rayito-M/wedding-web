@@ -126,6 +126,18 @@ export function toRsvpDraft(rsvp: RsvpDto): RsvpDraft {
   };
 }
 
+/**
+ * Serialise a draft to the `Partial<RsvpDto>` the two save boundaries
+ * (`app-rsvp-edit`, `app-manage-rsvp-modal`) `PATCH` to the API.
+ *
+ * This is **not** a plain serialiser: `status` is not carried through
+ * verbatim from `draft.status`. It is passed through `impliedStatus` first,
+ * which enforces the ADR W-0007 §Amendment2.5/§Amendment3 invariant
+ * ("declined" only when every eligible adult has *explicitly* declined, and
+ * absent flags are never treated as evidence) at the one seam both save
+ * boundaries already go through, rather than trusting each caller to remember
+ * to roll it up. See `impliedStatus`'s own doc comment for the rule itself.
+ */
 export function fromRsvpDraft(draft: RsvpDraft): Partial<RsvpDto> {
   const partner1: RsvpDtoAdultsPartner1 = {
     id: draft.partner1.id as string,
@@ -161,7 +173,7 @@ export function fromRsvpDraft(draft: RsvpDraft): Partial<RsvpDto> {
     options: c.options,
   }));
   return {
-    status: draft.status,
+    status: impliedStatus(draft),
     version: draft.version,
     adults: { partner1, partner2 },
     children,
@@ -283,4 +295,50 @@ export function attendingCount(draft: RsvpDraft): number {
     (key) => canDeclineAlone(draft, key) && draft[key]?.attending === false,
   ).length;
   return total - declinedAdults;
+}
+
+/**
+ * What should `RsvpDto.status` be, given the per-adult `attending` flags
+ * already on this draft? (ADR W-0007 §Amendment2.5, T328; corrected by
+ * §Amendment3.8, T329 — see below.)
+ *
+ * `status` is not an independent axis from the per-adult flags — it is their
+ * party-level roll-up: "did anyone from this party come?" But T328's first
+ * cut treated an *absent* flag as evidence of "coming", which silently
+ * reverted an already-declined RSVP (no per-adult flags at all — the common
+ * shape for anything declined before this feature existed, per CLAUDE.md hard
+ * rule 17) back to `attending` on the next save. §Amendment3.8 fixes this:
+ * **absent flags are not evidence, in either direction.** This function acts
+ * only on *explicit* flags, evaluated in this order:
+ *
+ * 1. `pending` is never touched — a party that has not answered has no
+ *    declines to roll up, and promoting it would fabricate an answer the
+ *    guest never gave.
+ * 2. No eligible adult (`canDeclineAlone` false for both keys, e.g. a lone
+ *    `partner1` with no `partner2`) ⇒ nobody to derive `status` from —
+ *    `draft.status` stands as-is.
+ * 3. Every eligible adult explicitly `attending === false` ⇒ `declined`.
+ * 4. Otherwise, at least one eligible adult explicitly `attending === true`
+ *    ⇒ `attending`.
+ * 5. Otherwise — no eligible adult carries an *explicit* flag either way —
+ *    `draft.status` stands unchanged. This is the clause that protects
+ *    RSVPs already in production: a `status: declined` document with no
+ *    per-adult flags at all stays `declined` rather than being promoted.
+ *
+ * Children never enter into it — they cannot decline (`RsvpDtoChildrenInner`
+ * has no `attending` field).
+ *
+ * This is now bidirectional in practice: `setStatus`
+ * (`src/app/shared/rsvp-editor/rsvp-editor.ts`) writes the per-adult flags
+ * when the guest uses the party-level status control, so the two
+ * representations of one fact stay in sync instead of one silently
+ * overwriting the other (§Amendment3.7).
+ */
+export function impliedStatus(draft: RsvpDraft): RsvpDto.StatusEnum {
+  if (draft.status === RsvpDto.StatusEnum.PENDING) return draft.status;
+  const eligible = (['partner1', 'partner2'] as const).filter((key) => canDeclineAlone(draft, key));
+  if (eligible.length === 0) return draft.status;
+  if (eligible.every((key) => draft[key]?.attending === false)) return RsvpDto.StatusEnum.DECLINED;
+  if (eligible.some((key) => draft[key]?.attending === true)) return RsvpDto.StatusEnum.ATTENDING;
+  return draft.status;
 }

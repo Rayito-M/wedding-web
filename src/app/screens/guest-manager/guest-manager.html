@@ -138,19 +138,85 @@
 
   <!-- Table -->
   <div class="table-container">
-    <!-- Table header -->
+    <!-- Table header — desktop-only; columns backed by real per-guest data
+         (guest, status, adults, children, last seen) are sortable. Dietary and
+         table stay plain labels: they render a static placeholder per row
+         (see below), so there's nothing to sort them by yet. -->
     <div class="table-header">
-      <div class="col-guest">{{ 'guest_manager.table.guest' | translate }}</div>
-      <div class="col-status">{{ 'guest_manager.table.status' | translate }}</div>
-      <div class="col-adults">{{ 'guest_manager.table.adults' | translate }}</div>
-      <div class="col-children">
+      <button
+        type="button"
+        class="col-guest col-sort"
+        [class.active]="getSortColumn() === 'lastName'"
+        [attr.aria-label]="sortAriaLabel('lastName', 'guest_manager.table.guest')"
+        (click)="toggleSort('lastName')"
+        (keydown.enter)="toggleSort('lastName')"
+        (keydown.space)="toggleSort('lastName')"
+      >
+        {{ 'guest_manager.table.guest' | translate }}
+        <span class="sort-icon" aria-hidden="true">{{
+          getSortColumn() === 'lastName' ? (getSortDirection() === 'asc' ? '▲' : '▼') : ''
+        }}</span>
+      </button>
+      <button
+        type="button"
+        class="col-status col-sort"
+        [class.active]="getSortColumn() === 'status'"
+        [attr.aria-label]="sortAriaLabel('status', 'guest_manager.table.status')"
+        (click)="toggleSort('status')"
+        (keydown.enter)="toggleSort('status')"
+        (keydown.space)="toggleSort('status')"
+      >
+        {{ 'guest_manager.table.status' | translate }}
+        <span class="sort-icon" aria-hidden="true">{{
+          getSortColumn() === 'status' ? (getSortDirection() === 'asc' ? '▲' : '▼') : ''
+        }}</span>
+      </button>
+      <button
+        type="button"
+        class="col-adults col-sort"
+        [class.active]="getSortColumn() === 'adults'"
+        [attr.aria-label]="sortAriaLabel('adults', 'guest_manager.table.adults')"
+        (click)="toggleSort('adults')"
+        (keydown.enter)="toggleSort('adults')"
+        (keydown.space)="toggleSort('adults')"
+      >
+        {{ 'guest_manager.table.adults' | translate }}
+        <span class="sort-icon" aria-hidden="true">{{
+          getSortColumn() === 'adults' ? (getSortDirection() === 'asc' ? '▲' : '▼') : ''
+        }}</span>
+      </button>
+      <button
+        type="button"
+        class="col-children col-sort"
+        [class.active]="getSortColumn() === 'children'"
+        [attr.aria-label]="sortAriaLabel('children', 'guest_manager.table.children')"
+        (click)="toggleSort('children')"
+        (keydown.enter)="toggleSort('children')"
+        (keydown.space)="toggleSort('children')"
+      >
         {{ 'guest_manager.table.children' | translate }}
-      </div>
+        <span class="sort-icon" aria-hidden="true">{{
+          getSortColumn() === 'children' ? (getSortDirection() === 'asc' ? '▲' : '▼') : ''
+        }}</span>
+      </button>
       <div class="col-dietary">
         {{ 'guest_manager.table.dietary' | translate }}
       </div>
       <div class="col-table">{{ 'guest_manager.table.table' | translate }}</div>
-      <div class="col-last-seen">{{ 'guest_manager.table.lastSeen' | translate }}</div>
+      <button
+        type="button"
+        class="col-last-seen col-sort"
+        [class.active]="getSortColumn() === 'lastSeen'"
+        [attr.aria-label]="sortAriaLabel('lastSeen', 'guest_manager.table.lastSeen')"
+        (click)="toggleSort('lastSeen')"
+        (keydown.enter)="toggleSort('lastSeen')"
+        (keydown.space)="toggleSort('lastSeen')"
+      >
+        {{ 'guest_manager.table.lastSeen' | translate }}
+        <span class="sort-icon" aria-hidden="true">{{
+          getSortColumn() === 'lastSeen' ? (getSortDirection() === 'asc' ? '▲' : '▼') : ''
+        }}</span>
+      </button>
     </div>
 
     <!-- Table body -->

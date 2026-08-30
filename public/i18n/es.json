@@ -663,6 +663,11 @@
       "table": "Mesa",
       "lastSeen": "Última conexión"
     },
+    "sort": {
+      "by": "Ordenar por {{column}}",
+      "ascending": "Ordenar por {{column}}, ascendente",
+      "descending": "Ordenar por {{column}}, descendente"
+    },
     "pagination": {
       "noResults": "Sin resultados",
       "prev": "← Anterior",
