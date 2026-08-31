@@ -7112,3 +7112,75 @@
   - Existing T330 cursor specs still pass; add specs for a first page + a `limit` on the wire.
   - `pnpm typecheck && pnpm lint && pnpm test` green, with only the documented pre-existing failures.
 - **Refs:** ADR W-0009 §6 and "Why the screen cannot adopt a `limit` yet"; hub ADR-0038
+
+### T335 — Couple: grant and revoke a delegation, with the required kind (desktop + mobile)
+- **Status:** blocked — waiting on `wedding-api` T238, then `pnpm gen:api`
+- **Owner:** unassigned
+- **Depends on:** `wedding-api` T238 (the `{id, kind}` contract)
+- **Why:** hub ADR-0039. The couple is the **only** author of a delegation, and today no screen in
+  any repo can create one. Hard rule 18 governs this task.
+- **Acceptance:**
+  - Control lives in the couple's guest **profile editor**, and ships on **desktop and mobile in the
+    same task**. `ScreenGuestManagerMobile.jsx` draws nothing here — build it anyway; half a grant
+    surface is worse than none on the device the couple carries.
+  - Search-and-pick over the guest list (empty until typed, ≤8 matches, self excluded, already-picked
+    excluded, "No matching guests." empty result), **then a required second step: what is this person
+    to the guest?** — `father | mother | brother | sister`, translated, no free text, no "other", no
+    default. The DS draws no kind picker; compose one from existing primitives rather than waiting.
+  - **Never offer the guest `relation.link` options here** (33 values, anchored to the couple) — hard
+    rule 18(b).
+  - Grant and removal accumulate in the profile **draft**: written by Save, discarded by Cancel, no
+    separate confirmation, riding the existing envelope `version` and its 409 handling.
+  - Profile **view** gets the read-only "RSVP answered by" field — name + kind per entry, accented
+    when non-empty, `—` when empty.
+  - The picker has a loading and an error state. `DelegationField.jsx` has neither; that is a gap in
+    the mock, not a design decision.
+  - ES/EN/FR copy for every string, including both empty states. Unit specs for the required-kind
+    gate (Save is blocked with a name and no kind).
+- **Non-goals:** no guest-side grant (hard rule 18(a)); no bulk grant; no notification; no "who does
+  this guest answer for" inverse view.
+- **Refs:** hub ADR-0039 §8, §12; `SPEC.md` J4a; hard rule 18
+
+### T336 — Guest: read-only "who answers for you" on the profile modal
+- **Status:** blocked — waiting on `wedding-api` T238, then `pnpm gen:api`
+- **Owner:** unassigned
+- **Depends on:** T335 (shares the display half of the control and its i18n keys)
+- **Why:** hub ADR-0039 — the arrangement must never be invisible to the person it is about. Read-only
+  in **all** modes, including edit mode: the guest-side picker in `ProfileModal.jsx` is cut.
+- **Acceptance:**
+  - Chips showing each delegate's name **and the kind, rendered subject-side** ("Laura Mendoza · mi
+    hermana") — this is the side where the kind is meaningful and translates (hard rule 18(c)).
+  - No remove `×`, no picker, no search, in any mode.
+  - Empty state: "Nobody answers for you — only you can reply." (ES/EN/FR).
+  - Do **not** ship `ProfileModal.jsx:58`'s "The couple can also set this up on your behalf" — that
+    describes a screen that is not being built.
+- **Non-goals:** granting; resigning; showing who last answered (`submittedBy` is out of scope,
+  ADR-0039 §10).
+- **Refs:** hub ADR-0039 §6, §8, §10; `SPEC.md` → Users → Guest
+
+### T337 — Delegate: the RSVP hub, names only, no relation line
+- **Status:** blocked — waiting on `wedding-api` T238/T239, then `pnpm gen:api`
+- **Owner:** unassigned
+- **Depends on:** `wedding-api` T239 (the mirror read), T336 (shared i18n keys)
+- **Why:** hub ADR-0039 §6. A guest holding at least one delegation gets a hub instead of a bare
+  editor: own reply first, then one card per subject. **No new endpoint** — `GET /v1/rsvp` already
+  returns exactly the delegated RSVPs for a non-couple caller.
+- **Acceptance:**
+  - With **zero** delegations the RSVP screen is byte-for-byte what it is today. The hub is additive
+    to J2, never a replacement — assert this with a spec.
+  - Each card: the subject's party label (from the RSVP's own adults — it may name two people when a
+    linked couple shares one reply), the state (Confirmed / Declined / Not answered yet), and the
+    party size once answered. A header count of what is still outstanding.
+  - **No relation line, on any card** (hard rule 18(c)). `meta={d.relation}` and the mock's "My
+    parents" / "My grandmother" render data the API does not return and cannot return.
+  - Opening a card opens the existing shared editor headed on-behalf-of with the subject's **name**,
+    third-person copy ("They can't make it"), and a back link. Use the editor's `delegate`
+    perspective labels, not `owner`.
+  - The deadline blocks a delegate like any non-admin (410) — surface it the same way the guest's own
+    editor does. Do not render the mock's hardcoded "Edit anything until 1 May"; the date is the
+    CONFIG row's.
+  - ES/EN/FR, including the pluralised outstanding-count sentence (a string switch will not survive
+    three locales — use the i18n plural machinery).
+- **Non-goals:** resigning a delegation; any write to `delegateTo`; per-item deep links from the
+  profile mirror list.
+- **Refs:** hub ADR-0039 §3, §6, §7; `SPEC.md` J3; hard rule 18
