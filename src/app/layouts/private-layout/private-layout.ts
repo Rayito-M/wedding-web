@@ -18,6 +18,7 @@ import {
   EntityNamesEnum,
   LoginService,
   ProfileModalService,
+  RouteChromeData,
   ToastCenterService,
   UserProfileDto,
 } from '@app/core';
@@ -29,14 +30,15 @@ import { TabBar } from '../../shared/tab-bar/tab-bar';
 import { Toast } from '../../shared/toast/toast';
 import { ToastStack } from '../../shared/toast-stack/toast-stack';
 
-/** Chrome flags read from the active child route's `data`. */
-interface RouteChrome {
-  tab?: string;
-  tabBar?: boolean;
-  topNav?: boolean;
-  /** Show the decorative motorcycle-rider crossing above the mobile tab bar. */
-  moto?: boolean;
-}
+/**
+ * Chrome flags read from the active child route's `data` — the shared
+ * `RouteChromeData` shape, `Partial` because the deepest snapshot route can be
+ * one without any (the layout route itself, before a child activates).
+ * Deliberately *not* a local re-declaration: the previous one spelled the
+ * nav-tab id `tab`, so `chrome().tab` was always `undefined` and no tab ever
+ * highlighted.
+ */
+type RouteChrome = Partial<RouteChromeData>;
 
 /**
  * Shell for the authenticated ("private") zone: renders the shared screen

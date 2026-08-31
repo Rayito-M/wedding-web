@@ -8,8 +8,8 @@
        "New guest · {side} · {group}") -->
   <span modal-eyebrow class="modal-eyebrow">
     {{ 'guest_manager.modal.newGuest' | translate }} ·
-    {{ 'guest_manager.relation.side.' + createForm.controls.side.value | translate }} ·
-    {{ 'guest_manager.relation.kind.' + createForm.controls.kind.value | translate }}
+    {{ 'relation.side.' + createForm.controls.side.value | translate }} ·
+    {{ 'relation.kind.' + createForm.controls.kind.value | translate }}
   </span>
 
   <!-- Decorative header fish (DS ScreenGuestManager profile-overlay header) -->
@@ -62,8 +62,8 @@
               >
                 <span class="candidate-name">{{ candidate.name }}</span>
                 <span class="candidate-meta">
-                  {{ 'guest_manager.relation.side.' + candidate.side | translate }} ·
-                  {{ 'guest_manager.relation.kind.' + candidate.kind | translate }}
+                  {{ 'relation.side.' + candidate.side | translate }} ·
+                  {{ 'relation.kind.' + candidate.kind | translate }}
                 </span>
               </button>
             } @empty {

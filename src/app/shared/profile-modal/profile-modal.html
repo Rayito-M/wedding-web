@@ -34,9 +34,9 @@
             </app-pill>
             @if (profile.guestInfo?.relation; as relation) {
               <app-pill>
-                {{ relation.link | translate }}
+                {{ relation | relationLink }}
                 @if (relation.side) {
-                  · {{ 'roles.' + relation.side | translate }}
+                  · {{ 'relation.side.' + relation.side | translate }}
                 }
               </app-pill>
             }

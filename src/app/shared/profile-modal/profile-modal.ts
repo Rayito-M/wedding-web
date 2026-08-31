@@ -11,7 +11,12 @@ import {
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { UpdateUserProfileDto, UserProfileDto, TranslateLanguageService } from '@app/core';
+import {
+  UpdateUserProfileDto,
+  UserProfileDto,
+  RelationLinkPipe,
+  TranslateLanguageService,
+} from '@app/core';
 import { Avatar } from '@app/shared/avatar/avatar';
 import { Btn } from '@app/shared/button/button';
 import { Modal } from '@app/shared/modal/modal';
@@ -72,7 +77,7 @@ import { ProfileFields, ProfileFieldsValue } from '@app/shared/profile-fields/pr
 @Component({
   selector: 'app-profile-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Modal, Btn, Avatar, Pill, ProfileFields, RouterLink, TranslatePipe],
+  imports: [Modal, Btn, Avatar, Pill, ProfileFields, RouterLink, TranslatePipe, RelationLinkPipe],
   templateUrl: './profile-modal.html',
   styleUrl: './profile-modal.scss',
   host: {

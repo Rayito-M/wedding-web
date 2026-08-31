@@ -13,6 +13,7 @@ import {
   GuestListResponseDtoItemsInnerRelationOneOf,
   TranslateLanguageService,
   lastSeenLabel as formatLastSeen,
+  relationLinkLabel as formatRelationLink,
   todayInMadrid,
   partnerHasAccount,
 } from '@app/core';
@@ -191,16 +192,15 @@ export class GuestProfileModal {
   });
 
   /**
-   * `relation.link` is a catalog key for `family` (rendered through
-   * `guest_manager.relation.link.*`, as `guest-create-modal` writes it) and
-   * free text for every other kind — so only the family case is translated.
+   * `relation.link` is a catalog key for `family` (rendered through the
+   * shared `relation.link.*` namespace, as `guest-create-modal` writes it)
+   * and free text for every other kind — the split lives once, in the shared
+   * `relationLinkLabel` helper.
    */
   protected readonly relationLinkLabel = computed<string | null>(() => {
     const relation = this.guestProfile()?.guestInfo?.relation;
     if (!relation?.link) return null;
-    return relation.kind === 'family'
-      ? this.translate.instant(`guest_manager.relation.link.${relation.link}`)
-      : relation.link;
+    return formatRelationLink(relation, (key) => this.translate.instant(key));
   });
 
   protected readonly modalTitle = computed(() =>

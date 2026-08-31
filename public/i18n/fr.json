@@ -5,6 +5,54 @@
     "guest": "Invité",
     "provider": "Prestataire"
   },
+  "relation": {
+    "side": {
+      "bride": "Mariée",
+      "groom": "Marié",
+      "both": "Les deux"
+    },
+    "kind": {
+      "family": "Famille",
+      "friends": "Amis",
+      "colleagues": "Collègues",
+      "other": "Autre"
+    },
+    "link": {
+      "aunt": "Tante",
+      "aunt-in-law": "Tante par alliance",
+      "brother": "Frère",
+      "brother-in-law": "Beau-frère",
+      "cousin": "Cousin(e)",
+      "cousin-in-law": "Cousin(e) par alliance",
+      "daughter": "Fille",
+      "father": "Père",
+      "father-in-law": "Beau-père",
+      "grandfather": "Grand-père",
+      "grandfather-in-law": "Grand-père par alliance",
+      "grandmother": "Grand-mère",
+      "grandmother-in-law": "Grand-mère par alliance",
+      "mother": "Mère",
+      "mother-in-law": "Belle-mère",
+      "nephew": "Neveu",
+      "niece": "Nièce",
+      "sister": "Sœur",
+      "sister-in-law": "Belle-sœur",
+      "son": "Fils",
+      "stepaunt": "Tante par alliance (remariage)",
+      "stepbrother": "Demi-frère",
+      "stepcousin": "Cousin(e) par alliance (remariage)",
+      "stepdaughter": "Belle-fille",
+      "stepfather": "Beau-père (remariage)",
+      "stepgrandfather": "Grand-père par alliance (remariage)",
+      "stepgrandmother": "Grand-mère par alliance (remariage)",
+      "stepmother": "Belle-mère (remariage)",
+      "stepsister": "Demi-sœur",
+      "stepson": "Beau-fils",
+      "stepuncle": "Oncle par alliance (remariage)",
+      "uncle": "Oncle",
+      "uncle-in-law": "Oncle par alliance"
+    }
+  },
   "grenade": "grenade",
   "spain": "espagne",
   "welcome": {
@@ -709,54 +757,6 @@
       "lastMonth": "Le mois dernier",
       "never": "Jamais connecté",
       "mobile": "Dernière connexion : {{label}}"
-    },
-    "relation": {
-      "side": {
-        "bride": "Mariée",
-        "groom": "Marié",
-        "both": "Les deux"
-      },
-      "kind": {
-        "family": "Famille",
-        "friends": "Amis",
-        "colleagues": "Collègues",
-        "other": "Autre"
-      },
-      "link": {
-        "aunt": "Tante",
-        "aunt-in-law": "Tante par alliance",
-        "brother": "Frère",
-        "brother-in-law": "Beau-frère",
-        "cousin": "Cousin(e)",
-        "cousin-in-law": "Cousin(e) par alliance",
-        "daughter": "Fille",
-        "father": "Père",
-        "father-in-law": "Beau-père",
-        "grandfather": "Grand-père",
-        "grandfather-in-law": "Grand-père par alliance",
-        "grandmother": "Grand-mère",
-        "grandmother-in-law": "Grand-mère par alliance",
-        "mother": "Mère",
-        "mother-in-law": "Belle-mère",
-        "nephew": "Neveu",
-        "niece": "Nièce",
-        "sister": "Sœur",
-        "sister-in-law": "Belle-sœur",
-        "son": "Fils",
-        "stepaunt": "Tante par alliance (remariage)",
-        "stepbrother": "Demi-frère",
-        "stepcousin": "Cousin(e) par alliance (remariage)",
-        "stepdaughter": "Belle-fille",
-        "stepfather": "Beau-père (remariage)",
-        "stepgrandfather": "Grand-père par alliance (remariage)",
-        "stepgrandmother": "Grand-mère par alliance (remariage)",
-        "stepmother": "Belle-mère (remariage)",
-        "stepsister": "Demi-sœur",
-        "stepson": "Beau-fils",
-        "stepuncle": "Oncle par alliance (remariage)",
-        "uncle": "Oncle",
-        "uncle-in-law": "Oncle par alliance"
-      }
     },
     "rsvp": {
       "summary": "Résumé du RSVP",

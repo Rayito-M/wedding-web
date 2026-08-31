@@ -8,8 +8,8 @@
       {{ 'guest_manager.modal.viewProfile' | translate }}
     }
     @if (guestProfile()?.guestInfo?.relation; as relation) {
-      · {{ 'guest_manager.relation.side.' + relation.side | translate }} ·
-      {{ 'guest_manager.relation.kind.' + relation.kind | translate }}
+      · {{ 'relation.side.' + relation.side | translate }} ·
+      {{ 'relation.kind.' + relation.kind | translate }}
     }
   </span>
 
@@ -28,8 +28,8 @@
                 <span class="info-label">{{ 'guest_manager.profile.sideGroup' | translate }}</span>
                 @if (guestProfile()?.guestInfo?.relation; as relation) {
                   <div class="value">
-                    {{ 'guest_manager.relation.side.' + relation.side | translate }} ·
-                    {{ 'guest_manager.relation.kind.' + relation.kind | translate }}
+                    {{ 'relation.side.' + relation.side | translate }} ·
+                    {{ 'relation.kind.' + relation.kind | translate }}
                   </div>
                 } @else {
                   <div class="value muted">—</div>

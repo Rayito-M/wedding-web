@@ -3,12 +3,12 @@
     @if (showSide()) {
       <div class="info-item">
         <span class="info-label">{{ sideLabel() }}</span>
-        <div class="value">{{ 'guest_manager.relation.side.' + value().side | translate }}</div>
+        <div class="value">{{ 'relation.side.' + value().side | translate }}</div>
       </div>
     }
     <div class="info-item">
       <span class="info-label">{{ groupLabel() }}</span>
-      <div class="value">{{ 'guest_manager.relation.kind.' + value().kind | translate }}</div>
+      <div class="value">{{ 'relation.kind.' + value().kind | translate }}</div>
     </div>
   </div>
   <div class="info-item">
@@ -32,7 +32,7 @@
               [selected]="value().side === side"
               (click)="selectSide(side)"
             >
-              {{ 'guest_manager.relation.side.' + side | translate }}
+              {{ 'relation.side.' + side | translate }}
             </button>
           }
         </div>
@@ -49,7 +49,7 @@
             [selected]="value().kind === kind"
             (click)="selectKind(kind)"
           >
-            {{ 'guest_manager.relation.kind.' + kind | translate }}
+            {{ 'relation.kind.' + kind | translate }}
           </button>
         }
       </div>
@@ -59,13 +59,13 @@
   <div class="field">
     <span class="info-label">
       {{ 'guest_manager.form.link' | translate }} ·
-      {{ 'guest_manager.relation.kind.' + value().kind | translate }}
+      {{ 'relation.kind.' + value().kind | translate }}
     </span>
     @if (isFamily()) {
       <select class="select-native" [value]="value().link" (change)="onLinkSelect($event)">
         <option value="" disabled>{{ 'guest_manager.form.linkSelectPlaceholder' | translate }}</option>
         @for (link of familyLinks; track link) {
-          <option [value]="link">{{ 'guest_manager.relation.link.' + link | translate }}</option>
+          <option [value]="link">{{ 'relation.link.' + link | translate }}</option>
         }
       </select>
     } @else {

@@ -168,7 +168,7 @@ describe('ProfileFields (T310)', () => {
     const relationFields = query('app-relation-fields')!;
     const kindRow = relationFields.querySelectorAll('.seg-row')[1];
     const friendsBtn = Array.from(kindRow.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === 'guest_manager.relation.kind.friends',
+      (b) => b.textContent?.trim() === 'relation.kind.friends',
     ) as HTMLButtonElement;
     friendsBtn.click();
     fixture.detectChanges();

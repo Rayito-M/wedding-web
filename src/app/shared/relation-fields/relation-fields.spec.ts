@@ -70,13 +70,13 @@ describe('RelationFields (T309)', () => {
     // Side, group, relationship — three read-only rows.
     expect(items.length).toBe(3);
     expect(items[0].querySelector('.value')?.textContent?.trim()).toBe(
-      'guest_manager.relation.side.bride',
+      'relation.side.bride',
     );
     expect(items[1].querySelector('.value')?.textContent?.trim()).toBe(
-      'guest_manager.relation.kind.family',
+      'relation.kind.family',
     );
     expect(items[2].querySelector('.value')?.textContent?.trim()).toBe(
-      'guest_manager.relation.link.sister',
+      'relation.link.sister',
     );
   });
 
@@ -106,7 +106,7 @@ describe('RelationFields (T309)', () => {
 
     const kindRow = queryAll<HTMLElement>('.seg-row')[1];
     const friendsBtn = Array.from(kindRow.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === 'guest_manager.relation.kind.friends',
+      (b) => b.textContent?.trim() === 'relation.kind.friends',
     ) as HTMLButtonElement;
     friendsBtn.click();
     fixture.detectChanges();
@@ -136,7 +136,7 @@ describe('RelationFields (T309)', () => {
 
     const sideRow = queryAll<HTMLElement>('.seg-row')[0];
     const groomBtn = Array.from(sideRow.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === 'guest_manager.relation.side.groom',
+      (b) => b.textContent?.trim() === 'relation.side.groom',
     ) as HTMLButtonElement;
     groomBtn.click();
     fixture.detectChanges();

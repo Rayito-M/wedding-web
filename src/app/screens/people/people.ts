@@ -18,6 +18,8 @@ import {
   ProfileModalService,
   TranslateLanguageService,
   lastSeenLabel as formatLastSeen,
+  relationLinkLabel,
+  RelationLinkPipe,
   todayInMadrid,
 } from '@app/core';
 
@@ -53,7 +55,7 @@ interface FilterOption {
 @Component({
   selector: 'app-people',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Avatar, Pill, TextInput, TranslatePipe],
+  imports: [Avatar, Pill, TextInput, TranslatePipe, RelationLinkPipe],
   templateUrl: './people.html',
   styleUrl: './people.scss',
 })
@@ -136,9 +138,12 @@ export class People {
         // matches its own reference exactly.
         const name =
           `${person.firstName} ${person.lastName} ${person.nickname ?? ''}`.toLowerCase();
-        const rel = person.guestInfo?.relation
-          ? this.translateService.instant(person.guestInfo.relation.link).toLowerCase()
-          : '';
+        // Search matches what the card actually shows: the translated catalog
+        // term for a family relation, the free text verbatim for every other
+        // kind (shared `relationLinkLabel`, same rule as the pill above).
+        const rel = relationLinkLabel(person.guestInfo?.relation, (key) =>
+          this.translateService.instant(key),
+        ).toLowerCase();
         if (query && !name.includes(query) && !rel.includes(query)) return false;
         if (filter === 'provider') return person.role === 'provider';
         if (filter === 'bride' || filter === 'groom') {

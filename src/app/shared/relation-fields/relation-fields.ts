@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-import { GuestListResponseDtoItemsInnerRelationOneOf } from '@app/core';
+import {
+  GuestListResponseDtoItemsInnerRelationOneOf,
+  relationLinkLabel as formatRelationLink,
+} from '@app/core';
 import { TextInput } from '@app/shared/input/input';
 import { GuestSeg } from '@app/shared/guest-seg/guest-seg';
 
@@ -66,8 +69,10 @@ const DEFAULT_VALUE: RelationFieldsValue = { side: SIDE_ENUM.BRIDE, kind: 'famil
  * by caller (DS's own doc: "voice depends on who is editing"). Every other
  * label (the side/kind pill text, the "Relationship link · <kind>" heading,
  * the family `<select>`'s option list, the non-family placeholder) reuses the
- * existing `guest_manager.relation.*`/`guest_manager.form.*` keys the ported
- * markup already used — this component owns those, unchanged.
+ * existing shared `relation.*` / `guest_manager.form.*` keys the ported
+ * markup already used — this component owns neither namespace: `relation.*`
+ * is shared with the people directory and the profile modal (see
+ * `core/pipe/relation-link.pipe.ts`).
  *
  * No call site is wired yet (T311/T313's job) — built and unit-tested here in
  * isolation, same as T303's precedent (`shared/profile-modal`).
@@ -117,15 +122,15 @@ export class RelationFields {
 
   /**
    * The read-only relationship row's value: a family `link` is a catalog key
-   * (translated through `guest_manager.relation.link.*`), every other kind's
-   * `link` is free text — same split `guest-profile-modal`'s
-   * `relationLinkLabel` already made. `null` when there is no link yet, so
-   * the template can fall back to an em dash.
+   * (translated through the shared `relation.link.*` namespace), every other
+   * kind's `link` is free text — that split now lives once, in the shared
+   * `relationLinkLabel` helper. `null` when there is no link yet, so the
+   * template can fall back to an em dash.
    */
   protected readonly relationLinkLabel = computed<string | null>(() => {
-    const { kind, link } = this.value();
-    if (!link) return null;
-    return kind === 'family' ? this.translate.instant(`guest_manager.relation.link.${link}`) : link;
+    const value = this.value();
+    if (!value.link) return null;
+    return formatRelationLink(value, (key) => this.translate.instant(key));
   });
 
   protected selectSide(side: GuestListResponseDtoItemsInnerRelationOneOf.SideEnum): void {

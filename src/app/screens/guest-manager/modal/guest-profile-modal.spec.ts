@@ -307,8 +307,8 @@ describe('GuestProfileModal — open into edit mode (T308)', () => {
     expect(eyebrowText()).toBe('guest_manager.modal.editProfile');
     expect(firstNameInput()?.value).toBe('Laura');
     expect(nicknameInput()?.value).toBe('Lau');
-    expect(selectedSeg(0)).toBe('guest_manager.relation.side.groom');
-    expect(selectedSeg(1)).toBe('guest_manager.relation.kind.friends');
+    expect(selectedSeg(0)).toBe('relation.side.groom');
+    expect(selectedSeg(1)).toBe('relation.kind.friends');
     expect(linkInput()?.value).toBe('college');
   });
 });

@@ -5,6 +5,54 @@
     "guest": "Guest",
     "provider": "Provider"
   },
+  "relation": {
+    "side": {
+      "bride": "Bride",
+      "groom": "Groom",
+      "both": "Both"
+    },
+    "kind": {
+      "family": "Family",
+      "friends": "Friends",
+      "colleagues": "Colleagues",
+      "other": "Other"
+    },
+    "link": {
+      "aunt": "Aunt",
+      "aunt-in-law": "Aunt-in-law",
+      "brother": "Brother",
+      "brother-in-law": "Brother-in-law",
+      "cousin": "Cousin",
+      "cousin-in-law": "Cousin-in-law",
+      "daughter": "Daughter",
+      "father": "Father",
+      "father-in-law": "Father-in-law",
+      "grandfather": "Grandfather",
+      "grandfather-in-law": "Grandfather-in-law",
+      "grandmother": "Grandmother",
+      "grandmother-in-law": "Grandmother-in-law",
+      "mother": "Mother",
+      "mother-in-law": "Mother-in-law",
+      "nephew": "Nephew",
+      "niece": "Niece",
+      "sister": "Sister",
+      "sister-in-law": "Sister-in-law",
+      "son": "Son",
+      "stepaunt": "Step-aunt",
+      "stepbrother": "Stepbrother",
+      "stepcousin": "Step-cousin",
+      "stepdaughter": "Stepdaughter",
+      "stepfather": "Stepfather",
+      "stepgrandfather": "Step-grandfather",
+      "stepgrandmother": "Step-grandmother",
+      "stepmother": "Stepmother",
+      "stepsister": "Stepsister",
+      "stepson": "Stepson",
+      "stepuncle": "Step-uncle",
+      "uncle": "Uncle",
+      "uncle-in-law": "Uncle-in-law"
+    }
+  },
   "welcome": {
     "saveDate": "Save the date",
     "location": "GRANADA · ES",
@@ -713,54 +761,6 @@
       "lastMonth": "Last month",
       "never": "Never signed in",
       "mobile": "Last seen: {{label}}"
-    },
-    "relation": {
-      "side": {
-        "bride": "Bride",
-        "groom": "Groom",
-        "both": "Both"
-      },
-      "kind": {
-        "family": "Family",
-        "friends": "Friends",
-        "colleagues": "Colleagues",
-        "other": "Other"
-      },
-      "link": {
-        "aunt": "Aunt",
-        "aunt-in-law": "Aunt-in-law",
-        "brother": "Brother",
-        "brother-in-law": "Brother-in-law",
-        "cousin": "Cousin",
-        "cousin-in-law": "Cousin-in-law",
-        "daughter": "Daughter",
-        "father": "Father",
-        "father-in-law": "Father-in-law",
-        "grandfather": "Grandfather",
-        "grandfather-in-law": "Grandfather-in-law",
-        "grandmother": "Grandmother",
-        "grandmother-in-law": "Grandmother-in-law",
-        "mother": "Mother",
-        "mother-in-law": "Mother-in-law",
-        "nephew": "Nephew",
-        "niece": "Niece",
-        "sister": "Sister",
-        "sister-in-law": "Sister-in-law",
-        "son": "Son",
-        "stepaunt": "Step-aunt",
-        "stepbrother": "Stepbrother",
-        "stepcousin": "Step-cousin",
-        "stepdaughter": "Stepdaughter",
-        "stepfather": "Stepfather",
-        "stepgrandfather": "Step-grandfather",
-        "stepgrandmother": "Step-grandmother",
-        "stepmother": "Stepmother",
-        "stepsister": "Stepsister",
-        "stepson": "Stepson",
-        "stepuncle": "Step-uncle",
-        "uncle": "Uncle",
-        "uncle-in-law": "Uncle-in-law"
-      }
     },
     "rsvp": {
       "summary": "RSVP summary",

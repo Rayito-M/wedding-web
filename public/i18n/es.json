@@ -5,6 +5,54 @@
     "guest": "Invitado",
     "provider": "Proveedor"
   },
+  "relation": {
+    "side": {
+      "bride": "Novia",
+      "groom": "Novio",
+      "both": "Ambos"
+    },
+    "kind": {
+      "family": "Familia",
+      "friends": "Amigos",
+      "colleagues": "Compañeros",
+      "other": "Otro"
+    },
+    "link": {
+      "aunt": "Tía",
+      "aunt-in-law": "Tía política",
+      "brother": "Hermano",
+      "brother-in-law": "Cuñado",
+      "cousin": "Primo/a",
+      "cousin-in-law": "Primo/a político/a",
+      "daughter": "Hija",
+      "father": "Padre",
+      "father-in-law": "Suegro",
+      "grandfather": "Abuelo",
+      "grandfather-in-law": "Abuelo político",
+      "grandmother": "Abuela",
+      "grandmother-in-law": "Abuela política",
+      "mother": "Madre",
+      "mother-in-law": "Suegra",
+      "nephew": "Sobrino",
+      "niece": "Sobrina",
+      "sister": "Hermana",
+      "sister-in-law": "Cuñada",
+      "son": "Hijo",
+      "stepaunt": "Tía política (segundas nupcias)",
+      "stepbrother": "Hermanastro",
+      "stepcousin": "Primo/a político/a (segundas nupcias)",
+      "stepdaughter": "Hijastra",
+      "stepfather": "Padrastro",
+      "stepgrandfather": "Abuelastro",
+      "stepgrandmother": "Abuelastra",
+      "stepmother": "Madrastra",
+      "stepsister": "Hermanastra",
+      "stepson": "Hijastro",
+      "stepuncle": "Tío político (segundas nupcias)",
+      "uncle": "Tío",
+      "uncle-in-law": "Tío político"
+    }
+  },
   "grenade": "granada",
   "spain": "españa",
   "welcome": {
@@ -709,54 +757,6 @@
       "lastMonth": "El mes pasado",
       "never": "Nunca ha iniciado sesión",
       "mobile": "Última conexión: {{label}}"
-    },
-    "relation": {
-      "side": {
-        "bride": "Novia",
-        "groom": "Novio",
-        "both": "Ambos"
-      },
-      "kind": {
-        "family": "Familia",
-        "friends": "Amigos",
-        "colleagues": "Compañeros",
-        "other": "Otro"
-      },
-      "link": {
-        "aunt": "Tía",
-        "aunt-in-law": "Tía política",
-        "brother": "Hermano",
-        "brother-in-law": "Cuñado",
-        "cousin": "Primo/a",
-        "cousin-in-law": "Primo/a político/a",
-        "daughter": "Hija",
-        "father": "Padre",
-        "father-in-law": "Suegro",
-        "grandfather": "Abuelo",
-        "grandfather-in-law": "Abuelo político",
-        "grandmother": "Abuela",
-        "grandmother-in-law": "Abuela política",
-        "mother": "Madre",
-        "mother-in-law": "Suegra",
-        "nephew": "Sobrino",
-        "niece": "Sobrina",
-        "sister": "Hermana",
-        "sister-in-law": "Cuñada",
-        "son": "Hijo",
-        "stepaunt": "Tía política (segundas nupcias)",
-        "stepbrother": "Hermanastro",
-        "stepcousin": "Primo/a político/a (segundas nupcias)",
-        "stepdaughter": "Hijastra",
-        "stepfather": "Padrastro",
-        "stepgrandfather": "Abuelastro",
-        "stepgrandmother": "Abuelastra",
-        "stepmother": "Madrastra",
-        "stepsister": "Hermanastra",
-        "stepson": "Hijastro",
-        "stepuncle": "Tío político (segundas nupcias)",
-        "uncle": "Tío",
-        "uncle-in-law": "Tío político"
-      }
     },
     "rsvp": {
       "summary": "Resumen de RSVP",

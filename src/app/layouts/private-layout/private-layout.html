@@ -1,5 +1,5 @@
 <app-screen-header
-  [active]="chrome().tab ?? ''"
+  [active]="chrome().id ?? ''"
   [showNav]="chrome().topNav ?? false"
   class="header"
   [class.scrolled]="isScrolled()"
@@ -21,7 +21,7 @@
 }
 
 @if (chrome().tabBar) {
-  <app-tab-bar class="tab-bar" [active]="chrome().tab ?? ''" />
+  <app-tab-bar class="tab-bar" [active]="chrome().id ?? ''" />
 }
 
 @if (profileModal.isOpen()) {
