@@ -1,10 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   signal,
   computed,
   inject,
   type Signal,
+  viewChild,
   ViewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -44,13 +46,19 @@ type SortColumn = 'lastName' | 'status' | 'adults' | 'children' | 'lastSeen';
   styleUrl: './guest-manager.scss',
 })
 export class GuestManager {
-  protected readonly Math = Math;
-
   /**
    * Shared predicate (ADR W-0002 §Decision.2) exposed to the row template, which
    * renders a partner with their own guest account differently from a plus-one.
    */
   protected readonly partnerHasAccount = partnerHasAccount;
+
+  /**
+   * The scrolling list container. Any change to the window (filter, search,
+   * sort) scrolls it back to the top, so a user who was at the bottom does not
+   * land on a fresh 12-row window with a clamped scroll position and trigger a
+   * grow they never asked for (ADR W-0008 §6).
+   */
+  private readonly listContainer = viewChild<ElementRef<HTMLElement>>('tableBody');
 
   @ViewChild(GuestProfileModal) profileModal!: GuestProfileModal;
   @ViewChild(ManageRsvpModal) manageRsvpModal!: ManageRsvpModal;
@@ -81,8 +89,22 @@ export class GuestManager {
     'all',
   );
   private readonly searchQuery = signal('');
-  private readonly currentPage = signal(0);
-  private readonly pageSize = 10;
+
+  /**
+   * How many rows the list starts with and grows by. A **presentation**
+   * constant, not an API page size: this screen reads the shared `UserProfile`
+   * collection, whose `profileControllerGetAllV1()` takes no cursor or limit
+   * and returns every profile in one response — so the window slices an array
+   * that is already in memory and there is no incremental fetch
+   * (ADR W-0008 §1-2).
+   */
+  private static readonly BATCH = 12;
+
+  /** {@link GuestManager.BATCH} again, reachable from the template. */
+  protected readonly BATCH = GuestManager.BATCH;
+
+  /** How many of the sorted rows are currently rendered. */
+  private readonly shown = signal(GuestManager.BATCH);
 
   /**
    * SPEC.md's admin capability list promises "Filter, sort, search" — filter and
@@ -139,17 +161,11 @@ export class GuestManager {
     );
   });
 
-  protected readonly paginatedGuests = computed(() => {
-    const sorted = this.sortedGuests();
-    const page = this.currentPage();
-    const start = page * this.pageSize;
-    const end = start + this.pageSize;
-    return sorted.slice(start, end);
-  });
+  /** The window the template renders: the first `shown` sorted rows. */
+  protected readonly visibleGuests = computed(() => this.sortedGuests().slice(0, this.shown()));
 
-  protected readonly totalPages = computed(() => {
-    return Math.ceil(this.filteredGuests().length / this.pageSize);
-  });
+  /** Whether any sorted row is still outside the window. */
+  protected readonly hasMore = computed(() => this.shown() < this.sortedGuests().length);
 
   constructor() {
     this.statistics.load(); // Only fetches if cache is empty
@@ -195,9 +211,14 @@ export class GuestManager {
       case 'children':
         return (a.guestInfo?.rsvp?.children ?? 0) - (b.guestInfo?.rsvp?.children ?? 0);
       case 'lastSeen':
-        // ISO date strings compare correctly as plain strings; a guest who has
-        // never signed in sorts before anyone with a real date.
-        return (a.lastSeen ?? '').localeCompare(b.lastSeen ?? '');
+        // Ascending means "most recently seen first", matching the DS's
+        // `SEEN_RANK` (`ScreenGuestManager.jsx` L119: Today → … → Never), so
+        // ISO date strings compare reversed and the never-signed-in sentinel
+        // sorts last (and therefore first when the direction flips).
+        if (!a.lastSeen && !b.lastSeen) return 0;
+        if (!a.lastSeen) return 1;
+        if (!b.lastSeen) return -1;
+        return b.lastSeen.localeCompare(a.lastSeen);
     }
   }
 
@@ -222,7 +243,7 @@ export class GuestManager {
 
   /**
    * Clicking a header: same column toggles direction, a new column starts
-   * ascending. Pagination resets, same as changing the filter or search does.
+   * ascending. The window resets, same as changing the filter or search does.
    */
   toggleSort(column: SortColumn): void {
     if (this.sortColumn() === column) {
@@ -231,7 +252,7 @@ export class GuestManager {
       this.sortColumn.set(column);
       this.sortDirection.set('asc');
     }
-    this.currentPage.set(0);
+    this.resetWindow();
   }
 
   /** Get the current sort column (for template) */
@@ -245,42 +266,61 @@ export class GuestManager {
   }
 
   /**
-   * Accessible name for a sortable header button — announces the column and,
-   * once it's the active one, its current direction, so a screen-reader user
-   * gets the same state the visual arrow carries.
+   * `aria-sort` for one sortable `role="columnheader"` (T332) — the direction
+   * on the active column, `"none"` on the other sortable ones. The header
+   * buttons' accessible name stays the plain "Sort by {column}" action, because
+   * repeating the direction there would announce it twice.
+   *
+   * The two placeholder columns (`dietary`, `table`) omit the attribute
+   * altogether rather than passing through here: `"none"` claims "sortable, not
+   * currently sorted", which they are not.
    */
-  sortAriaLabel(column: SortColumn, columnLabelKey: string): string {
-    const columnLabel = this.translateService.instant(columnLabelKey);
-    if (this.sortColumn() !== column) {
-      return this.translateService.instant('guest_manager.sort.by', { column: columnLabel });
-    }
-    const stateKey =
-      this.sortDirection() === 'asc'
-        ? 'guest_manager.sort.ascending'
-        : 'guest_manager.sort.descending';
-    return this.translateService.instant(stateKey, { column: columnLabel });
+  ariaSort(column: SortColumn): 'ascending' | 'descending' | 'none' {
+    if (this.sortColumn() !== column) return 'none';
+    return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
   }
 
-  /** Set the active filter and reset pagination */
+  /** Set the active filter and reset the window */
   setFilter(f: 'all' | 'attending' | 'pending' | 'declined' | 'undefined'): void {
     this.filter.set(f);
-    this.currentPage.set(0);
+    this.resetWindow();
   }
 
-  /** Update search query and reset pagination */
+  /** Update search query and reset the window */
   updateSearch(query: string): void {
     this.searchQuery.set(query);
-    this.currentPage.set(0);
+    this.resetWindow();
   }
 
-  /** Go to previous page */
-  previousPage(): void {
-    this.currentPage.set(Math.max(0, this.currentPage() - 1));
+  /**
+   * Grow the window by one batch. Synchronous on purpose: the rows are already
+   * in memory, so there is nothing to wait for and no busy state to report
+   * (ADR W-0008 §3).
+   */
+  loadMore(): void {
+    if (!this.hasMore()) return;
+    this.shown.update((n) => n + GuestManager.BATCH);
   }
 
-  /** Go to next page */
-  nextPage(maxPage: number): void {
-    this.currentPage.set(Math.min(maxPage, this.currentPage() + 1));
+  /**
+   * The DS's primary grow affordance: nearing the bottom of the list pulls in
+   * the next batch. The real "Load more" button ships alongside it because
+   * this one never fires for a keyboard user, nor at all while the container
+   * is not yet overflowing (ADR W-0008 §5).
+   */
+  onListScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) this.loadMore();
+  }
+
+  /**
+   * Back to the first batch, scrolled to the top. Called whenever the
+   * underlying row set changes out from under the window (ADR W-0008 §6).
+   */
+  private resetWindow(): void {
+    this.shown.set(GuestManager.BATCH);
+    const container = this.listContainer();
+    if (container) container.nativeElement.scrollTop = 0;
   }
 
   /** Add a new guest — opens the dedicated create-guest modal on a blank draft. */
@@ -307,11 +347,6 @@ export class GuestManager {
   /** Get the current search query (for template) */
   getSearchQuery(): string {
     return this.searchQuery();
-  }
-
-  /** Get the current page (for template) */
-  getCurrentPage(): number {
-    return this.currentPage();
   }
 
   /**

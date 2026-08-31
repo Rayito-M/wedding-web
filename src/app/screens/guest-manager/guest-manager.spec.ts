@@ -135,7 +135,7 @@ describe('GuestManager — search matches on nickname (T300)', () => {
  * Column sort — `SPEC.md`'s admin capability list promises "Filter, sort,
  * search"; filter and search already existed, this is the sort piece. The
  * table defaults to lastname ascending; clicking a sortable header re-orders
- * `paginatedGuests` in place, toggling direction on a repeat click of the
+ * `visibleGuests` in place, toggling direction on a repeat click of the
  * same column and resetting to ascending on a switch to a different one.
  */
 describe('GuestManager — column sort', () => {
@@ -147,9 +147,11 @@ describe('GuestManager — column sort', () => {
     ).map((el) => el.textContent?.trim() ?? '');
   }
 
+  // T332 wrapped each header button in its own `role="columnheader"` div, so
+  // the sortable control is `.col-sort` *inside* `.col-<column>`.
   function clickHeader(fixture: ComponentFixture<GuestManager>, column: string): void {
     const btn = fixture.nativeElement.querySelector(
-      `.table-header .col-${column}`,
+      `.table-header .col-${column} .col-sort`,
     ) as HTMLButtonElement;
     btn.click();
     fixture.detectChanges();
@@ -252,6 +254,275 @@ describe('GuestManager — column sort', () => {
       'Nora NoRsvp',
       'Deb Declined',
     ]);
+  });
+
+  /**
+   * T331 — every sortable header carries an arrow at all times (DS
+   * `ScreenGuestManager.jsx` L200); only the active column's is `.active`
+   * (full opacity, accent-toned) and only it flips to `▼`.
+   */
+  it('renders an arrow on every sortable header, marking only the active one', async () => {
+    const fixture = await createGuestManager([
+      profile({ id: 'g1', firstName: 'Zoe', lastName: 'Alvarez' }),
+    ]);
+
+    const icons = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.table-header .col-sort .sort-icon',
+      ) as NodeListOf<HTMLElement>,
+    );
+
+    expect(icons).toHaveLength(5);
+    expect(icons.every((el) => el.textContent?.trim() === '▲')).toBe(true);
+    expect(icons.filter((el) => el.classList.contains('active'))).toHaveLength(1);
+
+    clickHeader(fixture, 'guest'); // active column, second click: descending
+
+    const guestIcon = fixture.nativeElement.querySelector(
+      '.table-header .col-guest .sort-icon',
+    ) as HTMLElement;
+    expect(guestIcon.textContent?.trim()).toBe('▼');
+    expect(guestIcon.classList.contains('active')).toBe(true);
+  });
+
+  /**
+   * T331 — "Last seen" ascending means *most recently seen first*, mirroring
+   * the DS's `SEEN_RANK` (`ScreenGuestManager.jsx` L119: Today, Yesterday, …,
+   * Never). The never-signed-in sentinel therefore sorts last in ascending and
+   * first in descending; both directions are pinned so the sign cannot flip
+   * back silently. `lastSeen` stays read-only and couple-only — the route's
+   * `rbacGuard` is what gates it, never the field's presence (hub ADR-0035/36).
+   */
+  describe('last seen column', () => {
+    const seenProfiles = (): UserProfileDto[] => [
+      profile({ id: 'g1', firstName: 'Old', lastName: 'Ember', lastSeen: '2026-01-04T09:00:00Z' }),
+      profile({ id: 'g2', firstName: 'Never', lastName: 'Signedin' }),
+      profile({
+        id: 'g3',
+        firstName: 'Recent',
+        lastName: 'Alba',
+        lastSeen: '2026-08-29T18:30:00Z',
+      }),
+      profile({ id: 'g4', firstName: 'Mid', lastName: 'Costa', lastSeen: '2026-05-12T07:15:00Z' }),
+    ];
+
+    it('ascending lists the most recently seen first and the never-signed-in last', async () => {
+      const fixture = await createGuestManager(seenProfiles());
+
+      clickHeader(fixture, 'last-seen');
+
+      expect(rowNames(fixture)).toEqual([
+        'Recent Alba',
+        'Mid Costa',
+        'Old Ember',
+        'Never Signedin',
+      ]);
+    });
+
+    it('descending is the exact reverse — never-signed-in first, oldest to newest after it', async () => {
+      const fixture = await createGuestManager(seenProfiles());
+
+      clickHeader(fixture, 'last-seen'); // ascending
+      clickHeader(fixture, 'last-seen'); // same column again: descending
+
+      expect(rowNames(fixture)).toEqual([
+        'Never Signedin',
+        'Old Ember',
+        'Mid Costa',
+        'Recent Alba',
+      ]);
+    });
+
+    it('keeps the incoming order when no guest has ever signed in', async () => {
+      const fixture = await createGuestManager([
+        profile({ id: 'g1', firstName: 'Zoe', lastName: 'Alvarez' }),
+        profile({ id: 'g2', firstName: 'Ana', lastName: 'Perez' }),
+      ]);
+
+      clickHeader(fixture, 'last-seen');
+
+      // All ties (compare returns 0), so the stable sort preserves the
+      // previous (default lastname-ascending) order in both directions.
+      expect(rowNames(fixture)).toEqual(['Zoe Alvarez', 'Ana Perez']);
+
+      clickHeader(fixture, 'last-seen');
+
+      expect(rowNames(fixture)).toEqual(['Zoe Alvarez', 'Ana Perez']);
+    });
+  });
+});
+
+/**
+ * T330 — the list grows instead of paginating. The window is client-side
+ * (ADR W-0008): `GET /v1/profile` returns every profile in one response, so
+ * `shown` slices an array that is already in memory. It starts at 12 and grows
+ * by 12 on a scroll near the bottom or a "Load more" press, and resets to 12
+ * (scrolled back to the top) whenever the filter, search or sort changes.
+ */
+describe('GuestManager — growing list (T330)', () => {
+  const BATCH = 12;
+
+  /** `n` guests whose last names sort in creation order (`Guest00`, `Guest01`, …). */
+  function guests(n: number): UserProfileDto[] {
+    return Array.from({ length: n }, (_, i) =>
+      profile({
+        id: `g${i}`,
+        firstName: 'Ana',
+        lastName: `Guest${String(i).padStart(2, '0')}`,
+      }),
+    );
+  }
+
+  function rowNames(fixture: ComponentFixture<GuestManager>): string[] {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll('.table-row .guest-name') as NodeListOf<HTMLElement>,
+    ).map((el) => el.textContent?.trim() ?? '');
+  }
+
+  function tableBody(fixture: ComponentFixture<GuestManager>): HTMLElement {
+    return fixture.nativeElement.querySelector('.table-body') as HTMLElement;
+  }
+
+  /**
+   * jsdom has no layout, so the scroll geometry the handler reads has to be
+   * stood up by hand before the event is dispatched.
+   */
+  function scrollList(
+    fixture: ComponentFixture<GuestManager>,
+    geometry: { scrollHeight: number; scrollTop: number; clientHeight: number },
+  ): void {
+    const body = tableBody(fixture);
+    Object.defineProperty(body, 'scrollHeight', {
+      value: geometry.scrollHeight,
+      configurable: true,
+    });
+    Object.defineProperty(body, 'clientHeight', {
+      value: geometry.clientHeight,
+      configurable: true,
+    });
+    Object.defineProperty(body, 'scrollTop', {
+      value: geometry.scrollTop,
+      configurable: true,
+      writable: true,
+    });
+    body.dispatchEvent(new Event('scroll'));
+    fixture.detectChanges();
+  }
+
+  function clickLoadMore(fixture: ComponentFixture<GuestManager>): void {
+    const btn = fixture.nativeElement.querySelector('.load-more-btn') as HTMLButtonElement | null;
+    expect(btn).not.toBeNull();
+    btn!.click();
+    fixture.detectChanges();
+  }
+
+  it('renders only the first batch on a fresh render', async () => {
+    const fixture = await createGuestManager(guests(30));
+
+    expect(rowNames(fixture).length).toBe(BATCH);
+    expect(rowNames(fixture)[0]).toBe('Ana Guest00');
+    expect(rowNames(fixture)[BATCH - 1]).toBe('Ana Guest11');
+  });
+
+  it('"Load more" grows the window by one batch', async () => {
+    const fixture = await createGuestManager(guests(30));
+
+    clickLoadMore(fixture);
+
+    expect(rowNames(fixture).length).toBe(BATCH * 2);
+    expect(rowNames(fixture)[BATCH]).toBe('Ana Guest12');
+  });
+
+  it('a scroll within 120px of the bottom grows the window', async () => {
+    const fixture = await createGuestManager(guests(30));
+
+    scrollList(fixture, { scrollHeight: 1000, scrollTop: 900, clientHeight: 50 });
+
+    expect(rowNames(fixture).length).toBe(BATCH * 2);
+  });
+
+  it('a scroll far from the bottom does not grow the window', async () => {
+    const fixture = await createGuestManager(guests(30));
+
+    scrollList(fixture, { scrollHeight: 1000, scrollTop: 100, clientHeight: 50 });
+
+    expect(rowNames(fixture).length).toBe(BATCH);
+  });
+
+  it('changing the filter resets the window to one batch and scrolls back to the top', async () => {
+    const fixture = await createGuestManager(guests(30));
+    clickLoadMore(fixture);
+    expect(rowNames(fixture).length).toBe(BATCH * 2);
+
+    const body = tableBody(fixture);
+    Object.defineProperty(body, 'scrollTop', { value: 480, configurable: true, writable: true });
+
+    // Every seeded guest has no RSVP record, so "pending" keeps all 30 rows —
+    // what changes here is the window, not the row set.
+    const pendingFilter = fixture.nativeElement.querySelectorAll(
+      '.filter-btn',
+    )[2] as HTMLButtonElement;
+    pendingFilter.click();
+    fixture.detectChanges();
+
+    expect(rowNames(fixture).length).toBe(BATCH);
+    expect(body.scrollTop).toBe(0);
+  });
+
+  it('changing the search resets the window to one batch and scrolls back to the top', async () => {
+    const fixture = await createGuestManager(guests(30));
+    clickLoadMore(fixture);
+    expect(rowNames(fixture).length).toBe(BATCH * 2);
+
+    const body = tableBody(fixture);
+    Object.defineProperty(body, 'scrollTop', { value: 480, configurable: true, writable: true });
+
+    const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+    input.value = 'guest'; // matches every seeded last name
+    input.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(rowNames(fixture).length).toBe(BATCH);
+    expect(body.scrollTop).toBe(0);
+  });
+
+  it('clicking a column header resets the window to one batch and scrolls back to the top', async () => {
+    const fixture = await createGuestManager(guests(30));
+    clickLoadMore(fixture);
+    expect(rowNames(fixture).length).toBe(BATCH * 2);
+
+    const body = tableBody(fixture);
+    Object.defineProperty(body, 'scrollTop', { value: 480, configurable: true, writable: true });
+
+    const header = fixture.nativeElement.querySelector(
+      '.table-header .col-guest .col-sort',
+    ) as HTMLButtonElement;
+    header.click();
+    fixture.detectChanges();
+
+    expect(rowNames(fixture).length).toBe(BATCH);
+    expect(body.scrollTop).toBe(0);
+  });
+
+  it('with exactly one batch of guests, neither "Load more" nor "End of list" renders', async () => {
+    const fixture = await createGuestManager(guests(BATCH));
+
+    expect(rowNames(fixture).length).toBe(BATCH);
+    expect(fixture.nativeElement.querySelector('.load-more-btn')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.end-of-list')).toBeNull();
+  });
+
+  it('with one guest more than a batch, "Load more" renders and exhausting the list swaps it for "End of list"', async () => {
+    const fixture = await createGuestManager(guests(BATCH + 1));
+
+    expect(fixture.nativeElement.querySelector('.load-more-btn')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.end-of-list')).toBeNull();
+
+    clickLoadMore(fixture);
+
+    expect(rowNames(fixture).length).toBe(BATCH + 1);
+    expect(fixture.nativeElement.querySelector('.load-more-btn')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.end-of-list')).not.toBeNull();
   });
 });
 
@@ -431,5 +702,314 @@ describe('GuestManager — "open their profile" full-chain jump renders the real
     // carried the *partner's* id through every hop, not the primary guest's.
     expect(textInputs[0]?.value).toBe('Diego');
     expect(textInputs[1]?.value).toBe('Ferrer');
+  });
+});
+
+/**
+ * T332 — the table is a real ARIA table, which is what makes `aria-sort` legal
+ * (T331 declined to add it for exactly this reason). `role="table"` rather than
+ * `role="grid"`: nothing here is cell-navigable. The roles ride the existing
+ * layout divs because `.table-body` is the scroll container and a scrollable
+ * `<tbody>` would need `display: block`, which destroys native table layout.
+ *
+ * `lastSeen` gating is untouched by any of this: the "Last seen" column stays
+ * couple-only through the `guests` route's `rbacGuard`, never through the
+ * field's presence (hub ADR-0035/0036, CLAUDE.md rule 16), and the restructure
+ * adds no control that writes or clears it.
+ */
+describe('GuestManager — ARIA table semantics (T332)', () => {
+  const relation = { side: 'bride', kind: 'family', link: 'sister' } as const;
+
+  function clickHeader(fixture: ComponentFixture<GuestManager>, column: string): void {
+    const btn = fixture.nativeElement.querySelector(
+      `.table-header .col-${column} .col-sort`,
+    ) as HTMLButtonElement;
+    btn.click();
+    fixture.detectChanges();
+  }
+
+  function headerSort(fixture: ComponentFixture<GuestManager>, column: string): string | null {
+    const header = fixture.nativeElement.querySelector(
+      `.table-header .col-${column}`,
+    ) as HTMLElement;
+    return header.getAttribute('aria-sort');
+  }
+
+  it('names the container as a table', async () => {
+    const fixture = await createGuestManager([profile()]);
+
+    const table = fixture.nativeElement.querySelector('.table-container') as HTMLElement;
+
+    expect(table.getAttribute('role')).toBe('table');
+    expect(table.getAttribute('aria-label')?.length).toBeGreaterThan(0);
+    // Deliberately absent (T332): the rendered rows are the whole set the user
+    // chose to load, and the `aria-live` footer already carries the remainder.
+    expect(table.getAttribute('aria-rowcount')).toBeNull();
+  });
+
+  it('exposes the header as a row of seven column headers', async () => {
+    const fixture = await createGuestManager([profile()]);
+
+    const header = fixture.nativeElement.querySelector('.table-header') as HTMLElement;
+
+    expect(header.getAttribute('role')).toBe('row');
+    expect(header.querySelectorAll('[role="columnheader"]')).toHaveLength(7);
+  });
+
+  it('makes the scrolling body a rowgroup that a keyboard user can reach', async () => {
+    const fixture = await createGuestManager([profile()]);
+
+    const body = fixture.nativeElement.querySelector('.table-body') as HTMLElement;
+
+    expect(body.getAttribute('role')).toBe('rowgroup');
+    // WCAG 2.1.1: the region scrolls, so it needs a tab stop and a name of its
+    // own — its focusable children alone are not the region.
+    expect(body.getAttribute('tabindex')).toBe('0');
+    expect(body.getAttribute('aria-label')?.length).toBeGreaterThan(0);
+  });
+
+  it('marks the default sort on the guest header and "none" on the other sortable ones', async () => {
+    const fixture = await createGuestManager([profile()]);
+
+    expect(headerSort(fixture, 'guest')).toBe('ascending');
+    expect(headerSort(fixture, 'status')).toBe('none');
+    expect(headerSort(fixture, 'adults')).toBe('none');
+    expect(headerSort(fixture, 'children')).toBe('none');
+    expect(headerSort(fixture, 'last-seen')).toBe('none');
+  });
+
+  it('leaves the placeholder columns with no aria-sort at all', async () => {
+    const fixture = await createGuestManager([profile()]);
+
+    // "none" would claim "sortable, not currently sorted" — a lie about two
+    // columns that render a constant placeholder (T331).
+    expect(headerSort(fixture, 'dietary')).toBeNull();
+    expect(headerSort(fixture, 'table')).toBeNull();
+  });
+
+  it('flips the active header to descending on a second click', async () => {
+    const fixture = await createGuestManager([profile()]);
+
+    clickHeader(fixture, 'guest');
+
+    expect(headerSort(fixture, 'guest')).toBe('descending');
+  });
+
+  it('moves aria-sort to the new column and returns the old one to "none"', async () => {
+    const fixture = await createGuestManager([profile()]);
+
+    clickHeader(fixture, 'adults');
+
+    expect(headerSort(fixture, 'adults')).toBe('ascending');
+    expect(headerSort(fixture, 'guest')).toBe('none');
+  });
+
+  it('exposes a data row as a row of seven cells, and no longer as a button', async () => {
+    const fixture = await createGuestManager([
+      profile({
+        id: 'g1',
+        firstName: 'Laura',
+        lastName: 'Mendoza',
+        guestInfo: { relation, rsvp: { id: 'g1', status: 'attending', adults: 2 } },
+      }),
+    ]);
+
+    const row = fixture.nativeElement.querySelector('.table-row') as HTMLElement;
+
+    expect(row.getAttribute('role')).toBe('row');
+    expect(row.querySelectorAll(':scope > [role="cell"]')).toHaveLength(7);
+    // A `role="row"` cannot also be a button — the keyboard path moved into the
+    // first cell.
+    expect(row.getAttribute('role')).not.toBe('button');
+    expect(row.getAttribute('tabindex')).toBeNull();
+  });
+
+  it('wraps the guest name in a button, so the control announces as that guest', async () => {
+    const fixture = await createGuestManager([
+      profile({ id: 'g1', firstName: 'Laura', lastName: 'Mendoza' }),
+    ]);
+    const openSpy = vi.spyOn(fixture.componentInstance.profileModal, 'open');
+
+    const btn = fixture.nativeElement.querySelector(
+      '.table-row .col-guest button.row-open-btn',
+    ) as HTMLButtonElement;
+
+    expect(btn).not.toBeNull();
+    expect(btn.textContent?.trim()).toBe('Laura Mendoza');
+
+    btn.click();
+    fixture.detectChanges();
+
+    // Once, not twice: the button stops the click from also reaching the row's
+    // own pointer handler.
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    expect(openSpy).toHaveBeenCalledWith('g1');
+  });
+
+  it('keeps the row itself clickable for a pointer user', async () => {
+    const fixture = await createGuestManager([
+      profile({ id: 'g1', firstName: 'Laura', lastName: 'Mendoza' }),
+    ]);
+    const openSpy = vi.spyOn(fixture.componentInstance.profileModal, 'open');
+
+    const row = fixture.nativeElement.querySelector('.table-row') as HTMLElement;
+    row.click();
+    fixture.detectChanges();
+
+    expect(openSpy).toHaveBeenCalledWith('g1');
+  });
+
+  it('gives "Load more" and "End of list" full-width row/cell semantics', async () => {
+    const many = Array.from({ length: 13 }, (_, i) =>
+      profile({ id: `g${i}`, firstName: 'Ana', lastName: `Guest${String(i).padStart(2, '0')}` }),
+    );
+    const fixture = await createGuestManager(many);
+
+    // A `rowgroup`'s children must be rows, so each of these three is a row
+    // holding one cell spanning the table — the ARIA form of `<td colspan="7">`.
+    const loadMoreRow = fixture.nativeElement.querySelector('.load-more-row') as HTMLElement;
+    expect(loadMoreRow.getAttribute('role')).toBe('row');
+    const loadMoreCell = loadMoreRow.querySelector('[role="cell"]') as HTMLElement;
+    expect(loadMoreCell.getAttribute('aria-colspan')).toBe('7');
+    expect(loadMoreCell.querySelector('.load-more-btn')).not.toBeNull();
+
+    (loadMoreCell.querySelector('.load-more-btn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const endRow = fixture.nativeElement.querySelector('.end-of-list') as HTMLElement;
+    expect(endRow.getAttribute('role')).toBe('row');
+    expect(endRow.querySelector('[role="cell"]')?.getAttribute('aria-colspan')).toBe('7');
+  });
+
+  it('gives the empty state the same full-width row/cell semantics', async () => {
+    const fixture = await createGuestManager([]);
+
+    const emptyRow = fixture.nativeElement.querySelector('.empty-state') as HTMLElement;
+
+    expect(emptyRow.getAttribute('role')).toBe('row');
+    expect(emptyRow.querySelector('[role="cell"]')?.getAttribute('aria-colspan')).toBe('7');
+  });
+});
+
+/**
+ * T333 — the sort headers, the filter chips and "add guest" are native
+ * `<button>`s, which the browser already activates from the keyboard on its
+ * own: pressing Enter (or releasing Space) makes it dispatch a synthetic
+ * `click`. Any extra `(keydown.enter)`/`(keydown.space)` binding on such a host
+ * is therefore not a keyboard affordance but a second invocation of the same
+ * handler — visibly fatal on `toggleSort`, which is a toggle, so the two calls
+ * cancel and a keyboard user sees the sort never change.
+ *
+ * **Why every test below dispatches a keydown AND a click.** These specs run in
+ * jsdom, which does *not* synthesize the click a real browser would fire from a
+ * keydown on a button. Dispatching only the keydown would observe exactly one
+ * handler call and pass identically with the bug present — an unfalsifiable
+ * test. The two-event sequence is the browser's actual behaviour, and it is the
+ * only thing that distinguishes one invocation from two here. Do not
+ * "simplify" it away. (Same reasoning as
+ * `shared/confirm-dialog/confirm-dialog.spec.ts`, which simulates a real
+ * auto-repeat key sequence for the same reason.)
+ */
+describe('GuestManager — keyboard activation fires each handler once (T333)', () => {
+  // Sibling of the `clickHeader` helper above: same target, but the full
+  // browser key sequence (keydown, then the click the browser derives from it)
+  // instead of a bare pointer click.
+  function pressHeader(
+    fixture: ComponentFixture<GuestManager>,
+    column: string,
+    key: 'Enter' | ' ',
+  ): void {
+    const btn = fixture.nativeElement.querySelector(
+      `.table-header .col-${column} .col-sort`,
+    ) as HTMLButtonElement;
+    btn.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    btn.click();
+    fixture.detectChanges();
+  }
+
+  function headerSort(fixture: ComponentFixture<GuestManager>, column: string): string | null {
+    const header = fixture.nativeElement.querySelector(
+      `.table-header .col-${column}`,
+    ) as HTMLElement;
+    return header.getAttribute('aria-sort');
+  }
+
+  it('sorts once when Enter activates a column header', async () => {
+    const fixture = await createGuestManager([
+      profile({ id: 'g1', firstName: 'Zoe', lastName: 'Alvarez' }),
+      profile({ id: 'g2', firstName: 'Ana', lastName: 'Perez' }),
+    ]);
+
+    expect(headerSort(fixture, 'guest')).toBe('ascending');
+
+    pressHeader(fixture, 'guest', 'Enter');
+
+    // One toggle, not two: two would flip to descending and straight back,
+    // leaving the keyboard user with a sort that never moves.
+    expect(headerSort(fixture, 'guest')).toBe('descending');
+    expect(
+      Array.from(
+        fixture.nativeElement.querySelectorAll('.table-row .guest-name') as NodeListOf<HTMLElement>,
+      ).map((el) => el.textContent?.trim()),
+    ).toEqual(['Ana Perez', 'Zoe Alvarez']);
+  });
+
+  it('sorts once when Space activates a column header', async () => {
+    const fixture = await createGuestManager([
+      profile({ id: 'g1', firstName: 'Zoe', lastName: 'Alvarez' }),
+      profile({ id: 'g2', firstName: 'Ana', lastName: 'Perez' }),
+    ]);
+
+    pressHeader(fixture, 'adults', ' ');
+
+    expect(headerSort(fixture, 'adults')).toBe('ascending');
+    expect(headerSort(fixture, 'guest')).toBe('none');
+  });
+
+  it('opens the create modal exactly once when Enter activates "add guest"', async () => {
+    const fixture = await createGuestManager([profile()]);
+    const openSpy = vi.spyOn(fixture.componentInstance.createModal, 'open');
+
+    const btn = fixture.nativeElement.querySelector('.add-btn') as HTMLButtonElement;
+    btn.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+    );
+    btn.click();
+    fixture.detectChanges();
+
+    // The call count is the assertion, deliberately: `GuestCreateModal.open()`
+    // is idempotent, so counting modals in the DOM would find one either way
+    // and prove nothing about the double invocation.
+    expect(openSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the create modal exactly once when Space activates "add guest"', async () => {
+    const fixture = await createGuestManager([profile()]);
+    const openSpy = vi.spyOn(fixture.componentInstance.createModal, 'open');
+
+    const btn = fixture.nativeElement.querySelector('.add-btn') as HTMLButtonElement;
+    btn.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
+    btn.click();
+    fixture.detectChanges();
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('runs the filter handler exactly once when a chip is activated from the keyboard', async () => {
+    const fixture = await createGuestManager([profile()]);
+    const filterSpy = vi.spyOn(fixture.componentInstance, 'setFilter');
+
+    // Second chip: "attending". `setFilter` is idempotent too, so asserting on
+    // the rendered filter state would pass with the bug present — the count is
+    // what distinguishes one invocation from two.
+    const chip = fixture.nativeElement.querySelectorAll('.filter-btn')[1] as HTMLButtonElement;
+    chip.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+    );
+    chip.click();
+    fixture.detectChanges();
+
+    expect(filterSpy).toHaveBeenCalledTimes(1);
+    expect(filterSpy).toHaveBeenCalledWith('attending');
   });
 });

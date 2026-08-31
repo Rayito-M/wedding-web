@@ -505,7 +505,7 @@
     "header": "ALBAICÍN · GR",
     "badge": "ALBAICÍN · GRANADA",
     "title": "Cómo llegar",
-    "subtitle": "Vuelo a Granada (GRX) · 20 min hasta la venue.",
+    "subtitle": "Vuelo a Granada (GRX) · 20 min hasta el centro.",
     "venuesHeading": "Lugares",
     "mapTitle": "Mapa de la ubicación de la boda",
     "distanceKm": "{{km}} km",
@@ -661,18 +661,19 @@
       "children": "Niños",
       "dietary": "Dieta",
       "table": "Mesa",
-      "lastSeen": "Última conexión"
+      "lastSeen": "Última conexión",
+      "ariaLabel": "Lista de invitados",
+      "rowsAriaLabel": "Filas de invitados, lista desplazable"
     },
     "sort": {
-      "by": "Ordenar por {{column}}",
-      "ascending": "Ordenar por {{column}}, ascendente",
-      "descending": "Ordenar por {{column}}, descendente"
+      "by": "Ordenar por {{column}}"
     },
-    "pagination": {
+    "list": {
+      "showing": "Mostrando {{shown}} de {{total}}",
       "noResults": "Sin resultados",
-      "prev": "← Anterior",
-      "next": "Siguiente →",
-      "of": "de"
+      "scrollForMore": "Desplaza para ver más",
+      "loadMore": "Cargar más",
+      "endOfList": "Fin de la lista"
     },
     "modal": {
       "viewProfile": "Perfil de invitado",

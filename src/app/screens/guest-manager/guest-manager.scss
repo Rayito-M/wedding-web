@@ -204,8 +204,10 @@
   border-bottom: 1px solid var(--border-hairline);
 }
 
-.table-header>div,
-.table-header>button {
+// Every direct child of the header row is now a `role="columnheader"` wrapper
+// (T332) — it is the grid item, and it carries the header typography for the
+// button or plain label inside it.
+.table-header > div {
   font-size: t.$text-label;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -213,25 +215,40 @@
 }
 
 // Sortable header cells are real <button>s (keyboard/AT get click semantics
-// for free) reset to look like the plain label divs beside them. Scoped under
-// `.table-header` so it beats the desktop `.col-status`/`.col-adults`/etc.
-// `display: block` rules below, which target the same class names' *row*
-// (data-cell) use, not this header use.
+// for free) reset to look like the plain label divs beside them, and filling
+// the `columnheader` wrapper they now sit in. Scoped under `.table-header` so
+// it beats the desktop `.col-status`/`.col-adults`/etc. `display: block` rules
+// below, which target the same class names' *row* (data-cell) use, not this
+// header use.
 .table-header .col-sort {
   display: flex;
   align-items: center;
   gap: 4px;
+  width: 100%;
   margin: 0;
   padding: 0;
   border: none;
   background: transparent;
+  // The UA stylesheet resets these on form controls, so the wrapper's header
+  // typography has to be pulled back through explicitly rather than inherited
+  // by default.
+  font: inherit;
   font-family: t.$font-sans;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
   cursor: pointer;
   transition: color var(--transition-fast);
 
-  &:hover,
-  &.active {
+  &:hover {
     color: var(--text-body-color);
+  }
+
+  // DS `ScreenGuestManager.jsx` L200: the active column's label and glyph are
+  // accent-toned; inactive ones stay muted (inherited from the
+  // `.table-header > div` rule above).
+  &.active {
+    color: var(--brand-accent);
   }
 
   &:focus-visible {
@@ -241,20 +258,38 @@
 }
 
 .sort-icon {
-  font-size: 8px;
-  color: var(--brand-accent);
-  // Reserve the arrow's width on every sortable header so the label doesn't
-  // shift horizontally when a column becomes/stops being the active one.
-  width: 8px;
+  font-size: 9px;
+  // Inherit the header button's colour so the glyph is accent-toned exactly
+  // when its column is the active sort, and muted otherwise.
+  color: currentColor;
   display: inline-block;
-  text-align: center;
+  // Every sortable header renders an arrow at all times (DS
+  // `ScreenGuestManager.jsx` L200) — a faint `▲` when the column is inactive,
+  // so the label never shifts and the affordance is always visible.
+  opacity: 0.35;
+
+  &.active {
+    opacity: 1;
+  }
 }
 
 .table-body {
   flex: 1;
+  // `.table-container` is `flex: 1; overflow: hidden`, so without this the
+  // body's content floor keeps it from ever shrinking — and scrolling.
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0;
+
+  // The region is a tab stop of its own (`tabindex="0"`, T332) so it can be
+  // arrow-scrolled from the keyboard, which needs a visible indicator. Inset,
+  // because `.table-container` is `overflow: hidden` and would clip an
+  // outward one.
+  &:focus-visible {
+    outline: 2px solid var(--brand-accent);
+    outline-offset: -2px;
+  }
 }
 
 // Mobile (default): simple flex list row
@@ -280,12 +315,33 @@
     background-color: transparent;
   }
 
-  // Keyboard focus reads as the hover surface plus an accent ring.
-  &:focus {
+  // Keyboard focus reads as the hover surface plus an accent ring. Bound to
+  // `:focus-within` because the focusable control is the `.row-open-btn` inside
+  // the first cell (T332) — the row itself is no longer a tab stop.
+  &:focus-within {
     outline: none;
     background-color: var(--surface-card);
     box-shadow: inset 0 0 0 2px var(--brand-accent);
   }
+}
+
+// The row's keyboard/AT affordance: a real <button> around the guest's name, so
+// its accessible name is that name. Reset to an inline control, so the row
+// looks exactly as it did when the whole row was the click target.
+.row-open-btn {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  // Not a removed indicator (rule 14) — a relocated one: the row's
+  // `:focus-within` ring above lights the whole row instead of just the name.
+  outline: none;
 }
 
 // Mobile: only show guest and status columns
@@ -422,57 +478,63 @@
 }
 
 // ─────────────────────────────────────────────────────────────
-// Pagination (Mobile-First)
+// Growing list: "Load more" and the end-of-list marker
+// (DS `ScreenGuestManagerMobile.jsx` L137-142 / `ScreenGuestManager.jsx`
+// L221-226 — both live inside the scroll container, after the rows.)
 // ─────────────────────────────────────────────────────────────
 
-.pagination {
+.load-more-row {
+  display: flex;
+  justify-content: center;
+  padding: 14px 4px;
+}
+
+.load-more-btn {
+  padding: 8px 16px;
+  // Touch target (WCAG 2.5.5) — the DS's own mobile controls carry it too.
+  min-height: 44px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-hairline);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: t.$font-sans;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--brand-accent);
+    outline-offset: 2px;
+  }
+}
+
+.end-of-list {
+  padding: 14px 4px;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+// ─────────────────────────────────────────────────────────────
+// List footer (Mobile-First)
+// ─────────────────────────────────────────────────────────────
+
+.list-footer {
   flex: 0 0 auto;
   padding: 8px t.$space-3;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-top: 1px solid var(--border-hairline);
-  flex-wrap: wrap;
   gap: 8px;
 }
 
-.pagination-info {
-  width: 100%;
-  text-align: center;
-  font-size: 10px;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-  padding-bottom: 8px;
-}
-
-.pagination-controls {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-
-.pagination-btn {
-  flex: 1;
-  padding: 6px 8px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-hairline);
-  background: transparent;
-  color: var(--text-body-color);
+.list-footer-info,
+.list-footer-hint {
   font-size: 11px;
-  font-family: t.$font-sans;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-
-  &:not(:disabled):hover {
-    opacity: 0.85;
-  }
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -629,26 +691,25 @@
     display: block;
   }
 
-  .pagination {
+  .load-more-row {
+    padding: 16px;
+  }
+
+  .load-more-btn {
+    padding: 7px 16px;
+    min-height: auto;
+  }
+
+  .end-of-list {
+    padding: 16px;
+  }
+
+  .list-footer {
     padding: 12px t.$space-6 18px;
-    flex-wrap: nowrap;
   }
 
-  .pagination-info {
-    width: auto;
-    text-align: left;
-    font-size: 11px;
-    padding-bottom: 0;
-  }
-
-  .pagination-controls {
-    width: auto;
-    justify-content: flex-end;
-  }
-
-  .pagination-btn {
-    flex: none;
-    padding: 6px 12px;
-    font-size: t.$text-body;
+  .list-footer-info,
+  .list-footer-hint {
+    letter-spacing: 0.04em;
   }
 }

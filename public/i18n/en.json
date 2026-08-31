@@ -508,7 +508,7 @@
     "header": "ALBAICÍN · GR",
     "badge": "ALBAICÍN · GRANADA",
     "title": "Getting there",
-    "subtitle": "Fly to Granada (GRX) · 20 min to venue.",
+    "subtitle": "Fly to Granada (GRX) · 20 min to City Center.",
     "venuesHeading": "Venues",
     "mapTitle": "Wedding location map",
     "distanceKm": "{{km}} km",
@@ -665,18 +665,19 @@
       "children": "Children",
       "dietary": "Dietary",
       "table": "Table",
-      "lastSeen": "Last seen"
+      "lastSeen": "Last seen",
+      "ariaLabel": "Guest list",
+      "rowsAriaLabel": "Guest rows, scrollable list"
     },
     "sort": {
-      "by": "Sort by {{column}}",
-      "ascending": "Sort by {{column}}, ascending",
-      "descending": "Sort by {{column}}, descending"
+      "by": "Sort by {{column}}"
     },
-    "pagination": {
+    "list": {
+      "showing": "Showing {{shown}} of {{total}}",
       "noResults": "No results",
-      "prev": "← Prev",
-      "next": "Next →",
-      "of": "of"
+      "scrollForMore": "Scroll for more",
+      "loadMore": "Load more",
+      "endOfList": "End of list"
     },
     "modal": {
       "viewProfile": "Guest profile",

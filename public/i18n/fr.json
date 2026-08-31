@@ -505,7 +505,7 @@
     "header": "ALBAICÍN · GR",
     "badge": "ALBAICÍN · GRANADA",
     "title": "Comment venir",
-    "subtitle": "Vol vers Grenade (GRX) · 20 min de la venue.",
+    "subtitle": "Vol vers Grenade (GRX) · 20 min du Centre Ville.",
     "venuesHeading": "Lieux",
     "mapTitle": "Carte du lieu du mariage",
     "distanceKm": "{{km}} km",
@@ -661,18 +661,19 @@
       "children": "Enfants",
       "dietary": "Régime",
       "table": "Table",
-      "lastSeen": "Dernière connexion"
+      "lastSeen": "Dernière connexion",
+      "ariaLabel": "Liste des invités",
+      "rowsAriaLabel": "Lignes d'invités, liste défilable"
     },
     "sort": {
-      "by": "Trier par {{column}}",
-      "ascending": "Trier par {{column}}, ordre croissant",
-      "descending": "Trier par {{column}}, ordre décroissant"
+      "by": "Trier par {{column}}"
     },
-    "pagination": {
+    "list": {
+      "showing": "Affichage de {{shown}} sur {{total}}",
       "noResults": "Aucun résultat",
-      "prev": "← Précédent",
-      "next": "Suivant →",
-      "of": "sur"
+      "scrollForMore": "Faites défiler pour voir plus",
+      "loadMore": "Charger plus",
+      "endOfList": "Fin de la liste"
     },
     "modal": {
       "viewProfile": "Profil d'invité",
