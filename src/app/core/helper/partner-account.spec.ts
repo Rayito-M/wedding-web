@@ -1,4 +1,4 @@
-import { UserProfileListResponseDtoProfilesInnerGuestInfoPartner } from '../api';
+import { UserProfileListResponseDtoItemsInnerGuestInfoPartner } from '../api';
 import { partnerHasAccount } from './partner-account';
 import { AdultDraft } from './rsvp-draft';
 
@@ -42,7 +42,7 @@ describe('partnerHasAccount', () => {
   });
 
   it('is true for the profile partner variant with kind: "guest"', () => {
-    const linked: UserProfileListResponseDtoProfilesInnerGuestInfoPartner = {
+    const linked: UserProfileListResponseDtoItemsInnerGuestInfoPartner = {
       id: 'usr_123',
       firstName: 'Ada',
       lastName: 'Lovelace',

@@ -7,11 +7,17 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { UserProfileListResponseDtoProfilesInner } from './user-profile-list-response-dto-profiles-inner';
+import { UserProfileListResponseDtoItemsInner } from './user-profile-list-response-dto-items-inner';
 
 
 export interface UserProfileListResponseDto { 
-    profiles: Array<UserProfileListResponseDtoProfilesInner>;
+    items: Array<UserProfileListResponseDtoItemsInner>;
+    nextCursor: string | null;
+    count: number;
     notFoundIds?: Array<string>;
+    /**
+     * Deprecated alias of `items`, populated with the same array. Read `items`; this field is removed in a later release.
+     */
+    profiles: Array<UserProfileListResponseDtoItemsInner>;
 }
 

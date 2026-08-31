@@ -1,6 +1,8 @@
 # ADR W-0008: Guest manager list growth — client-side windowing, not a paged fetch
 
-- **Status:** accepted
+- **Status:** superseded by W-0009 (2026-08-31) — `GET /v1/profile` became cursor-paged (hub
+  ADR-0038), removing this ADR's central premise that there is no page to fetch. The reasoning
+  below is kept as the record of why the window was client-side while that was true.
 - **Date:** 2026-08-30
 - **Deciders:** wedding-web architect (this repo)
 - **Scope:** wedding-web (in-repo). No contract change, no glossary change, no design-system

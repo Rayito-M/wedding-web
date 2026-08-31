@@ -17,6 +17,7 @@ import { EntityCollectionService, EntityServices } from '@ngrx/data';
 import {
   EntityNamesEnum,
   UserProfileDto,
+  UserProfileDataService,
   PluralTranslatePipe,
   StatisticService,
   TranslateLanguageService,
@@ -53,10 +54,10 @@ export class GuestManager {
   protected readonly partnerHasAccount = partnerHasAccount;
 
   /**
-   * The scrolling list container. Any change to the window (filter, search,
+   * The scrolling list container. Any change to the row set (filter, search,
    * sort) scrolls it back to the top, so a user who was at the bottom does not
-   * land on a fresh 12-row window with a clamped scroll position and trigger a
-   * grow they never asked for (ADR W-0008 §6).
+   * land mid-list with a clamped scroll position and trigger a fetch they
+   * never asked for (ADR W-0009 §5).
    */
   private readonly listContainer = viewChild<ElementRef<HTMLElement>>('tableBody');
 
@@ -73,6 +74,23 @@ export class GuestManager {
       initialValue: [],
     },
   );
+
+  /**
+   * The same singleton the collection above reads through — injected directly
+   * for one thing the `@ngrx/data` collection does not carry: the API's
+   * `nextCursor` (ADR W-0009 §2).
+   */
+  private readonly profileData = inject(UserProfileDataService);
+
+  /**
+   * True while a list read is in flight. A fetch-backed grow has real latency,
+   * so the button reports it by going disabled — this is the busy state ADR
+   * W-0008 §3 correctly refused to fake when the grow was a synchronous array
+   * slice (ADR W-0009 §3).
+   */
+  protected readonly loadingMore = toSignal(this.userProfileCollection.loading$, {
+    initialValue: false,
+  });
 
   private readonly statistics = inject(StatisticService);
 
@@ -91,20 +109,12 @@ export class GuestManager {
   private readonly searchQuery = signal('');
 
   /**
-   * How many rows the list starts with and grows by. A **presentation**
-   * constant, not an API page size: this screen reads the shared `UserProfile`
-   * collection, whose `profileControllerGetAllV1()` takes no cursor or limit
-   * and returns every profile in one response — so the window slices an array
-   * that is already in memory and there is no incremental fetch
-   * (ADR W-0008 §1-2).
+   * How many extra pages the user has pulled in. Only ever non-zero once a
+   * grow has actually cost an API call, which is what the end-of-list line
+   * keys off — with the whole collection already in hand there is no "end" to
+   * announce (ADR W-0009 §4).
    */
-  private static readonly BATCH = 12;
-
-  /** {@link GuestManager.BATCH} again, reachable from the template. */
-  protected readonly BATCH = GuestManager.BATCH;
-
-  /** How many of the sorted rows are currently rendered. */
-  private readonly shown = signal(GuestManager.BATCH);
+  private readonly pagesFetched = signal(0);
 
   /**
    * SPEC.md's admin capability list promises "Filter, sort, search" — filter and
@@ -161,11 +171,25 @@ export class GuestManager {
     );
   });
 
-  /** The window the template renders: the first `shown` sorted rows. */
-  protected readonly visibleGuests = computed(() => this.sortedGuests().slice(0, this.shown()));
+  /**
+   * Whether growing the list would cost another API call — the **only**
+   * question "Load more" is allowed to be asked (ADR W-0009 §1). The answer is
+   * the API's own `nextCursor`: a string while rows remain unfetched, `null`
+   * once the collection is exhausted, `undefined` before the first read has
+   * landed. Both non-string cases mean "nothing to fetch", so neither the
+   * button nor the scroll trigger has anything to offer.
+   *
+   * Today this screen reads the collection with no `limit`, so the API answers
+   * with every profile and `nextCursor: null` — the affordance never appears,
+   * because a second call would return nothing. Nothing here assumes that: the
+   * day this screen asks for a page, the button appears on its own.
+   */
+  protected readonly hasMore = computed(() => typeof this.profileData.nextCursor() === 'string');
 
-  /** Whether any sorted row is still outside the window. */
-  protected readonly hasMore = computed(() => this.shown() < this.sortedGuests().length);
+  /** Whether the end-of-list line has anything to mark; see {@link pagesFetched}. */
+  protected readonly reachedEnd = computed(
+    () => this.pagesFetched() > 0 && !this.hasMore(),
+  );
 
   constructor() {
     this.statistics.load(); // Only fetches if cache is empty
@@ -293,20 +317,25 @@ export class GuestManager {
   }
 
   /**
-   * Grow the window by one batch. Synchronous on purpose: the rows are already
-   * in memory, so there is nothing to wait for and no busy state to report
-   * (ADR W-0008 §3).
+   * Fetch the next page. Unlike the window it replaces this is a real request,
+   * so it is guarded on the collection's own `loading$` — a scroll that keeps
+   * firing while a page is in flight must not queue a second call for the same
+   * cursor. `@ngrx/data` merges the response into the collection, so the rows
+   * already on screen stay put and the new ones join them.
    */
   loadMore(): void {
-    if (!this.hasMore()) return;
-    this.shown.update((n) => n + GuestManager.BATCH);
+    const cursor = this.profileData.nextCursor();
+    if (typeof cursor !== 'string' || this.loadingMore()) return;
+    this.userProfileCollection.getWithQuery({ cursor });
+    this.pagesFetched.update((n) => n + 1);
   }
 
   /**
    * The DS's primary grow affordance: nearing the bottom of the list pulls in
-   * the next batch. The real "Load more" button ships alongside it because
-   * this one never fires for a keyboard user, nor at all while the container
-   * is not yet overflowing (ADR W-0008 §5).
+   * the next page. The real "Load more" button ships alongside it because this
+   * one never fires for a keyboard user, nor at all while the container is not
+   * yet overflowing (ADR W-0009 §3). Both go through {@link loadMore}, which
+   * no-ops unless the API said there is another page.
    */
   onListScroll(event: Event): void {
     const el = event.target as HTMLElement;
@@ -314,11 +343,12 @@ export class GuestManager {
   }
 
   /**
-   * Back to the first batch, scrolled to the top. Called whenever the
-   * underlying row set changes out from under the window (ADR W-0008 §6).
+   * Back to the top of the list. Called whenever the row set changes out from
+   * under the reader (ADR W-0009 §5). Rows already fetched are **not**
+   * discarded: they cost a request, and re-fetching them because someone typed
+   * in the search box would be the fake-pagination problem in reverse.
    */
   private resetWindow(): void {
-    this.shown.set(GuestManager.BATCH);
     const container = this.listContainer();
     if (container) container.nativeElement.scrollTop = 0;
   }

@@ -31,6 +31,13 @@ import { Configuration }                                     from '../configurat
 import { BaseService } from '../api.base.service';
 
 
+export interface ProfileControllerGetAllV1RequestParams {
+    /** Opaque cursor for pagination, from a previous &#x60;nextCursor&#x60;. */
+    cursor?: string;
+    /** Max items per page. Omitted means no paging: all profiles. */
+    limit?: number;
+}
+
 export interface ProfileControllerGetListV1RequestParams {
     getProfilesListDto: GetProfilesListDto;
 }
@@ -58,16 +65,39 @@ export class WeddingUserProfileService extends BaseService {
 
     /**
      * Get all user profiles
-     * Retrieves all user profiles. All authenticated users can read any profile.
+     * Retrieves user profiles. All authenticated users can read any profile. Omit &#x60;limit&#x60; and the whole collection comes back in one response with &#x60;nextCursor: null&#x60; — the behaviour this endpoint has always had. Pass &#x60;limit&#x60; to page, then follow &#x60;nextCursor&#x60; until it is &#x60;null&#x60;; a client that never sees a non-null &#x60;nextCursor&#x60; has everything and needs no further call. &#x60;profiles&#x60; is a deprecated duplicate of &#x60;items&#x60; and is removed in a later release.
      * @endpoint get /v1/profile
+     * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public profileControllerGetAllV1(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserProfileListResponseDto>;
-    public profileControllerGetAllV1(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserProfileListResponseDto>>;
-    public profileControllerGetAllV1(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserProfileListResponseDto>>;
-    public profileControllerGetAllV1(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public profileControllerGetAllV1(requestParameters?: ProfileControllerGetAllV1RequestParams, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UserProfileListResponseDto>;
+    public profileControllerGetAllV1(requestParameters?: ProfileControllerGetAllV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UserProfileListResponseDto>>;
+    public profileControllerGetAllV1(requestParameters?: ProfileControllerGetAllV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UserProfileListResponseDto>>;
+    public profileControllerGetAllV1(requestParameters?: ProfileControllerGetAllV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        const cursor = requestParameters?.cursor;
+        const limit = requestParameters?.limit;
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'cursor',
+            <any>cursor,
+            QueryParamStyle.Form,
+            true,
+        );
+
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'limit',
+            <any>limit,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -102,6 +132,7 @@ export class WeddingUserProfileService extends BaseService {
         return this.httpClient.request<UserProfileListResponseDto>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

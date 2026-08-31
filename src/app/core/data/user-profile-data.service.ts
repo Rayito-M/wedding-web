@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
-import { EntityCollectionDataService } from '@ngrx/data';
-import { map, Observable, throwError } from 'rxjs';
+import { Injectable, inject, signal } from '@angular/core';
+import { EntityCollectionDataService, QueryParams } from '@ngrx/data';
+import { map, Observable, tap, throwError } from 'rxjs';
 
 import { UserProfileDto, UpdateUserProfileDto, WeddingUserProfileService } from '../api';
 
@@ -22,16 +22,69 @@ export class UserProfileDataService implements EntityCollectionDataService<UserP
 
   private readonly serviceApi = inject(WeddingUserProfileService);
 
+  /**
+   * The cursor the API handed back on the last list read: a string while
+   * profiles remain unfetched, `null` once the collection is exhausted, and
+   * `undefined` before anything has been read at all.
+   *
+   * This is the **only** answer to "would showing more rows cost another API
+   * call?" — a screen must read it rather than compare a rendered count
+   * against a batch size it made up. `GET /v1/profile` with no `limit`
+   * returns the whole collection and therefore always reports `null`: nothing
+   * is left to fetch, so no screen should offer to fetch it.
+   */
+  private readonly cursor = signal<string | null | undefined>(undefined);
+  readonly nextCursor = this.cursor.asReadonly();
+
+  /**
+   * The whole collection in one response — no `limit`, so the API answers with
+   * every profile and `nextCursor: null`. The guest-manager header counts and
+   * the people directory both aggregate over the full set, so this stays the
+   * default read.
+   */
   getAll(): Observable<UserProfileDto[]> {
-    return this.serviceApi.profileControllerGetAllV1().pipe(map((response) => response.profiles));
+    return this.readPage();
   }
 
   getById(id: string): Observable<UserProfileDto> {
     return this.serviceApi.profileControllerGetV1({ id });
   }
 
-  getWithQuery(): Observable<UserProfileDto[]> {
-    return this.getAll();
+  /**
+   * One page. `@ngrx/data` merges the result into the existing collection
+   * rather than replacing it, so successive cursors accumulate rows.
+   * Callers pass `{ cursor, limit }`; omitting `limit` is the same read
+   * {@link getAll} performs.
+   */
+  getWithQuery(params: QueryParams | string): Observable<UserProfileDto[]> {
+    if (typeof params === 'string') return this.readPage();
+    const cursor = this.firstValue(params['cursor']);
+    const limit = this.firstValue(params['limit']);
+    return this.readPage(cursor, limit === undefined ? undefined : Number(limit));
+  }
+
+  /** A `QueryParams` value may arrive as an array; the API takes one value. */
+  private firstValue(value: QueryParams[string] | undefined): string | undefined {
+    const single = Array.isArray(value) ? value[0] : value;
+    return single === undefined ? undefined : String(single);
+  }
+
+  /**
+   * Reads `items`, not `profiles`. Both carry the same array today — the API
+   * serves the deprecated `profiles` alias alongside it so bundles predating
+   * this change keep working (hub ADR-0037 §7) — and `profiles` disappears in
+   * a later API release.
+   */
+  private readPage(cursor?: string, limit?: number): Observable<UserProfileDto[]> {
+    return this.serviceApi
+      .profileControllerGetAllV1({
+        ...(cursor ? { cursor } : {}),
+        ...(limit === undefined ? {} : { limit }),
+      })
+      .pipe(
+        tap((response) => this.cursor.set(response.nextCursor)),
+        map((response) => response.items),
+      );
   }
 
   add(): Observable<UserProfileDto> {

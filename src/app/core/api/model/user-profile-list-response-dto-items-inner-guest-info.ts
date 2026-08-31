@@ -12,7 +12,7 @@ import { UserProfileListResponseDtoItemsInnerGuestInfoPartner } from './user-pro
 import { GuestListResponseDtoItemsInnerRelation } from './guest-list-response-dto-items-inner-relation';
 
 
-export interface UserProfileDtoGuestInfo { 
+export interface UserProfileListResponseDtoItemsInnerGuestInfo { 
     relation: GuestListResponseDtoItemsInnerRelation;
     partner?: UserProfileListResponseDtoItemsInnerGuestInfoPartner;
     rsvp?: UserProfileListResponseDtoItemsInnerGuestInfoRsvp;

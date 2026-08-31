@@ -7,22 +7,22 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { UserProfileListResponseDtoProfilesInnerGuestInfo } from './user-profile-list-response-dto-profiles-inner-guest-info';
+import { UserProfileListResponseDtoItemsInnerGuestInfo } from './user-profile-list-response-dto-items-inner-guest-info';
 
 
-export interface UserProfileListResponseDtoProfilesInner { 
+export interface UserProfileListResponseDtoItemsInner { 
     id: string;
     firstName: string;
     lastName: string;
     nickname?: string;
     email?: string;
     phoneNumber?: string;
-    preferredLang: UserProfileListResponseDtoProfilesInner.PreferredLangEnum;
-    role: UserProfileListResponseDtoProfilesInner.RoleEnum;
+    preferredLang: UserProfileListResponseDtoItemsInner.PreferredLangEnum;
+    role: UserProfileListResponseDtoItemsInner.RoleEnum;
     lastSeen?: string;
-    guestInfo?: UserProfileListResponseDtoProfilesInnerGuestInfo;
+    guestInfo?: UserProfileListResponseDtoItemsInnerGuestInfo;
 }
-export namespace UserProfileListResponseDtoProfilesInner {
+export namespace UserProfileListResponseDtoItemsInner {
     export const PreferredLangEnum = {
         ES: 'es',
         EN: 'en',

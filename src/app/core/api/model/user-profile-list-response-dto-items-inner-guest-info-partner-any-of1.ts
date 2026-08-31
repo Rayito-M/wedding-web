@@ -9,7 +9,7 @@
  */
 
 
-export interface UserProfileListResponseDtoProfilesInnerGuestInfoPartnerAnyOf1 { 
+export interface UserProfileListResponseDtoItemsInnerGuestInfoPartnerAnyOf1 { 
     firstName: string;
     lastName: string;
     nickname?: string;

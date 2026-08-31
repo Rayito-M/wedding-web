@@ -1,5 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  TestRequest,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideEffects } from '@ngrx/effects';
 import { EntityServices, provideEntityData, withEffects } from '@ngrx/data';
@@ -353,22 +357,21 @@ describe('GuestManager — column sort', () => {
 });
 
 /**
- * T330 — the list grows instead of paginating. The window is client-side
- * (ADR W-0008): `GET /v1/profile` returns every profile in one response, so
- * `shown` slices an array that is already in memory. It starts at 12 and grows
- * by 12 on a scroll near the bottom or a "Load more" press, and resets to 12
- * (scrolled back to the top) whenever the filter, search or sort changes.
+ * T330 — the list grows by fetching, never by slicing (ADR W-0009, superseding
+ * W-0008). `GET /v1/profile` answers with a page envelope, and its
+ * `nextCursor` is the single thing that decides whether "Load more" exists: a
+ * string means another call would return rows, `null` means the collection is
+ * exhausted and there is nothing left to offer. There is no batch size in this
+ * screen to assert against any more, because the screen no longer invents one.
  */
-describe('GuestManager — growing list (T330)', () => {
-  const BATCH = 12;
-
+describe('GuestManager — growing list (T330, ADR W-0009)', () => {
   /** `n` guests whose last names sort in creation order (`Guest00`, `Guest01`, …). */
-  function guests(n: number): UserProfileDto[] {
+  function guests(n: number, offset = 0): UserProfileDto[] {
     return Array.from({ length: n }, (_, i) =>
       profile({
-        id: `g${i}`,
+        id: `g${i + offset}`,
         firstName: 'Ana',
-        lastName: `Guest${String(i).padStart(2, '0')}`,
+        lastName: `Guest${String(i + offset).padStart(2, '0')}`,
       }),
     );
   }
@@ -409,70 +412,155 @@ describe('GuestManager — growing list (T330)', () => {
     fixture.detectChanges();
   }
 
-  function clickLoadMore(fixture: ComponentFixture<GuestManager>): void {
-    const btn = fixture.nativeElement.querySelector('.load-more-btn') as HTMLButtonElement | null;
-    expect(btn).not.toBeNull();
-    btn!.click();
-    fixture.detectChanges();
+  /** Every outstanding `GET /v1/profile`, newest last. */
+  function listRequests(http: HttpTestingController): TestRequest[] {
+    return http.match((req) => req.method === 'GET' && req.url.endsWith('/v1/profile'));
   }
 
-  it('renders only the first batch on a fresh render', async () => {
-    const fixture = await createGuestManager(guests(30));
+  /**
+   * Answer the pending list read with one page. `profiles` mirrors `items`
+   * exactly as the API does during the deprecation window, so a test can never
+   * pass by accidentally reading the field the client is supposed to ignore.
+   */
+  function respondWith(
+    http: HttpTestingController,
+    items: UserProfileDto[],
+    nextCursor: string | null,
+  ): TestRequest {
+    const requests = listRequests(http);
+    expect(requests.length).toBe(1);
+    requests[0].flush({ items, nextCursor, count: items.length, profiles: items });
+    return requests[0];
+  }
 
-    expect(rowNames(fixture).length).toBe(BATCH);
+  /**
+   * A rendered guest manager whose one list read has been answered with
+   * `items` and `nextCursor` — the component under test then knows exactly
+   * what the real API would have told it.
+   */
+  async function createWithPage(
+    items: UserProfileDto[],
+    nextCursor: string | null,
+  ): Promise<{ fixture: ComponentFixture<GuestManager>; http: HttpTestingController }> {
+    const fixture = await createGuestManager([]);
+    const http = TestBed.inject(HttpTestingController);
+    respondWith(http, items, nextCursor);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return { fixture, http };
+  }
+
+  it('renders every row it has — there is no window to be outside of', async () => {
+    const { fixture } = await createWithPage(guests(30), null);
+
+    expect(rowNames(fixture).length).toBe(30);
     expect(rowNames(fixture)[0]).toBe('Ana Guest00');
-    expect(rowNames(fixture)[BATCH - 1]).toBe('Ana Guest11');
+    expect(rowNames(fixture)[29]).toBe('Ana Guest29');
   });
 
-  it('"Load more" grows the window by one batch', async () => {
-    const fixture = await createGuestManager(guests(30));
+  it('offers nothing to load when the API says the collection is exhausted', async () => {
+    const { fixture } = await createWithPage(guests(30), null);
 
-    clickLoadMore(fixture);
-
-    expect(rowNames(fixture).length).toBe(BATCH * 2);
-    expect(rowNames(fixture)[BATCH]).toBe('Ana Guest12');
+    // `nextCursor: null` — a second call would return nothing, so neither
+    // affordance appears no matter how many rows are on screen.
+    expect(fixture.nativeElement.querySelector('.load-more-btn')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.end-of-list')).toBeNull();
   });
 
-  it('a scroll within 120px of the bottom grows the window', async () => {
-    const fixture = await createGuestManager(guests(30));
+  it('offers "Load more" only while the API is holding a cursor', async () => {
+    const { fixture } = await createWithPage(guests(12), 'cursor-1');
+
+    expect(fixture.nativeElement.querySelector('.load-more-btn')).not.toBeNull();
+  });
+
+  it('"Load more" fetches the next page with the cursor the API handed back', async () => {
+    const { fixture, http } = await createWithPage(guests(12), 'cursor-1');
+
+    (fixture.nativeElement.querySelector('.load-more-btn') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    const requests = listRequests(http);
+    expect(requests.length).toBe(1);
+    expect(requests[0].request.params.get('cursor')).toBe('cursor-1');
+
+    // The page merges into the rows already on screen rather than replacing them.
+    requests[0].flush({
+      items: guests(3, 12),
+      nextCursor: null,
+      count: 3,
+      profiles: guests(3, 12),
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(rowNames(fixture).length).toBe(15);
+    expect(fixture.nativeElement.querySelector('.load-more-btn')).toBeNull();
+    // Only now is there an "end" worth announcing: the user actually grew the list.
+    expect(fixture.nativeElement.querySelector('.end-of-list')).not.toBeNull();
+  });
+
+  it('a scroll within 120px of the bottom fetches the next page', async () => {
+    const { fixture, http } = await createWithPage(guests(12), 'cursor-1');
 
     scrollList(fixture, { scrollHeight: 1000, scrollTop: 900, clientHeight: 50 });
+    await fixture.whenStable();
 
-    expect(rowNames(fixture).length).toBe(BATCH * 2);
+    expect(listRequests(http).length).toBe(1);
   });
 
-  it('a scroll far from the bottom does not grow the window', async () => {
-    const fixture = await createGuestManager(guests(30));
+  it('a scroll far from the bottom fetches nothing', async () => {
+    const { fixture, http } = await createWithPage(guests(12), 'cursor-1');
 
     scrollList(fixture, { scrollHeight: 1000, scrollTop: 100, clientHeight: 50 });
+    await fixture.whenStable();
 
-    expect(rowNames(fixture).length).toBe(BATCH);
+    http.expectNone((req) => req.method === 'GET' && req.url.endsWith('/v1/profile'));
   });
 
-  it('changing the filter resets the window to one batch and scrolls back to the top', async () => {
-    const fixture = await createGuestManager(guests(30));
-    clickLoadMore(fixture);
-    expect(rowNames(fixture).length).toBe(BATCH * 2);
+  it('a scroll to the bottom of an exhausted list fetches nothing', async () => {
+    const { fixture, http } = await createWithPage(guests(30), null);
+
+    scrollList(fixture, { scrollHeight: 1000, scrollTop: 900, clientHeight: 50 });
+    await fixture.whenStable();
+
+    // The old screen would have grown here. Without a cursor there is nothing
+    // to grow into, and firing a request to discover that is the waste this
+    // ADR exists to remove.
+    http.expectNone((req) => req.method === 'GET' && req.url.endsWith('/v1/profile'));
+  });
+
+  it('does not queue a second request for a cursor already in flight', async () => {
+    const { fixture, http } = await createWithPage(guests(12), 'cursor-1');
+
+    (fixture.nativeElement.querySelector('.load-more-btn') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    scrollList(fixture, { scrollHeight: 1000, scrollTop: 900, clientHeight: 50 });
+    await fixture.whenStable();
+
+    expect(listRequests(http).length).toBe(1);
+  });
+
+  it('changing the filter scrolls back to the top and keeps the fetched rows', async () => {
+    const { fixture } = await createWithPage(guests(30), null);
 
     const body = tableBody(fixture);
     Object.defineProperty(body, 'scrollTop', { value: 480, configurable: true, writable: true });
 
-    // Every seeded guest has no RSVP record, so "pending" keeps all 30 rows —
-    // what changes here is the window, not the row set.
+    // Every seeded guest has no RSVP record, so "pending" keeps all 30 rows.
     const pendingFilter = fixture.nativeElement.querySelectorAll(
       '.filter-btn',
     )[2] as HTMLButtonElement;
     pendingFilter.click();
     fixture.detectChanges();
 
-    expect(rowNames(fixture).length).toBe(BATCH);
+    // Rows survive: they cost a request, and re-fetching them because someone
+    // touched a filter would be the fake window's problem in reverse.
+    expect(rowNames(fixture).length).toBe(30);
     expect(body.scrollTop).toBe(0);
   });
 
-  it('changing the search resets the window to one batch and scrolls back to the top', async () => {
-    const fixture = await createGuestManager(guests(30));
-    clickLoadMore(fixture);
-    expect(rowNames(fixture).length).toBe(BATCH * 2);
+  it('changing the search scrolls back to the top', async () => {
+    const { fixture } = await createWithPage(guests(30), null);
 
     const body = tableBody(fixture);
     Object.defineProperty(body, 'scrollTop', { value: 480, configurable: true, writable: true });
@@ -482,14 +570,12 @@ describe('GuestManager — growing list (T330)', () => {
     input.dispatchEvent(new Event('change'));
     fixture.detectChanges();
 
-    expect(rowNames(fixture).length).toBe(BATCH);
+    expect(rowNames(fixture).length).toBe(30);
     expect(body.scrollTop).toBe(0);
   });
 
-  it('clicking a column header resets the window to one batch and scrolls back to the top', async () => {
-    const fixture = await createGuestManager(guests(30));
-    clickLoadMore(fixture);
-    expect(rowNames(fixture).length).toBe(BATCH * 2);
+  it('clicking a column header scrolls back to the top', async () => {
+    const { fixture } = await createWithPage(guests(30), null);
 
     const body = tableBody(fixture);
     Object.defineProperty(body, 'scrollTop', { value: 480, configurable: true, writable: true });
@@ -500,29 +586,8 @@ describe('GuestManager — growing list (T330)', () => {
     header.click();
     fixture.detectChanges();
 
-    expect(rowNames(fixture).length).toBe(BATCH);
+    expect(rowNames(fixture).length).toBe(30);
     expect(body.scrollTop).toBe(0);
-  });
-
-  it('with exactly one batch of guests, neither "Load more" nor "End of list" renders', async () => {
-    const fixture = await createGuestManager(guests(BATCH));
-
-    expect(rowNames(fixture).length).toBe(BATCH);
-    expect(fixture.nativeElement.querySelector('.load-more-btn')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.end-of-list')).toBeNull();
-  });
-
-  it('with one guest more than a batch, "Load more" renders and exhausting the list swaps it for "End of list"', async () => {
-    const fixture = await createGuestManager(guests(BATCH + 1));
-
-    expect(fixture.nativeElement.querySelector('.load-more-btn')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.end-of-list')).toBeNull();
-
-    clickLoadMore(fixture);
-
-    expect(rowNames(fixture).length).toBe(BATCH + 1);
-    expect(fixture.nativeElement.querySelector('.load-more-btn')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.end-of-list')).not.toBeNull();
   });
 });
 
@@ -863,7 +928,15 @@ describe('GuestManager — ARIA table semantics (T332)', () => {
     const many = Array.from({ length: 13 }, (_, i) =>
       profile({ id: `g${i}`, firstName: 'Ana', lastName: `Guest${String(i).padStart(2, '0')}` }),
     );
-    const fixture = await createGuestManager(many);
+    // Both rows are cursor-driven (ADR W-0009), so the list read has to answer
+    // with a cursor for "Load more" to exist at all.
+    const fixture = await createGuestManager([]);
+    const http = TestBed.inject(HttpTestingController);
+    http
+      .expectOne((req) => req.method === 'GET' && req.url.endsWith('/v1/profile'))
+      .flush({ items: many, nextCursor: 'cursor-1', count: many.length, profiles: many });
+    await fixture.whenStable();
+    fixture.detectChanges();
 
     // A `rowgroup`'s children must be rows, so each of these three is a row
     // holding one cell spanning the table — the ARIA form of `<td colspan="7">`.
@@ -874,6 +947,11 @@ describe('GuestManager — ARIA table semantics (T332)', () => {
     expect(loadMoreCell.querySelector('.load-more-btn')).not.toBeNull();
 
     (loadMoreCell.querySelector('.load-more-btn') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    http
+      .expectOne((req) => req.method === 'GET' && req.url.endsWith('/v1/profile'))
+      .flush({ items: [], nextCursor: null, count: 0, profiles: [] });
+    await fixture.whenStable();
     fixture.detectChanges();
 
     const endRow = fixture.nativeElement.querySelector('.end-of-list') as HTMLElement;

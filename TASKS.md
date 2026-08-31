@@ -7085,3 +7085,30 @@
   L233-244 (why add-guest is latent, not visible); CLAUDE.md hard rules 9 and 14.
   Files: `src/app/screens/guest-manager/guest-manager.html`,
   `src/app/screens/guest-manager/guest-manager.spec.ts`. Nothing else.
+
+### T334 — Guest manager: adopt a `limit` once the counts are server-side
+- **Status:** blocked — waiting on `wedding-api` T235
+- **Owner:** unassigned
+- **Depends on:** `wedding-api` T235 (server-computed guest counts); ADR W-0009 (this screen is
+  already cursor-driven and needs no rework to start paging)
+- **Why:** ADR W-0009 wired every growth affordance to the API's `nextCursor`, but the screen still
+  reads with **no** `limit`, so the API returns the whole collection, `nextCursor` is always `null`
+  and "Load more" never renders. That is correct today — one call returns everything, so no second
+  call is needed — and it stays correct until the two client-side aggregations below move server-side.
+- **The coupling, stated so nobody "fixes" this by adding a page size on its own:**
+  - The header tiles and every filter-chip badge come from `StatisticService`, which aggregates over
+    the **entire** `UserProfile` collection. Under paging they read low until the last page lands.
+  - Search and the status filters match client-side over loaded rows, so a paged list silently fails
+    to find a guest who has not been fetched yet.
+- **Acceptance:**
+  - `StatisticService` reads the server aggregate (`wedding-api` T235) instead of folding over the
+    collection; the tiles and chip badges are correct with only one page loaded.
+  - The guest manager's list read passes a `limit`; "Load more", the scroll trigger and the
+    end-of-list line light up with **no template change** — that is the design W-0009 shipped, and a
+    template diff here means something regressed.
+  - Decide and record what search does across unfetched rows: either server-side search, or an
+    explicit, translated UI statement that search covers loaded guests only. **Do not ship silent
+    partial search.**
+  - Existing T330 cursor specs still pass; add specs for a first page + a `limit` on the wire.
+  - `pnpm typecheck && pnpm lint && pnpm test` green, with only the documented pre-existing failures.
+- **Refs:** ADR W-0009 §6 and "Why the screen cannot adopt a `limit` yet"; hub ADR-0038

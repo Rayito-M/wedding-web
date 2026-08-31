@@ -9,13 +9,13 @@
  */
 
 
-export interface UserProfileListResponseDtoProfilesInnerGuestInfoRsvp { 
+export interface UserProfileListResponseDtoItemsInnerGuestInfoRsvp { 
     id: string;
-    status: UserProfileListResponseDtoProfilesInnerGuestInfoRsvp.StatusEnum;
+    status: UserProfileListResponseDtoItemsInnerGuestInfoRsvp.StatusEnum;
     adults: number;
     children?: number;
 }
-export namespace UserProfileListResponseDtoProfilesInnerGuestInfoRsvp {
+export namespace UserProfileListResponseDtoItemsInnerGuestInfoRsvp {
     export const StatusEnum = {
         ATTENDING: 'attending',
         DECLINED: 'declined',

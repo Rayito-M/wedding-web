@@ -272,8 +272,8 @@
       [attr.aria-label]="'guest_manager.table.rowsAriaLabel' | translate"
       (scroll)="onListScroll($event)"
     >
-      @if (visibleGuests().length > 0) {
-        @for (profile of visibleGuests(); track profile.id) {
+      @if (sortedGuests().length > 0) {
+        @for (profile of sortedGuests(); track profile.id) {
           <!-- The row is a pointer-only click target, as the DS row is: a
                `role="row"` cannot also be a button, so the keyboard/AT path is
                the `.row-open-btn` in the first cell below. Neither rule can see
@@ -371,13 +371,18 @@
       @if (hasMore()) {
         <div class="load-more-row" role="row">
           <div role="cell" aria-colspan="7">
-            <button type="button" class="load-more-btn" (click)="loadMore()">
+            <button
+              type="button"
+              class="load-more-btn"
+              [disabled]="loadingMore()"
+              (click)="loadMore()"
+            >
               {{ 'guest_manager.list.loadMore' | translate }}
             </button>
           </div>
         </div>
       }
-      @if (!hasMore() && visibleGuests().length > BATCH) {
+      @if (reachedEnd()) {
         <div class="end-of-list" role="row">
           <div role="cell" aria-colspan="7">
             {{ 'guest_manager.list.endOfList' | translate }}
@@ -397,7 +402,7 @@
       } @else {
         {{
           'guest_manager.list.showing'
-            | translate: { shown: visibleGuests().length, total: sortedGuests().length }
+            | translate: { shown: sortedGuests().length, total: count().rsvp.total }
         }}
       }
     </span>

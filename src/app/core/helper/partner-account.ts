@@ -1,6 +1,6 @@
 import {
   RsvpDtoAdultsPartner2,
-  UserProfileListResponseDtoProfilesInnerGuestInfoPartner,
+  UserProfileListResponseDtoItemsInnerGuestInfoPartner,
 } from '../api';
 import { AdultDraft } from './rsvp-draft';
 
@@ -31,7 +31,7 @@ import { AdultDraft } from './rsvp-draft';
  */
 export function partnerHasAccount(
   partner:
-    | UserProfileListResponseDtoProfilesInnerGuestInfoPartner
+    | UserProfileListResponseDtoItemsInnerGuestInfoPartner
     | RsvpDtoAdultsPartner2
     | AdultDraft
     | null
