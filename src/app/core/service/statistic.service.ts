@@ -14,6 +14,7 @@ export interface HeadCount {
 }
 
 export interface GuestStatistics {
+  attending: number;
   declined: number;
   /**
    * Everyone still owed a reply: rows sitting at `status: 'pending'` **plus**
@@ -142,6 +143,7 @@ export class StatisticService {
    */
   readonly guestStatistics = computed<GuestStatistics>(() => {
     const counts: GuestStatistics = {
+      attending: 0,
       declined: 0,
       pending: 0,
       total: 0,
@@ -175,6 +177,8 @@ export class StatisticService {
 
       switch (rsvp.status) {
         case 'attending':
+          if (partner2GuestId(rsvp)) counts.attending = counts.attending + 2;
+          else counts.attending++;
           counts.headCount.adults += adultHeadCount(rsvp);
           counts.headCount.children += rsvp.children?.length ?? 0;
           break;
@@ -199,7 +203,7 @@ export class StatisticService {
     return this.guestStatistics().total === 0
       ? 0
       : Math.round(
-          ((this.guestStatistics().headCount.adults + this.guestStatistics().declined) /
+          ((this.guestStatistics().attending + this.guestStatistics().declined) /
             this.guestStatistics().total) *
             100,
         );
