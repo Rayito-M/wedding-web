@@ -18,6 +18,17 @@ import {
 
 import { DelegateEdit } from './delegate-edit';
 
+/**
+ * An `attending` flag that is **absent**, not `false`.
+ *
+ * Hub ADR-0040 made `attending` required on every adult member, so a member
+ * carrying no flag is no longer constructible — but it is still readable
+ * (stored RSVPs are not re-validated on read, ADR-0040 §1; and this bundle
+ * outlives any single API deploy, CLAUDE.md hard rule 17). These fixtures keep
+ * the shape they were written with, so what they assert is unchanged.
+ */
+const NO_FLAG = undefined as unknown as boolean;
+
 /** Copy fixture, same rationale as `rsvp-edit.spec.ts`'s own: a copy change
  *  in `public/i18n/*.json` must not silently turn these assertions red. */
 const TRANSLATIONS = {
@@ -62,7 +73,7 @@ function rsvpWith(status: RsvpDto.StatusEnum): RsvpDto {
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-02T00:00:00.000Z',
     status,
-    adults: { partner1: { id: 'subject-1', firstName: 'Ana', lastName: 'Ruiz', options: {} } },
+    adults: { partner1: { id: 'subject-1', firstName: 'Ana', lastName: 'Ruiz', options: {}, attending: NO_FLAG } },
     children: [],
     submittedBy: 'subject-1',
   };

@@ -23,6 +23,17 @@ import {
 import { Rsvp } from './rsvp';
 
 /**
+ * An `attending` flag that is **absent**, not `false`.
+ *
+ * Hub ADR-0040 made `attending` required on every adult member, so a member
+ * carrying no flag is no longer constructible — but it is still readable
+ * (stored RSVPs are not re-validated on read, ADR-0040 §1; and this bundle
+ * outlives any single API deploy, CLAUDE.md hard rule 17). These fixtures keep
+ * the shape they were written with, so what they assert is unchanged.
+ */
+const NO_FLAG = undefined as unknown as boolean;
+
+/**
  * Orchestrator test: this screen's whole job is to route between
  * `app-rsvp-create` (a `pending` record) and `app-rsvp-edit` (a decided
  * one) — no route, no step state of its own (see `rsvp.ts`'s header
@@ -39,7 +50,7 @@ function rsvpWith(status: RsvpDto.StatusEnum): RsvpDto {
     updatedAt: '2026-01-01T00:00:00.000Z',
     status,
     adults: {
-      partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {} },
+      partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: NO_FLAG },
     },
     children: [],
     submittedBy: 'guest-1',
@@ -173,7 +184,7 @@ function delegatedRsvp(overrides: Partial<RsvpListResponseDtoItemsInner> = {}): 
     updatedAt: '2026-01-01T00:00:00.000Z',
     status: RsvpDto.StatusEnum.PENDING,
     adults: {
-      partner1: { id: 'subject-1', firstName: 'Ana', lastName: 'Ruiz', options: {} },
+      partner1: { id: 'subject-1', firstName: 'Ana', lastName: 'Ruiz', options: {}, attending: NO_FLAG },
     },
     children: [],
     submittedBy: 'subject-1',

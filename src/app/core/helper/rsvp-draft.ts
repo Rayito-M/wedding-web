@@ -46,15 +46,20 @@ export interface AdultDraft {
   kind?: string;
   /**
    * Independent decline flag — typed exactly as the generated
-   * `RsvpDtoAdultsPartner1.attending` / `RsvpDtoAdultsPartner2OneOf.attending`
-   * already are (both plain `boolean | undefined`; CLAUDE.md Hard rule 15).
+   * `RsvpDtoAdultsPartner1.attending` and **both** `partner2` variants'
+   * `attending` already are (all three a plain required `boolean` since
+   * `wedding-api` a97cbf2 / hub ADR-0040; CLAUDE.md Hard rule 15).
    * Meaningful on `partner1` whenever a `partner2` exists, and on `partner2`
    * whenever `partnerHasAccount(partner2)` is `true` (ADR W-0007 §Amendment,
    * superseding the original §Decision.1/.2 read): any adult with their own
    * account, in a party of more than one adult, can decline independently of
-   * the RSVP's own `status`. It does not exist at all for a plus-one
-   * `partner2` or for a child — the contract has no `attending` field on
-   * `RsvpDtoAdultsPartner2OneOf1`/`RsvpDtoChildrenInner` — which is why
+   * the RSVP's own `status`. A `kind: 'plus-one'` `partner2` now carries the
+   * flag like any other adult (`RsvpDtoAdultsPartner2OneOf1.attending`, no
+   * longer omitted); whether the editor may ever set it to `false` is an open
+   * product question, not a shape one — ADR-0040 §4, tracked as T339.
+   * It does not exist at all for a **child**: the contract has no `attending`
+   * on `RsvpDtoChildrenInner`, deliberately, because a child has no
+   * independent answer to give (ADR-0040 §Decision). That is why
    * `canDeclineAlone()` below still gates structurally on which slot the key
    * names rather than deriving eligibility from the DTO shape alone.
    */
@@ -98,8 +103,9 @@ export function toRsvpDraft(rsvp: RsvpDto): RsvpDraft {
       lastName: rsvp.adults.partner1.lastName,
       nickname: rsvp.adults.partner1.nickname,
       options: rsvp.adults.partner1.options ?? {},
-      // `RsvpDtoAdultsPartner1` is not a union — `attending` is a plain
-      // optional field, so no `in` check is needed (ADR W-0007 §Amendment).
+      // `RsvpDtoAdultsPartner1` is not a union and `attending` is a plain
+      // required field, so no `in` check is needed (ADR W-0007 §Amendment;
+      // required since hub ADR-0040).
       attending: rsvp.adults.partner1.attending,
     },
     partner2: rsvp.adults.partner2
@@ -110,10 +116,10 @@ export function toRsvpDraft(rsvp: RsvpDto): RsvpDraft {
           nickname: rsvp.adults.partner2.nickname,
           options: rsvp.adults.partner2.options ?? {},
           kind: rsvp.adults.partner2.kind,
-          // `attending` only exists on the `…OneOf` (account-holding) member of
-          // the union; the plus-one `…OneOf1` member has no such field at all,
-          // so the `in` check (not plain access, unlike partner1 above) is
-          // still needed here.
+          // Both arms of the union carry `attending` since hub ADR-0040 — the
+          // plus-one `…OneOf1` no longer omits it — so this is plain access on
+          // the union, no `in` check, same as partner1 above. (`id` above still
+          // needs one: that field really does exist on only one arm.)
           attending: rsvp.adults.partner2.attending,
         }
       : undefined,
@@ -296,11 +302,32 @@ export function canDeclineAlone(draft: RsvpDraft, key: PersonKey): boolean {
 /**
  * Is this person coming? Absent or explicit `true` both mean "yes" — only an
  * explicit `false` means "no". Boolean mirror of the design system's
- * `rsvpComing(p)` (`p.attending !== 'no'`), specialised to this app's
- * `boolean | undefined` wire representation instead of the DS's
- * `'yes' | 'no'` string.
+ * `rsvpComing(p)` (`p.attending !== 'no'`), specialised to this app's boolean
+ * representation instead of the DS's `'yes' | 'no'` string.
+ *
+ * **On the parameter type.** It is `{ attending: boolean | undefined }`, not
+ * `{ attending?: boolean }`: since hub ADR-0040 `attending` is required on
+ * every adult member and `AdultDraft.attending` is non-optional to match, so a
+ * member that structurally *lacks* the key is not a shape any caller can hand
+ * in. The two `undefined`s that remain are each load-bearing:
+ * - the outer one, because `draft.partner2` is genuinely optional (a party of
+ *   one adult), and both call sites pass a slot straight through
+ *   (`rsvp-editor.ts`, `isAttending`);
+ * - the inner one, because an absent flag stays *reachable* even though it is
+ *   no longer *representable*: stored RSVPs are not re-validated on read
+ *   (ADR-0040 §1) and this bundle outlives any single API deploy (CLAUDE.md
+ *   hard rule 17). `!== false` is therefore a defect tolerance, not a state —
+ *   the reading is stated here rather than left to a crash in a computed that
+ *   feeds a screen.
+ *
+ * This deliberately does **not** match `adultHeadCount()`'s `=== true` in
+ * `statistic.service.ts`. The inputs differ: that one sums server DTOs into
+ * the couple's totals and leaves a flagless seat out; this one reads *draft*
+ * state in the guest's own editor, where the person is on screen and hiding
+ * them would be the worse answer. The two only ever disagree about a member
+ * the contract now forbids, so under ADR-0040 they never disagree at all.
  */
-export function isPersonComing(person: { attending?: boolean } | undefined): boolean {
+export function isPersonComing(person: { attending: boolean | undefined } | undefined): boolean {
   return person?.attending !== false;
 }
 

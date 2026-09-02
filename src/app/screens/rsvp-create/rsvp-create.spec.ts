@@ -13,6 +13,17 @@ import { EntityNamesEnum, RsvpDto, entityConfig, provideEntityDataServices } fro
 import { RsvpCreate } from './rsvp-create';
 
 /**
+ * An `attending` flag that is **absent**, not `false`.
+ *
+ * Hub ADR-0040 made `attending` required on every adult member, so a member
+ * carrying no flag is no longer constructible — but it is still readable
+ * (stored RSVPs are not re-validated on read, ADR-0040 §1; and this bundle
+ * outlives any single API deploy, CLAUDE.md hard rule 17). These fixtures keep
+ * the shape they were written with, so what they assert is unchanged.
+ */
+const NO_FLAG = undefined as unknown as boolean;
+
+/**
  * Copy fixture — local so a wording change in `public/i18n/*.json` cannot
  * turn these assertions red. What is under test is *which action sends the
  * reply*: "Send reply" must be the button that PATCHes, and the "See you in
@@ -61,7 +72,7 @@ function pendingRsvp(): RsvpDto {
     updatedAt: '2026-01-02T00:00:00.000Z',
     status: RsvpDto.StatusEnum.PENDING,
     adults: {
-      partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {} },
+      partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: NO_FLAG },
     },
     children: [],
     submittedBy: 'guest-1',
@@ -274,7 +285,7 @@ describe('RsvpCreate', () => {
         ...pendingRsvp(),
         adults: {
           partner1: pendingRsvp().adults.partner1,
-          partner2: { id: 'guest-2', firstName: 'Grace', lastName: 'Hopper', nickname: 'Gigi', options: {}, kind: 'guest' },
+          partner2: { id: 'guest-2', firstName: 'Grace', lastName: 'Hopper', nickname: 'Gigi', options: {}, kind: 'guest', attending: NO_FLAG },
         },
       };
       await create(rsvp);

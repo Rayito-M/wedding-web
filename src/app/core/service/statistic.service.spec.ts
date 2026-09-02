@@ -40,7 +40,10 @@ const RSVPS = [
     id: 'g1',
     status: 'attending',
     adults: {
-      partner1: { id: 'g1', firstName: 'Ada', lastName: 'Vance' },
+      // Every adult carries `attending` since hub ADR-0040 (`wedding-api`
+      // a97cbf2 plus the backfill), so the fixtures do too — `adultHeadCount`
+      // reads `=== true` and a flagless seat is deliberately not counted.
+      partner1: { id: 'g1', firstName: 'Ada', lastName: 'Vance', attending: true },
       partner2: { kind: 'guest', id: 'g1p', firstName: 'Bo', lastName: 'Vance', attending: true },
     },
     children: [{ firstName: 'Cy', age: 6 }],
@@ -48,7 +51,7 @@ const RSVPS = [
   {
     id: 'g2',
     status: 'declined',
-    adults: { partner1: { id: 'g2', firstName: 'Dee', lastName: 'Roth' } },
+    adults: { partner1: { id: 'g2', firstName: 'Dee', lastName: 'Roth', attending: false } },
   },
 ] as unknown as RsvpDto[];
 
@@ -95,7 +98,7 @@ describe('StatisticService.loading', () => {
     dispatch(EntityOp.QUERY_BY_KEY_SUCCESS, OWN_PROFILE);
 
     expect(statistics.loading()).toBe(true);
-    expect(statistics.guestStatistics().rsvp.total).toBe(0);
+    expect(statistics.guestStatistics().total).toBe(0);
   });
 
   it('publishes only once the full read lands', () => {
@@ -104,13 +107,15 @@ describe('StatisticService.loading', () => {
     dispatch(EntityOp.QUERY_ALL_SUCCESS, [OWN_PROFILE, ...GUESTS]);
 
     expect(statistics.loading()).toBe(false);
-    // `g1` and `g1p` share one record, so the couple is one attending row.
-    expect(statistics.guestStatistics().rsvp).toEqual({
-      attending: 1,
+    // `g1` and `g1p` share one record but are two guest-list rows, and an
+    // attending record with a `kind: 'guest'` partner2 counts both seats.
+    // `pending` absorbs `g3`, who has no RSVP record at all.
+    expect(statistics.guestStatistics()).toEqual({
+      attending: 2,
       declined: 1,
       pending: 1,
-      undefined: 1,
-      total: 3,
+      total: 4,
+      headCount: { adults: 2, children: 1 },
     });
   });
 
@@ -118,10 +123,11 @@ describe('StatisticService.loading', () => {
     dispatchRsvps(RSVPS);
     dispatch(EntityOp.QUERY_ALL_SUCCESS, GUESTS);
 
-    // Two adults because the `kind: 'guest'` partner2 said yes; `g1p` itself
-    // is neither a second attending row nor a not-answered one.
+    // Two adult seats because both members of the couple carry
+    // `attending: true`; the record itself is only counted once.
     expect(statistics.guestStatistics().headCount).toEqual({ adults: 2, children: 1 });
-    expect(statistics.guestStatistics().rsvp.undefined).toBe(1);
+    // `g3` has no RSVP record at all and lands in `pending`.
+    expect(statistics.guestStatistics().pending).toBe(1);
   });
 
   it('leaves the second seat empty when the linked partner has not said yes', () => {

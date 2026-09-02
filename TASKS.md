@@ -7188,7 +7188,7 @@
 - **Refs:** hub ADR-0039 §3, §6, §7; `SPEC.md` J3; hard rule 18
 
 ### T338 — One reading of a missing `attending`, and comments that match the schema
-- **Status:** todo
+- **Status:** done
 - **Target release:** 1.1.1
 - **Owner:** unassigned
 - **Depends on:** nothing

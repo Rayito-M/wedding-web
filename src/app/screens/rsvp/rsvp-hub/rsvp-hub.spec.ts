@@ -5,6 +5,17 @@ import { RsvpDto, RsvpListResponseDtoItemsInner } from '@app/core';
 
 import { RsvpHub } from './rsvp-hub';
 
+/**
+ * An `attending` flag that is **absent**, not `false`.
+ *
+ * Hub ADR-0040 made `attending` required on every adult member, so a member
+ * carrying no flag is no longer constructible — but it is still readable
+ * (stored RSVPs are not re-validated on read, ADR-0040 §1; and this bundle
+ * outlives any single API deploy, CLAUDE.md hard rule 17). These fixtures keep
+ * the shape they were written with, so what they assert is unchanged.
+ */
+const NO_FLAG = undefined as unknown as boolean;
+
 const TRANSLATIONS = {
   rsvp: {
     header: 'RSVP',
@@ -31,7 +42,7 @@ function rsvp(overrides: Partial<RsvpListResponseDtoItemsInner> = {}): RsvpListR
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     status: RsvpDto.StatusEnum.PENDING,
-    adults: { partner1: { id: 'subject-1', firstName: 'Ana', lastName: 'Ruiz', options: {} } },
+    adults: { partner1: { id: 'subject-1', firstName: 'Ana', lastName: 'Ruiz', options: {}, attending: NO_FLAG } },
     children: [],
     submittedBy: 'subject-1',
     ...overrides,
@@ -72,12 +83,12 @@ describe('RsvpHub (hub ADR-0039 §6, T337)', () => {
   it('renders one card per delegation, titled with the party label (hub ADR-0039 §7)', async () => {
     await create({
       delegations: [
-        rsvp({ id: 'a', adults: { partner1: { id: 'a', firstName: 'Ana', lastName: 'Ruiz', options: {} } } }),
+        rsvp({ id: 'a', adults: { partner1: { id: 'a', firstName: 'Ana', lastName: 'Ruiz', options: {}, attending: NO_FLAG } } }),
         rsvp({
           id: 'b',
           adults: {
-            partner1: { id: 'b', firstName: 'Ramón', lastName: 'Mendoza', options: {} },
-            partner2: { kind: 'guest', id: 'b2', firstName: 'Pilar', lastName: 'Mendoza', options: {} },
+            partner1: { id: 'b', firstName: 'Ramón', lastName: 'Mendoza', options: {}, attending: NO_FLAG },
+            partner2: { kind: 'guest', id: 'b2', firstName: 'Pilar', lastName: 'Mendoza', options: {}, attending: NO_FLAG },
           },
         }),
       ],
@@ -103,8 +114,8 @@ describe('RsvpHub (hub ADR-0039 §6, T337)', () => {
           id: 'b',
           status: RsvpDto.StatusEnum.ATTENDING,
           adults: {
-            partner1: { id: 'b', firstName: 'B', lastName: 'B', options: {} },
-            partner2: { kind: 'guest', id: 'b2', firstName: 'B2', lastName: 'B2', options: {} },
+            partner1: { id: 'b', firstName: 'B', lastName: 'B', options: {}, attending: NO_FLAG },
+            partner2: { kind: 'guest', id: 'b2', firstName: 'B2', lastName: 'B2', options: {}, attending: NO_FLAG },
           },
           children: [{ firstName: 'Kid', age: 5, options: {} }],
         }),
@@ -128,7 +139,7 @@ describe('RsvpHub (hub ADR-0039 §6, T337)', () => {
         createdAt: '',
         updatedAt: '',
         status: RsvpDto.StatusEnum.PENDING,
-        adults: { partner1: { id: 'me', firstName: 'Me', lastName: 'Self', options: {} } },
+        adults: { partner1: { id: 'me', firstName: 'Me', lastName: 'Self', options: {}, attending: NO_FLAG } },
         children: [],
         submittedBy: 'me',
       },

@@ -12,10 +12,26 @@ import {
   unnamedAdultCount,
 } from './rsvp-draft';
 
+/**
+ * A member carrying **no** `attending` flag at all.
+ *
+ * Hub ADR-0040 made `attending` required on every adult, so this shape is no
+ * longer constructible — but it is still *readable*: stored RSVPs are not
+ * re-validated on read (ADR-0040 §1) and this bundle outlives any single API
+ * deploy (CLAUDE.md hard rule 17), so an RSVP written before the flag existed
+ * still arrives looking like this. Several cases below — the T329 "absent
+ * flags are not evidence" guards above all — assert precisely what the helpers
+ * do with such a member, so the fixture has to be able to express it. The cast
+ * is the assertion, not a shortcut; cases that mean "explicitly coming" pass
+ * `attending: true`.
+ */
+const NO_FLAG = undefined as unknown as boolean;
+
 const adult = (patch: Partial<AdultDraft> = {}): AdultDraft => ({
   firstName: 'Ada',
   lastName: 'Lovelace',
   options: {},
+  attending: NO_FLAG,
   ...patch,
 });
 
@@ -41,7 +57,7 @@ const rsvpDto = (patch: Partial<RsvpDto> = {}): RsvpDto => ({
   updatedAt: '2026-01-01T00:00:00.000Z',
   status: RsvpDto.StatusEnum.ATTENDING,
   adults: {
-    partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {} },
+    partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: NO_FLAG },
   },
   children: [],
   submittedBy: 'usr_self',
@@ -84,13 +100,14 @@ describe('partner2.kind (ADR W-0004)', () => {
   it('survives a linked partner2 unchanged from DTO through toRsvpDraft and back through fromRsvpDraft', () => {
     const dto = rsvpDto({
       adults: {
-        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {} },
+        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: NO_FLAG },
         partner2: {
           id: 'usr_partner',
           firstName: 'Grace',
           lastName: 'Hopper',
           options: {},
           kind: 'guest',
+          attending: NO_FLAG,
         },
       },
     });
@@ -147,7 +164,7 @@ describe('nickname (T299)', () => {
   it('round-trips a partner1 nickname through toRsvpDraft and fromRsvpDraft', () => {
     const dto = rsvpDto({
       adults: {
-        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', nickname: 'Ad', options: {} },
+        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', nickname: 'Ad', options: {}, attending: NO_FLAG },
       },
     });
     const draftFromDto = toRsvpDraft(dto);
@@ -160,7 +177,7 @@ describe('nickname (T299)', () => {
   it('round-trips a partner2 and a child nickname through toRsvpDraft and fromRsvpDraft', () => {
     const dto = rsvpDto({
       adults: {
-        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {} },
+        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: NO_FLAG },
         partner2: {
           id: 'usr_partner',
           firstName: 'Grace',
@@ -168,6 +185,7 @@ describe('nickname (T299)', () => {
           nickname: 'Gigi',
           options: {},
           kind: 'guest',
+          attending: NO_FLAG,
         },
       },
       children: [{ firstName: 'Iris', age: 7, nickname: 'Iri', options: {} }],
@@ -391,7 +409,7 @@ describe('attending (ADR W-0007, T320) round-trip', () => {
   it('survives an account-holding partner2.attending: false through toRsvpDraft and back through fromRsvpDraft', () => {
     const dto = rsvpDto({
       adults: {
-        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {} },
+        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: NO_FLAG },
         partner2: {
           id: 'usr_partner',
           firstName: 'Grace',
@@ -429,12 +447,89 @@ describe('attending (ADR W-0007, T320) round-trip', () => {
     expect(serialised.adults?.partner1?.attending).toBe(false);
   });
 
-  it('serialises a plus-one partner2 with no attending key at all', () => {
+  it('serialises a plus-one partner2 with the attending key like any other adult (hub ADR-0040)', () => {
+    // Was: "with no attending key at all". `rsvpMemberPartnerPlusOneSchema`
+    // stopped `.omit()`ing `attending` in `wedding-api` a97cbf2, and
+    // `RsvpDtoAdultsPartner2OneOf1.attending` is now a required `boolean`, so
+    // the plus-one arm carries the flag on the wire exactly like the
+    // account-holding one. Whether the editor may ever set it to `false` is a
+    // separate, open question — ADR-0040 §4 / T339 — not a shape question.
     const value = draft({
-      partner2: adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one' }),
+      partner2: adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one', attending: true }),
     });
     const partner2 = fromRsvpDraft(value).adults?.partner2;
-    expect(partner2 && 'attending' in partner2).toBe(false);
+    expect(partner2 && 'attending' in partner2).toBe(true);
+    expect(partner2?.attending).toBe(true);
+  });
+});
+
+describe('attending is carried in every adult slot, both ways (hub ADR-0040, T338)', () => {
+  // `attending` is required on `partner1` and on **both** `partner2` variants
+  // since `wedding-api` a97cbf2. These cases pin the reading each helper takes
+  // of an *explicit* flag in each adult slot, so the one that survives is
+  // asserted rather than assumed. (The absent-flag reading is pinned
+  // separately: `isPersonComing` above, and the T329 guards below.)
+
+  it('round-trips an explicit true and an explicit false in the partner1 slot', () => {
+    for (const attending of [true, false]) {
+      const dto = rsvpDto({
+        adults: {
+          partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending },
+        },
+      });
+      expect(toRsvpDraft(dto).partner1.attending).toBe(attending);
+      expect(fromRsvpDraft(toRsvpDraft(dto)).adults?.partner1?.attending).toBe(attending);
+      expect(isPersonComing(toRsvpDraft(dto).partner1)).toBe(attending);
+    }
+  });
+
+  it('round-trips an explicit true and an explicit false in the account-holding partner2 slot', () => {
+    for (const attending of [true, false]) {
+      const dto = rsvpDto({
+        adults: {
+          partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: true },
+          partner2: {
+            id: 'usr_partner',
+            firstName: 'Grace',
+            lastName: 'Hopper',
+            options: {},
+            kind: 'guest',
+            attending,
+          },
+        },
+      });
+      expect(toRsvpDraft(dto).partner2?.attending).toBe(attending);
+      expect(fromRsvpDraft(toRsvpDraft(dto)).adults?.partner2?.attending).toBe(attending);
+      expect(isPersonComing(toRsvpDraft(dto).partner2)).toBe(attending);
+    }
+  });
+
+  it('round-trips an explicit true and an explicit false in the plus-one partner2 slot', () => {
+    for (const attending of [true, false]) {
+      const dto = rsvpDto({
+        adults: {
+          partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: true },
+          partner2: { firstName: 'Grace', lastName: 'Hopper', options: {}, kind: 'plus-one', attending },
+        },
+      });
+      expect(toRsvpDraft(dto).partner2?.attending).toBe(attending);
+      expect(fromRsvpDraft(toRsvpDraft(dto)).adults?.partner2?.attending).toBe(attending);
+      expect(isPersonComing(toRsvpDraft(dto).partner2)).toBe(attending);
+    }
+  });
+
+  it('leaves a declined plus-one out of attendingCount and impliedStatus all the same — they gate on canDeclineAlone, not on the flag (T339 is the open question)', () => {
+    const value = draft({
+      status: RsvpDto.StatusEnum.ATTENDING,
+      partner1: adult({ id: 'usr_self', attending: true }),
+      partner2: adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one', attending: false }),
+    });
+    // A plus-one is not eligible to decline alone, so the flag it now carries
+    // does not move either roll-up. This is the state ADR-0040 §4 names: the
+    // shape is uniform, the meaning is not.
+    expect(canDeclineAlone(value, 'partner2')).toBe(false);
+    expect(attendingCount(value)).toBe(2);
+    expect(impliedStatus(value)).toBe('attending');
   });
 });
 

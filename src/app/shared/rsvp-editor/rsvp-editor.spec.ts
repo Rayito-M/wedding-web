@@ -92,13 +92,37 @@ const WEDDING_CONFIG: WeddingConfigResponseDto = {
   menus: [],
 };
 
-function draftWith(overrides: Partial<RsvpDraft> = {}): RsvpDraft {
+/**
+ * An `attending` flag that is **absent**, not `false`.
+ *
+ * Hub ADR-0040 made `attending` required on every adult, so a member carrying
+ * no flag is no longer constructible — but it is still readable (stored RSVPs
+ * are not re-validated on read, ADR-0040 §1; and this bundle outlives any
+ * single API deploy, CLAUDE.md hard rule 17), and several cases below assert
+ * exactly what the editor renders for one. The cast is the fixture.
+ */
+const NO_FLAG = undefined as unknown as boolean;
+
+/** An adult fixture that may leave `attending` out; `draftWith` fills in
+ *  `NO_FLAG` so the omission stays the pre-ADR-0040 shape it always was. */
+type AdultFixture = Omit<RsvpDraft['partner1'], 'attending'> & { attending?: boolean };
+
+type DraftOverrides = Partial<Omit<RsvpDraft, 'partner1' | 'partner2'>> & {
+  partner1?: AdultFixture;
+  partner2?: AdultFixture;
+};
+
+function draftWith(overrides: DraftOverrides = {}): RsvpDraft {
+  const { partner1, partner2, ...rest } = overrides;
   return {
     status: RsvpDto.StatusEnum.ATTENDING,
     version: 3,
-    partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {} },
+    partner1: partner1
+      ? { attending: NO_FLAG, ...partner1 }
+      : { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: NO_FLAG },
+    partner2: partner2 && { attending: NO_FLAG, ...partner2 },
     children: [],
-    ...overrides,
+    ...rest,
   };
 }
 
@@ -649,7 +673,7 @@ describe('RsvpEditor', () => {
         updatedAt: '2026-01-01T00:00:00.000Z',
         submittedBy: 'guest-1',
         status: RsvpDto.StatusEnum.ATTENDING,
-        adults: { partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {} } },
+        adults: { partner1: { id: 'guest-1', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: NO_FLAG } },
         children: [],
         ...saved,
       };

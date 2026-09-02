@@ -45,11 +45,23 @@ export function partner2GuestId(rsvp: RsvpDto): string | undefined {
 }
 
 /**
- * Adult seats one RSVP takes at the reception. `partner1` always counts; the
- * second seat counts only when someone is coming in it — a `kind: 'guest'`
- * partner has to have said yes, a `kind: 'plus-one'` carries no `attending`
- * flag and always counts. Same rule the API applies when it collapses an RSVP
- * into `UserProfileDto.guestInfo.rsvp.adults`.
+ * Adult seats one RSVP takes at the reception: a sum over the party's adults
+ * of `attending === true`, with no reference to `kind` and no `in` test (hub
+ * ADR-0040). Since `wedding-api` a97cbf2 the flag is required on `partner1`
+ * and on **both** `partner2` variants — a `kind: 'plus-one'` carries it like
+ * any other adult — so there is no member type left to special-case.
+ *
+ * `=== true` rather than `!== false`: this counts server DTOs for the couple's
+ * totals, and stored documents are not re-validated on read (ADR-0040 §1), so
+ * a seat whose flag is missing is left out rather than assumed. Draft state
+ * takes the opposite reading, for a reason stated where it is taken —
+ * `isPersonComing()` in `core/helper/rsvp-draft.ts`.
+ *
+ * The API does **not** currently apply the same rule: `profile.service.ts`
+ * still branches on `kind === 'plus-one'` and counts that seat
+ * unconditionally, so the two sides disagree about a plus-one stored
+ * `attending: false` until `wedding-api` T241 removes the branch
+ * (ADR-0040 §3).
  */
 export function adultHeadCount(rsvp: RsvpDto): number {
   let count = rsvp.adults.partner1.attending === true ? 1 : 0;

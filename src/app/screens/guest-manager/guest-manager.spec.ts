@@ -20,6 +20,17 @@ import {
 
 import { GuestManager } from './guest-manager';
 
+/**
+ * An `attending` flag that is **absent**, not `false`.
+ *
+ * Hub ADR-0040 made `attending` required on every adult member, so a member
+ * carrying no flag is no longer constructible — but it is still readable
+ * (stored RSVPs are not re-validated on read, ADR-0040 §1; and this bundle
+ * outlives any single API deploy, CLAUDE.md hard rule 17). These fixtures keep
+ * the shape they were written with, so what they assert is unchanged.
+ */
+const NO_FLAG = undefined as unknown as boolean;
+
 function profile(overrides: Partial<UserProfileDto> = {}): UserProfileDto {
   return {
     id: 'guest-1',
@@ -650,13 +661,14 @@ describe('GuestManager — "open their profile" full-chain jump renders the real
       updatedAt: '2026-01-02T00:00:00.000Z',
       status: RsvpDto.StatusEnum.ATTENDING,
       adults: {
-        partner1: { id: 'guest-1', firstName: 'Laura', lastName: 'Mendoza', options: {} },
+        partner1: { id: 'guest-1', firstName: 'Laura', lastName: 'Mendoza', options: {}, attending: NO_FLAG },
         partner2: {
           id: 'guest-2',
           firstName: 'Diego',
           lastName: 'Ferrer',
           options: {},
           kind: 'guest',
+          attending: NO_FLAG,
         },
       },
       children: [],

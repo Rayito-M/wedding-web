@@ -14,6 +14,7 @@ describe('partnerHasAccount', () => {
       lastName: 'Lovelace',
       options: {},
       kind: 'guest',
+      attending: true,
     };
     expect(partnerHasAccount(linked)).toBe(true);
   });
@@ -25,17 +26,19 @@ describe('partnerHasAccount', () => {
       lastName: 'Lovelace',
       options: {},
       kind: 'plus-one',
+      attending: true,
     };
     expect(partnerHasAccount(stale)).toBe(false);
   });
 
   it('is false when kind is missing, with or without an id', () => {
-    const noKindNoId: AdultDraft = { firstName: 'Ada', lastName: 'Lovelace', options: {} };
+    const noKindNoId: AdultDraft = { firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: true };
     const noKindWithId: AdultDraft = {
       id: 'usr_123',
       firstName: 'Ada',
       lastName: 'Lovelace',
       options: {},
+      attending: true,
     };
     expect(partnerHasAccount(noKindNoId)).toBe(false);
     expect(partnerHasAccount(noKindWithId)).toBe(false);
@@ -47,6 +50,7 @@ describe('partnerHasAccount', () => {
       firstName: 'Ada',
       lastName: 'Lovelace',
       kind: 'guest',
+      attending: true,
     };
     expect(partnerHasAccount(linked)).toBe(true);
   });

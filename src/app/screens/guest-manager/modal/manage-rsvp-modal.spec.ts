@@ -17,6 +17,17 @@ import {
 import { ManageRsvpModal } from './manage-rsvp-modal';
 
 /**
+ * An `attending` flag that is **absent**, not `false`.
+ *
+ * Hub ADR-0040 made `attending` required on every adult member, so a member
+ * carrying no flag is no longer constructible — but it is still readable
+ * (stored RSVPs are not re-validated on read, ADR-0040 §1; and this bundle
+ * outlives any single API deploy, CLAUDE.md hard rule 17). These fixtures keep
+ * the shape they were written with, so what they assert is unchanged.
+ */
+const NO_FLAG = undefined as unknown as boolean;
+
+/**
  * Copy fixture — the shipped English for the keys these tests read back out
  * of the DOM. Kept local so a copy change in `public/i18n/*.json` cannot
  * silently turn these assertions red; what is under test is that the modal
@@ -71,7 +82,7 @@ function rsvpWith(lastName = 'Lovelace'): RsvpDto {
     updatedAt: '2026-01-02T00:00:00.000Z',
     status: RsvpDto.StatusEnum.ATTENDING,
     adults: {
-      partner1: { id: 'guest-1', firstName: 'Ada', lastName, options: {} },
+      partner1: { id: 'guest-1', firstName: 'Ada', lastName, options: {}, attending: NO_FLAG },
     },
     children: [],
     submittedBy: 'guest-1',
@@ -91,6 +102,7 @@ function rsvpWithLinkedPartner(): RsvpDto {
         lastName: 'Hopper',
         options: {},
         kind: 'guest',
+        attending: NO_FLAG,
       },
     },
   };
