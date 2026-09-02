@@ -151,8 +151,14 @@
             </div>
           </div>
         }
-        @if (filteredPeople().length === 0) {
-          <div class="empty">{{ 'people.empty' | translate: { query: query() } }}</div>
+        @if (narrowed() && filteredPeople().length === 0) {
+          <div class="empty">
+            @if (query().trim()) {
+              {{ 'people.empty' | translate: { query: query().trim() } }}
+            } @else {
+              {{ 'people.emptyFilter' | translate }}
+            }
+          </div>
         }
       </div>
     }

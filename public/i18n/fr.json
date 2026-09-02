@@ -1018,6 +1018,7 @@
       "photography": "Photographie"
     },
     "empty": "Personne ne correspond à \"{{query}}\".",
+    "emptyFilter": "Personne ne correspond à ce filtre.",
     "lastSeen": "Dernière connexion : {{label}}"
   },
   "privacyPolicy": {

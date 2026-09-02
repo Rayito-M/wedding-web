@@ -133,6 +133,18 @@ export class People {
   protected readonly query = signal('');
   protected readonly filter = signal<FilterId>('all');
 
+  /**
+   * The viewer has narrowed the list themselves — a search term, or a chip
+   * other than "All". Only then is an empty grid a *result*: `people.empty`
+   * ("no one matches") is a statement about a search, and with no search
+   * running it is both false and, on the very first paint, printed against an
+   * empty `{{query}}`. Un-narrowed, an empty grid means the list is not known
+   * yet, so the grid stays silent and the loader speaks instead.
+   */
+  protected readonly narrowed = computed(
+    () => this.query().trim() !== '' || this.filter() !== 'all',
+  );
+
   protected readonly eyebrowKey = computed(() =>
     this.userProfileList().length === 1 ? 'people.eyebrow_singular' : 'people.eyebrow_plural',
   );

@@ -1018,6 +1018,7 @@
       "photography": "Fotografía"
     },
     "empty": "Nadie coincide con \"{{query}}\".",
+    "emptyFilter": "Nadie coincide con este filtro.",
     "lastSeen": "Última conexión: {{label}}"
   },
   "privacyPolicy": {

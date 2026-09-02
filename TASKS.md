@@ -7186,3 +7186,64 @@
 - **Non-goals:** resigning a delegation; any write to `delegateTo`; per-item deep links from the
   profile mirror list.
 - **Refs:** hub ADR-0039 §3, §6, §7; `SPEC.md` J3; hard rule 18
+
+### T338 — One reading of a missing `attending`, and comments that match the schema
+- **Status:** todo
+- **Target release:** 1.1.1
+- **Owner:** unassigned
+- **Depends on:** nothing
+- **Why:** hub **ADR-0040**. `attending` is now required on every adult member, but the helpers still
+  carry two opposite readings of its absence, written when it was optional:
+  `adultHeadCount()` treats a missing flag as **not coming** (`=== true ? 1 : 0`), while
+  `isPersonComing()` treats the identical absence as **coming** (`!== false`). Both are in
+  `src/app/core/`, both feed the couple's numbers, and they cannot both be right. The attribute is
+  required now, so absence should be unrepresentable rather than quietly meaning two things.
+- **Acceptance:**
+  - `isPersonComing()` and `adultHeadCount()` agree on what an absent `attending` means, and the one
+    that is chosen is stated in the doc comment with the reason. Prefer reading the generated type
+    (`attending: boolean`, non-optional) and treating absence as a defect rather than a state — but
+    do not throw in a computed that feeds a screen.
+  - The stale sentence *"a `kind: 'plus-one'` carries no `attending` flag and always counts"* is gone
+    from `adultHeadCount()`'s doc comment (`statistic.service.ts`). It describes the pre-a97cbf2
+    schema; the code below it already stopped doing that.
+  - `canDeclineAlone()`'s doc comment keeps its **child** clause — `RsvpDtoChildrenInner` genuinely
+    has no `attending` field, that is correct and deliberate (ADR-0040 §Decision) — and drops or
+    rewrites any claim about the plus-one carrying no flag. Whether a plus-one *may* decline is T339;
+    this task only stops the comments asserting something the contract contradicts.
+  - `rsvp-draft.spec.ts` covers a member with `attending: false` and one with `attending: true` for
+    each adult slot, so the chosen reading is pinned by a test.
+- **Non-goals:** no behaviour change to the party editor; no change to `attendingCount()`'s
+  solo-decline rule (ADR W-0007 §Amendment.3 accepted that knowingly).
+- **Refs:** hub ADR-0040 §3/§4; `src/app/core/service/statistic.service.ts` → `adultHeadCount()`;
+  `src/app/core/helper/rsvp-draft.ts` → `isPersonComing()`, `canDeclineAlone()`
+
+### T339 — Can a plus-one decline? A required flag the editor cannot set
+- **Status:** blocked — needs a product decision before any code
+- **Target release:** 1.1.1
+- **Owner:** Product Owner (the decision), then unassigned (the implementation)
+- **Depends on:** T338 (comments first, so the code states the current rule honestly)
+- **Why:** hub **ADR-0040 §4**, which names this and deliberately does not settle it.
+  `attending` is now **required** on a `kind: 'plus-one'` partner, but `canDeclineAlone()` returns
+  `false` for that member type unless they hold an account, so the editor offers no control to set it
+  and the value is in practice always `true`. Either the field means something for a plus-one — and
+  the editor should let it be toggled — or it is structurally always true, and the normalization
+  gained uniformity of shape without uniformity of meaning. Both are defensible; leaving it
+  undecided is what is not.
+- **The decision to make:** a plus-one is a named person with **no account**, invited as somebody's
+  guest. If they drop out, is that (a) the inviting partner editing the party — removing the
+  plus-one entirely — or (b) a decline, keeping the name with `attending: false`?
+- **Acceptance (once decided):**
+  - If **(a) removal is the answer:** no UI change. `canDeclineAlone()` keeps returning `false` for a
+    plus-one, and a comment says *why* it is structurally always `true` rather than leaving the next
+    reader to infer it from a missing branch. `wedding-api` T241 still matters — the API must not
+    count a `attending: false` plus-one that some other writer could produce.
+  - If **(b) decline is the answer:** the editor renders the same decline control it renders for an
+    account-holding partner, `canDeclineAlone()` returns `true` for a plus-one, `impliedStatus()` and
+    `attendingCount()` are checked against a party whose only second adult is a declined plus-one,
+    and ES/EN/FR copy is added for the third-person case.
+  - Either way the outcome is written back into hub ADR-0040 §4 so the question is closed on the
+    record, not just in code.
+- **Non-goals:** no change to who may edit the party; no new member type; no contract change —
+  `attending` is already required on both `partner2` variants.
+- **Refs:** hub ADR-0040 §4; `src/app/core/helper/rsvp-draft.ts` → `canDeclineAlone()`,
+  `partnerHasAccount()`; ADR W-0007 §Amendment.3
