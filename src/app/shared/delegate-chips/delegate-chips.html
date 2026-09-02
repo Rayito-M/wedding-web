@@ -1,0 +1,28 @@
+@if (delegates().length > 0) {
+  <div class="chip-row">
+    @for (chip of delegates(); track chip.id) {
+      <span class="delegate-chip">
+        <!-- An unresolved name (T336: the fallback lookup hasn't landed yet,
+             or failed) degrades to the kind alone — never a blank name, never
+             a crash, never a dangling "· kind" with nothing before it. -->
+        @if (chip.name) {
+          {{ chip.name }} · {{ 'delegation.kind.' + chip.kind | translate }}
+        } @else {
+          {{ 'delegation.kind.' + chip.kind | translate }}
+        }
+        @if (removable()) {
+          <button
+            type="button"
+            class="chip-remove"
+            [attr.aria-label]="'delegation.field.remove' | translate: { name: chip.name || ('delegation.kind.' + chip.kind | translate) }"
+            (click)="remove.emit(chip.id)"
+          >
+            ×
+          </button>
+        }
+      </span>
+    }
+  </div>
+} @else {
+  <p class="chip-empty">{{ emptyText() }}</p>
+}

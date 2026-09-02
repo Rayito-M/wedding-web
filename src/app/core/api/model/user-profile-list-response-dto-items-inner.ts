@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { UserListResponseDtoItemsInnerDelegateToInner } from './user-list-response-dto-items-inner-delegate-to-inner';
 import { UserProfileListResponseDtoItemsInnerGuestInfo } from './user-profile-list-response-dto-items-inner-guest-info';
 
 
@@ -20,6 +21,7 @@ export interface UserProfileListResponseDtoItemsInner {
     preferredLang: UserProfileListResponseDtoItemsInner.PreferredLangEnum;
     role: UserProfileListResponseDtoItemsInner.RoleEnum;
     lastSeen?: string;
+    delegateTo?: Array<UserListResponseDtoItemsInnerDelegateToInner>;
     guestInfo?: UserProfileListResponseDtoItemsInnerGuestInfo;
 }
 export namespace UserProfileListResponseDtoItemsInner {

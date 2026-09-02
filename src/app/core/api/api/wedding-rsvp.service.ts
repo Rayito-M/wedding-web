@@ -30,18 +30,18 @@ import { BaseService } from '../api.base.service';
 
 
 export interface RsvpControllerCreateV1RequestParams {
-    /** User ULID, or the literal &#x60;me&#x60; for the authenticated user */
-    id: any;
+    /** ULID of the **guest** whose RSVP this is, or the literal &#x60;me&#x60; for the authenticated user. Not an RSVP id: the RSVP is keyed by the guest (hub ADR-0022), and for a linked couple the RSVP returned is the one shared with their partner, whose &#x60;id&#x60; may differ from this value. */
+    guestId: any;
 }
 
 export interface RsvpControllerGetV1RequestParams {
-    /** User ULID, or the literal &#x60;me&#x60; for the authenticated user */
-    id: any;
+    /** ULID of the **guest** whose RSVP this is, or the literal &#x60;me&#x60; for the authenticated user. Not an RSVP id: the RSVP is keyed by the guest (hub ADR-0022), and for a linked couple the RSVP returned is the one shared with their partner, whose &#x60;id&#x60; may differ from this value. */
+    guestId: any;
 }
 
 export interface RsvpControllerUpdateV1RequestParams {
-    /** User ULID, or the literal &#x60;me&#x60; for the authenticated user */
-    id: any;
+    /** ULID of the **guest** whose RSVP this is, or the literal &#x60;me&#x60; for the authenticated user. Not an RSVP id: the RSVP is keyed by the guest (hub ADR-0022), and for a linked couple the RSVP returned is the one shared with their partner, whose &#x60;id&#x60; may differ from this value. */
+    guestId: any;
     updateRsvpDto: UpdateRsvpDto;
 }
 
@@ -58,7 +58,7 @@ export class WeddingRsvpService extends BaseService {
     /**
      * Create the RSVP for the guest
      * Creates the guest RSVP. &#x60;status&#x60; is client-set (defaults to &#x60;pending&#x60;) and validated against the party rules; &#x60;submittedBy&#x60; is server-set from the caller. Allowed for admins, the guest themselves, and delegates.
-     * @endpoint post /v1/rsvp/{id}
+     * @endpoint post /v1/rsvp/{guestId}
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -68,9 +68,9 @@ export class WeddingRsvpService extends BaseService {
     public rsvpControllerCreateV1(requestParameters: RsvpControllerCreateV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RsvpDto>>;
     public rsvpControllerCreateV1(requestParameters: RsvpControllerCreateV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RsvpDto>>;
     public rsvpControllerCreateV1(requestParameters: RsvpControllerCreateV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        const id = requestParameters?.id;
-        if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling rsvpControllerCreateV1.');
+        const guestId = requestParameters?.guestId;
+        if (guestId === null || guestId === undefined) {
+            throw new Error('Required parameter guestId was null or undefined when calling rsvpControllerCreateV1.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -101,7 +101,7 @@ export class WeddingRsvpService extends BaseService {
             }
         }
 
-        let localVarPath = `/v1/rsvp/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "any", dataFormat: undefined})}`;
+        let localVarPath = `/v1/rsvp/${this.configuration.encodeParam({name: "guestId", value: guestId, in: "path", style: "simple", explode: false, dataType: "any", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<RsvpDto>('post', `${basePath}${localVarPath}`,
             {
@@ -118,7 +118,7 @@ export class WeddingRsvpService extends BaseService {
 
     /**
      * Get all RSVPs
-     * Retrieve all guest RSVPs with pagination. Admin gets all, guest gets their delegates, reports, and analytics.
+     * Paginated list of RSVPs. Admins (bride/groom) get every RSVP. Any other caller gets exactly the RSVPs they are a delegate for — the \&quot;replies I look after\&quot; mirror list (hub ADR-0039 §3) — and nothing else, never their own RSVP by default. This is the only delegate read endpoint; there is no separate \&#39;my delegations\&#39; route.
      * @endpoint get /v1/rsvp
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -175,7 +175,7 @@ export class WeddingRsvpService extends BaseService {
     /**
      * Get the RSVP for the guest
      * Reads the guest RSVP. Allowed for admins, the guest themselves, and delegates.
-     * @endpoint get /v1/rsvp/{id}
+     * @endpoint get /v1/rsvp/{guestId}
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -185,9 +185,9 @@ export class WeddingRsvpService extends BaseService {
     public rsvpControllerGetV1(requestParameters: RsvpControllerGetV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RsvpDto>>;
     public rsvpControllerGetV1(requestParameters: RsvpControllerGetV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RsvpDto>>;
     public rsvpControllerGetV1(requestParameters: RsvpControllerGetV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        const id = requestParameters?.id;
-        if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling rsvpControllerGetV1.');
+        const guestId = requestParameters?.guestId;
+        if (guestId === null || guestId === undefined) {
+            throw new Error('Required parameter guestId was null or undefined when calling rsvpControllerGetV1.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -218,7 +218,7 @@ export class WeddingRsvpService extends BaseService {
             }
         }
 
-        let localVarPath = `/v1/rsvp/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "any", dataFormat: undefined})}`;
+        let localVarPath = `/v1/rsvp/${this.configuration.encodeParam({name: "guestId", value: guestId, in: "path", style: "simple", explode: false, dataType: "any", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<RsvpDto>('get', `${basePath}${localVarPath}`,
             {
@@ -236,7 +236,7 @@ export class WeddingRsvpService extends BaseService {
     /**
      * Update the RSVP for the guest
      * Updates the guest RSVP in place; the body carries the envelope &#x60;version&#x60;, which guards the write with optimistic locking (409 on a stale write — re-read and retry). &#x60;status&#x60; is client-set and validated; &#x60;submittedBy&#x60; stays server-managed and is not patchable. Allowed for admins, the guest themselves, and delegates.
-     * @endpoint patch /v1/rsvp/{id}
+     * @endpoint patch /v1/rsvp/{guestId}
      * @param requestParameters
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -246,9 +246,9 @@ export class WeddingRsvpService extends BaseService {
     public rsvpControllerUpdateV1(requestParameters: RsvpControllerUpdateV1RequestParams, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RsvpDto>>;
     public rsvpControllerUpdateV1(requestParameters: RsvpControllerUpdateV1RequestParams, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RsvpDto>>;
     public rsvpControllerUpdateV1(requestParameters: RsvpControllerUpdateV1RequestParams, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        const id = requestParameters?.id;
-        if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling rsvpControllerUpdateV1.');
+        const guestId = requestParameters?.guestId;
+        if (guestId === null || guestId === undefined) {
+            throw new Error('Required parameter guestId was null or undefined when calling rsvpControllerUpdateV1.');
         }
         const updateRsvpDto = requestParameters?.updateRsvpDto;
         if (updateRsvpDto === null || updateRsvpDto === undefined) {
@@ -292,7 +292,7 @@ export class WeddingRsvpService extends BaseService {
             }
         }
 
-        let localVarPath = `/v1/rsvp/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "any", dataFormat: undefined})}`;
+        let localVarPath = `/v1/rsvp/${this.configuration.encodeParam({name: "guestId", value: guestId, in: "path", style: "simple", explode: false, dataType: "any", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<RsvpDto>('patch', `${basePath}${localVarPath}`,
             {

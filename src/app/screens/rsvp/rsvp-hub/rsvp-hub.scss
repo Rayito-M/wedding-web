@@ -1,0 +1,119 @@
+@use '../../../../styles/tokens' as t;
+@use '../../../../styles/primitives';
+
+:host {
+  display: block;
+  width: 100%;
+  padding: 20px t.$space-6;
+  overflow-y: auto;
+}
+
+.head {
+  margin-bottom: t.$space-6;
+}
+
+.eyebrow {
+  @extend %eyebrow;
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-family: t.$font-serif;
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.05;
+  margin: 0 0 8px;
+}
+
+.sub {
+  @extend %sub;
+  max-width: 420px;
+}
+
+.section-label {
+  font-size: t.$text-label;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: t.$space-6 0 t.$space-3;
+
+  &:first-of-type {
+    margin-top: 0;
+  }
+}
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: t.$space-4;
+  width: 100%;
+  text-align: left;
+  padding: t.$space-4 t.$space-5;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: t.$radius-card;
+  font-family: var(--font-sans);
+  color: var(--text-body-color);
+  cursor: pointer;
+
+  &.mine {
+    border-color: var(--brand-accent);
+    margin-bottom: t.$space-3;
+  }
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--brand-accent);
+  }
+}
+
+.card-head {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  min-width: 0;
+}
+
+// Plain colored label, no border/fill (DS `ScreenRSVPHub.jsx`'s `state()`
+// helper draws text only) — not `app-status-pill`, which is a bordered
+// badge, a different visual for a different pattern (agenda/milestone
+// status), grepped before adding this.
+.state {
+  font-size: t.$text-label;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+
+  &.attending {
+    color: var(--brand-accent);
+  }
+
+  &.pending {
+    color: var(--status-provisional);
+  }
+}
+
+.title {
+  font-family: t.$font-serif;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.meta {
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 16px;
+}

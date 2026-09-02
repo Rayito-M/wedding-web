@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
 } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
@@ -69,6 +70,15 @@ export class RsvpEdit {
   /** The current guest's RSVP, as read by the orchestrator. */
   readonly rsvp = input.required<RsvpDto>();
 
+  /** Opt-in "back to the hub" affordance, off by default: this screen is the
+   *  zero-delegation guest's whole RSVP page, where there is nothing behind
+   *  it to go back to. `app-rsvp` turns it on only for the copy it mounts
+   *  from inside the delegate hub (hub ADR-0039 §6) — the same re-entry
+   *  point `app-delegate-edit` carries, so the own-reply card and a
+   *  delegation card lead to screens a guest can leave the same way. */
+  readonly showBack = input(false);
+  readonly back = output<void>();
+
   // Placeholder until the constructor's `effect()` below resyncs it from the
   // required `rsvp` input — reading a required input signal at field-init
   // time is flagged by the Angular compiler (NG8118) even though the value
@@ -119,6 +129,10 @@ export class RsvpEdit {
    *  screen owns no overlay of its own, so it hands the target id straight to
    *  the shell-level service — the same pattern already used for the guest's
    *  own profile (`ScreenHeader`, `People`). */
+  protected onBack(): void {
+    this.back.emit();
+  }
+
   protected onOpenProfile(userId: string): void {
     this.profileModal.open(userId);
   }

@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { CreateGuestDtoRelation } from './create-guest-dto-relation';
+import { UserListResponseDtoItemsInnerDelegateToInner } from './user-list-response-dto-items-inner-delegate-to-inner';
 
 
 export interface CreateGuestDto { 
@@ -17,7 +18,7 @@ export interface CreateGuestDto {
     nickname?: string;
     phoneNumber: string;
     preferredLang: CreateGuestDto.PreferredLangEnum;
-    delegateTo?: Array<string>;
+    delegateTo?: Array<UserListResponseDtoItemsInnerDelegateToInner>;
     relation: CreateGuestDtoRelation;
 }
 export namespace CreateGuestDto {

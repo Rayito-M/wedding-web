@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { UserListResponseDtoItemsInnerDelegateToInner } from './user-list-response-dto-items-inner-delegate-to-inner';
 import { GuestListResponseDtoItemsInnerRelation } from './guest-list-response-dto-items-inner-relation';
 
 
@@ -20,7 +21,7 @@ export interface GuestListResponseDtoItemsInner {
     phoneNumber: string;
     role: string;
     preferredLang: GuestListResponseDtoItemsInner.PreferredLangEnum;
-    delegateTo?: Array<string>;
+    delegateTo?: Array<UserListResponseDtoItemsInnerDelegateToInner>;
     lastSeen?: string;
     partnerId?: string;
     relation: GuestListResponseDtoItemsInnerRelation;

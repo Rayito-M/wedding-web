@@ -88,6 +88,7 @@ export * from './update-wedding-config-dto-agenda';
 export * from './user-dto';
 export * from './user-list-response-dto';
 export * from './user-list-response-dto-items-inner';
+export * from './user-list-response-dto-items-inner-delegate-to-inner';
 export * from './user-profile-dto';
 export * from './user-profile-dto-guest-info';
 export * from './user-profile-list-response-dto';

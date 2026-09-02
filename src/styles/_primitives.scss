@@ -39,6 +39,37 @@
   margin: 0;
 }
 
+/// Screen-level "back" affordance (the delegate hub's re-entry point, shared
+/// by `app-delegate-edit` and — when opened from the hub — `app-rsvp-edit`).
+/// Sized as a real tap target (44px, WCAG 2.5.5 / iOS HIG) rather than a
+/// caption-sized text link: it is the only way off those screens other than
+/// the browser's own back button.
+%back-link {
+  appearance: none;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  min-height: 44px;
+  // Bleeds left by the optical weight of the chevron so the label still
+  // lines up with the heading below it, and right so the tap target runs
+  // past the text.
+  margin: 0 0 t.$space-2 -2px;
+  padding: 0 t.$space-3 0 0;
+  color: var(--brand-accent);
+  font-family: t.$font-sans;
+  font-size: t.$text-body;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+
+  .chevron {
+    font-size: 18px;
+    line-height: 1;
+  }
+}
+
 // ── Card Shell Primitives ──
 
 /// Base card surface: border, background, radius, overflow clipping. No layout/padding.

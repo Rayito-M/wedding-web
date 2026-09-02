@@ -53,6 +53,30 @@
       "uncle-in-law": "Oncle par alliance"
     }
   },
+  "delegation": {
+    "kind": {
+      "father": "Père",
+      "mother": "Mère",
+      "brother": "Frère",
+      "sister": "Sœur"
+    },
+    "field": {
+      "title": "Délégation RSVP",
+      "loading": "Chargement…",
+      "error": "Impossible de charger les délégations de cet invité.",
+      "retry": "Réessayer",
+      "emptyCouple": "Personne ne répond encore pour cette invitation.",
+      "emptyGuest": "Personne ne répond pour vous — vous seul(e) pouvez répondre.",
+      "searchPlaceholder": "Rechercher un invité à qui déléguer…",
+      "noMatches": "Aucun invité correspondant.",
+      "kindPrompt": "Qui est {{name}} pour cet invité ?",
+      "kindPlaceholder": "Choisissez…",
+      "kindRequiredHint": "Choisissez qui est {{name}} pour cet invité avant d'enregistrer.",
+      "saveError": "La délégation n'a pas pu être enregistrée. Veuillez réessayer.",
+      "remove": "Retirer {{name}}",
+      "unknownGuest": "Invité inconnu"
+    }
+  },
   "grenade": "grenade",
   "spain": "espagne",
   "welcome": {
@@ -319,8 +343,42 @@
           "addPartner": "+ Ajouter un partenaire",
           "addChild": "+ Ajouter un enfant",
           "declinedHint": "Le groupe et les détails de repas sont conservés — changer de réponse ne change rien d'autre."
+        },
+        "delegate": {
+          "party": "Son groupe",
+          "primaryHint": "Cette personne",
+          "partyMeta": "Participants · régime & allergies",
+          "note": "Note de cette personne",
+          "notePlaceholder": "Aucune note laissée.",
+          "addPartner": "+ Ajouter son/sa partenaire",
+          "addChild": "+ Ajouter un enfant",
+          "declinedHint": "Son groupe et ses détails de repas sont conservés — vous pouvez revenir en arrière à tout moment, rien n'est perdu."
         }
       }
+    },
+    "hub": {
+      "title": "Réponses dont vous vous occupez",
+      "own": {
+        "title": "Votre propre réponse"
+      },
+      "ownCardTitle": "Vous et votre groupe",
+      "delegatesTitle": "Vous répondez pour",
+      "outstanding": {
+        "none": "Tout est répondu — vous pouvez encore tout modifier jusqu'à la date limite.",
+        "singular": "{{count}} réponse a encore besoin d'une réponse.",
+        "plural": "{{count}} réponses ont encore besoin d'une réponse."
+      },
+      "state": {
+        "attending": "Confirmé",
+        "declined": "Décliné",
+        "pending": "Sans réponse"
+      },
+      "seats": {
+        "singular": "{{count}} personne",
+        "plural": "{{count}} personnes"
+      },
+      "back": "Retour à vos réponses",
+      "error": "Une erreur est survenue lors du chargement des réponses dont vous vous occupez."
     }
   },
   "dashboard": {
@@ -748,7 +806,8 @@
       "phone": "Téléphone",
       "table": "Table",
       "partner": "Partenaire",
-      "lastSeen": "Dernière connexion"
+      "lastSeen": "Dernière connexion",
+      "delegatedTo": "Répondent pour ce RSVP"
     },
     "lastSeen": {
       "today": "Aujourd’hui",

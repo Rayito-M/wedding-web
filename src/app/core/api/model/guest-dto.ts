@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { CreateGuestDtoRelation } from './create-guest-dto-relation';
+import { UserListResponseDtoItemsInnerDelegateToInner } from './user-list-response-dto-items-inner-delegate-to-inner';
 
 
 export interface GuestDto { 
@@ -20,7 +21,7 @@ export interface GuestDto {
     phoneNumber: string;
     role: string;
     preferredLang: GuestDto.PreferredLangEnum;
-    delegateTo?: Array<string>;
+    delegateTo?: Array<UserListResponseDtoItemsInnerDelegateToInner>;
     lastSeen?: string;
     partnerId?: string;
     relation: CreateGuestDtoRelation;

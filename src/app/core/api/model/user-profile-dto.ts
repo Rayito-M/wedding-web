@@ -8,6 +8,7 @@
  * Do not edit the class manually.
  */
 import { UserProfileDtoGuestInfo } from './user-profile-dto-guest-info';
+import { UserListResponseDtoItemsInnerDelegateToInner } from './user-list-response-dto-items-inner-delegate-to-inner';
 
 
 export interface UserProfileDto { 
@@ -20,6 +21,7 @@ export interface UserProfileDto {
     preferredLang: UserProfileDto.PreferredLangEnum;
     role: UserProfileDto.RoleEnum;
     lastSeen?: string;
+    delegateTo?: Array<UserListResponseDtoItemsInnerDelegateToInner>;
     guestInfo?: UserProfileDtoGuestInfo;
 }
 export namespace UserProfileDto {

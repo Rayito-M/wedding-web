@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { provideEffects } from '@ngrx/effects';
 import { EntityServices, provideEntityData, withEffects } from '@ngrx/data';
@@ -12,6 +13,7 @@ import {
   EntityNamesEnum,
   LoginService,
   RsvpDto,
+  RsvpListResponseDtoItemsInner,
   WeddingConfigResponseDto,
   WeddingRsvpService,
   entityConfig,
@@ -49,9 +51,15 @@ describe('Rsvp', () => {
   // Read lazily by the `WeddingRsvpService` stub below, so each test can pick
   // its own fixture without re-configuring the TestBed providers.
   let currentRsvp: RsvpDto;
+  // T337 — `GET /v1/rsvp`'s mirror-list read. Empty by default so every
+  // pre-existing test in this file exercises the true zero-delegation path
+  // with no per-test wiring of its own (T337's own acceptance: with zero
+  // delegations this screen is byte-for-byte what it was before this task).
+  let currentDelegated: RsvpListResponseDtoItemsInner[];
 
-  async function create(rsvp: RsvpDto): Promise<void> {
+  async function create(rsvp: RsvpDto, delegated: RsvpListResponseDtoItemsInner[] = []): Promise<void> {
     currentRsvp = rsvp;
+    currentDelegated = delegated;
     fixture = TestBed.createComponent(Rsvp);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -70,6 +78,7 @@ describe('Rsvp', () => {
     await TestBed.configureTestingModule({
       imports: [Rsvp],
       providers: [
+        provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideTranslateService({ lang: 'en', fallbackLang: 'en' }),
@@ -84,6 +93,12 @@ describe('Rsvp', () => {
               sub: 'guest-1',
               role: AppJwtClaimsDto.RoleEnum.GUEST,
             }),
+            // Kept in step with the real service, where `currentUserId()` is
+            // derived from `currentUserClaims()?.sub`. `RsvpEditor` only reads
+            // it when `partner2` has an `id`, so omitting it here fails no test
+            // today — it would throw the moment a fixture gains a registered
+            // partner.
+            currentUserId: () => 'guest-1',
           },
         },
         {
@@ -91,6 +106,8 @@ describe('Rsvp', () => {
           useValue: {
             rsvpControllerGetV1: () => of(currentRsvp),
             rsvpControllerCreateV1: () => of(currentRsvp),
+            rsvpControllerGetAllV1: () =>
+              of({ items: currentDelegated, nextCursor: null, count: currentDelegated.length }),
           },
         },
       ],
@@ -124,5 +141,193 @@ describe('Rsvp', () => {
 
     expect(fixture.nativeElement.querySelector('app-rsvp-edit')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-rsvp-create')).toBeNull();
+  });
+
+  // T337's own acceptance: with zero delegations this screen is
+  // byte-for-byte what it was before this task. The three routing tests
+  // above already exercise the zero-delegation path end to end (their own
+  // `WeddingRsvpService` stub answers `rsvpControllerGetAllV1` with an empty
+  // list); this test is the explicit assertion that the hub component never
+  // mounts alongside them, for every status the guest's own reply can be in.
+  it('never renders the delegate hub with zero delegations, whatever the own reply status', async () => {
+    for (const status of [
+      RsvpDto.StatusEnum.PENDING,
+      RsvpDto.StatusEnum.ATTENDING,
+      RsvpDto.StatusEnum.DECLINED,
+    ]) {
+      await create(rsvpWith(status));
+      expect(fixture.nativeElement.querySelector('app-rsvp-hub')).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-delegate-edit')).toBeNull();
+    }
+  });
+});
+
+/** A delegated subject's RSVP — the shape `GET /v1/rsvp` returns for a
+ *  non-couple caller (`RsvpListResponseDtoItemsInner`), structurally
+ *  identical to `RsvpDto` plus the (unread, here) `delegatedTo` string. */
+function delegatedRsvp(overrides: Partial<RsvpListResponseDtoItemsInner> = {}): RsvpListResponseDtoItemsInner {
+  return {
+    id: 'subject-1',
+    version: 1,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    status: RsvpDto.StatusEnum.PENDING,
+    adults: {
+      partner1: { id: 'subject-1', firstName: 'Ana', lastName: 'Ruiz', options: {} },
+    },
+    children: [],
+    submittedBy: 'subject-1',
+    ...overrides,
+  };
+}
+
+describe('Rsvp — delegate hub (hub ADR-0039, T337)', () => {
+  let fixture: ComponentFixture<Rsvp>;
+  let currentRsvp: RsvpDto;
+  let currentDelegated: RsvpListResponseDtoItemsInner[];
+
+  async function create(rsvp: RsvpDto, delegated: RsvpListResponseDtoItemsInner[]): Promise<void> {
+    currentRsvp = rsvp;
+    currentDelegated = delegated;
+    fixture = TestBed.createComponent(Rsvp);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await Promise.resolve();
+    await Promise.resolve();
+    fixture.detectChanges();
+    await fixture.whenStable();
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [Rsvp],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTranslateService({ lang: 'en', fallbackLang: 'en' }),
+        provideStore(),
+        provideEffects(),
+        provideEntityData(entityConfig, withEffects()),
+        provideEntityDataServices(),
+        {
+          provide: LoginService,
+          useValue: {
+            currentUserClaims: () => ({ sub: 'guest-1', role: AppJwtClaimsDto.RoleEnum.GUEST }),
+            currentUserId: () => 'guest-1',
+          },
+        },
+        {
+          provide: WeddingRsvpService,
+          useValue: {
+            rsvpControllerGetV1: () => of(currentRsvp),
+            rsvpControllerCreateV1: () => of(currentRsvp),
+            rsvpControllerGetAllV1: () =>
+              of({ items: currentDelegated, nextCursor: null, count: currentDelegated.length }),
+            rsvpControllerUpdateV1: (params: { guestId: string; updateRsvpDto: Partial<RsvpDto> }) =>
+              of({
+                ...currentDelegated.find((d) => d.id === params.guestId),
+                ...params.updateRsvpDto,
+              } as RsvpDto),
+          },
+        },
+      ],
+    }).compileComponents();
+
+    TestBed.inject(TranslateService).setTranslation(
+      'en',
+      {
+        rsvp: {
+          hub: {
+            title: 'Replies you look after',
+            own: { title: 'Your own reply' },
+            ownCardTitle: 'You and your party',
+            delegatesTitle: 'You answer for',
+            outstanding: { none: 'none', singular: '{{count}} outstanding', plural: '{{count}} outstanding' },
+            state: { attending: 'Confirmed', declined: 'Declined', pending: 'Not answered yet' },
+            seats: { singular: '{{count}} person', plural: '{{count}} people' },
+            back: 'Back to your replies',
+          },
+        },
+      },
+      true,
+    );
+    TestBed.inject(EntityServices)
+      .getEntityCollectionService<WeddingConfigResponseDto>(EntityNamesEnum.WEDDING_CONFIG)
+      .clearCache();
+    TestBed.inject(EntityServices)
+      .getEntityCollectionService<RsvpDto>(EntityNamesEnum.RSVP)
+      .clearCache();
+  });
+
+  it('renders the hub, additively, when the guest holds at least one delegation', async () => {
+    await create(rsvpWith(RsvpDto.StatusEnum.ATTENDING), [delegatedRsvp()]);
+
+    expect(fixture.nativeElement.querySelector('app-rsvp-hub')).not.toBeNull();
+    // The plain owner screen never mounts underneath the hub.
+    expect(fixture.nativeElement.querySelector('app-rsvp-edit')).toBeNull();
+  });
+
+  it('keeps a guest who has not answered for themselves on app-rsvp-create — a delegation never pre-empts their own first reply', async () => {
+    await create(rsvpWith(RsvpDto.StatusEnum.PENDING), [delegatedRsvp()]);
+
+    expect(fixture.nativeElement.querySelector('app-rsvp-create')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-rsvp-hub')).toBeNull();
+  });
+
+  it('opening the own-reply card falls through to the exact same app-rsvp-edit/app-rsvp-create the zero-delegation screen uses', async () => {
+    await create(rsvpWith(RsvpDto.StatusEnum.ATTENDING), [delegatedRsvp()]);
+
+    (fixture.nativeElement.querySelector('.card.mine') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-rsvp-edit')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-rsvp-hub')).toBeNull();
+
+    // …and carries the same way back to the hub a delegation card does — it
+    // is reached the same way, so it has to be leavable the same way.
+    const back = fixture.nativeElement.querySelector(
+      'app-rsvp-edit .back-link',
+    ) as HTMLButtonElement;
+    expect(back).not.toBeNull();
+    back.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-rsvp-hub')).not.toBeNull();
+  });
+
+  it('opening a delegation card opens app-delegate-edit headed with the subject\'s party label, with a back link to the hub', async () => {
+    await create(rsvpWith(RsvpDto.StatusEnum.ATTENDING), [
+      delegatedRsvp({ id: 'subject-1', status: RsvpDto.StatusEnum.PENDING }),
+    ]);
+
+    const cards = Array.from(
+      fixture.nativeElement.querySelectorAll('.card:not(.mine)'),
+    ) as HTMLButtonElement[];
+    cards[0].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const delegateEdit = fixture.nativeElement.querySelector('app-delegate-edit');
+    expect(delegateEdit).not.toBeNull();
+    expect(delegateEdit?.querySelector('h2')?.textContent?.trim()).toBe('Ana Ruiz');
+
+    (delegateEdit?.querySelector('.back-link') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-rsvp-hub')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-delegate-edit')).toBeNull();
+  });
+
+  it('never renders a relation line on any card (hard rule 18(c))', async () => {
+    await create(rsvpWith(RsvpDto.StatusEnum.ATTENDING), [delegatedRsvp()]);
+
+    // The DS mock's `meta={d.relation}` has no equivalent here at all — this
+    // asserts the absence structurally, not by string-matching copy that
+    // could coincidentally not appear for an unrelated reason.
+    expect(fixture.nativeElement.textContent).not.toMatch(/sister|brother|father|mother/i);
   });
 });

@@ -53,6 +53,30 @@
       "uncle-in-law": "Uncle-in-law"
     }
   },
+  "delegation": {
+    "kind": {
+      "father": "Father",
+      "mother": "Mother",
+      "brother": "Brother",
+      "sister": "Sister"
+    },
+    "field": {
+      "title": "RSVP delegation",
+      "loading": "Loading…",
+      "error": "Could not load this guest's delegations.",
+      "retry": "Retry",
+      "emptyCouple": "Nobody answers for this RSVP yet.",
+      "emptyGuest": "Nobody answers for you — only you can reply.",
+      "searchPlaceholder": "Search a guest to delegate to…",
+      "noMatches": "No matching guests.",
+      "kindPrompt": "What is {{name}} to this guest?",
+      "kindPlaceholder": "Choose one…",
+      "kindRequiredHint": "Choose what {{name}} is to this guest before saving.",
+      "saveError": "The delegation could not be saved. Please try again.",
+      "remove": "Remove {{name}}",
+      "unknownGuest": "Unknown guest"
+    }
+  },
   "welcome": {
     "saveDate": "Save the date",
     "location": "GRANADA · ES",
@@ -322,8 +346,42 @@
           "addPartner": "+ Add partner",
           "addChild": "+ Add child",
           "declinedHint": "Party and meal details are kept — switching back changes nothing else."
+        },
+        "delegate": {
+          "party": "Their party",
+          "primaryHint": "They",
+          "partyMeta": "Participants · dietary & allergies",
+          "note": "Note from them",
+          "notePlaceholder": "No note left.",
+          "addPartner": "+ Add their partner",
+          "addChild": "+ Add a child",
+          "declinedHint": "Their party and meal details are kept — switch back any time and nothing is lost."
         }
       }
+    },
+    "hub": {
+      "title": "Replies you look after",
+      "own": {
+        "title": "Your own reply"
+      },
+      "ownCardTitle": "You and your party",
+      "delegatesTitle": "You answer for",
+      "outstanding": {
+        "none": "Everything is answered — you can still change anything until the deadline.",
+        "singular": "{{count}} reply still needs an answer.",
+        "plural": "{{count}} replies still need an answer."
+      },
+      "state": {
+        "attending": "Confirmed",
+        "declined": "Declined",
+        "pending": "Not answered yet"
+      },
+      "seats": {
+        "singular": "{{count}} person",
+        "plural": "{{count}} people"
+      },
+      "back": "Back to your replies",
+      "error": "Something went wrong loading the replies you look after."
     }
   },
   "dashboard": {
@@ -752,7 +810,8 @@
       "phone": "Phone",
       "table": "Table",
       "partner": "Partner",
-      "lastSeen": "Last seen"
+      "lastSeen": "Last seen",
+      "delegatedTo": "RSVP answered by"
     },
     "lastSeen": {
       "today": "Today",

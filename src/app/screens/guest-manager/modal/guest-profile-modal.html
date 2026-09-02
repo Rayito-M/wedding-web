@@ -92,6 +92,24 @@
                 <span class="info-label">{{ 'guest_manager.profile.lastSeen' | translate }}</span>
                 <div class="value">{{ lastSeenLabel() }}</div>
               </div>
+              <!-- "RSVP answered by" (hub ADR-0039 §6/§8, T335) — read-only
+                 here too: this view never offers a picker, only the edit
+                 form below does (the couple is the only author). Name + kind
+                 per entry, subject-side (hard rule 18(c)), accented via the
+                 shared chip when non-empty, "—" when empty. -->
+              <div class="info-item span-2">
+                <span class="info-label">{{ 'guest_manager.profile.delegatedTo' | translate }}</span>
+                @if (delegationLoading()) {
+                  <div class="value muted">{{ 'delegation.field.loading' | translate }}</div>
+                } @else if (delegationError()) {
+                  <div class="value muted">{{ 'delegation.field.error' | translate }}</div>
+                } @else {
+                  <!-- Bare "—" (not "Nobody answers…") to match every other
+                     empty field in this grid — same convention this view
+                     already uses for Table/Partner/etc. above. -->
+                  <app-delegate-chips [delegates]="delegateChips()" emptyText="—" />
+                }
+              </div>
             </div>
           </div>
 
@@ -189,6 +207,81 @@
               [relationHint]="linkErrorHint()"
               (valueChange)="editDraft.set($event)"
             />
+
+            <!-- RSVP delegation (hub ADR-0039 §8/§12, T335) — the couple's
+               only grant surface, ships desktop and mobile alike: this whole
+               overlay is the responsive `app-modal`, so there is no separate
+               mobile control to build. -->
+            <section class="delegation-field">
+              <span class="info-label">{{ 'delegation.field.title' | translate }}</span>
+
+              @if (delegationLoading()) {
+                <p class="delegation-status">{{ 'delegation.field.loading' | translate }}</p>
+              } @else if (delegationError()) {
+                <p class="delegation-status">
+                  {{ 'delegation.field.error' | translate }}
+                  <button type="button" class="delegation-retry" (click)="retryDelegationFetch()">
+                    {{ 'delegation.field.retry' | translate }}
+                  </button>
+                </p>
+              } @else {
+                <app-delegate-chips
+                  [delegates]="delegateChips()"
+                  [removable]="true"
+                  [emptyText]="'delegation.field.emptyCouple' | translate"
+                  (remove)="removeDelegate($event)"
+                />
+
+                <input
+                  app-input
+                  type="search"
+                  class="delegation-search"
+                  [value]="delegationSearch()"
+                  [placeholder]="'delegation.field.searchPlaceholder' | translate"
+                  (input)="onDelegationSearch(inputValue($event))"
+                />
+
+                @if (delegationSearch().trim()) {
+                  <div class="candidate-list">
+                    @for (candidate of delegationCandidates(); track candidate.id) {
+                      <button type="button" class="candidate" (click)="pickCandidate(candidate.id)">
+                        <span class="candidate-name">{{ candidate.name }}</span>
+                      </button>
+                    } @empty {
+                      <p class="candidate-empty">{{ 'delegation.field.noMatches' | translate }}</p>
+                    }
+                  </div>
+                }
+
+                @if (pendingPickId()) {
+                  <div class="kind-picker">
+                    <span class="info-label">
+                      {{ 'delegation.field.kindPrompt' | translate: { name: pendingPickName() } }}
+                    </span>
+                    <select class="select-native" (change)="onKindSelect($event)">
+                      <option value="" selected disabled>
+                        {{ 'delegation.field.kindPlaceholder' | translate }}
+                      </option>
+                      @for (kind of kinds; track kind) {
+                        <option [value]="kind">{{ 'delegation.kind.' + kind | translate }}</option>
+                      }
+                    </select>
+                    <button type="button" class="kind-cancel" (click)="cancelPendingPick()">
+                      {{ 'guest_manager.action.cancel' | translate }}
+                    </button>
+                  </div>
+                }
+
+                @if (delegationSaveBlocked()) {
+                  <p class="field-error" role="alert">
+                    {{ 'delegation.field.kindRequiredHint' | translate: { name: pendingPickName() } }}
+                  </p>
+                }
+                @if (delegationSaveError()) {
+                  <p class="field-error" role="alert">{{ 'delegation.field.saveError' | translate }}</p>
+                }
+              }
+            </section>
           </form>
         </div>
 

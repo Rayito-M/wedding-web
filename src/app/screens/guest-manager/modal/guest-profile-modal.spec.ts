@@ -1,7 +1,7 @@
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { EntityServices, provideEntityData, withEffects } from '@ngrx/data';
 import { provideEffects } from '@ngrx/effects';
 import { provideStore } from '@ngrx/store';
@@ -9,8 +9,10 @@ import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 
 import {
   EntityNamesEnum,
+  GuestDto,
   UpdateUserProfileDto,
   UserProfileDto,
+  WeddingGuestsService,
   WeddingUserProfileService,
   entityConfig,
   provideEntityDataServices,
@@ -26,6 +28,20 @@ function guest(overrides: Partial<UserProfileDto> = {}): UserProfileDto {
     preferredLang: UserProfileDto.PreferredLangEnum.EN,
     role: UserProfileDto.RoleEnum.GUEST,
     guestInfo: { relation: { side: 'bride', kind: 'family', link: 'sister' } },
+    ...overrides,
+  };
+}
+
+function guestDoc(overrides: Partial<GuestDto> = {}): GuestDto {
+  return {
+    id: 'guest-1',
+    version: 1,
+    firstName: 'Laura',
+    lastName: 'Mendoza',
+    phoneNumber: '+34600000001',
+    role: 'guest',
+    preferredLang: GuestDto.PreferredLangEnum.EN,
+    relation: { side: 'bride', kind: 'family', link: 'sister' },
     ...overrides,
   };
 }
@@ -310,5 +326,300 @@ describe('GuestProfileModal — open into edit mode (T308)', () => {
     expect(selectedSeg(0)).toBe('relation.side.groom');
     expect(selectedSeg(1)).toBe('relation.kind.friends');
     expect(linkInput()?.value).toBe('college');
+  });
+});
+
+describe('GuestProfileModal — RSVP delegation (hub ADR-0039, T335)', () => {
+  let fixture: ComponentFixture<GuestProfileModal>;
+  let getSpy: ReturnType<typeof vi.fn>;
+  let updateGuestSpy: ReturnType<typeof vi.fn>;
+
+  async function setUp(
+    doc: GuestDto,
+    profiles: UserProfileDto[],
+    options: { getGuest?: () => Observable<GuestDto>; updateGuest?: ReturnType<typeof vi.fn> } = {},
+  ): Promise<void> {
+    getSpy = vi.fn(options.getGuest ?? (() => of(doc)));
+    updateGuestSpy =
+      options.updateGuest ??
+      vi.fn((params: { updateGuestDto: { delegateTo?: unknown } }) =>
+        of({ ...doc, delegateTo: params.updateGuestDto.delegateTo, version: doc.version + 1 } as GuestDto),
+      );
+
+    await TestBed.configureTestingModule({
+      imports: [GuestProfileModal],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTranslateService({ lang: 'en', fallbackLang: 'en' }),
+        provideStore(),
+        provideEffects(),
+        provideEntityData(entityConfig, withEffects()),
+        provideEntityDataServices(),
+        {
+          provide: WeddingUserProfileService,
+          useValue: {
+            profileControllerUpdateProfileByIdV1: vi.fn((params: { updateUserProfileDto: unknown }) =>
+              of({ ...profiles[0], ...(params.updateUserProfileDto as object) } as UserProfileDto),
+            ),
+          },
+        },
+        {
+          provide: WeddingGuestsService,
+          useValue: {
+            guestsControllerGetV1: getSpy,
+            guestsControllerUpdateV1: updateGuestSpy,
+          },
+        },
+      ],
+    }).compileComponents();
+
+    TestBed.inject(TranslateService).setTranslation(
+      'en',
+      {
+        delegation: {
+          kind: { father: 'Father', mother: 'Mother', brother: 'Brother', sister: 'Sister' },
+          field: {
+            kindRequiredHint: 'Choose what {{name}} is to this guest before saving.',
+            kindPrompt: 'What is {{name}} to this guest?',
+          },
+        },
+      },
+      true,
+    );
+
+    const profileCollection = TestBed.inject(EntityServices).getEntityCollectionService<UserProfileDto>(
+      EntityNamesEnum.USER_PROFILE,
+    );
+    for (const p of profiles) profileCollection.addOneToCache(p);
+
+    fixture = TestBed.createComponent(GuestProfileModal);
+    fixture.componentInstance.open(doc.id);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  function startEdit(): void {
+    const editBtn = Array.from(
+      fixture.nativeElement.querySelectorAll('.actions-row button[app-btn]') as NodeListOf<HTMLButtonElement>,
+    )[0];
+    editBtn.click();
+    fixture.detectChanges();
+  }
+
+  function saveProfile(): void {
+    const saveBtn = fixture.nativeElement.querySelectorAll(
+      'button[app-btn][modal-actions]',
+    )[1] as HTMLButtonElement;
+    saveBtn.click();
+    fixture.detectChanges();
+  }
+
+  function searchInput(): HTMLInputElement {
+    return fixture.nativeElement.querySelector('.delegation-search') as HTMLInputElement;
+  }
+
+  function typeSearch(query: string): void {
+    const input = searchInput();
+    input.value = query;
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  }
+
+  function candidateButtons(): HTMLButtonElement[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('.candidate')) as HTMLButtonElement[];
+  }
+
+  function kindSelect(): HTMLSelectElement | null {
+    return fixture.nativeElement.querySelector('.kind-picker select');
+  }
+
+  function chooseKind(kind: string): void {
+    const select = kindSelect()!;
+    select.value = kind;
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  }
+
+  it('view mode renders name + kind, subject-side, for every stored delegate', async () => {
+    await setUp(
+      guestDoc({ delegateTo: [{ id: 'delegate-1', kind: 'sister' }] }),
+      [guest({ id: 'guest-1' }), guest({ id: 'delegate-1', firstName: 'Ana', lastName: 'Ruiz' })],
+    );
+
+    const chip = fixture.nativeElement.querySelector('.info-item.span-2 .delegate-chip') as HTMLElement;
+    expect(chip.textContent).toContain('Ana Ruiz · Sister');
+    // Read-only: no picker, no remove control outside edit mode.
+    expect(fixture.nativeElement.querySelector('.delegation-search')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.info-item.span-2 .chip-remove')).toBeNull();
+  });
+
+  it('view mode shows "—" when nobody answers for this guest', async () => {
+    await setUp(guestDoc(), [guest({ id: 'guest-1' })]);
+
+    const cell = fixture.nativeElement.querySelector('.info-item.span-2 .chip-empty') as HTMLElement;
+    expect(cell.textContent?.trim()).toBe('—');
+  });
+
+  it('search excludes self and already-picked, caps at 8, and picking a name opens the kind step', async () => {
+    const candidates = Array.from({ length: 10 }, (_, i) =>
+      guest({ id: `cand-${i}`, firstName: 'Ana', lastName: `Ruiz${i}` }),
+    );
+    await setUp(guestDoc(), [guest({ id: 'guest-1', firstName: 'Ana', lastName: 'Self' }), ...candidates]);
+    startEdit();
+
+    typeSearch('ana');
+
+    // Self is never offered, and the list caps at 8 (T335 acceptance).
+    expect(candidateButtons().length).toBe(8);
+    expect(kindSelect()).toBeNull();
+
+    candidateButtons()[0].click();
+    fixture.detectChanges();
+
+    expect(kindSelect()).not.toBeNull();
+    // Picking a name alone never adds a chip — the kind step is mandatory.
+    expect(fixture.nativeElement.querySelectorAll('.delegate-chip').length).toBe(0);
+  });
+
+  it('"No matching guests." shows for a query with no candidates', async () => {
+    await setUp(guestDoc(), [guest({ id: 'guest-1' })]);
+    startEdit();
+
+    typeSearch('nobody-like-this');
+
+    expect(fixture.nativeElement.querySelector('.candidate-empty')).not.toBeNull();
+  });
+
+  it('the required-kind gate: Save is blocked with a name picked and no kind chosen', async () => {
+    await setUp(guestDoc(), [
+      guest({ id: 'guest-1' }),
+      guest({ id: 'delegate-1', firstName: 'Ana', lastName: 'Ruiz' }),
+    ]);
+    startEdit();
+    typeSearch('ana');
+    candidateButtons()[0].click();
+    fixture.detectChanges();
+
+    saveProfile();
+
+    expect(updateGuestSpy).not.toHaveBeenCalled();
+    const hint = fixture.nativeElement.querySelector('.delegation-field .field-error') as HTMLElement;
+    expect(hint.textContent?.trim()).toBe('Choose what Ana Ruiz is to this guest before saving.');
+    // The pending pick is not silently dropped — the kind step is still open.
+    expect(kindSelect()).not.toBeNull();
+  });
+
+  it('choosing a kind adds the chip; Save writes delegateTo through PATCH /v1/guests/:id', async () => {
+    await setUp(guestDoc({ version: 3 }), [
+      guest({ id: 'guest-1' }),
+      guest({ id: 'delegate-1', firstName: 'Ana', lastName: 'Ruiz' }),
+    ]);
+    startEdit();
+    typeSearch('ana');
+    candidateButtons()[0].click();
+    fixture.detectChanges();
+    chooseKind('sister');
+
+    expect(fixture.nativeElement.querySelector('.delegate-chip')?.textContent).toContain('Ana Ruiz · Sister');
+
+    saveProfile();
+
+    expect(updateGuestSpy).toHaveBeenCalledWith({
+      id: 'guest-1',
+      updateGuestDto: {
+        id: 'guest-1',
+        version: 3,
+        delegateTo: [{ id: 'delegate-1', kind: 'sister' }],
+      },
+    });
+  });
+
+  it('removing an existing delegate and saving sends the reduced list', async () => {
+    await setUp(guestDoc({ delegateTo: [{ id: 'delegate-1', kind: 'sister' }] }), [
+      guest({ id: 'guest-1' }),
+      guest({ id: 'delegate-1', firstName: 'Ana', lastName: 'Ruiz' }),
+    ]);
+    startEdit();
+
+    const removeBtn = fixture.nativeElement.querySelector(
+      '.delegation-field .chip-remove',
+    ) as HTMLButtonElement;
+    removeBtn.click();
+    fixture.detectChanges();
+
+    saveProfile();
+
+    expect(updateGuestSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ updateGuestDto: expect.objectContaining({ delegateTo: [] }) }),
+    );
+  });
+
+  it('never writes delegateTo when nothing changed', async () => {
+    await setUp(guestDoc({ delegateTo: [{ id: 'delegate-1', kind: 'sister' }] }), [
+      guest({ id: 'guest-1' }),
+      guest({ id: 'delegate-1', firstName: 'Ana', lastName: 'Ruiz' }),
+    ]);
+    startEdit();
+
+    saveProfile();
+
+    expect(updateGuestSpy).not.toHaveBeenCalled();
+  });
+
+  it('shows a loading state while the guest document is being fetched', async () => {
+    const pending = new Subject<GuestDto>();
+    await setUp(guestDoc(), [guest({ id: 'guest-1' })], { getGuest: () => pending });
+    startEdit();
+
+    expect(fixture.nativeElement.textContent).toContain('delegation.field.loading');
+    expect(fixture.nativeElement.querySelector('.delegation-search')).toBeNull();
+
+    pending.next(guestDoc());
+    pending.complete();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('delegation.field.loading');
+  });
+
+  it('shows an error state with a retry when the fetch fails, and retry re-fetches', async () => {
+    await setUp(guestDoc(), [guest({ id: 'guest-1' })], {
+      getGuest: () => throwError(() => new HttpErrorResponse({ status: 500 })),
+    });
+    startEdit();
+
+    expect(fixture.nativeElement.textContent).toContain('delegation.field.error');
+
+    getSpy.mockImplementation(() => of(guestDoc()));
+    const retryBtn = fixture.nativeElement.querySelector('.delegation-retry') as HTMLButtonElement;
+    retryBtn.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(getSpy).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.textContent).not.toContain('delegation.field.error');
+  });
+
+  it('a 409 on the delegation write re-fetches the guest and discards the draft, staying in edit mode', async () => {
+    const conflict = new HttpErrorResponse({ status: 409 });
+    await setUp(guestDoc({ version: 1 }), [
+      guest({ id: 'guest-1' }),
+      guest({ id: 'delegate-1', firstName: 'Ana', lastName: 'Ruiz' }),
+    ]);
+    updateGuestSpy.mockImplementation(() => throwError(() => conflict));
+    startEdit();
+    typeSearch('ana');
+    candidateButtons()[0].click();
+    fixture.detectChanges();
+    chooseKind('sister');
+
+    saveProfile();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Re-read, not a blind retry (mirrors `milestones.ts`'s 409 handling).
+    expect(getSpy).toHaveBeenCalledTimes(2);
+    // Still in edit mode — the couple can redo the grant against the fresh copy.
+    expect(fixture.nativeElement.querySelector('.delegation-field')).not.toBeNull();
   });
 });

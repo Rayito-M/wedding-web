@@ -1,0 +1,55 @@
+<div class="head">
+  <div class="eyebrow">{{ 'rsvp.header' | translate }}</div>
+  <h2>{{ 'rsvp.hub.title' | translate }}</h2>
+  <p class="sub">
+    {{
+      'rsvp.hub.outstanding'
+        | pluralTranslate: outstandingCount()
+        | translate: { count: outstandingCount() }
+    }}
+  </p>
+</div>
+
+<div class="section-label">{{ 'rsvp.hub.own.title' | translate }}</div>
+<button type="button" class="card mine" (click)="onOpen('me')">
+  <span class="card-head">
+    <span class="state" [class]="stateClass(myReply())">
+      {{ stateKey(myReply()) | translate }}
+    </span>
+    <span class="title">{{ 'rsvp.hub.ownCardTitle' | translate }}</span>
+    @if (myReply(); as mine) {
+      @if (!isPending(mine)) {
+        <span class="meta">
+          {{ 'rsvp.hub.seats' | pluralTranslate: seatCount(mine) | translate: { count: seatCount(mine) } }}
+        </span>
+      }
+    }
+  </span>
+  <span class="chevron" aria-hidden="true">›</span>
+</button>
+
+@if (delegateCards().length > 0) {
+  <div class="section-label">{{ 'rsvp.hub.delegatesTitle' | translate }}</div>
+  <div class="card-list">
+    @for (card of delegateCards(); track card.key) {
+      <button type="button" class="card" (click)="onOpen(card.key)">
+        <span class="card-head">
+          <span class="state" [class]="stateClass(card.rsvp)">
+            {{ stateKey(card.rsvp) | translate }}
+          </span>
+          <span class="title">{{ card.title }}</span>
+          @if (!isPending(card.rsvp)) {
+            <span class="meta">
+              {{
+                'rsvp.hub.seats'
+                  | pluralTranslate: seatCount(card.rsvp)
+                  | translate: { count: seatCount(card.rsvp) }
+              }}
+            </span>
+          }
+        </span>
+        <span class="chevron" aria-hidden="true">›</span>
+      </button>
+    }
+  </div>
+}

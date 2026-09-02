@@ -1,0 +1,41 @@
+@use '../../../styles/tokens' as t;
+
+// Outline chip (DS `DelegationField.jsx`'s delegate chip: accent border +
+// accent text, no fill) — a new visual, not a re-declaration of the
+// existing uppercase-badge `app-pill`/`app-status-pill` (grepped first: no
+// shared "outline name chip" exists yet — flagged for a DS consolidation
+// task alongside `.select-native`'s own flag, not fixed here).
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-2;
+}
+
+.delegate-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: 6px 12px;
+  border: 1px solid var(--brand-accent);
+  border-radius: var(--radius-pill);
+  color: var(--brand-accent);
+  font-size: t.$text-caption;
+  line-height: 1.2;
+}
+
+.chip-remove {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: t.$text-body;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+
+.chip-empty {
+  margin: 0;
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+}

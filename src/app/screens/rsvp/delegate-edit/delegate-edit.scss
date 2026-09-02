@@ -1,0 +1,111 @@
+@use '../../../../styles/tokens' as t;
+@use '../../../../styles/primitives';
+
+// Host chrome only — same shape as `screens/rsvp-edit/rsvp-edit.scss` (page
+// header, save footer, desktop card wrapper), copied rather than shared:
+// Angular component styles are scoped, and this is a distinct host element
+// from `app-rsvp-edit`'s (see this component's own class doc for why it
+// isn't reused directly). The editable body belongs to `app-rsvp-editor`.
+
+:host {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+  // See `rsvp-edit.scss`'s identical rule for the full rationale — this
+  // host fills `app-rsvp`'s available height the same way.
+  height: calc(100% + 20px);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px t.$space-6;
+}
+
+// The hub's own re-entry point — always rendered (this component only ever
+// mounts when the guest holds at least one delegation, so there is always a
+// hub to go back to).
+.back-link {
+  @extend %back-link;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.head-text {
+  min-width: 0;
+}
+
+.eyebrow {
+  @extend %eyebrow;
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-family: t.$font-serif;
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.05;
+  margin: 0 0 8px;
+}
+
+.sub {
+  @extend %sub;
+}
+
+.check {
+  flex-shrink: 0;
+  color: var(--brand-accent);
+  font-size: 20px;
+  line-height: 1;
+
+  &.declined {
+    color: var(--text-muted);
+  }
+}
+
+app-rsvp-editor {
+  display: block;
+  margin-top: 22px;
+}
+
+footer {
+  flex: 0 0 auto;
+  padding: 12px t.$space-6 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.status {
+  flex: 1;
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+}
+
+@media (min-width: 900px) {
+  :host {
+    max-width: 560px;
+    margin: 26px auto 24px;
+    height: auto;
+    max-height: calc(100% - 50px);
+    background: var(--surface-card);
+    border: 1px solid var(--border-hairline);
+    border-radius: t.$radius-card;
+  }
+
+  .content {
+    padding: 26px 30px 24px;
+  }
+
+  footer {
+    padding: 14px 30px 22px;
+  }
+}

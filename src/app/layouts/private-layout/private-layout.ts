@@ -15,15 +15,18 @@ import { EntityCollectionService, EntityServices } from '@ngrx/data';
 import { filter, map } from 'rxjs';
 
 import {
+  AppJwtClaimsDto,
   EntityNamesEnum,
   LoginService,
   ProfileModalService,
   RouteChromeData,
   ToastCenterService,
   UserProfileDto,
+  WeddingUserProfileService,
 } from '@app/core';
 
 import { DecorMotorcycleRider } from '../../shared/decor/motorcycle-rider/motorcycle-rider';
+import { DelegateChip } from '../../shared/delegate-chips/delegate-chips';
 import { ProfileModal } from '../../shared/profile-modal/profile-modal';
 import { ScreenHeader } from '../../shared/screen-header/screen-header';
 import { TabBar } from '../../shared/tab-bar/tab-bar';
@@ -75,6 +78,23 @@ type RouteChrome = Partial<RouteChromeData>;
  * session, so a `constructor()` `effect()` fetches it (`getByKey()`) the
  * first time `ProfileModalService.targetUserId()` points at an id not
  * already present in the cache.
+ *
+ * **Also resolves the delegate-chip names (hub ADR-0039 §6, T336).**
+ * `UserProfileDto.delegateTo` now carries `{id, kind}` pairs only; this
+ * layout maps each id to a display name — from `profiles()` when already
+ * cached, otherwise via a second `constructor()` `effect()` doing a targeted
+ * `POST /v1/profile` lookup — and hands `app-profile-modal` the fully
+ * resolved `delegateChips()`, the same "host resolves it, modal only
+ * renders it" split `profile`/`save` already use. `showsDelegation()` —
+ * `isOwnProfile() && isGuest()` — is the single gate for that list and for
+ * the modal's `[canHaveDelegates]`, so the chips and the section framing
+ * them can never disagree. Two independent reasons, neither of which is
+ * "the array happens to be non-empty": the API populates `delegateTo` on
+ * *every* profile a couple viewer reads, not only their own, so the field's
+ * mere presence is never read as permission to render it (CLAUDE.md hard
+ * rule 16's `lastSeen` reasoning); and delegation is a guest-only relation
+ * (ADR-0039 §1 omits `delegateTo` from the bride/groom/provider documents),
+ * so the couple must not see even its empty state.
  */
 @Component({
   selector: 'app-private-layout',
@@ -117,6 +137,91 @@ export class PrivateLayout {
     return targetId ? this.profiles().find((p) => p.id === targetId) : undefined;
   });
 
+  /**
+   * `true` exactly when this modal shows the signed-in guest's own account —
+   * the one explicit signal `app-profile-modal`'s `[isOwnProfile]` input and
+   * the delegation-chip gate below both key on. **Never** gate on whether
+   * `resolvedProfile()?.delegateTo` happens to be present: the API populates
+   * that field on *every* profile a couple viewer reads, not only their own
+   * (hub ADR-0039, T336's own instruction — the same `lastSeen` reasoning as
+   * CLAUDE.md hard rule 16, applied to a second field). Single source of
+   * truth for both the template's `[isOwnProfile]` binding and `delegateChips`
+   * below, so the two can never disagree about which profile this is.
+   */
+  protected readonly isOwnProfile = computed(() => !this.profileModal.targetUserId());
+
+  /**
+   * `true` exactly when the signed-in user is a guest — read from the JWT's
+   * `role` claim (ADR-0013) through `LoginService`, deliberately **not**
+   * from `resolvedProfile()?.role`: the profile document is the thing being
+   * gated, and its `role` field is on its way off the user schemas, so a
+   * permission gate must not key on it.
+   *
+   * Delegation is a guest-only relation: hub ADR-0039 §1 keeps `delegateTo`
+   * off `BrideDocumentSchema`, `GroomDocumentSchema` and
+   * `ProviderDocumentSchema` — "the couple and providers cannot *have*
+   * delegates". A couple member opening their own profile must therefore see
+   * no delegation surface at all, not even the "Nobody answers for you"
+   * empty state, which would describe an arrangement they can never have.
+   */
+  protected readonly isGuest = computed(
+    () => this.login.role() === AppJwtClaimsDto.RoleEnum.GUEST,
+  );
+
+  /** The one gate for the whole "who answers your RSVP" surface: the
+   *  signed-in user's own profile (`isOwnProfile`), and only when that user
+   *  is a guest (`isGuest`). Drives both the resolution below and the
+   *  modal's `[canHaveDelegates]` input. */
+  protected readonly showsDelegation = computed(() => this.isOwnProfile() && this.isGuest());
+
+  /**
+   * Delegate ids on the own guest profile (hub ADR-0039 §6, T336) whose name isn't
+   * in `profiles()` (the shared, already-loaded collection) yet — a guest's
+   * own session rarely has anyone but themself and a linked partner cached,
+   * so this is the common case, not an edge case. The effect below resolves
+   * them through the targeted `POST /v1/profile` lookup rather than bulk-
+   * loading the whole collection just to read a few names.
+   */
+  private readonly missingDelegateIds = computed<string[]>(() => {
+    if (!this.showsDelegation()) return [];
+    const entries = this.resolvedProfile()?.delegateTo ?? [];
+    if (entries.length === 0) return [];
+    const known = new Set(this.profiles().map((p) => p.id));
+    const fetched = this.fetchedDelegateNames();
+    return entries.map((d) => d.id).filter((id) => !known.has(id) && !fetched.has(id));
+  });
+
+  /**
+   * The targeted fallback's results — `null` for an id the API confirmed it
+   * cannot resolve (never re-fetched again, so a stale/deleted delegate id
+   * doesn't retry forever), a display name otherwise. Deliberately not
+   * merged into `userProfileCollection`: these are one-off reads for a chip
+   * label, not profiles this session otherwise cares about.
+   */
+  private readonly fetchedDelegateNames = signal<Map<string, string | null>>(new Map());
+
+  private readonly userProfileApi = inject(WeddingUserProfileService);
+
+  /** `<app-profile-modal>`'s `[delegateChips]` (T336) — resolved here, never
+   *  inside the modal itself (its own class doc: no `HttpClient`, no
+   *  `EntityCollectionService`). An id neither `profiles()` nor the fallback
+   *  fetch could resolve degrades to `name: ''`; `app-delegate-chips` itself
+   *  renders that as the kind alone, never a blank chip. */
+  protected readonly delegateChips = computed<DelegateChip[]>(() => {
+    if (!this.showsDelegation()) return [];
+    const entries = this.resolvedProfile()?.delegateTo ?? [];
+    if (entries.length === 0) return [];
+    const byId = new Map(this.profiles().map((p) => [p.id, p]));
+    const fetched = this.fetchedDelegateNames();
+    return entries.map((entry) => {
+      const known = byId.get(entry.id);
+      const name = known
+        ? `${known.firstName} ${known.lastName}`.trim()
+        : (fetched.get(entry.id) ?? '');
+      return { id: entry.id, kind: entry.kind, name };
+    });
+  });
+
   protected readonly savingProfile = signal(false);
   protected readonly profileSaveError = signal(false);
 
@@ -155,6 +260,46 @@ export class PrivateLayout {
       if (targetId && !this.profiles().some((p) => p.id === targetId)) {
         this.userProfileCollection.getByKey(targetId);
       }
+    });
+
+    // The delegate-chip name resolution (T336) — a targeted read, not a
+    // collection load: only fires for the ids `delegateChips()` cannot
+    // already resolve out of `profiles()`, and never for a linked partner's
+    // profile nor for a couple viewer (`missingDelegateIds` is structurally
+    // empty whenever `showsDelegation()` is false).
+    effect(() => {
+      const ids = this.missingDelegateIds();
+      if (ids.length === 0) return;
+      this.userProfileApi.profileControllerGetListV1({ getProfilesListDto: { ids } }).subscribe({
+        next: (response) => {
+          this.fetchedDelegateNames.update((current) => {
+            const next = new Map(current);
+            for (const item of response.items) {
+              next.set(item.id, `${item.firstName} ${item.lastName}`.trim());
+            }
+            // Anything the batch endpoint didn't return (`notFoundIds`, or
+            // simply absent) is marked resolved-to-nothing so this effect
+            // never re-requests it — `delegateChips()` degrades that id to
+            // the kind alone, permanently, not just until the next retry.
+            for (const id of ids) {
+              if (!next.has(id)) next.set(id, null);
+            }
+            return next;
+          });
+        },
+        // Best-effort (T336): a failed lookup still marks these ids
+        // resolved-to-nothing (same as an id the batch endpoint couldn't
+        // find), so a transient network error degrades those chips to the
+        // kind alone once rather than retrying this fetch on every signal
+        // recomputation. Never blocks or errors the profile modal itself.
+        error: () => {
+          this.fetchedDelegateNames.update((current) => {
+            const next = new Map(current);
+            for (const id of ids) if (!next.has(id)) next.set(id, null);
+            return next;
+          });
+        },
+      });
     });
   }
 

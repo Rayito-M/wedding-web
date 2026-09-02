@@ -43,6 +43,12 @@
   padding: 20px t.$space-6;
 }
 
+// Only rendered when `app-rsvp` mounts this screen from inside the delegate
+// hub (`showBack`) — see the primitive's own comment.
+.back-link {
+  @extend %back-link;
+}
+
 .head {
   display: flex;
   align-items: flex-start;

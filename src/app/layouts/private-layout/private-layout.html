@@ -28,7 +28,9 @@
   <app-profile-modal
     [open]="profileModal.isOpen()"
     [profile]="resolvedProfile() ?? null"
-    [isOwnProfile]="!profileModal.targetUserId()"
+    [isOwnProfile]="isOwnProfile()"
+    [delegateChips]="delegateChips()"
+    [canHaveDelegates]="isGuest()"
     [saving]="savingProfile()"
     [saveError]="profileSaveError()"
     (save)="onProfileSave($event)"

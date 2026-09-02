@@ -109,6 +109,13 @@ describe('ProfileModal', () => {
             error: "Couldn't save. Try again.",
           },
         },
+        delegation: {
+          kind: { father: 'Father', mother: 'Mother', brother: 'Brother', sister: 'Sister' },
+          field: {
+            title: 'RSVP delegation',
+            emptyGuest: 'Nobody answers for you — only you can reply.',
+          },
+        },
       },
       true,
     );
@@ -279,5 +286,62 @@ describe('ProfileModal', () => {
   it('T316: titles the fixed header with the partner copy when isOwnProfile is bound false', async () => {
     await create({ isOwnProfile: false });
     expect(query('.modal-title')?.textContent?.trim()).toBe("Partner's profile");
+  });
+
+  describe('"who answers your RSVP" (hub ADR-0039 §6, T336)', () => {
+    const chips = [
+      { id: 'g1', name: 'Laura Mendoza', kind: 'sister' as const },
+      { id: 'g2', name: 'Pablo Mendoza', kind: 'brother' as const },
+    ];
+
+    it('renders the resolved chips, subject-side name + kind, for the own profile', async () => {
+      await create({ delegateChips: chips });
+
+      const rendered = Array.from(fixture.nativeElement.querySelectorAll('.delegate-chip')).map(
+        (el) => (el as HTMLElement).textContent?.trim(),
+      );
+      expect(rendered).toEqual(['Laura Mendoza · Sister', 'Pablo Mendoza · Brother']);
+    });
+
+    it('renders nothing at all — not even the empty state — for a linked partner\'s profile', async () => {
+      await create({ isOwnProfile: false, delegateChips: chips });
+
+      expect(query('.delegation')).toBeNull();
+      expect(query('.delegate-chip')).toBeNull();
+      expect(query('.chip-empty')).toBeNull();
+    });
+
+    it('renders nothing at all for a couple member\'s own profile — they cannot have delegates (ADR-0039 §1)', async () => {
+      await create({ canHaveDelegates: false, delegateChips: [] });
+
+      expect(query('.delegation')).toBeNull();
+      expect(query('.chip-empty')).toBeNull();
+    });
+
+    it('shows the empty state when the guest has no delegates', async () => {
+      await create({ delegateChips: [] });
+
+      expect(query('.chip-empty')?.textContent?.trim()).toBe(
+        'Nobody answers for you — only you can reply.',
+      );
+    });
+
+    it('stays read-only in edit mode too — no remove control, ever (hard rule 18(a))', async () => {
+      await create({ delegateChips: chips });
+
+      findButton('Edit profile')!.click();
+      await fixture.whenStable();
+
+      expect(query('.delegate-chip')).not.toBeNull();
+      expect(query('.chip-remove')).toBeNull();
+    });
+
+    it('never ships the DS\'s guest-side grant copy ("The couple can also set this up on your behalf")', async () => {
+      await create({ delegateChips: chips });
+      findButton('Edit profile')!.click();
+      await fixture.whenStable();
+
+      expect(fixture.nativeElement.textContent).not.toContain('also set this up on your behalf');
+    });
   });
 });

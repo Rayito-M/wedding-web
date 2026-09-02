@@ -51,6 +51,12 @@
     letter-spacing: 0.14em;
     text-transform: uppercase;
   }
+
+  // "RSVP answered by" (T335) can hold several chips — let it use the full
+  // grid row instead of fighting Table/Last seen for a half column.
+  &.span-2 {
+    grid-column: 1 / -1;
+  }
 }
 
 .value {
@@ -180,4 +186,127 @@
   @media (max-width: 640px) {
     flex-direction: column-reverse;
   }
+}
+
+// ── RSVP delegation (hub ADR-0039 §8/§12, T335) ────────────────────────────
+// The couple's grant control, inside the edit form. One responsive markup
+// for desktop and mobile alike — this whole overlay is the shared, already
+// responsive `app-modal`, so there is no separate mobile template to build
+// (ADR-0039 §12's "half a grant surface is worse than none" is satisfied by
+// construction, not by a second layout).
+
+.delegation-field {
+  margin-top: t.$space-5;
+  padding-top: t.$space-4;
+  border-top: 1px solid var(--border-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+}
+
+.delegation-status {
+  margin: 0;
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+}
+
+.delegation-retry {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin-left: t.$space-2;
+  color: var(--brand-accent);
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+// Search-and-pick candidate list (DS `DelegationField.jsx`), same visual as
+// `guest-create-modal.scss`'s partner picker — components are style-scoped
+// in this repo, so each caller keeps its own copy rather than reaching into
+// a sibling modal's `.scss` (same accepted duplication as `.select-native`,
+// flagged there, not fixed here).
+.candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  max-height: 156px;
+  overflow-y: auto;
+}
+
+.candidate {
+  display: flex;
+  align-items: center;
+  padding: t.$space-2 t.$space-3;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-input);
+  background: var(--surface-page);
+  color: var(--text-body-color);
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--brand-accent);
+  }
+}
+
+.candidate-name {
+  font-size: t.$text-body;
+}
+
+.candidate-empty {
+  margin: 0;
+  padding: t.$space-1 2px;
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+}
+
+.kind-picker {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-2;
+  padding: t.$space-3;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-page);
+}
+
+.kind-cancel {
+  align-self: flex-start;
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--text-muted);
+  font-size: t.$text-micro;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+// Hand-built native select — no Select component exists in the design
+// system yet; same treatment (and the same "no shared home yet" flag) as
+// `relation-fields.scss`'s own `.select-native`.
+.select-native {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-input);
+  font-family: var(--font-sans);
+  font-size: var(--text-body-lg);
+  color: var(--text-body-color);
+  appearance: none;
+  cursor: pointer;
+}
+
+.field-error {
+  margin: 0;
+  font-size: t.$text-caption;
+  color: var(--text-muted);
 }

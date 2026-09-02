@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { UserListResponseDtoItemsInnerDelegateToInner } from './user-list-response-dto-items-inner-delegate-to-inner';
 
 
 export interface CreateUserDto { 
@@ -19,7 +20,7 @@ export interface CreateUserDto {
     phoneNumber: string;
     role: CreateUserDto.RoleEnum;
     preferredLang: CreateUserDto.PreferredLangEnum;
-    delegateTo?: Array<string>;
+    delegateTo?: Array<UserListResponseDtoItemsInnerDelegateToInner>;
 }
 export namespace CreateUserDto {
     export const RoleEnum = {

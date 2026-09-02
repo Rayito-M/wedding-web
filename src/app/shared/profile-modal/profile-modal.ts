@@ -19,6 +19,7 @@ import {
 } from '@app/core';
 import { Avatar } from '@app/shared/avatar/avatar';
 import { Btn } from '@app/shared/button/button';
+import { DelegateChip, DelegateChips } from '@app/shared/delegate-chips/delegate-chips';
 import { Modal } from '@app/shared/modal/modal';
 import { Pill } from '@app/shared/pill/pill';
 import { ProfileFields, ProfileFieldsValue } from '@app/shared/profile-fields/profile-fields';
@@ -73,11 +74,32 @@ import { ProfileFields, ProfileFieldsValue } from '@app/shared/profile-fields/pr
  * side effect of this dedup). The identity block above the field list
  * (avatar/name/nickname/role/relation pills) is not part of `ProfileFields`
  * in the DS either, so it stays hand-rolled here.
+ *
+ * **"Who answers your RSVP" (hub ADR-0039 §6, T336):** `<app-delegate-chips>`
+ * over the host-resolved `delegateChips()`, **read-only in every mode,
+ * including edit** — the guest-side grant picker `ProfileModal.jsx` draws
+ * here, and its "The couple can also set this up on your behalf" line, are
+ * both cut (hard rule 18(a)); the only editable surface for a delegation is
+ * the couple's guest profile editor. Rendered only while `isOwnProfile()`
+ * **and** `canHaveDelegates()` are true — never for a linked partner's
+ * profile, never for a couple member's own (ADR-0039 §1: only guests can
+ * have delegates). Both gates are explicit inputs, never "whether
+ * `delegateChips()` happens to be non-empty".
  */
 @Component({
   selector: 'app-profile-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Modal, Btn, Avatar, Pill, ProfileFields, RouterLink, TranslatePipe, RelationLinkPipe],
+  imports: [
+    Modal,
+    Btn,
+    Avatar,
+    Pill,
+    ProfileFields,
+    DelegateChips,
+    RouterLink,
+    TranslatePipe,
+    RelationLinkPipe,
+  ],
   templateUrl: './profile-modal.html',
   styleUrl: './profile-modal.scss',
   host: {
@@ -94,6 +116,30 @@ export class ProfileModal {
    *  `false` (T317) means it shows a linked partner's profile instead,
    *  which `resolvedTitle` below must not label as "My profile". */
   readonly isOwnProfile = input(true);
+  /**
+   * Resolved chips for "who answers your RSVP for you" (hub ADR-0039 §6,
+   * T336) — the host (`private-layout.ts`) resolves names and hands them
+   * over fully formed, the same "host resolves it, this component only
+   * renders it" split `profile` itself already uses (this component has no
+   * `HttpClient`/`EntityCollectionService`, see the class doc). **Read-only
+   * in every mode, including edit** — hard rule 18(a): the guest-side grant
+   * picker the DS draws here is cut, there is no remove control, no search,
+   * ever, on this call site. Rendered only while `isOwnProfile()` is true
+   * (never for a linked partner's profile) — gated by the host on that same
+   * explicit signal, not on whether this array happens to be non-empty.
+   */
+  readonly delegateChips = input<DelegateChip[]>([]);
+  /**
+   * Whether the profile on show is one that can have delegates at all —
+   * `false` for the couple and for providers, whose documents omit
+   * `delegateTo` entirely (hub ADR-0039 §1: "the couple and providers cannot
+   * *have* delegates"). Gates the whole "who answers your RSVP" section, so
+   * a couple member opening their own profile sees no delegation surface —
+   * not even the "Nobody answers for you" empty state, which would describe
+   * an arrangement they can never have. Defaults to `true`: the guest case
+   * is the common one and every existing call site is a guest's.
+   */
+  readonly canHaveDelegates = input(true);
   /** True while the host's `save`-triggered update is in flight. */
   readonly saving = input(false);
   /** True if the host's last update attempt failed. The host resets this to
@@ -139,6 +185,15 @@ export class ProfileModal {
   protected readonly contactHint = computed(() => {
     this.lang();
     return this.translateService.instant('profileModal.contactHint');
+  });
+
+  /** Pre-translated, forwarded to `app-delegate-chips`' `emptyText` input
+   *  (T336) — "Nobody answers for you — only you can reply.", the guest's
+   *  own second-person voice, distinct from `guest_manager.profile
+   *  .delegatedTo`'s couple-facing copy for the same empty case. */
+  protected readonly delegationEmptyText = computed(() => {
+    this.lang();
+    return this.translateService.instant('delegation.field.emptyGuest');
   });
 
   protected readonly editing = signal(false);

@@ -202,6 +202,27 @@ export function withPersonOptions(
   return draft;
 }
 
+/**
+ * The party label a delegate's RSVP hub card shows (hub ADR-0039 §7, T337):
+ * derived from the RSVP's own `adults`, **never** from a relation to the
+ * couple — this is what still names two people when a linked couple shares
+ * one RSVP ("Ramón & Pilar Mendoza"), not a plural delegation. Takes either
+ * `RsvpDto` or `RsvpListResponseDtoItemsInner`: both expose the identical
+ * `adults` shape (`RsvpListResponseDtoItemsInnerAdults` is built from the
+ * same `RsvpDtoAdultsPartner1`/`RsvpDtoAdultsPartner2` the plain `RsvpDto`
+ * uses), so one function serves both the hub's own-reply card and its
+ * per-delegation cards.
+ */
+export function partyLabel(rsvp: {
+  adults: { partner1: { firstName: string; lastName: string }; partner2?: { firstName: string; lastName: string } };
+}): string {
+  const p1 = `${rsvp.adults.partner1.firstName} ${rsvp.adults.partner1.lastName}`.trim();
+  const partner2 = rsvp.adults.partner2;
+  if (!partner2) return p1;
+  const p2 = `${partner2.firstName} ${partner2.lastName}`.trim();
+  return p2 ? `${p1} & ${p2}` : p1;
+}
+
 /** Toggle one catalog id inside a list-valued option field. */
 export function toggleOptionId(
   options: RsvpDtoAdultsPartner1Options,

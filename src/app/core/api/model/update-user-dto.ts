@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { UserListResponseDtoItemsInnerDelegateToInner } from './user-list-response-dto-items-inner-delegate-to-inner';
 
 
 export interface UpdateUserDto { 
@@ -18,7 +19,7 @@ export interface UpdateUserDto {
     googleSub?: string;
     appleSub?: string;
     preferredLang?: UpdateUserDto.PreferredLangEnum;
-    delegateTo?: Array<string>;
+    delegateTo?: Array<UserListResponseDtoItemsInnerDelegateToInner>;
 }
 export namespace UpdateUserDto {
     export const PreferredLangEnum = {

@@ -41,10 +41,13 @@ import { Toggle } from '@app/shared/toggle/toggle';
 /**
  * Who is filling this editor in. Pure presentation — it indexes the
  * `rsvp.editor.perspective.*` copy namespace and nothing else, so it has no
- * API counterpart (ADR W-0003 §Decision.3). Ships with the two members that
- * have a call site; the DS's `partner`/`delegate` are deliberately absent.
+ * API counterpart (ADR W-0003 §Decision.3). `delegate` (hub ADR-0039, T337)
+ * is third-person copy for a guest acting on another guest's RSVP — headed
+ * "on behalf of", never first-person "your"/"my" (`owner`) and never the
+ * admin "Main guest"/"Participants" framing (`couple`). The DS's `partner`
+ * is still deliberately absent — no call site needs it.
  */
-type Perspective = 'owner' | 'couple';
+type Perspective = 'owner' | 'couple' | 'delegate';
 
 /** Which slot a card occupies — drives the role pill and the field layout. */
 type PersonRole = 'primary' | 'partner' | 'child';
@@ -205,7 +208,18 @@ export class RsvpEditor {
   protected readonly cards = computed<PersonCard[]>(() => {
     const draft = this.draft();
     const perspective = this.perspective();
-    const role1 = draft.partner1.id === this.loggingService.currentUserId() ? 'primary' : 'partner';
+    // Exactly one adult is the party's primary. The signed-in user claims that
+    // slot when they are the *second* adult (T322 — an adult with their own
+    // account answers for themselves); otherwise it falls back to the
+    // positional default, `partner1`. Without that fallback a viewer who is
+    // neither adult — the couple in the guest manager, a delegate on someone
+    // else's reply — matches nobody, and the party renders two "Partner" cards
+    // and no main guest. `partner2.id` is checked for existence first so a
+    // named plus-one (no `id`) can never tie with an anonymous viewer on
+    // `undefined === undefined`.
+    const viewerIsPartner2 =
+      draft.partner2?.id !== undefined && draft.partner2.id === this.loggingService.currentUserId();
+    const role1 = viewerIsPartner2 ? 'partner' : 'primary';
     const list: PersonCard[] = [
       {
         key: 'partner1',
@@ -224,8 +238,7 @@ export class RsvpEditor {
       },
     ];
     if (draft.partner2) {
-      const role2 =
-        draft.partner2.id === this.loggingService.currentUserId() ? 'primary' : 'partner';
+      const role2 = viewerIsPartner2 ? 'primary' : 'partner';
       list.push({
         key: 'partner2',
         role: role2,

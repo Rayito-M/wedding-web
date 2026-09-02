@@ -7114,7 +7114,7 @@
 - **Refs:** ADR W-0009 §6 and "Why the screen cannot adopt a `limit` yet"; hub ADR-0038
 
 ### T335 — Couple: grant and revoke a delegation, with the required kind (desktop + mobile)
-- **Status:** blocked — waiting on `wedding-api` T238, then `pnpm gen:api`
+- **Status:** done
 - **Owner:** unassigned
 - **Depends on:** `wedding-api` T238 (the `{id, kind}` contract)
 - **Why:** hub ADR-0039. The couple is the **only** author of a delegation, and today no screen in
@@ -7142,9 +7142,11 @@
 - **Refs:** hub ADR-0039 §8, §12; `SPEC.md` J4a; hard rule 18
 
 ### T336 — Guest: read-only "who answers for you" on the profile modal
-- **Status:** blocked — waiting on `wedding-api` T238, then `pnpm gen:api`
+- **Status:** done
 - **Owner:** unassigned
-- **Depends on:** T335 (shares the display half of the control and its i18n keys)
+- **Depends on:** T335 (shares the display half of the control, `src/app/shared/delegate-chips/`,
+  and its i18n keys); `wedding-api`'s extension of `UserProfileSchema`/`UserProfileDto` to carry
+  `delegateTo` — both done
 - **Why:** hub ADR-0039 — the arrangement must never be invisible to the person it is about. Read-only
   in **all** modes, including edit mode: the guest-side picker in `ProfileModal.jsx` is cut.
 - **Acceptance:**
@@ -7159,7 +7161,7 @@
 - **Refs:** hub ADR-0039 §6, §8, §10; `SPEC.md` → Users → Guest
 
 ### T337 — Delegate: the RSVP hub, names only, no relation line
-- **Status:** blocked — waiting on `wedding-api` T238/T239, then `pnpm gen:api`
+- **Status:** done
 - **Owner:** unassigned
 - **Depends on:** `wedding-api` T239 (the mirror read), T336 (shared i18n keys)
 - **Why:** hub ADR-0039 §6. A guest holding at least one delegation gets a hub instead of a bare

@@ -109,6 +109,7 @@ model/update-user-profile-dto.ts
 model/update-wedding-config-dto-agenda.ts
 model/update-wedding-config-dto.ts
 model/user-dto.ts
+model/user-list-response-dto-items-inner-delegate-to-inner.ts
 model/user-list-response-dto-items-inner.ts
 model/user-list-response-dto.ts
 model/user-profile-dto-guest-info.ts

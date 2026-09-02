@@ -97,6 +97,21 @@
   opacity: 0.85;
 }
 
+// ── "Who answers your RSVP" (hub ADR-0039 §6, T336) ──
+.delegation {
+  padding-top: t.$space-4;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.delegation-label {
+  display: block;
+  font-size: t.$text-label;
+  color: var(--text-muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: t.$space-2;
+}
+
 // ── Actions ──
 .actions {
   display: flex;

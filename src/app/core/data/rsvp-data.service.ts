@@ -44,7 +44,7 @@ export class RsvpDataService implements EntityCollectionDataService<RsvpDto> {
   }
 
   getById(id: string): Observable<RsvpDto> {
-    return this.rsvpApi.rsvpControllerGetV1({ id });
+    return this.rsvpApi.rsvpControllerGetV1({ guestId: id });
   }
 
   getWithQuery(): Observable<RsvpDto[]> {
@@ -59,7 +59,7 @@ export class RsvpDataService implements EntityCollectionDataService<RsvpDto> {
    * timestamps, submittedBy) are ignored — the server owns them.
    */
   add(entity: RsvpDto): Observable<RsvpDto> {
-    return this.rsvpApi.rsvpControllerCreateV1({ id: entity.id }).pipe(
+    return this.rsvpApi.rsvpControllerCreateV1({ guestId: entity.id }).pipe(
       switchMap((created) => {
         const updateRsvpDto: UpdateRsvpDto = {
           id: created.id,
@@ -71,7 +71,7 @@ export class RsvpDataService implements EntityCollectionDataService<RsvpDto> {
           },
           children: entity.children,
         };
-        return this.rsvpApi.rsvpControllerUpdateV1({ id: created.id, updateRsvpDto });
+        return this.rsvpApi.rsvpControllerUpdateV1({ guestId: created.id, updateRsvpDto });
       }),
     );
   }
@@ -90,7 +90,7 @@ export class RsvpDataService implements EntityCollectionDataService<RsvpDto> {
       adults: update.changes.adults,
       children: update.changes.children,
     };
-    return this.rsvpApi.rsvpControllerUpdateV1({ id: update.id, updateRsvpDto });
+    return this.rsvpApi.rsvpControllerUpdateV1({ guestId: update.id, updateRsvpDto });
   }
 
   upsert(): Observable<RsvpDto> {

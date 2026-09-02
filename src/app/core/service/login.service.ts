@@ -95,7 +95,7 @@ export class LoginService {
     const claims = this.currentUserClaims();
     if (claims?.sub && claims.role === AppJwtClaimsDto.RoleEnum.GUEST) {
       try {
-        const rsvp = await firstValueFrom(this.rsvpApi.rsvpControllerGetV1({ id: claims.sub }));
+        const rsvp = await firstValueFrom(this.rsvpApi.rsvpControllerGetV1({ guestId: claims.sub }));
         if (!rsvp || rsvp.status === RsvpDto.StatusEnum.PENDING) {
           return '/rsvp';
         }

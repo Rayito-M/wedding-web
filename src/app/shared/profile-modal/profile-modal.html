@@ -64,6 +64,20 @@
           <a class="link" routerLink="/people">{{ 'nav.people' | translate }}</a
           >{{ 'profileModal.visibility.suffix' | translate }}
         </p>
+
+        <!-- "Who answers your RSVP" (hub ADR-0039 §6, T336) — read-only in
+             every mode, including edit: no remove `×`, no picker, no search,
+             ever (hard rule 18(a)). Rendered only for the guest's own
+             profile — never a linked partner's, and never the couple's own,
+             who cannot have delegates at all (ADR-0039 §1). Both gates are
+             explicit inputs (see the class doc comment for why this is not
+             gated on whether the array is empty). -->
+        @if (isOwnProfile() && canHaveDelegates()) {
+          <div class="delegation">
+            <span class="delegation-label">{{ 'delegation.field.title' | translate }}</span>
+            <app-delegate-chips [delegates]="delegateChips()" [emptyText]="delegationEmptyText()" />
+          </div>
+        }
       </div>
     </div>
   }

@@ -1,10 +1,8 @@
 <div class="content">
-  @if (showBack()) {
-    <button type="button" class="back-link" (click)="onBack()">
-      <span class="chevron" aria-hidden="true">‹</span>
-      {{ 'rsvp.hub.back' | translate }}
-    </button>
-  }
+  <button type="button" class="back-link" (click)="onBack()">
+    <span class="chevron" aria-hidden="true">‹</span>
+    {{ 'rsvp.hub.back' | translate }}
+  </button>
 
   <div class="head">
     <div class="head-text">
@@ -17,9 +15,9 @@
           ) | translate
         }}
       </div>
-      <h2>{{ 'rsvp.edit.title' | translate }}</h2>
+      <h2>{{ subjectName() }}</h2>
       @if (draft().status === 'declined') {
-        <p class="sub">{{ 'rsvp.edit.declinedSub' | translate }}</p>
+        <p class="sub">{{ 'rsvp.hub.detail.declinedSub' | translate }}</p>
       } @else {
         <p class="sub">
           {{ 'rsvp.edit.seatsHeld' | pluralTranslate: seatsHeld() | translate: { count: seatsHeld() } }}
@@ -31,12 +29,12 @@
     </span>
   </div>
 
-  <!-- The editor renders whole, always — including the party while declined
-       (T273; T274 guarantees the party itself is never pruned by a decline). -->
   <app-rsvp-editor
     [draft]="draft()"
-    perspective="owner"
+    perspective="delegate"
     [showStatus]="true"
+    [statusPending]="true"
+    [noteReadonly]="true"
     (draftChange)="onDraftChange($event)"
     (openProfile)="onOpenProfile($event)"
   />

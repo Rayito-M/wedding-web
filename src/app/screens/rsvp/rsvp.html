@@ -1,7 +1,33 @@
 @if (!loaded()) {
   <app-loading />
 } @else if (showCreate()) {
+  <!-- The guest's own first-time reply outranks everything else (including
+     the hub): until they have answered for themselves there is nothing for
+     a hub to list them as, and a delegation must never push their own reply
+     off the screen. -->
   <app-rsvp-create [rsvp]="rsvp()!" (submitted)="onReplyFlowDone()" />
+} @else if (hasDelegations()) {
+  <!-- The hub (hub ADR-0039 §6, T337) — additive to the plain owner screen
+     below, never a replacement of it: this whole branch is unreachable with
+     zero delegations, and its sibling `@else` is untouched (this task's own
+     acceptance). -->
+  @if (hubMode()) {
+    <app-rsvp-hub
+      [myReply]="rsvp()"
+      [delegations]="delegatedRsvps()"
+      (open)="onHubOpen($event)"
+    />
+  } @else if (activeDelegateId()) {
+    @if (activeDelegateRsvp(); as delegateRsvp) {
+      <app-delegate-edit
+        [rsvp]="delegateRsvp"
+        [subjectName]="activeDelegateName()"
+        (back)="backToHub()"
+      />
+    }
+  } @else if (rsvp()) {
+    <app-rsvp-edit [rsvp]="rsvp()!" [showBack]="true" (back)="backToHub()" />
+  }
 } @else if (rsvp()) {
   <app-rsvp-edit [rsvp]="rsvp()!" />
 }
