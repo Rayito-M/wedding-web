@@ -14,37 +14,73 @@
 
     <div class="header-stats">
       <div class="stat-group">
-        <div class="stat-value">{{ count().rsvp.total }}</div>
+        <div class="stat-value">
+          @if (initialLoading()) {
+            <span class="skeleton stat-bar" aria-hidden="true">&nbsp;</span>
+          } @else {
+            {{ count().total }}
+          }
+        </div>
         <div class="stat-label">
           {{ 'guest_manager.status.total' | translate }}
         </div>
       </div>
       <div class="stat-group divider">
-        <div class="stat-value accent">{{ count().rsvp.attending }}</div>
+        <div class="stat-value accent">
+          @if (initialLoading()) {
+            <span class="skeleton stat-bar" aria-hidden="true">&nbsp;</span>
+          } @else {
+            {{ count().headCount.adults }}
+          }
+        </div>
         <div class="stat-label">
           {{ 'guest_manager.status.attending' | translate }}
         </div>
       </div>
       <div class="stat-group">
-        <div class="stat-value">{{ count().rsvp.pending }}</div>
+        <div class="stat-value">
+          @if (initialLoading()) {
+            <span class="skeleton stat-bar" aria-hidden="true">&nbsp;</span>
+          } @else {
+            {{ count().pending }}
+          }
+        </div>
         <div class="stat-label">
           {{ 'guest_manager.status.pending' | translate }}
         </div>
       </div>
       <div class="stat-group">
-        <div class="stat-value">{{ count().rsvp.declined }}</div>
+        <div class="stat-value">
+          @if (initialLoading()) {
+            <span class="skeleton stat-bar" aria-hidden="true">&nbsp;</span>
+          } @else {
+            {{ count().declined }}
+          }
+        </div>
         <div class="stat-label">
           {{ 'guest_manager.status.declined' | translate }}
         </div>
       </div>
       <div class="stat-group divider">
-        <div class="stat-value">{{ count().headCount.adults }}</div>
+        <div class="stat-value">
+          @if (initialLoading()) {
+            <span class="skeleton stat-bar" aria-hidden="true">&nbsp;</span>
+          } @else {
+            {{ count().headCount.adults }}
+          }
+        </div>
         <div class="stat-label">
           {{ 'shared.adults' | pluralTranslate: count().headCount.adults | translate }}
         </div>
       </div>
       <div class="stat-group">
-        <div class="stat-value">{{ count().headCount.children }}</div>
+        <div class="stat-value">
+          @if (initialLoading()) {
+            <span class="skeleton stat-bar" aria-hidden="true">&nbsp;</span>
+          } @else {
+            {{ count().headCount.children }}
+          }
+        </div>
         <div class="stat-label">
           {{ 'shared.children' | pluralTranslate: count().headCount.children | translate }}
         </div>
@@ -52,366 +88,427 @@
     </div>
   </header>
 
-  <!-- Toolbar -->
-  <div class="toolbar">
-    <div class="filters">
-      <button
-        type="button"
-        class="filter-btn"
-        [class.active]="getFilter() === 'all'"
-        (click)="setFilter('all')"
-      >
-        {{ 'guest_manager.filter.all' | translate }}
-        <span class="count">· {{ count().rsvp.total }}</span>
-      </button>
-      <button
-        type="button"
-        class="filter-btn"
-        [class.active]="getFilter() === 'attending'"
-        (click)="setFilter('attending')"
-      >
-        {{ 'guest_manager.filter.attending' | translate }}
-        <span class="count">· {{ count().rsvp.attending }}</span>
-      </button>
-      <button
-        type="button"
-        class="filter-btn"
-        [class.active]="getFilter() === 'pending'"
-        (click)="setFilter('pending')"
-      >
-        {{ 'guest_manager.filter.pending' | translate }}
-        <span class="count">· {{ count().rsvp.pending }}</span>
-      </button>
-      <button
-        type="button"
-        class="filter-btn"
-        [class.active]="getFilter() === 'declined'"
-        (click)="setFilter('declined')"
-      >
-        {{ 'guest_manager.filter.declined' | translate }}
-        <span class="count">· {{ count().rsvp.declined }}</span>
-      </button>
-      <button
-        type="button"
-        class="filter-btn"
-        [class.active]="getFilter() === 'undefined'"
-        (click)="setFilter('undefined')"
-      >
-        {{ 'guest_manager.filter.undefined' | translate }}
-        <span class="count">· {{ count().rsvp.undefined }}</span>
-      </button>
-    </div>
+  <!-- Everything below the header is the screen's content region: while the
+       first profile read is in flight it has nothing honest to draw — the
+       filter chips would read "· 0" and the table would read as empty. Rather
+       than blank the region, it draws the same toolbar and table with the
+       unknowns as skeletons (see %skeleton-bar), so nothing moves when the read
+       lands. The filter labels and column headings are static copy and are
+       real; the counts, the rows and the footer tally are not. The placeholder
+       is `aria-hidden` and the `role="status"` line below carries the wait —
+       the real table's ARIA semantics describe rows that do not exist yet. -->
+  @if (initialLoading()) {
+    <span class="sr-only" role="status">{{ 'guest_manager.list.loading' | translate }}</span>
 
-    <div class="toolbar-right">
-      <div class="search-box">
-        <input
-          type="text"
-          class="search-input"
-          [value]="getSearchQuery()"
-          (change)="updateSearch($event.target.value)"
-          [attr.placeholder]="'guest_manager.search.placeholder' | translate"
-          aria-label="Search guests by name or party"
-        />
+    <div class="toolbar" aria-hidden="true">
+      <div class="filters">
+        @for (label of pendingFilters; track label) {
+          <span class="filter-btn">
+            {{ label | translate }}
+            <span class="count skeleton count-bar">&nbsp;</span>
+          </span>
+        }
       </div>
-      <button type="button" class="add-btn" app-btn (click)="addNewGuest()">
-        + {{ 'guest_manager.action.addGuest' | translate }}
-      </button>
-    </div>
-  </div>
 
-  <!-- Table — ARIA table semantics carried by the existing layout divs (T332).
-       `role="table"`, not `role="grid"`: nothing here is cell-navigable, so the
-       grid interaction contract (arrow keys, roving tabindex) would be a promise
-       the screen doesn't keep. The roles sit on divs rather than native
-       <table> markup because `.table-body` is the scroll container and a
-       scrollable <tbody> needs `display: block`, which destroys native table
-       layout. No `aria-rowcount`/`aria-rowindex`: the rendered rows are the
-       whole set the user chose to load and the `aria-live` footer already
-       carries the remainder. -->
-  <div
-    class="table-container"
-    role="table"
-    [attr.aria-label]="'guest_manager.table.ariaLabel' | translate"
-  >
-    <!-- Table header — desktop-only; columns backed by real per-guest data
-         (guest, status, adults, children, last seen) are sortable. Dietary and
-         table stay plain labels: they render a static placeholder per row
-         (see below), so there's nothing to sort them by yet — and they carry no
-         `aria-sort` at all, since even "none" would advertise a sort they don't
-         have. Below 900px the whole row is `display: none` and so leaves the
-         accessibility tree: a `role="table"` is valid without a header row, and
-         the columns it would name aren't on screen there either. -->
-    <div class="table-header" role="row">
-      <div class="col-guest" role="columnheader" [attr.aria-sort]="ariaSort('lastName')">
-        <button
-          type="button"
-          class="col-sort"
-          [class.active]="getSortColumn() === 'lastName'"
-          [attr.aria-label]="
-            'guest_manager.sort.by' | translate: { column: 'guest_manager.table.guest' | translate }
-          "
-          (click)="toggleSort('lastName')"
-        >
-          {{ 'guest_manager.table.guest' | translate }}
-          <span
-            class="sort-icon"
-            [class.active]="getSortColumn() === 'lastName'"
-            aria-hidden="true"
-            >{{
-              getSortColumn() === 'lastName' ? (getSortDirection() === 'asc' ? '▲' : '▼') : '▲'
-            }}</span
-          >
-        </button>
-      </div>
-      <div class="col-status" role="columnheader" [attr.aria-sort]="ariaSort('status')">
-        <button
-          type="button"
-          class="col-sort"
-          [class.active]="getSortColumn() === 'status'"
-          [attr.aria-label]="
-            'guest_manager.sort.by'
-              | translate: { column: 'guest_manager.table.status' | translate }
-          "
-          (click)="toggleSort('status')"
-        >
-          {{ 'guest_manager.table.status' | translate }}
-          <span
-            class="sort-icon"
-            [class.active]="getSortColumn() === 'status'"
-            aria-hidden="true"
-            >{{
-              getSortColumn() === 'status' ? (getSortDirection() === 'asc' ? '▲' : '▼') : '▲'
-            }}</span
-          >
-        </button>
-      </div>
-      <div class="col-adults" role="columnheader" [attr.aria-sort]="ariaSort('adults')">
-        <button
-          type="button"
-          class="col-sort"
-          [class.active]="getSortColumn() === 'adults'"
-          [attr.aria-label]="
-            'guest_manager.sort.by'
-              | translate: { column: 'guest_manager.table.adults' | translate }
-          "
-          (click)="toggleSort('adults')"
-        >
-          {{ 'guest_manager.table.adults' | translate }}
-          <span
-            class="sort-icon"
-            [class.active]="getSortColumn() === 'adults'"
-            aria-hidden="true"
-            >{{
-              getSortColumn() === 'adults' ? (getSortDirection() === 'asc' ? '▲' : '▼') : '▲'
-            }}</span
-          >
-        </button>
-      </div>
-      <div class="col-children" role="columnheader" [attr.aria-sort]="ariaSort('children')">
-        <button
-          type="button"
-          class="col-sort"
-          [class.active]="getSortColumn() === 'children'"
-          [attr.aria-label]="
-            'guest_manager.sort.by'
-              | translate: { column: 'guest_manager.table.children' | translate }
-          "
-          (click)="toggleSort('children')"
-        >
-          {{ 'guest_manager.table.children' | translate }}
-          <span
-            class="sort-icon"
-            [class.active]="getSortColumn() === 'children'"
-            aria-hidden="true"
-            >{{
-              getSortColumn() === 'children' ? (getSortDirection() === 'asc' ? '▲' : '▼') : '▲'
-            }}</span
-          >
-        </button>
-      </div>
-      <div class="col-dietary" role="columnheader">
-        {{ 'guest_manager.table.dietary' | translate }}
-      </div>
-      <div class="col-table" role="columnheader">
-        {{ 'guest_manager.table.table' | translate }}
-      </div>
-      <div class="col-last-seen" role="columnheader" [attr.aria-sort]="ariaSort('lastSeen')">
-        <button
-          type="button"
-          class="col-sort"
-          [class.active]="getSortColumn() === 'lastSeen'"
-          [attr.aria-label]="
-            'guest_manager.sort.by'
-              | translate: { column: 'guest_manager.table.lastSeen' | translate }
-          "
-          (click)="toggleSort('lastSeen')"
-        >
-          {{ 'guest_manager.table.lastSeen' | translate }}
-          <span
-            class="sort-icon"
-            [class.active]="getSortColumn() === 'lastSeen'"
-            aria-hidden="true"
-            >{{
-              getSortColumn() === 'lastSeen' ? (getSortDirection() === 'asc' ? '▲' : '▼') : '▲'
-            }}</span
-          >
-        </button>
+      <div class="toolbar-right">
+        <div class="search-box">
+          <div class="search-input skeleton">&nbsp;</div>
+        </div>
+        <span class="add-btn skeleton">&nbsp;</span>
       </div>
     </div>
 
-    <!-- Table body — the `rowgroup`, and also the scroll container: nearing its
-         bottom grows the window by one batch (ADR W-0008 §5). It takes
-         `tabindex="0"` and a name of its own so a keyboard-only user can reach
-         and arrow-scroll the region (WCAG 2.1.1), which a scrollable div with no
-         tab stop of its own does not satisfy. -->
-    <div
-      #tableBody
-      class="table-body"
-      role="rowgroup"
-      tabindex="0"
-      [attr.aria-label]="'guest_manager.table.rowsAriaLabel' | translate"
-      (scroll)="onListScroll($event)"
-    >
-      @if (sortedGuests().length > 0) {
-        @for (profile of sortedGuests(); track profile.id) {
-          <!-- The row is a pointer-only click target, as the DS row is: a
-               `role="row"` cannot also be a button, so the keyboard/AT path is
-               the `.row-open-btn` in the first cell below. Neither rule can see
-               that from here — `click-events-have-key-events` wants key handlers
-               on this element and `interactive-supports-focus` reads `row` as an
-               interactive role (it is not, inside a `role="table"`; that is the
-               `grid` contract this screen deliberately does not implement). -->
-          <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
-          <div class="table-row" role="row" (click)="openGuestProfile(profile.id)">
-            <div class="col-guest" role="cell">
-              <!-- Wraps the name only, so the control's accessible name *is* the
-                   guest's name ("Laura Mendoza") rather than a generic
-                   "open profile". -->
-              <button
-                type="button"
-                class="row-open-btn"
-                (click)="$event.stopPropagation(); openGuestProfile(profile.id)"
-              >
-                <span class="guest-name">{{ profile.firstName }} {{ profile.lastName }}</span>
-              </button>
-              <!-- Partner line (DS `PartnerLine` / `GmPartnerLine`): a leading dot
-                   plus the partner's name, tinted when that partner has their own
-                   guest account and muted when they are a plus-one (ADR W-0002).
-                   The colour alone must not carry that meaning, so the status is
-                   repeated as a screen-reader-only suffix. -->
-              @if (profile.guestInfo?.partner; as partner) {
-                <div class="guest-secondary" [class.has-account]="partnerHasAccount(partner)">
-                  <span class="partner-dot" aria-hidden="true"></span>
-                  <span class="partner-name">{{ partner.firstName }} {{ partner.lastName }}</span>
-                  <span class="partner-account-note">{{
-                    (partnerHasAccount(partner)
-                      ? 'shared.partner.ownAccount'
-                      : 'shared.partner.plusOne'
-                    ) | translate
-                  }}</span>
-                </div>
-              }
-              <!-- Mobile-only count caption (DS mobile row pattern): "N participants · M children" -->
-              <div class="guest-caption">
-                {{ profile.guestInfo?.rsvp?.adults }}
-                {{ 'guest_manager.rsvp.participants' | translate }}
-                @if (profile.guestInfo?.rsvp?.children) {
-                  · {{ profile.guestInfo?.rsvp?.children }}
-                  {{ 'guest_manager.table.children' | translate }}
-                }
-              </div>
+    <div class="table-container" aria-hidden="true">
+      <!-- Desktop-only header row: the column labels are static, and the
+           settled markup's sort <button>s are reset to the plain label divs
+           beside them, so plain spans here measure the same. -->
+      <div class="table-header">
+        @for (column of pendingColumns; track column.key) {
+          <div [class]="column.key">{{ column.labelKey | translate }}</div>
+        }
+      </div>
+
+      <div class="table-body">
+        <!-- The page size is known but the guest count is not, so this is a
+             typical screenful, not a measured one. -->
+        @for (row of pendingRows; track row) {
+          <div class="table-row">
+            <div class="col-guest">
+              <span class="guest-name skeleton name-bar">&nbsp;</span>
+              <div class="guest-caption skeleton caption-bar">&nbsp;</div>
             </div>
-            <div class="col-status" role="cell">
-              <span class="status-cell" [class]="'status-' + profile.guestInfo?.rsvp?.status">
-                <span class="status-dot"></span>
-                {{ 'guest_manager.status.' + profile.guestInfo?.rsvp?.status | translate }}
-              </span>
-              <!-- Mobile-only secondary line (DS `ScreenGuestManagerMobile.jsx`):
-                   the desktop grid has its own `.col-last-seen` column instead,
-                   so this is hidden there. Read-only, admin-surface-only
-                   (hub ADR-0035 §6) — never a colour/opacity-only cue (rule 14),
-                   the pre-formatted label text carries the information. -->
-              <span class="last-seen-mobile">
-                {{ 'guest_manager.lastSeen.mobile' | translate: { label: lastSeenLabel(profile) } }}
-              </span>
+            <div class="col-status">
+              <span class="skeleton status-bar">&nbsp;</span>
             </div>
-            <div class="col-adults" role="cell">
-              {{ profile.guestInfo?.rsvp?.adults || '—' }}
-            </div>
-            <div class="col-children" role="cell">
-              {{ profile.guestInfo?.rsvp?.children || '—' }}
-            </div>
-            <div class="col-dietary" role="cell">
-              <!-- The list summary (`UserProfileDto.rsvp`) doesn't carry dietary
-                   data — that only comes back with the full RSVP the details
-                   modal fetches, so this column is a static placeholder here. -->
-              <span class="dietary-badge">—</span>
-            </div>
-            <div class="col-table" role="cell">
-              <span class="table-assignment">—</span>
-            </div>
-            <!-- Desktop-only column (hidden on mobile via `.col-last-seen`'s
-                 base `display: none`, matching `.col-adults` etc.) -->
-            <div class="col-last-seen" role="cell">{{ lastSeenLabel(profile) }}</div>
+            <div class="col-adults"><span class="skeleton cell-bar">&nbsp;</span></div>
+            <div class="col-children"><span class="skeleton cell-bar">&nbsp;</span></div>
+            <div class="col-dietary"><span class="skeleton dietary-bar">&nbsp;</span></div>
+            <div class="col-table"><span class="skeleton cell-bar">&nbsp;</span></div>
+            <div class="col-last-seen"><span class="skeleton cell-bar">&nbsp;</span></div>
           </div>
         }
-      } @else {
-        <!-- The ARIA equivalent of `<tr><td colspan="7">` — a `rowgroup`'s
-             children must be rows, and this line is visually a full-width row
-             already. Same for the two below it. -->
-        <div class="empty-state" role="row">
-          <div role="cell" aria-colspan="7">
-            {{ 'guest_manager.empty' | translate }}
-          </div>
-        </div>
-      }
-
-      <!-- Keyboard-operable twin of the scroll trigger: a native <button>, so
-           Enter/Space already activate it — no key handlers here. -->
-      @if (hasMore()) {
-        <div class="load-more-row" role="row">
-          <div role="cell" aria-colspan="7">
-            <button
-              type="button"
-              class="load-more-btn"
-              [disabled]="loadingMore()"
-              (click)="loadMore()"
-            >
-              {{ 'guest_manager.list.loadMore' | translate }}
-            </button>
-          </div>
-        </div>
-      }
-      @if (reachedEnd()) {
-        <div class="end-of-list" role="row">
-          <div role="cell" aria-colspan="7">
-            {{ 'guest_manager.list.endOfList' | translate }}
-          </div>
-        </div>
-      }
+      </div>
     </div>
-  </div>
 
-  <!-- List footer — the count line is `aria-live` because it is the only
-       announcement a grow produces; there is no loading affordance to convey
-       progress (ADR W-0008 §4). -->
-  <div class="list-footer">
-    <span class="list-footer-info" aria-live="polite">
-      @if (filteredGuests().length === 0) {
-        {{ 'guest_manager.list.noResults' | translate }}
-      } @else {
-        {{
-          'guest_manager.list.showing'
-            | translate: { shown: sortedGuests().length, total: count().rsvp.total }
-        }}
-      }
-    </span>
-    <span class="list-footer-hint">
-      @if (hasMore()) {
-        {{ 'guest_manager.list.scrollForMore' | translate }}
-      }
-    </span>
-  </div>
+    <div class="list-footer" aria-hidden="true">
+      <span class="list-footer-info skeleton footer-bar">&nbsp;</span>
+    </div>
+  } @else {
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="filters">
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="getFilter() === 'all'"
+          (click)="setFilter('all')"
+        >
+          {{ 'guest_manager.filter.all' | translate }}
+          <span class="count">· {{ count().total }}</span>
+        </button>
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="getFilter() === 'attending'"
+          (click)="setFilter('attending')"
+        >
+          {{ 'guest_manager.filter.attending' | translate }}
+          <span class="count">· {{ count().headCount.adults }}</span>
+        </button>
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="getFilter() === 'pending'"
+          (click)="setFilter('pending')"
+        >
+          {{ 'guest_manager.filter.pending' | translate }}
+          <span class="count">· {{ count().pending }}</span>
+        </button>
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="getFilter() === 'declined'"
+          (click)="setFilter('declined')"
+        >
+          {{ 'guest_manager.filter.declined' | translate }}
+          <span class="count">· {{ count().declined }}</span>
+        </button>
+      </div>
+
+      <div class="toolbar-right">
+        <div class="search-box">
+          <input
+            type="text"
+            class="search-input"
+            [value]="getSearchQuery()"
+            (change)="updateSearch($event.target.value)"
+            [attr.placeholder]="'guest_manager.search.placeholder' | translate"
+            aria-label="Search guests by name or party"
+          />
+        </div>
+        <button type="button" class="add-btn" app-btn (click)="addNewGuest()">
+          + {{ 'guest_manager.action.addGuest' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Table — ARIA table semantics carried by the existing layout divs (T332).
+         `role="table"`, not `role="grid"`: nothing here is cell-navigable, so the
+         grid interaction contract (arrow keys, roving tabindex) would be a promise
+         the screen doesn't keep. The roles sit on divs rather than native
+         <table> markup because `.table-body` is the scroll container and a
+         scrollable <tbody> needs `display: block`, which destroys native table
+         layout. No `aria-rowcount`/`aria-rowindex`: the rendered rows are the
+         whole set the user chose to load and the `aria-live` footer already
+         carries the remainder. -->
+    <div
+      class="table-container"
+      role="table"
+      [attr.aria-label]="'guest_manager.table.ariaLabel' | translate"
+    >
+      <!-- Table header — desktop-only; columns backed by real per-guest data
+           (guest, status, adults, children, last seen) are sortable. Dietary and
+           table stay plain labels: they render a static placeholder per row
+           (see below), so there's nothing to sort them by yet — and they carry no
+           `aria-sort` at all, since even "none" would advertise a sort they don't
+           have. Below 900px the whole row is `display: none` and so leaves the
+           accessibility tree: a `role="table"` is valid without a header row, and
+           the columns it would name aren't on screen there either. -->
+      <div class="table-header" role="row">
+        <div class="col-guest" role="columnheader" [attr.aria-sort]="ariaSort('lastName')">
+          <button
+            type="button"
+            class="col-sort"
+            [class.active]="getSortColumn() === 'lastName'"
+            [attr.aria-label]="
+              'guest_manager.sort.by'
+                | translate: { column: 'guest_manager.table.guest' | translate }
+            "
+            (click)="toggleSort('lastName')"
+          >
+            {{ 'guest_manager.table.guest' | translate }}
+            <span
+              class="sort-icon"
+              [class.active]="getSortColumn() === 'lastName'"
+              aria-hidden="true"
+              >{{
+                getSortColumn() === 'lastName' ? (getSortDirection() === 'asc' ? '▲' : '▼') : '▲'
+              }}</span
+            >
+          </button>
+        </div>
+        <div class="col-status" role="columnheader" [attr.aria-sort]="ariaSort('status')">
+          <button
+            type="button"
+            class="col-sort"
+            [class.active]="getSortColumn() === 'status'"
+            [attr.aria-label]="
+              'guest_manager.sort.by'
+                | translate: { column: 'guest_manager.table.status' | translate }
+            "
+            (click)="toggleSort('status')"
+          >
+            {{ 'guest_manager.table.status' | translate }}
+            <span
+              class="sort-icon"
+              [class.active]="getSortColumn() === 'status'"
+              aria-hidden="true"
+              >{{
+                getSortColumn() === 'status' ? (getSortDirection() === 'asc' ? '▲' : '▼') : '▲'
+              }}</span
+            >
+          </button>
+        </div>
+        <div class="col-adults" role="columnheader" [attr.aria-sort]="ariaSort('adults')">
+          <button
+            type="button"
+            class="col-sort"
+            [class.active]="getSortColumn() === 'adults'"
+            [attr.aria-label]="
+              'guest_manager.sort.by'
+                | translate: { column: 'guest_manager.table.adults' | translate }
+            "
+            (click)="toggleSort('adults')"
+          >
+            {{ 'guest_manager.table.adults' | translate }}
+            <span
+              class="sort-icon"
+              [class.active]="getSortColumn() === 'adults'"
+              aria-hidden="true"
+              >{{
+                getSortColumn() === 'adults' ? (getSortDirection() === 'asc' ? '▲' : '▼') : '▲'
+              }}</span
+            >
+          </button>
+        </div>
+        <div class="col-children" role="columnheader" [attr.aria-sort]="ariaSort('children')">
+          <button
+            type="button"
+            class="col-sort"
+            [class.active]="getSortColumn() === 'children'"
+            [attr.aria-label]="
+              'guest_manager.sort.by'
+                | translate: { column: 'guest_manager.table.children' | translate }
+            "
+            (click)="toggleSort('children')"
+          >
+            {{ 'guest_manager.table.children' | translate }}
+            <span
+              class="sort-icon"
+              [class.active]="getSortColumn() === 'children'"
+              aria-hidden="true"
+              >{{
+                getSortColumn() === 'children' ? (getSortDirection() === 'asc' ? '▲' : '▼') : '▲'
+              }}</span
+            >
+          </button>
+        </div>
+        <div class="col-dietary" role="columnheader">
+          {{ 'guest_manager.table.dietary' | translate }}
+        </div>
+        <div class="col-table" role="columnheader">
+          {{ 'guest_manager.table.table' | translate }}
+        </div>
+        <div class="col-last-seen" role="columnheader" [attr.aria-sort]="ariaSort('lastSeen')">
+          <button
+            type="button"
+            class="col-sort"
+            [class.active]="getSortColumn() === 'lastSeen'"
+            [attr.aria-label]="
+              'guest_manager.sort.by'
+                | translate: { column: 'guest_manager.table.lastSeen' | translate }
+            "
+            (click)="toggleSort('lastSeen')"
+          >
+            {{ 'guest_manager.table.lastSeen' | translate }}
+            <span
+              class="sort-icon"
+              [class.active]="getSortColumn() === 'lastSeen'"
+              aria-hidden="true"
+              >{{
+                getSortColumn() === 'lastSeen' ? (getSortDirection() === 'asc' ? '▲' : '▼') : '▲'
+              }}</span
+            >
+          </button>
+        </div>
+      </div>
+
+      <!-- Table body — the `rowgroup`, and also the scroll container: nearing its
+           bottom grows the window by one batch (ADR W-0008 §5). It takes
+           `tabindex="0"` and a name of its own so a keyboard-only user can reach
+           and arrow-scroll the region (WCAG 2.1.1), which a scrollable div with no
+           tab stop of its own does not satisfy. -->
+      <div
+        #tableBody
+        class="table-body"
+        role="rowgroup"
+        tabindex="0"
+        [attr.aria-label]="'guest_manager.table.rowsAriaLabel' | translate"
+        (scroll)="onListScroll($event)"
+      >
+        @if (sortedGuests().length > 0) {
+          @for (profile of sortedGuests(); track profile.id) {
+            <!-- The row is a pointer-only click target, as the DS row is: a
+                 `role="row"` cannot also be a button, so the keyboard/AT path is
+                 the `.row-open-btn` in the first cell below. Neither rule can see
+                 that from here — `click-events-have-key-events` wants key handlers
+                 on this element and `interactive-supports-focus` reads `row` as an
+                 interactive role (it is not, inside a `role="table"`; that is the
+                 `grid` contract this screen deliberately does not implement). -->
+            <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+            <div class="table-row" role="row" (click)="openGuestProfile(profile.id)">
+              <div class="col-guest" role="cell">
+                <!-- Wraps the name only, so the control's accessible name *is* the
+                     guest's name ("Laura Mendoza") rather than a generic
+                     "open profile". -->
+                <button
+                  type="button"
+                  class="row-open-btn"
+                  (click)="$event.stopPropagation(); openGuestProfile(profile.id)"
+                >
+                  <span class="guest-name">{{ profile.firstName }} {{ profile.lastName }}</span>
+                </button>
+                <!-- Partner line (DS `PartnerLine` / `GmPartnerLine`): a leading dot
+                     plus the partner's name, tinted when that partner has their own
+                     guest account and muted when they are a plus-one (ADR W-0002).
+                     The colour alone must not carry that meaning, so the status is
+                     repeated as a screen-reader-only suffix. -->
+                @if (profile.guestInfo?.partner; as partner) {
+                  <div class="guest-secondary" [class.has-account]="partnerHasAccount(partner)">
+                    <span class="partner-dot" aria-hidden="true"></span>
+                    <span class="partner-name">{{ partner.firstName }} {{ partner.lastName }}</span>
+                    <span class="partner-account-note">{{
+                      (partnerHasAccount(partner)
+                        ? 'shared.partner.ownAccount'
+                        : 'shared.partner.plusOne'
+                      ) | translate
+                    }}</span>
+                  </div>
+                }
+                <!-- Mobile-only count caption (DS mobile row pattern): "N participants · M children" -->
+                <div class="guest-caption">
+                  {{ profile.guestInfo?.rsvp?.adults }}
+                  {{ 'guest_manager.rsvp.participants' | translate }}
+                  @if (profile.guestInfo?.rsvp?.children) {
+                    · {{ profile.guestInfo?.rsvp?.children }}
+                    {{ 'guest_manager.table.children' | translate }}
+                  }
+                </div>
+              </div>
+              <div class="col-status" role="cell">
+                <span class="status-cell" [class]="'status-' + profile.guestInfo?.rsvp?.status">
+                  <span class="status-dot"></span>
+                  {{ 'guest_manager.status.' + profile.guestInfo?.rsvp?.status | translate }}
+                </span>
+                <!-- Mobile-only secondary line (DS `ScreenGuestManagerMobile.jsx`):
+                     the desktop grid has its own `.col-last-seen` column instead,
+                     so this is hidden there. Read-only, admin-surface-only
+                     (hub ADR-0035 §6) — never a colour/opacity-only cue (rule 14),
+                     the pre-formatted label text carries the information. -->
+                <span class="last-seen-mobile">
+                  {{
+                    'guest_manager.lastSeen.mobile' | translate: { label: lastSeenLabel(profile) }
+                  }}
+                </span>
+              </div>
+              <div class="col-adults" role="cell">
+                {{ profile.guestInfo?.rsvp?.adults || '—' }}
+              </div>
+              <div class="col-children" role="cell">
+                {{ profile.guestInfo?.rsvp?.children || '—' }}
+              </div>
+              <div class="col-dietary" role="cell">
+                <!-- The list summary (`UserProfileDto.rsvp`) doesn't carry dietary
+                     data — that only comes back with the full RSVP the details
+                     modal fetches, so this column is a static placeholder here. -->
+                <span class="dietary-badge">—</span>
+              </div>
+              <div class="col-table" role="cell">
+                <span class="table-assignment">—</span>
+              </div>
+              <!-- Desktop-only column (hidden on mobile via `.col-last-seen`'s
+                   base `display: none`, matching `.col-adults` etc.) -->
+              <div class="col-last-seen" role="cell">{{ lastSeenLabel(profile) }}</div>
+            </div>
+          }
+        } @else {
+          <!-- The ARIA equivalent of `<tr><td colspan="7">` — a `rowgroup`'s
+               children must be rows, and this line is visually a full-width row
+               already. Same for the two below it. -->
+          <div class="empty-state" role="row">
+            <div role="cell" aria-colspan="7">
+              {{ 'guest_manager.empty' | translate }}
+            </div>
+          </div>
+        }
+
+        <!-- Keyboard-operable twin of the scroll trigger: a native <button>, so
+             Enter/Space already activate it — no key handlers here. -->
+        @if (hasMore()) {
+          <div class="load-more-row" role="row">
+            <div role="cell" aria-colspan="7">
+              <button
+                type="button"
+                class="load-more-btn"
+                [disabled]="loadingMore()"
+                (click)="loadMore()"
+              >
+                {{ 'guest_manager.list.loadMore' | translate }}
+              </button>
+            </div>
+          </div>
+        }
+        @if (reachedEnd()) {
+          <div class="end-of-list" role="row">
+            <div role="cell" aria-colspan="7">
+              {{ 'guest_manager.list.endOfList' | translate }}
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- List footer — the count line is `aria-live` because it is the only
+         announcement a grow produces; there is no loading affordance to convey
+         progress (ADR W-0008 §4). -->
+    <div class="list-footer">
+      <span class="list-footer-info" aria-live="polite">
+        @if (filteredGuests().length === 0) {
+          {{ 'guest_manager.list.noResults' | translate }}
+        } @else {
+          {{
+            'guest_manager.list.showing'
+              | translate: { shown: sortedGuests().length, total: count().total }
+          }}
+        }
+      </span>
+      <span class="list-footer-hint">
+        @if (hasMore()) {
+          {{ 'guest_manager.list.scrollForMore' | translate }}
+        }
+      </span>
+    </div>
+  }
 
   <!-- Guest profile Modal — opened by a row click -->
   <app-guest-profile-modal (manageRsvp)="openManageRsvp($event)" />

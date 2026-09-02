@@ -58,7 +58,7 @@ export interface AdultDraft {
    * `canDeclineAlone()` below still gates structurally on which slot the key
    * names rather than deriving eligibility from the DTO shape alone.
    */
-  attending?: boolean;
+  attending: boolean;
 }
 
 /** Age is kept as free text while editing so an empty field reads as empty,
@@ -84,12 +84,12 @@ export interface RsvpDraft {
 export const EMPTY_RSVP_DRAFT: RsvpDraft = {
   status: RsvpDto.StatusEnum.PENDING,
   version: 0,
-  partner1: { id: '', firstName: '', lastName: '', options: {} },
+  partner1: { id: '', firstName: '', lastName: '', options: {}, attending: false },
   children: [],
 };
 
 export function toRsvpDraft(rsvp: RsvpDto): RsvpDraft {
-  return {
+  const draft: RsvpDraft = {
     status: rsvp.status,
     version: rsvp.version,
     partner1: {
@@ -114,7 +114,7 @@ export function toRsvpDraft(rsvp: RsvpDto): RsvpDraft {
           // the union; the plus-one `…OneOf1` member has no such field at all,
           // so the `in` check (not plain access, unlike partner1 above) is
           // still needed here.
-          attending: 'attending' in rsvp.adults.partner2 ? rsvp.adults.partner2.attending : undefined,
+          attending: rsvp.adults.partner2.attending,
         }
       : undefined,
     children: (rsvp.children ?? []).map((c) => ({
@@ -124,6 +124,8 @@ export function toRsvpDraft(rsvp: RsvpDto): RsvpDraft {
       options: c.options ?? {},
     })),
   };
+
+  return draft;
 }
 
 /**
@@ -164,6 +166,7 @@ export function fromRsvpDraft(draft: RsvpDraft): Partial<RsvpDto> {
           nickname: draft.partner2.nickname?.trim() || undefined,
           options: draft.partner2.options,
           kind: draft.partner2.kind as string,
+          attending: draft.partner2.attending,
         }
     : undefined;
   const children: RsvpDtoChildrenInner[] = draft.children.map((c) => ({
@@ -196,7 +199,9 @@ export function withPersonOptions(
     const index = Number(key.slice('child:'.length));
     return {
       ...draft,
-      children: draft.children.map((c, i) => (i === index ? { ...c, options: mutate(c.options) } : c)),
+      children: draft.children.map((c, i) =>
+        i === index ? { ...c, options: mutate(c.options) } : c,
+      ),
     };
   }
   return draft;
@@ -214,7 +219,10 @@ export function withPersonOptions(
  * per-delegation cards.
  */
 export function partyLabel(rsvp: {
-  adults: { partner1: { firstName: string; lastName: string }; partner2?: { firstName: string; lastName: string } };
+  adults: {
+    partner1: { firstName: string; lastName: string };
+    partner2?: { firstName: string; lastName: string };
+  };
 }): string {
   const p1 = `${rsvp.adults.partner1.firstName} ${rsvp.adults.partner1.lastName}`.trim();
   const partner2 = rsvp.adults.partner2;

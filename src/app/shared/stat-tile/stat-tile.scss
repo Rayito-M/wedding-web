@@ -1,28 +1,50 @@
-// Per design system components/data-display/StatTile.jsx
+// Per design system components/data-display/StatTile.jsx, with the value,
+// label and sub lines taken from the shared stat primitives so this tile and
+// the dashboard's RSVP counts read as one thing.
+@use '../../../styles/tokens' as t;
+@use '../../../styles/primitives';
+
 :host {
   display: block;
-  padding: var(--space-3);
+  padding: t.$space-3;
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-md);
-  font-family: var(--font-sans);
+  border-radius: t.$radius-card;
+  font-family: t.$font-sans;
 }
 
 .label {
-  font-size: var(--text-label);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %stat-label;
+  // The label sits above the value here, so the primitive's top margin (which
+  // separates a label sitting *under* a value) does not apply.
+  margin-top: 0;
 }
 
 .value {
-  font-family: var(--font-serif);
-  font-size: var(--text-caption);
-  margin-top: 2px;
-  color: var(--text-body-color);
+  @extend %stat-value;
+  margin-top: 4px;
 }
 
 .sub {
-  font-size: var(--text-micro);
-  color: var(--text-muted);
+  @extend %stat-sub;
+  margin-top: 4px;
+}
+
+// See %skeleton-bar in primitives: these bars carry the settled `.value` /
+// `.sub` classes, so the tile is exactly as tall while loading as it is once
+// filled.
+.skeleton {
+  @include primitives.skeleton-bar;
+
+  &.value {
+    width: 3.5rem;
+  }
+
+  &.sub {
+    width: 70%;
+  }
+}
+
+.sr-only {
+  @extend %sr-only;
 }

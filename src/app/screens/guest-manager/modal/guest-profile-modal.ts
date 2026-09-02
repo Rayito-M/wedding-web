@@ -1,5 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, signal, computed, inject, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  computed,
+  inject,
+  output,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
@@ -114,6 +121,10 @@ export class GuestProfileModal {
     EntityServices,
   ).getEntityCollectionService<RsvpDto>(EntityNamesEnum.RSVP);
 
+  private readonly guestCollection: EntityCollectionService<GuestDto> = inject(
+    EntityServices,
+  ).getEntityCollectionService<GuestDto>(EntityNamesEnum.GUEST);
+
   /**
    * Delegation (hub ADR-0039) writes through `PATCH /v1/guests/:id`, not
    * `/v1/profile` — `UpdateUserProfileDto` structurally has no `delegateTo`
@@ -123,7 +134,7 @@ export class GuestProfileModal {
    * `guest-create-modal.ts` calls this same service the same way, for the
    * same reason).
    */
-  private readonly guestsApi = inject(WeddingGuestsService);
+  // private readonly guestsApi = inject(WeddingGuestsService);
 
   /**
    * Read-only lookup into the profiles `guest-manager.ts` already bulk-loads
@@ -185,9 +196,9 @@ export class GuestProfileModal {
    * every pick/remove in memory; written by `saveProfile()`, discarded by
    * `cancelEdit()` — no separate confirmation (ADR-0039 §8).
    */
-  protected readonly delegationDraft = signal<UserListResponseDtoItemsInnerDelegateToInner[] | null>(
-    null,
-  );
+  protected readonly delegationDraft = signal<
+    UserListResponseDtoItemsInnerDelegateToInner[] | null
+  >(null);
   protected readonly delegationSearch = signal('');
   /** A candidate has been picked but has no `kind` yet — the mandatory
    *  second step (ADR-0039 §1/§12). Save is blocked while this is set. */
@@ -231,7 +242,11 @@ export class GuestProfileModal {
    */
   protected readonly delegateChips = computed<DelegateChip[]>(() => {
     const entries = this.delegationDraft() ?? this.delegationDoc()?.delegateTo ?? [];
-    return entries.map((entry) => ({ id: entry.id, kind: entry.kind, name: this.nameFor(entry.id) }));
+    return entries.map((entry) => ({
+      id: entry.id,
+      kind: entry.kind,
+      name: this.nameFor(entry.id),
+    }));
   });
 
   private nameFor(id: string): string {
@@ -383,7 +398,7 @@ export class GuestProfileModal {
   protected fetchDelegationDoc(userId: string): void {
     this.delegationLoading.set(true);
     this.delegationError.set(false);
-    this.guestsApi.guestsControllerGetV1({ id: userId }).subscribe({
+    this.guestCollection.getByKey(userId).subscribe({
       next: (doc) => {
         this.delegationDoc.set(doc);
         this.delegationLoading.set(false);
@@ -542,7 +557,11 @@ export class GuestProfileModal {
     // `guestDraft()`.
     const relationPayload: CreateGuestDtoRelation =
       relation.kind === 'family'
-        ? { side: relation.side, kind: relation.kind, link: relation.link as FamilyRelation['link'] }
+        ? {
+            side: relation.side,
+            kind: relation.kind,
+            link: relation.link as FamilyRelation['link'],
+          }
         : { side: relation.side, kind: relation.kind, link: relation.link };
 
     this.userProfileCollection
@@ -552,6 +571,7 @@ export class GuestProfileModal {
         lastName,
         nickname: nickname || undefined,
         guestInfo: { relation: relationPayload },
+        delegateTo: draft.delegateTo,
       })
       .subscribe({
         // One Save, two writes (ADR-0039 §8: the grant rides the profile
@@ -583,33 +603,33 @@ export class GuestProfileModal {
 
     this.delegationSaving.set(true);
     this.delegationSaveError.set(false);
-    this.guestsApi
-      .guestsControllerUpdateV1({
-        id: doc.id,
-        updateGuestDto: { id: doc.id, version: doc.version, delegateTo: draft },
-      })
-      .subscribe({
-        next: (updated) => {
-          this.delegationDoc.set(updated);
-          this.delegationDraft.set(null);
-          this.delegationSaving.set(false);
-          this.viewMode.set('profile');
-        },
-        error: (err: unknown) => {
-          this.delegationSaving.set(false);
-          this.delegationSaveError.set(true);
-          // Someone else changed this guest first — re-read rather than
-          // retrying blind against a `version` that no longer exists
-          // (matches `milestones.ts`'s 409 handling). The editor stays
-          // open so the couple can redo the grant against the fresh copy;
-          // their in-progress draft is discarded along with it, same as a
-          // stale form anywhere else in this modal.
-          if (this.httpStatus(err) === 409) {
+    this.guestCollection.getByKey(doc.id).subscribe({
+      next: (guest) => {
+        this.guestCollection.update({ ...guest, delegateTo: draft }).subscribe({
+          next: (updated) => {
+            this.delegationDoc.set(updated);
             this.delegationDraft.set(null);
-            this.fetchDelegationDoc(doc.id);
-          }
-        },
-      });
+            this.delegationSaving.set(false);
+            this.viewMode.set('profile');
+          },
+          error: (err: unknown) => {
+            this.delegationSaving.set(false);
+            this.delegationSaveError.set(true);
+            // Someone else changed this guest first — re-read rather than
+            // retrying blind against a `version` that no longer exists
+            // (matches `milestones.ts`'s 409 handling). The editor stays
+            // open so the couple can redo the grant against the fresh copy;
+            // their in-progress draft is discarded along with it, same as a
+            // stale form anywhere else in this modal.
+            if (this.httpStatus(err) === 409) {
+              this.delegationDraft.set(null);
+              this.fetchDelegationDoc(doc.id);
+            }
+          },
+        }); // Handle the fetched guest if needed
+      },
+      error: (err: unknown) => console.error('Failed to fetch guest', err),
+    });
   }
 
   private delegationChanged(

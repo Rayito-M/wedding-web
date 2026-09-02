@@ -14,6 +14,7 @@ import { EntityCollectionService, EntityServices } from '@ngrx/data';
 import {
   EntityNamesEnum,
   UserProfileDto,
+  isFirstLoad,
   LoginService,
   ProfileModalService,
   TranslateLanguageService,
@@ -97,6 +98,19 @@ export class People {
       initialValue: [],
     },
   );
+
+  /**
+   * The first profile read is still in flight. Until it lands the grid is not
+   * empty, it is unknown — and `people.empty` ("no one matches") would be a
+   * false statement, so the loader stands in for the grid instead.
+   */
+  protected readonly loading = isFirstLoad(this.userProfileCollection);
+
+  /** Placeholder counts for the loading state. `filters()` always returns four
+   *  options, so the chip row is exact; the card count is a guess — see the
+   *  note in the template. */
+  protected readonly pendingFilters = [0, 1, 2, 3];
+  protected readonly pendingCards = [0, 1, 2, 3, 4, 5];
 
   protected readonly filters = computed((): FilterOption[] => {
     const couple = this.userProfileList().filter((p) => p.role === 'bride' || p.role === 'groom');

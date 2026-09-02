@@ -17,6 +17,7 @@ import { EntityCollectionService, EntityServices } from '@ngrx/data';
 import {
   EntityNamesEnum,
   UserProfileDto,
+  isFirstLoad,
   UserProfileDataService,
   PluralTranslatePipe,
   StatisticService,
@@ -88,9 +89,41 @@ export class GuestManager {
    * W-0008 §3 correctly refused to fake when the grow was a synchronous array
    * slice (ADR W-0009 §3).
    */
+  /** Filter captions, in the order the settled toolbar renders them — the
+   *  loading state shows the real labels and skeletons only their counts. */
+  protected readonly pendingFilters = [
+    'guest_manager.filter.all',
+    'guest_manager.filter.attending',
+    'guest_manager.filter.pending',
+    'guest_manager.filter.declined',
+  ];
+
+  /** Column cells of the loading table's header, matching the settled header's
+   *  order — the class carries each column's width, the key its label. */
+  protected readonly pendingColumns = [
+    { key: 'col-guest', labelKey: 'guest_manager.table.guest' },
+    { key: 'col-status', labelKey: 'guest_manager.table.status' },
+    { key: 'col-adults', labelKey: 'guest_manager.table.adults' },
+    { key: 'col-children', labelKey: 'guest_manager.table.children' },
+    { key: 'col-dietary', labelKey: 'guest_manager.table.dietary' },
+    { key: 'col-table', labelKey: 'guest_manager.table.table' },
+    { key: 'col-last-seen', labelKey: 'guest_manager.table.lastSeen' },
+  ];
+
+  /** Placeholder rows for the loading table — see the note in the template. */
+  protected readonly pendingRows = [0, 1, 2, 3, 4, 5, 6, 7];
+
   protected readonly loadingMore = toSignal(this.userProfileCollection.loading$, {
     initialValue: false,
   });
+
+  /**
+   * The screen has nothing to draw yet — the state the in-place
+   * `app-content-loading` replaces the content region with (header excluded).
+   * The three conditions behind it live in {@link isFirstLoad}, shared with
+   * every other screen that fronts a collection.
+   */
+  protected readonly initialLoading = isFirstLoad(this.userProfileCollection);
 
   private readonly statistics = inject(StatisticService);
 
@@ -103,9 +136,7 @@ export class GuestManager {
    */
   protected readonly count = this.statistics.guestStatistics;
 
-  private readonly filter = signal<'all' | 'attending' | 'pending' | 'declined' | 'undefined'>(
-    'all',
-  );
+  private readonly filter = signal<'all' | 'attending' | 'pending' | 'declined'>('all');
   private readonly searchQuery = signal('');
 
   /**
@@ -147,7 +178,7 @@ export class GuestManager {
         // No RSVP record at all. "Pending" covers these alongside the rows
         // sitting at `status: 'pending'` — both are guests who still owe a
         // reply, which is how StatisticService counts them too.
-        return filterValue === 'all' || filterValue === 'pending' || filterValue === 'undefined';
+        return filterValue === 'all' || filterValue === 'pending';
       }
 
       // A partner with their own account carries the couple's shared RSVP but
@@ -187,9 +218,7 @@ export class GuestManager {
   protected readonly hasMore = computed(() => typeof this.profileData.nextCursor() === 'string');
 
   /** Whether the end-of-list line has anything to mark; see {@link pagesFetched}. */
-  protected readonly reachedEnd = computed(
-    () => this.pagesFetched() > 0 && !this.hasMore(),
-  );
+  protected readonly reachedEnd = computed(() => this.pagesFetched() > 0 && !this.hasMore());
 
   constructor() {
     this.statistics.load(); // Only fetches if cache is empty
@@ -305,7 +334,7 @@ export class GuestManager {
   }
 
   /** Set the active filter and reset the window */
-  setFilter(f: 'all' | 'attending' | 'pending' | 'declined' | 'undefined'): void {
+  setFilter(f: 'all' | 'attending' | 'pending' | 'declined'): void {
     this.filter.set(f);
     this.resetWindow();
   }

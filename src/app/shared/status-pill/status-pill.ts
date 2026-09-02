@@ -34,6 +34,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
     '[class.reached]': "variant() === 'reached'",
     '[class.not-reached]': "variant() === 'not-reached'",
     '[class.at-risk]': "variant() === 'at-risk'",
+    '[class.is-loading]': 'loading()',
   },
 })
 export class StatusPill {
@@ -42,4 +43,10 @@ export class StatusPill {
   readonly variant = input<'final' | 'provisional' | 'reached' | 'not-reached' | 'at-risk'>(
     'provisional',
   );
+
+  /** Render as a skeleton of the pill's own box — same height and border, no
+   *  variant colour, so a header row does not resize when the real state
+   *  lands. The pill's metrics stay here rather than being restated by each
+   *  screen that has a loading state. */
+  readonly loading = input(false);
 }

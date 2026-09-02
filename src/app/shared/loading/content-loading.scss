@@ -1,0 +1,53 @@
+:host {
+  // Fills the box the parent gives it: `flex: 1` claims the leftover space in
+  // a flex column (the guest manager's `.guest-manager`), while `min-height: 0`
+  // keeps it from pushing a sibling header off-screen when the viewport is
+  // short. `height: 100%` covers non-flex parents.
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  // background: var(--surface-page);
+}
+
+.content-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--border-hairline);
+  border-top-color: var(--brand-accent);
+  border-radius: 50%;
+  animation: content-loading-spin 1s linear infinite;
+}
+
+@keyframes content-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin: 0;
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+// The `role="status"` text already carries the state, so for anyone who asked
+// for less motion the spinner slows to a crawl rather than stopping outright —
+// a frozen spinner reads as a hung screen.
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 3s;
+  }
+}

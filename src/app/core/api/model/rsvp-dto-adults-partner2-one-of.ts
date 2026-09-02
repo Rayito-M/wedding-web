@@ -16,7 +16,7 @@ export interface RsvpDtoAdultsPartner2OneOf {
     lastName: string;
     nickname?: string;
     kind: string;
-    attending?: boolean;
+    attending: boolean;
     options?: RsvpDtoAdultsPartner1Options;
 }
 

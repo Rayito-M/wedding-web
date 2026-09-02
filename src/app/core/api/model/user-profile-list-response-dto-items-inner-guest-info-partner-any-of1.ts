@@ -14,5 +14,6 @@ export interface UserProfileListResponseDtoItemsInnerGuestInfoPartnerAnyOf1 {
     lastName: string;
     nickname?: string;
     kind: string;
+    attending: boolean;
 }
 

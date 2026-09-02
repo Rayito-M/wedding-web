@@ -1,4 +1,5 @@
 @use '../../../styles/tokens' as t;
+@use '../../../styles/primitives';
 @use './modal/status-cell' as *;
 
 :host {
@@ -540,6 +541,68 @@
 // ─────────────────────────────────────────────────────────────
 // Desktop (min-width: 900px) — Data Grid Layout
 // ─────────────────────────────────────────────────────────────
+
+// ── Loading state ────────────────────────────────────────────────────────
+// See %skeleton-bar. Bars ride on (or inside) the settled element, so the
+// toolbar, header row and table rows keep their real metrics and nothing moves
+// when the read lands.
+
+.skeleton {
+  @include primitives.skeleton-bar;
+  display: inline-block;
+}
+
+.stat-value .stat-bar {
+  width: 1.5rem;
+}
+
+// The chip, search field and add button placeholders ride on .filter-btn /
+// .search-input / .add-btn themselves, so each control's padding, type and
+// radius are stated once and only the fill changes.
+.filters .filter-btn .count-bar {
+  width: 1.25rem;
+}
+
+.search-input.skeleton {
+  display: block;
+  border-color: transparent;
+}
+
+.add-btn.skeleton {
+  border-color: transparent;
+  width: 7rem;
+}
+
+.col-guest .name-bar {
+  width: 60%;
+}
+
+.col-guest .caption-bar {
+  width: 40%;
+}
+
+.col-status .status-bar {
+  width: 4.5rem;
+}
+
+.cell-bar {
+  width: 1.5rem;
+}
+
+// Matches the settled cell's 24px badge circle.
+.col-dietary .dietary-bar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.list-footer .footer-bar {
+  width: 9rem;
+}
+
+.sr-only {
+  @extend %sr-only;
+}
 
 @media (min-width: 900px) {
   .header {

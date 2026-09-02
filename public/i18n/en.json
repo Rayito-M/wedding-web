@@ -206,6 +206,7 @@
     ]
   },
   "rsvp": {
+    "loading": "Loading your RSVP…",
     "status": {
       "attending": "Attending",
       "pending": "Pending",
@@ -385,6 +386,7 @@
     }
   },
   "dashboard": {
+    "loading": "Loading RSVP figures…",
     "greeting": "Buenos días, {{name}}.",
     "daysToGo_singular": "day before the special day.",
     "daysToGo_plural": "days before the special day.",
@@ -416,6 +418,7 @@
     }
   },
   "configManager": {
+    "loading": "Loading configuration…",
     "headerMeta": "Couple · Settings",
     "title": "General configuration",
     "eyebrow": "Settings",
@@ -568,6 +571,7 @@
     }
   },
   "invitee": {
+    "loading": "Loading your wedding…",
     "greeting": "Hola",
     "seeYouIn": "See you in",
     "countdown": {
@@ -668,6 +672,7 @@
       "provisional": "Provisional",
       "final": "Final"
     },
+    "headCount": "Head count",
     "adults": {
       "none": "adult",
       "singular": "adult",
@@ -783,7 +788,8 @@
       "noResults": "No results",
       "scrollForMore": "Scroll for more",
       "loadMore": "Load more",
-      "endOfList": "End of list"
+      "endOfList": "End of list",
+      "loading": "Loading guest list…"
     },
     "modal": {
       "viewProfile": "Guest profile",
@@ -866,6 +872,7 @@
     "empty": "No guests to display. Add your first guest to get started."
   },
   "milestones": {
+    "loading": "Loading milestones…",
     "headerMeta": "PLANNING",
     "title": "Milestones",
     "subtitle": "Your own checklist for getting ready — never seen by guests.",
@@ -992,6 +999,7 @@
     }
   },
   "people": {
+    "loading": "Loading people…",
     "eyebrow_singular": "{{count}} person going",
     "eyebrow_plural": "{{count}} people going",
     "title": "Find",

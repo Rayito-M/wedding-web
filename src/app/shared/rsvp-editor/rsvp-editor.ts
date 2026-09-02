@@ -628,6 +628,7 @@ export class RsvpEditor {
         lastName: '',
         options: {},
         kind: 'plus-one',
+        attending: true,
       },
     });
   }

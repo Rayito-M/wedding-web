@@ -7,15 +7,17 @@ import {
   UserProfileDto,
   UserDto,
   MilestoneDto,
+  GuestDto,
 } from '../api';
 
 export enum EntityNamesEnum {
-  WEDDING_CONFIG = 'WeddingConfig',
-  WEDDING_CONFIG_PUBLIC = 'WeddingConfigPublic',
+  GUEST = 'Guest',
+  MILESTONE = 'Milestone',
   RSVP = 'Rsvp',
   USER = 'User',
   USER_PROFILE = 'UserProfile',
-  MILESTONE = 'Milestone',
+  WEDDING_CONFIG = 'WeddingConfig',
+  WEDDING_CONFIG_PUBLIC = 'WeddingConfigPublic',
 }
 
 /**
@@ -31,6 +33,21 @@ export enum EntityNamesEnum {
  * are added as their tasks land.
  */
 export const entityMetadata: EntityMetadataMap = {
+  [EntityNamesEnum.GUEST]: {
+    selectId: (guest: GuestDto) => guest.id,
+  },
+  [EntityNamesEnum.MILESTONE]: {
+    selectId: (milestone: MilestoneDto) => milestone.id,
+  },
+  [EntityNamesEnum.RSVP]: {
+    selectId: (rsvp: RsvpDto) => rsvp.id,
+  },
+  [EntityNamesEnum.USER]: {
+    selectId: (user: UserDto) => user.id,
+  },
+  [EntityNamesEnum.USER_PROFILE]: {
+    selectId: (profile: UserProfileDto) => profile.id,
+  },
   [EntityNamesEnum.WEDDING_CONFIG]: {
     // `GET /v1/config/public` is a singleton resource, but the API document
     // carries its own stable `id`; using it keeps the collection honest (at
@@ -43,18 +60,6 @@ export const entityMetadata: EntityMetadataMap = {
     // most one entry, keyed by the server-issued id).
     selectId: (config: WeddingConfigPublicResponseDto) => config.id,
   },
-  [EntityNamesEnum.RSVP]: {
-    selectId: (rsvp: RsvpDto) => rsvp.id,
-  },
-  [EntityNamesEnum.USER]: {
-    selectId: (user: UserDto) => user.id,
-  },
-  [EntityNamesEnum.USER_PROFILE]: {
-    selectId: (profile: UserProfileDto) => profile.id,
-  },
-  [EntityNamesEnum.MILESTONE]: {
-    selectId: (milestone: MilestoneDto) => milestone.id,
-  },
 };
 
 /**
@@ -63,12 +68,13 @@ export const entityMetadata: EntityMetadataMap = {
  * a custom data service). The invariant plural documents the singleton nature.
  */
 export const pluralNames: Record<EntityNamesEnum, string> = {
-  [EntityNamesEnum.WEDDING_CONFIG]: 'WeddingConfig',
-  [EntityNamesEnum.WEDDING_CONFIG_PUBLIC]: 'WeddingConfigPublic',
+  [EntityNamesEnum.GUEST]: 'Guest',
+  [EntityNamesEnum.MILESTONE]: 'Milestone',
   [EntityNamesEnum.RSVP]: 'Rsvp',
   [EntityNamesEnum.USER]: 'User',
   [EntityNamesEnum.USER_PROFILE]: 'UserProfile',
-  [EntityNamesEnum.MILESTONE]: 'Milestone',
+  [EntityNamesEnum.WEDDING_CONFIG]: 'WeddingConfig',
+  [EntityNamesEnum.WEDDING_CONFIG_PUBLIC]: 'WeddingConfigPublic',
 };
 
 export const entityConfig: EntityDataModuleConfig = {

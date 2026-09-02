@@ -25,6 +25,7 @@ import {
   WeddingConfigResponseDto,
   byAgendaTime,
   EntityNamesEnum,
+  isFirstLoad,
   extractAgendaTime,
   UserDto,
   CreateUserDto,
@@ -226,10 +227,22 @@ export class ConfigManager implements OnInit {
   private savedFlashTimer: ReturnType<typeof setTimeout> | undefined;
 
   protected readonly sections = SECTIONS;
+
+  /** Two placeholder fields, for each `.grid-2` row of the loading form. */
+  protected readonly pendingFieldPair = [0, 1];
   protected readonly editLangs = EDIT_LANGS;
   protected readonly appLanguages = APP_LANGUAGES;
   protected readonly priceTiers = PRICE_TIERS;
   protected readonly themeSwatches = THEME_SWATCHES;
+
+  /**
+   * The persisted document has not arrived yet, so `cfg()` below is still
+   * `buildEmptyConfig()` — blank fields and version 0, which an editor must
+   * not offer as if they were the wedding's real settings. The panel area
+   * shows the in-place loader until the read lands; the section rail stays
+   * usable and the toolbar keeps its (disabled) Save.
+   */
+  protected readonly loading = isFirstLoad(this.weddingConfigCollection);
 
   protected readonly cfg = signal<ConfigState>(this.weddingConfig() ?? buildEmptyConfig());
   protected readonly section = signal<SectionId>('basics');

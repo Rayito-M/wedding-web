@@ -1,7 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { GuestListResponseDtoItemsInnerRelationOneOf, UpdateUserProfileDto } from '@app/core';
+import {
+  GuestListResponseDtoItemsInnerRelationOneOf,
+  UpdateUserProfileDto,
+  UserListResponseDtoItemsInnerDelegateToInner,
+} from '@app/core';
 import { langDescription } from '@app/model';
 import { GuestSeg } from '@app/shared/guest-seg/guest-seg';
 import { TextInput } from '@app/shared/input/input';
@@ -36,6 +40,7 @@ export interface ProfileFieldsValue {
   phoneNumber: string;
   preferredLang: UpdateUserProfileDto.PreferredLangEnum;
   relation?: RelationFieldsValue;
+  delegateTo?: UserListResponseDtoItemsInnerDelegateToInner[];
 }
 
 const DEFAULT_VALUE: ProfileFieldsValue = {
@@ -45,6 +50,7 @@ const DEFAULT_VALUE: ProfileFieldsValue = {
   email: '',
   phoneNumber: '',
   preferredLang: LANG_ENUM.EN,
+  delegateTo: [],
 };
 
 /** Fallback handed to `<app-relation-fields>` when `value().relation` is

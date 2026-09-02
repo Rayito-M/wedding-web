@@ -2,7 +2,67 @@
   @if (loadError()) {
     <app-error [message]="loadError()!" (retry)="retryLoad()" />
   } @else {
-    <app-loading />
+    <!-- Loading draws the settled chrome with the unknowns as skeletons (see
+         %skeleton-bar), so the header does not resize and the list does not
+         appear from nothing. The headings and the three counter captions are
+         static copy and are shown for real; only the counts, the New button
+         and the rows are unknown. -->
+    <span class="sr-only" role="status">{{ 'milestones.loading' | translate }}</span>
+
+    <div class="header">
+      <div class="header-title">
+        <span class="header-meta">{{ 'milestones.headerMeta' | translate }}</span>
+        <h1 class="header-text">{{ 'milestones.title' | translate }}</h1>
+        <p class="sub">{{ 'milestones.subtitle' | translate }}</p>
+      </div>
+      <div class="header-counters">
+        @for (caption of pendingCounters; track caption) {
+          <div class="counter">
+            <div class="counter-value">
+              <span class="skeleton value-bar" aria-hidden="true">&nbsp;</span>
+            </div>
+            <div class="counter-label">{{ caption | translate }}</div>
+          </div>
+        }
+        <!-- The real New button is conditional on there being milestones, so a
+             placeholder holds its box either way rather than the header
+             growing a row's height when it appears. -->
+        <span class="new-btn btn-placeholder skeleton" aria-hidden="true">&nbsp;</span>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="list">
+        <div class="list-inner">
+          <!-- The list's length is unknown until the read lands; four rows is a
+               typical timeline. A longer or shorter list still reflows here. -->
+          @for (row of pendingRows; track row) {
+            <div class="row">
+              <div class="row-date">
+                <span class="skeleton date-bar" aria-hidden="true">&nbsp;</span>
+              </div>
+              <div class="row-rail">
+                <span class="rail-line"></span>
+                <span class="rail-dot dot-loading"></span>
+              </div>
+              <div class="card">
+                <div class="card-top">
+                  <span class="card-title"
+                    ><span class="skeleton title-bar" aria-hidden="true">&nbsp;</span></span
+                  >
+                  <app-status-pill [loading]="true" />
+                </div>
+                <div class="card-meta">
+                  <span class="card-meta-text"
+                    ><span class="skeleton meta-bar" aria-hidden="true">&nbsp;</span></span
+                  >
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
   }
 } @else {
   <div class="header">
@@ -35,7 +95,12 @@
   @if (actionError()) {
     <div class="action-error">
       <span>{{ actionError() }}</span>
-      <button type="button" class="dismiss" (click)="dismissActionError()" [attr.aria-label]="'shared.close' | translate">
+      <button
+        type="button"
+        class="dismiss"
+        (click)="dismissActionError()"
+        [attr.aria-label]="'shared.close' | translate"
+      >
         &times;
       </button>
     </div>
@@ -86,7 +151,11 @@
                   <span class="today-countdown-line"></span>
                   @if (daysToGo() !== null) {
                     <span class="today-countdown-text">
-                      {{ ('milestones.daysToGo' | pluralTranslate: daysToGo()!) | translate: { count: daysToGo()! } }}
+                      {{
+                        'milestones.daysToGo'
+                          | pluralTranslate: daysToGo()!
+                          | translate: { count: daysToGo()! }
+                      }}
                     </span>
                   }
                 </div>
@@ -118,7 +187,10 @@
                     type="button"
                     class="pill-toggle"
                     (click)="toggleReached(m, $event)"
-                    [attr.aria-label]="(m.reached ? 'milestones.markNotReached' : 'milestones.markReached') | translate"
+                    [attr.aria-label]="
+                      (m.reached ? 'milestones.markNotReached' : 'milestones.markReached')
+                        | translate
+                    "
                   >
                     <app-status-pill [variant]="milestoneStatus(m)">
                       {{ statusLabelKey(m) | translate }}
@@ -132,13 +204,28 @@
                            send-state, a distinct branch from the internal
                            relative-time line below, never a mutation of it. -->
                       @if (m.announcement; as ann) {
-                        {{ 'milestones.announcement.sentOn' | translate: { date: (ann.sentAt | date: 'd MMM y' : '' : primaryLang()) } }}
-                        · {{ 'milestones.announcement.sentCounts' | translate: { recipientCount: ann.recipientCount, reachableCount: ann.reachableCount } }}
+                        {{
+                          'milestones.announcement.sentOn'
+                            | translate
+                              : { date: (ann.sentAt | date: 'd MMM y' : '' : primaryLang()) }
+                        }}
+                        ·
+                        {{
+                          'milestones.announcement.sentCounts'
+                            | translate
+                              : {
+                                  recipientCount: ann.recipientCount,
+                                  reachableCount: ann.reachableCount,
+                                }
+                        }}
                       } @else if (m.announcementType && m.audience) {
-                        {{ announcementTypeLabel(m.announcementType) }} · {{ audienceLabel(m.audience) }}
+                        {{ announcementTypeLabel(m.announcementType) }} ·
+                        {{ audienceLabel(m.audience) }}
                         @if (audiencesLoaded()) {
-                          · {{
-                            ('milestones.row.recipients' | pluralTranslate: (audienceSize(m.audience) ?? 0))
+                          ·
+                          {{
+                            'milestones.row.recipients'
+                              | pluralTranslate: audienceSize(m.audience) ?? 0
                               | translate: { count: audienceSize(m.audience) ?? 0 }
                           }}
                         }
@@ -155,13 +242,15 @@
                         }
                         @case ('overdue') {
                           {{
-                            ('milestones.relative.overdueDays' | pluralTranslate: relativeDays(m))
+                            'milestones.relative.overdueDays'
+                              | pluralTranslate: relativeDays(m)
                               | translate: { count: relativeDays(m) }
                           }}
                         }
                         @default {
                           {{
-                            ('milestones.relative.inDays' | pluralTranslate: relativeDays(m))
+                            'milestones.relative.inDays'
+                              | pluralTranslate: relativeDays(m)
                               | translate: { count: relativeDays(m) }
                           }}
                         }
@@ -209,7 +298,11 @@
                 <span class="today-countdown-line"></span>
                 @if (daysToGo() !== null) {
                   <span class="today-countdown-text">
-                    {{ ('milestones.daysToGo' | pluralTranslate: daysToGo()!) | translate: { count: daysToGo()! } }}
+                    {{
+                      'milestones.daysToGo'
+                        | pluralTranslate: daysToGo()!
+                        | translate: { count: daysToGo()! }
+                    }}
                   </span>
                 }
               </div>
@@ -233,10 +326,19 @@
           <div class="detail-header">
             <div class="detail-heading">
               <span class="eyebrow">
-                {{ (panel().kind === 'create' ? 'milestones.form.createEyebrow' : 'milestones.form.editEyebrow') | translate }}
+                {{
+                  (panel().kind === 'create'
+                    ? 'milestones.form.createEyebrow'
+                    : 'milestones.form.editEyebrow'
+                  ) | translate
+                }}
               </span>
               <h2>
-                {{ panel().kind === 'create' ? ('milestones.form.createTitle' | translate) : titleFor(selectedMilestone()!) }}
+                {{
+                  panel().kind === 'create'
+                    ? ('milestones.form.createTitle' | translate)
+                    : titleFor(selectedMilestone()!)
+                }}
               </h2>
               @if (selectedMilestone(); as m) {
                 <div class="detail-status">
@@ -244,7 +346,10 @@
                     type="button"
                     class="pill-toggle"
                     (click)="toggleReached(m, $event)"
-                    [attr.aria-label]="(m.reached ? 'milestones.markNotReached' : 'milestones.markReached') | translate"
+                    [attr.aria-label]="
+                      (m.reached ? 'milestones.markNotReached' : 'milestones.markReached')
+                        | translate
+                    "
                   >
                     <app-status-pill [variant]="milestoneStatus(m)">
                       {{ statusLabelKey(m) | translate }}
@@ -279,7 +384,12 @@
             }
 
             <button type="button" class="disclosure" (click)="toggleOtherLocales()">
-              {{ (showOtherLocales() ? 'milestones.form.hideOtherLanguages' : 'milestones.form.otherLanguages') | translate }}
+              {{
+                (showOtherLocales()
+                  ? 'milestones.form.hideOtherLanguages'
+                  : 'milestones.form.otherLanguages'
+                ) | translate
+              }}
             </button>
             @if (showOtherLocales()) {
               @for (lang of otherLangs(); track lang) {
@@ -339,14 +449,21 @@
               <div class="field">
                 <span class="field-label">{{ 'milestones.form.kindLabel' | translate }}</span>
                 <app-pill>
-                  {{ (m.kind === KindEnum.GUEST_FACING ? 'milestones.form.kind.guestFacing' : 'milestones.form.kind.internal') | translate }}
+                  {{
+                    (m.kind === KindEnum.GUEST_FACING
+                      ? 'milestones.form.kind.guestFacing'
+                      : 'milestones.form.kind.internal'
+                    ) | translate
+                  }}
                 </app-pill>
               </div>
 
               @if (m.kind === KindEnum.GUEST_FACING) {
                 <div class="announcement-config">
                   <div class="field">
-                    <span class="field-label">{{ 'milestones.form.announcementTypeLabel' | translate }}</span>
+                    <span class="field-label">{{
+                      'milestones.form.announcementTypeLabel' | translate
+                    }}</span>
                     <div class="chip-row">
                       @for (type of announcementTypes; track type) {
                         <button
@@ -362,7 +479,9 @@
                   </div>
 
                   <div class="field">
-                    <span class="field-label">{{ 'milestones.form.audienceLabel' | translate }}</span>
+                    <span class="field-label">{{
+                      'milestones.form.audienceLabel' | translate
+                    }}</span>
                     @if (audiencesLoaded()) {
                       <div class="chip-row">
                         @for (a of audiences(); track a.id) {
@@ -374,7 +493,10 @@
                           >
                             <span>{{ audienceLabel(a.id) }}</span>
                             <span class="chip-counts">
-                              {{ 'milestones.announcement.audienceCounts' | translate: { size: a.size, reachable: a.reachableSize } }}
+                              {{
+                                'milestones.announcement.audienceCounts'
+                                  | translate: { size: a.size, reachable: a.reachableSize }
+                              }}
                             </span>
                           </button>
                         }
@@ -385,23 +507,52 @@
                   @if (m.announcement; as ann) {
                     <div class="announcement-sent">
                       <p class="field-hint">
-                        {{ 'milestones.announcement.sentOn' | translate: { date: (ann.sentAt | date: 'd MMM y' : '' : primaryLang()) } }}
-                        · {{ 'milestones.announcement.sentCounts' | translate: { recipientCount: ann.recipientCount, reachableCount: ann.reachableCount } }}
+                        {{
+                          'milestones.announcement.sentOn'
+                            | translate
+                              : { date: (ann.sentAt | date: 'd MMM y' : '' : primaryLang()) }
+                        }}
+                        ·
+                        {{
+                          'milestones.announcement.sentCounts'
+                            | translate
+                              : {
+                                  recipientCount: ann.recipientCount,
+                                  reachableCount: ann.reachableCount,
+                                }
+                        }}
                       </p>
-                      <button type="button" class="disclosure mark-not-sent-btn" (click)="requestClearAnnouncement()">
+                      <button
+                        type="button"
+                        class="disclosure mark-not-sent-btn"
+                        (click)="requestClearAnnouncement()"
+                      >
                         {{ 'milestones.announcement.markNotSent' | translate }}
                       </button>
                     </div>
                   } @else if (m.reached) {
                     <div class="announcement-sent">
-                      <p class="field-hint">{{ 'milestones.announcement.reachedHint' | translate }}</p>
+                      <p class="field-hint">
+                        {{ 'milestones.announcement.reachedHint' | translate }}
+                      </p>
                     </div>
                   } @else {
                     <div class="announcement-send">
                       <p class="field-hint">
-                        {{ (canSend(m) ? 'milestones.announcement.sendHint' : 'milestones.announcement.sendDisabledHint') | translate }}
+                        {{
+                          (canSend(m)
+                            ? 'milestones.announcement.sendHint'
+                            : 'milestones.announcement.sendDisabledHint'
+                          ) | translate
+                        }}
                       </p>
-                      <button app-btn type="button" class="send-btn" [disabled]="!canSend(m)" (click)="requestSend()">
+                      <button
+                        app-btn
+                        type="button"
+                        class="send-btn"
+                        [disabled]="!canSend(m)"
+                        (click)="requestSend()"
+                      >
                         {{ 'milestones.announcement.sendButton' | translate }}
                       </button>
                     </div>
@@ -428,7 +579,12 @@
                 } @else {
                   <div class="internal-not-reached">
                     <p class="field-hint">{{ 'milestones.internal.hint' | translate }}</p>
-                    <button app-btn type="button" class="mark-reached-btn" (click)="toggleReached(m, $event)">
+                    <button
+                      app-btn
+                      type="button"
+                      class="mark-reached-btn"
+                      (click)="toggleReached(m, $event)"
+                    >
                       {{ 'milestones.markReached' | translate }}
                     </button>
                   </div>

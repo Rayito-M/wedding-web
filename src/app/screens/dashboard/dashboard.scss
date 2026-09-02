@@ -37,33 +37,51 @@
   border: 1px solid var(--border-hairline);
   position: relative;
   overflow: hidden;
+
+  // No min-height: the loading state renders the settled elements as skeletons
+  // (see %skeleton-bar), so the card measures the same in both states without a
+  // hand-computed floor to keep in step with the type scale.
 }
 
 .deco-fish {
   @extend %deco-fish-base;
 }
 
+// Four counts on one row in every language. The Spanish labels
+// (CONFIRMADOS / PENDIENTE / RECHAZADOS) run ~6 characters longer than the
+// English ones, so at the shared .label tracking they ate the whole row and
+// space-between had nothing left to distribute — the numbers touched. The row
+// therefore takes the card's full width instead of a 280px cap, holds a floor
+// under the column gap, and tightens the label type inside this card only.
 .stats {
   display: flex;
   justify-content: space-between;
+  column-gap: 12px;
   position: relative;
-  max-width: 280px;
+  // Caps the spread on desktop, where the card is far wider than the row needs;
+  // on a phone the card is narrower than this and the cap never binds. The row
+  // runs under the decorative fish at the top-right exactly as it did before —
+  // .stats is positioned, so it paints above it.
+  max-width: 380px;
 }
 
 .stat {
   .value {
-    font-family: t.$font-serif;
-    font-size: 30px;
-    line-height: 1;
-    color: var(--ink);
+    @extend %stat-value;
 
     &.accent {
       color: var(--brand-accent);
     }
   }
 
+  // Takes the shared stat caption, then tightens it: four labels share one row
+  // here (see the note above), which the shared 10px/0.14em setting cannot fit
+  // in Spanish. Only this card overrides it.
   .stat-label {
-    margin-top: 4px;
+    @extend %stat-label;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
   }
 }
 
@@ -79,6 +97,29 @@
   color: var(--text-muted);
   margin-top: 6px;
   letter-spacing: 0.06em;
+}
+
+// Loading state — see %skeleton-bar. The progress bar keeps its own component
+// so the 4px track height matches by construction; `aria-hidden` on it stops a
+// placeholder 0% being announced as a real figure.
+.skeleton {
+  @include primitives.skeleton-bar;
+
+  &.value {
+    width: 1.75rem;
+  }
+
+  &.progress {
+    background: var(--border-hairline);
+  }
+
+  &.caption {
+    width: 65%;
+  }
+}
+
+.sr-only {
+  @extend %sr-only;
 }
 
 .tiles {

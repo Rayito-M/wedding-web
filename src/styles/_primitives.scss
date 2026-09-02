@@ -151,3 +151,87 @@
   right: 12px;
   opacity: 0.5;
 }
+
+// ── Stat Primitives ──
+// One vocabulary for every "big number + caption" surface: the dashboard's
+// four-across RSVP counts (.stat) and the app-stat-tile cards under it sit on
+// the same screen, so their numbers must read at one size. The DS renders
+// StatTile's value at 22px and the Home stats at 30px; the dashboard card is
+// the reference here, and the tiles follow it.
+
+/// Serif stat number. Line-height 1 so the value box measures exactly its
+/// font-size — the dashboard card's min-height math depends on that.
+%stat-value {
+  font-family: t.$font-serif;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+/// Caption under (or over) a stat value.
+%stat-label {
+  @extend %eyebrow-wide;
+  margin-top: 4px;
+}
+
+/// Secondary line under a stat value (breakdowns, units).
+%stat-sub {
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+}
+
+// ── Loading Primitives ──
+// `app-content-loading` is a *screen-region* loader: 2rem of padding around a
+// 2rem spinner and a caption. Dropped inside a card or a tile it is roughly
+// twice as tall as the content it stands in for, so the box visibly collapses
+// when the read lands. Inside a bounded surface, skeleton the settled elements
+// instead — put this on the real `.value` / `.caption` element holding an
+// `&nbsp;` and it inherits that element's own font metrics and margins, so the
+// loading box is the settled box by construction rather than by a hand-measured
+// min-height that drifts the next time the type scale moves.
+//
+// A mixin, not a placeholder: `@extend` would not carry the keyframes, and a
+// bare `@keyframes` in this file would be emitted into every component that
+// `@use`s it.
+@mixin skeleton-bar {
+  color: transparent;
+  background: var(--border-hairline);
+  border-radius: t.$radius-pill;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+
+  // The `role="status"` line already announces the wait, so drop the pulse
+  // rather than leave it running for anyone who asked for less motion.
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+
+  @keyframes skeleton-pulse {
+    50% {
+      opacity: 0.45;
+    }
+  }
+}
+
+/// Text carried for screen readers only — a `role="status"` line naming a wait
+/// whose visible form is a skeleton.
+%sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/// Box of a skeleton standing in for an `app-input`. That component is an
+/// attribute selector on a native `<input>`, so unlike app-pill/app-status-pill
+/// it cannot carry its own loading state and every screen with one has to draw
+/// the box. Use alongside the `skeleton-bar` mixin, which supplies the fill.
+@mixin skeleton-input-box {
+  padding: 12px 14px;
+  font-size: t.$text-heading;
+  // The input radius, not the pill radius `skeleton-bar` defaults to.
+  border-radius: var(--radius-input);
+  box-sizing: border-box;
+}

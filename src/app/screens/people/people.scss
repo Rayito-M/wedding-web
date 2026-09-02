@@ -220,6 +220,49 @@
   color: var(--text-muted);
 }
 
+// ── Loading state ────────────────────────────────────────────────────────
+// See %skeleton-bar. Bars sit inside (or on) the element they stand in for, so
+// they inherit its type metrics. app-pill carries its own loading state; the
+// avatar only needs its fill replaced, since app-avatar already sizes itself.
+// Placed after the rules above so the flat fill wins on equal specificity.
+
+.skeleton {
+  @include primitives.skeleton-bar;
+}
+
+// The eyebrow previously rendered as an empty box while loading, which has no
+// line box and so collapsed to zero height — the title jumped up by a line
+// when the count landed. A bar gives it the height its text will have.
+.eyebrow .eyebrow-bar {
+  display: inline-block;
+  width: 7rem;
+}
+
+.search-bar {
+  @include primitives.skeleton-input-box;
+}
+
+// Rides on .filter-chip itself, so the chip's padding, type and radius are
+// stated once; only the fill and border change.
+.filters .filter-chip.skeleton {
+  border-color: transparent;
+  width: 4.5rem;
+}
+
+.name .name-bar {
+  display: inline-block;
+  width: 65%;
+}
+
+.contact-line .contact-bar {
+  display: inline-block;
+  width: 55%;
+}
+
+.sr-only {
+  @extend %sr-only;
+}
+
 @media (min-width: 900px) {
   .page {
     padding: var(--space-5) var(--space-7) var(--space-6);

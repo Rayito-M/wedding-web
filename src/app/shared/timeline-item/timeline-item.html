@@ -1,36 +1,55 @@
-<div class="time">{{ time() }}</div>
-<div class="rail">
-  <span class="dot"></span>
-  @if (!last()) {
-    <span class="line"></span>
-  }
-</div>
-<div class="body">
-  <div class="row">
-    <div class="item-title">{{ heading() }}</div>
-    <div class="badges">
-      @if (tag()) {
-        <span class="tag">{{ tag() }}</span>
-      }
-      @if (showBadge()) {
-        <span class="status-badge">{{ statusLabelKey() | translate }}</span>
-      }
-    </div>
-  </div>
-  @if (sub()) {
-    <div class="item-sub">{{ sub() }}</div>
-  }
-  @if (venue()) {
-    @if (venueId()) {
-      <a
-        class="item-venue is-link"
-        [routerLink]="travelRoute"
-        [queryParams]="venueQueryParams()"
-        [attr.aria-label]="'shared.venueOnMap' | translate: { name: venue() }"
-        >{{ venue() }}</a
-      >
-    } @else {
-      <div class="item-venue">{{ venue() }}</div>
+@if (loading()) {
+  <!-- The row owns its own skeleton so the placeholder inherits these exact
+       metrics (50px time gutter, rail, body type) instead of a screen
+       re-deriving them. See %skeleton-bar. -->
+  <div class="time"><span class="skeleton time-bar" aria-hidden="true">&nbsp;</span></div>
+  <div class="rail">
+    <span class="dot dot-loading"></span>
+    @if (!last()) {
+      <span class="line"></span>
     }
-  }
-</div>
+  </div>
+  <div class="body">
+    <div class="row">
+      <div class="item-title skeleton" aria-hidden="true">&nbsp;</div>
+    </div>
+    <div class="item-sub skeleton" aria-hidden="true">&nbsp;</div>
+  </div>
+} @else {
+  <div class="time">{{ time() }}</div>
+  <div class="rail">
+    <span class="dot"></span>
+    @if (!last()) {
+      <span class="line"></span>
+    }
+  </div>
+  <div class="body">
+    <div class="row">
+      <div class="item-title">{{ heading() }}</div>
+      <div class="badges">
+        @if (tag()) {
+          <span class="tag">{{ tag() }}</span>
+        }
+        @if (showBadge()) {
+          <span class="status-badge">{{ statusLabelKey() | translate }}</span>
+        }
+      </div>
+    </div>
+    @if (sub()) {
+      <div class="item-sub">{{ sub() }}</div>
+    }
+    @if (venue()) {
+      @if (venueId()) {
+        <a
+          class="item-venue is-link"
+          [routerLink]="travelRoute"
+          [queryParams]="venueQueryParams()"
+          [attr.aria-label]="'shared.venueOnMap' | translate: { name: venue() }"
+          >{{ venue() }}</a
+        >
+      } @else {
+        <div class="item-venue">{{ venue() }}</div>
+      }
+    }
+  </div>
+}

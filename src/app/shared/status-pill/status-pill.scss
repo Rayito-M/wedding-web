@@ -1,3 +1,5 @@
+@use '../../../styles/primitives';
+
 // Status pill for agenda final/provisional state (DS inline pattern from
 // ScreenSchedule.jsx `statusPill` / ScreenHome.jsx `schedulePill`).
 // Consolidated from duplicated rules in screens/schedule/ + screens/invitee/
@@ -43,4 +45,12 @@
   background: var(--danger);
   color: var(--on-danger);
   border: 1px solid var(--danger);
+}
+
+// Loading placeholder — see %skeleton-bar. Last in the file so it wins over
+// the equal-specificity variant rules above, whatever `variant` still reads.
+:host(.is-loading) {
+  @include primitives.skeleton-bar;
+  border: 1px solid transparent;
+  min-width: 76px;
 }

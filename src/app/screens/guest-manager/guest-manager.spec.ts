@@ -31,7 +31,9 @@ function profile(overrides: Partial<UserProfileDto> = {}): UserProfileDto {
   };
 }
 
-async function createGuestManager(profiles: UserProfileDto[]): Promise<ComponentFixture<GuestManager>> {
+async function createGuestManager(
+  profiles: UserProfileDto[],
+): Promise<ComponentFixture<GuestManager>> {
   await TestBed.configureTestingModule({
     imports: [GuestManager],
     providers: [
@@ -678,9 +680,9 @@ describe('GuestManager — "open their profile" full-chain jump renders the real
 
     TestBed.inject(TranslateService).setTranslation('en', {}, true);
 
-    const profileCollection = TestBed.inject(EntityServices).getEntityCollectionService<UserProfileDto>(
-      EntityNamesEnum.USER_PROFILE,
-    );
+    const profileCollection = TestBed.inject(
+      EntityServices,
+    ).getEntityCollectionService<UserProfileDto>(EntityNamesEnum.USER_PROFILE);
     // Two distinct profiles, seeded with different names/nicknames/relations
     // so a seeding mismatch (e.g. the wrong id threaded through the chain)
     // would show up as the wrong values in the final assertion.
@@ -961,6 +963,14 @@ describe('GuestManager — ARIA table semantics (T332)', () => {
 
   it('gives the empty state the same full-width row/cell semantics', async () => {
     const fixture = await createGuestManager([]);
+    // "No guests" is only true once the API has answered: until then the
+    // screen shows the in-place loader in the content region, not an empty
+    // table.
+    TestBed.inject(HttpTestingController)
+      .expectOne((req) => req.method === 'GET' && req.url.endsWith('/v1/profile'))
+      .flush({ items: [], nextCursor: null, count: 0, profiles: [] });
+    await fixture.whenStable();
+    fixture.detectChanges();
 
     const emptyRow = fixture.nativeElement.querySelector('.empty-state') as HTMLElement;
 
@@ -1089,5 +1099,48 @@ describe('GuestManager — keyboard activation fires each handler once (T333)', 
 
     expect(filterSpy).toHaveBeenCalledTimes(1);
     expect(filterSpy).toHaveBeenCalledWith('attending');
+  });
+});
+
+/**
+ * The in-place loading state: while the screen's first profile read is in
+ * flight there is nothing honest to draw below the header — the filter chips
+ * would all read "· 0" — so the content region draws its own shape with the
+ * unknowns as skeletons instead of either lying or blanking. What must hold is
+ * that no *real* row is on screen (the placeholder rows carry no open button),
+ * and that the state is scoped to the *first* read with an empty cache: a later
+ * page, or rows another screen already primed the shared collection with, must
+ * never be replaced by placeholders.
+ */
+describe('GuestManager — in-place loading state', () => {
+  it('draws placeholders instead of rows while the first read is in flight, then restores', async () => {
+    const fixture = await createGuestManager([]);
+
+    expect(fixture.nativeElement.querySelectorAll('.skeleton').length).toBeGreaterThan(0);
+    // Placeholder rows, but not one real guest: the open button is what makes a
+    // row real, and the placeholders deliberately carry none.
+    expect(fixture.nativeElement.querySelectorAll('.table-row').length).toBeGreaterThan(0);
+    expect(fixture.nativeElement.querySelector('.row-open-btn')).toBeNull();
+    // The header is not part of the content region and stays on screen.
+    expect(fixture.nativeElement.querySelector('.header')).not.toBeNull();
+
+    TestBed.inject(HttpTestingController)
+      .expectOne((req) => req.method === 'GET' && req.url.endsWith('/v1/profile'))
+      .flush({ items: [profile()], nextCursor: null, count: 1, profiles: [profile()] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('.skeleton').length).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.table-row').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.row-open-btn')).not.toBeNull();
+  });
+
+  it('keeps rows already in the shared cache on screen instead of replacing them', async () => {
+    // `createGuestManager` primes the collection before the component mounts,
+    // exactly as a screen visited earlier would have.
+    const fixture = await createGuestManager([profile()]);
+
+    expect(fixture.nativeElement.querySelectorAll('.skeleton').length).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.table-row').length).toBe(1);
   });
 });

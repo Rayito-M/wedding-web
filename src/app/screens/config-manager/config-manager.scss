@@ -898,6 +898,33 @@
   margin-bottom: var(--space-4);
 }
 
+// ── Loading state ────────────────────────────────────────────────────────
+// See %skeleton-bar. The section heading and note are real copy; the labels
+// and inputs are bars, since one placeholder form stands in for all seven
+// sections.
+
+.skeleton {
+  @include primitives.skeleton-bar;
+}
+
+.version-bar {
+  display: inline-block;
+  width: 5rem;
+}
+
+.field-label.label-bar {
+  display: inline-block;
+  width: 40%;
+}
+
+.input-bar {
+  @include primitives.skeleton-input-box;
+}
+
+.sr-only {
+  @extend %sr-only;
+}
+
 @media (min-width: 900px) {
   .toolbar {
     display: flex;

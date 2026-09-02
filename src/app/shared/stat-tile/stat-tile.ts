@@ -14,4 +14,6 @@ export class StatTile {
   readonly label = input.required<string>();
   readonly value = input.required<string>();
   readonly sub = input('');
+  readonly loading = input(true);
+  readonly loadingLLabel = input('shared.loading');
 }

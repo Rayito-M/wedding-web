@@ -1,1 +1,5 @@
-<ng-content></ng-content>
+@if (loading()) {
+  &nbsp;
+} @else {
+  <ng-content></ng-content>
+}

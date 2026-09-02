@@ -1,5 +1,15 @@
-<div class="label">{{ label() | translate }}</div>
-<div class="value">{{ value() | translate }}</div>
-@if (sub()) {
-  <div class="sub">{{ sub() | translate }}</div>
+<div class="label">{{ label() }}</div>
+@if (loading()) {
+  <!-- Skeletons reuse the settled `.value` / `.sub` classes and hold a `&nbsp;`,
+       so the tile is exactly as tall while loading as it is once filled. -->
+  <div class="value skeleton" aria-hidden="true">&nbsp;</div>
+  @if (sub()) {
+    <div class="sub skeleton" aria-hidden="true">&nbsp;</div>
+  }
+  <span class="sr-only" role="status">{{ loadingLLabel() | translate }}</span>
+} @else {
+  <div class="value">{{ value() }}</div>
+  @if (sub()) {
+    <div class="sub">{{ sub() }}</div>
+  }
 }

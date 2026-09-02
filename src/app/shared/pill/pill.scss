@@ -1,3 +1,5 @@
+@use '../../../styles/primitives';
+
 // Per design system components/core/Pill.jsx
 :host {
   display: inline-block;
@@ -14,4 +16,11 @@
 :host(.accent) {
   background: var(--brand-accent);
   color: var(--on-accent);
+}
+
+// Loading placeholder — see %skeleton-bar. Last in the file so it wins over
+// the equal-specificity tone rule above.
+:host(.is-loading) {
+  @include primitives.skeleton-bar;
+  min-width: 56px;
 }

@@ -155,6 +155,59 @@
   }
 }
 
+// ── Loading state ──
+// See %skeleton-bar. Each bar sits on the element it stands in for, so it
+// inherits that element's font metrics and margins and the card measures the
+// same loading as loaded. The RSVP tick has no loading state of its own, so
+// its 32px circle is restated here; app-status-pill and app-timeline-item own
+// theirs.
+.skeleton {
+  @include primitives.skeleton-bar;
+}
+
+.greeting h1 .skeleton.days {
+  display: inline-block;
+  width: 4.5rem;
+}
+
+.countdown .skeleton {
+  &.label {
+    width: 70%;
+  }
+
+  &.venue {
+    width: 55%;
+  }
+
+  // Keeps app-progress-bar itself, so the 3px track height matches by
+  // construction; only the track colour joins the skeleton palette.
+  &.progress {
+    background: var(--border-hairline);
+  }
+
+  &.caption {
+    width: 40%;
+  }
+}
+
+.rsvp-card .skeleton {
+  // Mirrors app-rsvp-status-tick's 32px circle.
+  &.tick-placeholder {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &.rsvp-title {
+    width: 65%;
+  }
+}
+
+.sr-only {
+  @extend %sr-only;
+}
+
 // Mobile-first single column; desktop reflows to the DS two-column Home grid
 // (countdown + highlights left, RSVP + album right) at maxWidth 900.
 @media (min-width: 900px) {

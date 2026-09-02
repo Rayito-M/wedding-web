@@ -35,7 +35,6 @@ import { Btn } from '@app/shared/button/button';
 import { ConfirmDialog } from '@app/shared/confirm-dialog/confirm-dialog';
 import { AppErrorComponent } from '@app/shared/error/error';
 import { TextInput } from '@app/shared/input/input';
-import { AppLoadingComponent } from '@app/shared/loading/loading';
 import { Pill } from '@app/shared/pill/pill';
 import { StatusPill } from '@app/shared/status-pill/status-pill';
 
@@ -105,7 +104,6 @@ function daysBetween(fromIso: string, toIso: string): number {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     AppErrorComponent,
-    AppLoadingComponent,
     Btn,
     ConfirmDialog,
     DatePipe,
@@ -189,6 +187,19 @@ export class Milestones {
    *  full-screen `app-error` state (with retry), distinct from a mutation
    *  failure (`actionError`), which never blocks the screen. */
   protected readonly loadError = signal<string | null>(null);
+
+  /** The three counter captions, in the order the settled header renders them
+   *  — the loading state shows the real captions and skeletons only the
+   *  counts. */
+  protected readonly pendingCounters = [
+    'milestones.status.reached',
+    'milestones.status.notReached',
+    'milestones.status.atRisk',
+  ];
+
+  /** Placeholder timeline rows for the loading state — see the note in the
+   *  template on why the count is a guess. */
+  protected readonly pendingRows = [0, 1, 2, 3];
 
   /** Surfaced for any failed mutation (tick, create, rename, re-date,
    *  delete) — hub ADR-0029 §5: "a failed write must be surfaced", never

@@ -1,117 +1,170 @@
-<!-- Greeting -->
-<div class="greeting">
-  <div class="hello">{{ 'invitee.greeting' | translate }}, {{ profile()?.firstName }}.</div>
-  <h1>
-    {{ 'invitee.seeYouIn' | translate }} <span class="accent">{{ daysToGo() }} days</span>
-    @if (rsvpStatus() === 'attending') {
-      !
-    } @else {
-      ?
-    }
-  </h1>
-</div>
+<!-- The screen body is one long read of the wedding document (date,
+     countdown, venue, agenda). Rather than blank the body behind a spinner,
+     the loading state draws the same layout with the unknown values as
+     skeletons (see %skeleton-bar), so the cards do not resize or reflow when
+     the read lands. Static copy — the greeting, the RSVP and schedule
+     headings, the links — is real text in both states. -->
+@if (loading()) {
+  <span class="sr-only" role="status">{{ 'invitee.loading' | translate }}</span>
 
-<div class="content">
-  <!-- Countdown card -->
-  <div class="card countdown">
-    <app-decor-fish class="deco-fish" [w]="48" [flip]="true" />
-    <div class="label">
-      {{ weddingConfig()?.date | date: 'EEEE, d MMMM y' : '' : currentLang() }} ·
-      {{ weddingConfig()?.venues?.find((v) => v.type === 'reception')?.city | translate }}
-    </div>
-    <div class="venue">
-      {{ weddingConfig()?.venues?.find((v) => v.type === 'reception')?.name }}
-    </div>
-    <app-progress-bar class="progress" [percent]="(daysToGo() / 365) * 100" [height]="3" />
-    <div class="caption">{{ daysToGo() }} {{ 'invitee.countdown.daysToGo' | translate }}</div>
+  <div class="greeting">
+    <div class="hello">{{ 'invitee.greeting' | translate }}, {{ profile()?.firstName }}.</div>
+    <h1>
+      {{ 'invitee.seeYouIn' | translate }}
+      <span class="skeleton days" aria-hidden="true">&nbsp;</span>
+    </h1>
   </div>
 
-  <!-- RSVP confirmed card -->
-  <div class="card rsvp-card">
-    <app-rsvp-status-tick [status]="rsvpStatus()" />
-    <div class="rsvp-info">
-      <div class="label">{{ 'invitee.rsvp.label' | translate }}</div>
-      <div class="rsvp-title">
-        @if (!rsvp()) {
-          {{ 'invitee.rsvp.notFound' | translate }}
-        } @else if (rsvpStatus() === 'attending') {
-          {{
-            'invitee.rsvp.status.confirmed.adults'
-              | pluralTranslate: adultsCount()
-              | translate: { count: adultsCount() }
-          }}
-          @if (childrenCount() > 0) {
-            {{
-              'invitee.rsvp.status.confirmed.children'
-                | pluralTranslate: childrenCount()
-                | translate: { count: childrenCount() }
-            }}
-          }
-        } @else if (rsvpStatus() === 'pending') {
-          {{ 'invitee.rsvp.status.pending' | translate }}
-        } @else if (rsvpStatus() === 'declined') {
-          {{ 'invitee.rsvp.status.declined' | translate }}
-        }
+  <div class="content">
+    <div class="card countdown">
+      <app-decor-fish class="deco-fish" [w]="48" [flip]="true" />
+      <div class="label skeleton" aria-hidden="true">&nbsp;</div>
+      <div class="venue skeleton" aria-hidden="true">&nbsp;</div>
+      <app-progress-bar class="progress skeleton" [percent]="0" [height]="3" aria-hidden="true" />
+      <div class="caption skeleton" aria-hidden="true">&nbsp;</div>
+    </div>
+
+    <div class="card rsvp-card">
+      <span class="tick-placeholder skeleton" aria-hidden="true"></span>
+      <div class="rsvp-info">
+        <div class="label">{{ 'invitee.rsvp.label' | translate }}</div>
+        <div class="rsvp-title skeleton" aria-hidden="true">&nbsp;</div>
       </div>
-      @if (rsvpStatus() === 'attending' && (adultsCount() > 1 || childrenCount() > 0)) {
-        <div class="rsvp-sub">
-          {{ 'shared.you' | translate }}
-          @if (partner2FirstName()) {
-            - {{ partner2FirstName() }}
-          }
-          @if (childrenCount() > 0) {
-            - {{ childrenFirstNames() }}
-          }
-        </div>
-      }
+      <a class="edit" routerLink="/rsvp">{{ 'shared.edit' | translate }}</a>
     </div>
-    <a class="edit" routerLink="/rsvp">{{ 'shared.edit' | translate }}</a>
-  </div>
 
-  <!-- The day · highlights -->
-  @if (weddingConfig()?.agenda) {
+    <!-- The agenda's length is the one thing a skeleton cannot match: it is
+         unknown until the document lands. Three rows is the typical count of
+         highlighted moments; a longer or shorter agenda still reflows here. -->
     <div class="schedule">
       <div class="schedule-header">
         <div class="label-group">
           <div class="label">{{ 'invitee.schedule.title' | translate }}</div>
-          <app-status-pill [variant]="isAgendaFinal() ? 'final' : 'provisional'">
-            {{
-              (isAgendaFinal()
-                ? 'shared.scheduleStatus.final'
-                : 'shared.scheduleStatus.provisional'
-              ) | translate
-            }}
-          </app-status-pill>
+          <app-status-pill [loading]="true" />
         </div>
         <a class="all" routerLink="/schedule">{{ 'invitee.schedule.all' | translate }}</a>
       </div>
-      @if (!isAgendaFinal()) {
-        <div class="provisional-note">{{ 'invitee.schedule.provisionalNote' | translate }}</div>
+      @for (row of pendingAgendaRows; track row; let last = $last) {
+        <app-timeline-item [loading]="true" [last]="last" />
       }
-      @if (weddingConfig()?.agenda?.items?.length === 0) {
-        <div class="no-events">{{ 'invitee.schedule.noEvents' | translate }}</div>
+    </div>
+  </div>
+} @else {
+  <!-- Greeting -->
+  <div class="greeting">
+    <div class="hello">{{ 'invitee.greeting' | translate }}, {{ profile()?.firstName }}.</div>
+    <h1>
+      {{ 'invitee.seeYouIn' | translate }} <span class="accent">{{ daysToGo() }} days</span>
+      @if (rsvpStatus() === 'attending') {
+        !
       } @else {
-        @for (event of highlightedAgendaItems(); track event.id; let last = $last) {
-          <app-timeline-item
-            [time]="event.time | agendaTime"
-            [heading]="event.title"
-            [sub]="event.desc"
-            [venue]="event.venue"
-            [venueId]="event.venueId"
-            [status]="event.status"
-            [last]="last"
-          />
-        }
+        ?
       }
-    </div>
-  }
+    </h1>
+  </div>
 
-  <!-- Live album preview -->
-  <!-- <a class="card album-row" routerLink="/album">
-    <div class="album-info">
-      <div class="album-title">{{ 'invitee.photos.title' | translate: { count: 247 } }}</div>
-      <div class="album-sub">{{ 'invitee.photos.subtitle' | translate }}</div>
+  <div class="content">
+    <!-- Countdown card -->
+    <div class="card countdown">
+      <app-decor-fish class="deco-fish" [w]="48" [flip]="true" />
+      <div class="label">
+        {{ weddingConfig()?.date | date: 'EEEE, d MMMM y' : '' : currentLang() }} ·
+        {{ weddingConfig()?.venues?.find((v) => v.type === 'reception')?.city | translate }}
+      </div>
+      <div class="venue">
+        {{ weddingConfig()?.venues?.find((v) => v.type === 'reception')?.name }}
+      </div>
+      <app-progress-bar class="progress" [percent]="(1 - daysToGo() / 365) * 100" [height]="3" />
+      <div class="caption">{{ daysToGo() }} {{ 'invitee.countdown.daysToGo' | translate }}</div>
     </div>
-    <span class="arrow" aria-hidden="true">→</span>
-  </a> -->
-</div>
+
+    <!-- RSVP confirmed card -->
+    <div class="card rsvp-card">
+      <app-rsvp-status-tick [status]="rsvpStatus()" />
+      <div class="rsvp-info">
+        <div class="label">{{ 'invitee.rsvp.label' | translate }}</div>
+        <div class="rsvp-title">
+          @if (!rsvp()) {
+            {{ 'invitee.rsvp.notFound' | translate }}
+          } @else if (rsvpStatus() === 'attending') {
+            {{
+              'invitee.rsvp.status.confirmed.adults'
+                | pluralTranslate: adultsCount()
+                | translate: { count: adultsCount() }
+            }}
+            @if (childrenCount() > 0) {
+              {{
+                'invitee.rsvp.status.confirmed.children'
+                  | pluralTranslate: childrenCount()
+                  | translate: { count: childrenCount() }
+              }}
+            }
+          } @else if (rsvpStatus() === 'pending') {
+            {{ 'invitee.rsvp.status.pending' | translate }}
+          } @else if (rsvpStatus() === 'declined') {
+            {{ 'invitee.rsvp.status.declined' | translate }}
+          }
+        </div>
+        @if (rsvpStatus() === 'attending' && (adultsCount() > 1 || childrenCount() > 0)) {
+          <div class="rsvp-sub">
+            {{ 'shared.you' | translate }}
+            @if (partner2FirstName()) {
+              - {{ partner2FirstName() }}
+            }
+            @if (childrenCount() > 0) {
+              - {{ childrenFirstNames() }}
+            }
+          </div>
+        }
+      </div>
+      <a class="edit" routerLink="/rsvp">{{ 'shared.edit' | translate }}</a>
+    </div>
+
+    <!-- The day · highlights -->
+    @if (weddingConfig()?.agenda) {
+      <div class="schedule">
+        <div class="schedule-header">
+          <div class="label-group">
+            <div class="label">{{ 'invitee.schedule.title' | translate }}</div>
+            <app-status-pill [variant]="isAgendaFinal() ? 'final' : 'provisional'">
+              {{
+                (isAgendaFinal()
+                  ? 'shared.scheduleStatus.final'
+                  : 'shared.scheduleStatus.provisional'
+                ) | translate
+              }}
+            </app-status-pill>
+          </div>
+          <a class="all" routerLink="/schedule">{{ 'invitee.schedule.all' | translate }}</a>
+        </div>
+        @if (!isAgendaFinal()) {
+          <div class="provisional-note">{{ 'invitee.schedule.provisionalNote' | translate }}</div>
+        }
+        @if (weddingConfig()?.agenda?.items?.length === 0) {
+          <div class="no-events">{{ 'invitee.schedule.noEvents' | translate }}</div>
+        } @else {
+          @for (event of highlightedAgendaItems(); track event.id; let last = $last) {
+            <app-timeline-item
+              [time]="event.time | agendaTime"
+              [heading]="event.title"
+              [sub]="event.desc"
+              [venue]="event.venue"
+              [venueId]="event.venueId"
+              [status]="event.status"
+              [last]="last"
+            />
+          }
+        }
+      </div>
+    }
+
+    <!-- Live album preview -->
+    <!-- <a class="card album-row" routerLink="/album">
+      <div class="album-info">
+        <div class="album-title">{{ 'invitee.photos.title' | translate: { count: 247 } }}</div>
+        <div class="album-sub">{{ 'invitee.photos.subtitle' | translate }}</div>
+      </div>
+      <span class="arrow" aria-hidden="true">→</span>
+    </a> -->
+  </div>
+}

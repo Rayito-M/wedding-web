@@ -1,3 +1,5 @@
+@use '../../../styles/primitives';
+
 // Per design system components/data-display/TimelineItem.jsx
 :host {
   display: flex;
@@ -147,4 +149,28 @@ a.item-venue {
     opacity: 1;
     text-decoration: underline solid;
   }
+}
+
+// Loading row — see %skeleton-bar. The dot drops to the hairline colour
+// because a status-coloured dot would assert a status that has not loaded.
+.skeleton {
+  @include primitives.skeleton-bar;
+
+  &.time-bar {
+    display: inline-block;
+    width: 34px;
+  }
+
+  &.item-title {
+    width: 55%;
+  }
+
+  &.item-sub {
+    width: 80%;
+  }
+}
+
+.rail .dot.dot-loading {
+  background: var(--border-hairline);
+  border: 0;
 }

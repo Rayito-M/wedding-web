@@ -6,54 +6,93 @@
 </div>
 
 <div class="content">
-  <!-- RSVP stats -->
+  <!-- RSVP stats — every number in this card comes from the profile
+       collection, so while its first read is in flight they are all zeros
+       meaning "not known yet", not "none". The card waits; the greeting above
+       and the manage links below are static and stay usable. -->
+
   <div class="stats-card">
     <app-decor-fish class="deco-fish" [w]="60" [flip]="true" />
-
-    <div class="stats">
-      <div class="stat">
-        <div class="value">{{ statistics.guestStatistics().rsvp.total }}</div>
-        <div class="label stat-label">{{ 'dashboard.rsvp.total' | translate }}</div>
+    @if (statistics.loading()) {
+      <!-- Skeletons on the settled elements: the four labels are static copy and
+           are shown for real, only the counts, the fill and the caption are
+           unknown. The card therefore loads at exactly its settled height. -->
+      <div class="stats">
+        @for (label of pendingRsvpLabels; track label) {
+          <div class="stat">
+            <div class="value skeleton" aria-hidden="true">&nbsp;</div>
+            <div class="label stat-label">{{ label | translate }}</div>
+          </div>
+        }
       </div>
-      <div class="stat">
-        <div class="value accent">{{ statistics.guestStatistics().rsvp.attending }}</div>
-        <div class="label stat-label">{{ 'dashboard.rsvp.attending' | translate }}</div>
+      <app-progress-bar class="progress skeleton" [percent]="0" aria-hidden="true" />
+      <div class="caption skeleton" aria-hidden="true">&nbsp;</div>
+      <span class="sr-only" role="status">{{ 'dashboard.loading' | translate }}</span>
+    } @else {
+      <div class="stats">
+        <div class="stat">
+          <div class="value">{{ statistics.guestStatistics().total }}</div>
+          <div class="label stat-label">{{ 'dashboard.rsvp.total' | translate }}</div>
+        </div>
+        <div class="stat">
+          <div class="value accent">{{ statistics.guestStatistics().headCount.adults }}</div>
+          <div class="label stat-label">{{ 'dashboard.rsvp.attending' | translate }}</div>
+        </div>
+        <div class="stat">
+          <div class="value">{{ statistics.guestStatistics().pending }}</div>
+          <div class="label stat-label">{{ 'dashboard.rsvp.pending' | translate }}</div>
+        </div>
+        <div class="stat">
+          <div class="value">{{ statistics.guestStatistics().declined }}</div>
+          <div class="label stat-label">{{ 'dashboard.rsvp.declined' | translate }}</div>
+        </div>
       </div>
-      <div class="stat">
-        <div class="value">{{ statistics.guestStatistics().rsvp.pending }}</div>
-        <div class="label stat-label">{{ 'dashboard.rsvp.pending' | translate }}</div>
+      <app-progress-bar class="progress" [percent]="statistics.repliedPercent()" />
+      <div class="caption">
+        {{
+          'dashboard.rsvp.progress'
+            | translate
+              : {
+                  percent: statistics.repliedPercent(),
+                  total: statistics.guestStatistics().total,
+                }
+        }}
       </div>
-      <div class="stat">
-        <div class="value">{{ statistics.guestStatistics().rsvp.declined }}</div>
-        <div class="label stat-label">{{ 'dashboard.rsvp.declined' | translate }}</div>
-      </div>
-    </div>
-    <app-progress-bar class="progress" [percent]="statistics.repliedPercent()" />
-    <div class="caption">
-      {{
-        'dashboard.rsvp.progress'
-          | translate
-            : {
-                percent: statistics.repliedPercent(),
-                total: statistics.guestStatistics().rsvp.total,
-              }
-      }}
-    </div>
+    }
   </div>
 
   <!-- quick tiles -->
-  <!-- <div class="tiles">
+
+  <div class="tiles">
     <app-stat-tile
-      [label]="'dashboard.budget' | translate"
-      [value]="dash.budget().spent"
-      [sub]="dash.budget().total"
+      [loading]="statistics.loading()"
+      [label]="'shared.headCount' | translate"
+      [value]="`
+        ${
+          statistics.guestStatistics().headCount.adults +
+          statistics.guestStatistics().headCount.children
+        }`"
+      [sub]="`${statistics.guestStatistics().headCount.adults} ${
+        ('shared.adults'
+        | pluralTranslate: statistics.guestStatistics().headCount.adults
+        | translate)
+      }${
+        statistics.guestStatistics().headCount.children > 0
+          ? ' - ' +
+            statistics.guestStatistics().headCount.children +
+            ' ' +
+            ('shared.children'
+              | pluralTranslate: statistics.guestStatistics().headCount.children
+              | translate)
+          : ''
+      }`"
     />
-    <app-stat-tile
+    <!-- <app-stat-tile
       [label]="'dashboard.vendors' | translate"
       [value]="dash.vendors().value"
       [sub]="dash.vendors().sub"
-    />
-  </div> -->
+    /> -->
+  </div>
 
   <!-- manage -->
   <div class="manage">

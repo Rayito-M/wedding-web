@@ -15,7 +15,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
 import { EntityNamesEnum, LoginService, RsvpDto, WeddingRsvpService, partyLabel } from '@app/core';
-import { AppLoadingComponent } from '@app/shared/loading/loading';
+import { ContentLoading } from '@app/shared/loading/content-loading';
 
 import { DelegateEdit } from './delegate-edit/delegate-edit';
 import { RsvpHub } from './rsvp-hub/rsvp-hub';
@@ -46,7 +46,7 @@ function partner2Id(rsvp: RsvpDto): string | undefined {
 @Component({
   selector: 'app-rsvp',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RsvpCreate, RsvpEdit, RsvpHub, DelegateEdit, AppLoadingComponent],
+  imports: [RsvpCreate, RsvpEdit, RsvpHub, DelegateEdit, ContentLoading],
   templateUrl: './rsvp.html',
   styleUrl: './rsvp.scss',
 })

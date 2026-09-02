@@ -2,8 +2,15 @@
   <div class="page">
     <div class="top">
       <header class="head">
+        <!-- The box stays (no layout jump), the count does not: "0 people
+             going" is a false statement while the first read is still in
+             flight. -->
         <div class="eyebrow">
-          {{ eyebrowKey() | translate: { count: userProfileList().length } }}
+          @if (loading()) {
+            <span class="skeleton eyebrow-bar" aria-hidden="true">&nbsp;</span>
+          } @else {
+            {{ eyebrowKey() | translate: { count: userProfileList().length } }}
+          }
         </div>
         <h1 class="title">
           {{ 'people.title' | translate }}
@@ -12,92 +19,142 @@
         <p class="subtitle">{{ 'people.subtitle' | translate }}</p>
       </header>
 
-      <div class="controls">
-        <input
-          app-input
-          type="text"
-          class="search"
-          [attr.placeholder]="'people.search.placeholder' | translate"
-          [value]="query()"
-          (input)="setQuery(inputValue($event))"
-        />
-        <div class="filters">
-          @for (f of filters(); track f.id) {
-            <button
-              type="button"
-              class="filter-chip"
-              [class.on]="filter() === f.id"
-              (click)="setFilter(f.id)"
-            >
-              {{ f.labelKey | translate: f.labelParams }}
-            </button>
-          }
-        </div>
-      </div>
-    </div>
-
-    <div class="grid">
-      @for (person of filteredPeople(); track person.id) {
-        <div
-          class="card"
-          [class.clickable]="isMine(person)"
-          [attr.role]="isMine(person) ? 'link' : null"
-          [attr.tabindex]="isMine(person) ? 0 : null"
-          (click)="goToProfile(person)"
-          (keydown.enter)="goToProfile(person)"
-          (keydown.space)="goToProfile(person)"
-        >
-          <app-avatar [size]="42" [accent]="isCouple(person)">{{ initials(person) }}</app-avatar>
-          <div class="info">
-            <div class="name-row">
-              <span class="name">{{ person.firstName }} {{ person.lastName }}</span>
-              @if (person.preferredLang) {
-                <span class="lang">{{ person.preferredLang.toUpperCase() }}</span>
-              }
-            </div>
-            @if (person.nickname) {
-              <div class="nickname">“{{ person.nickname }}”</div>
-            }
-            <div class="badges">
-              <app-pill [tone]="isCouple(person) ? 'accent' : 'soft'">{{
-                'roles.' + person.role | translate
-              }}</app-pill>
-              @if (person.guestInfo?.relation) {
-                <app-pill>
-                  {{ person.guestInfo.relation | relationLink }}
-                  @if (person.guestInfo.relation.side) {
-                    · {{ 'relation.side.' + person.guestInfo.relation.side | translate }}
-                  }
-                </app-pill>
-              }
-            </div>
-            @if (person.email || person.phoneNumber) {
-              <div class="contact">
-                @if (person.email) {
-                  <span class="contact-line">{{ person.email }}</span>
-                }
-                @if (person.phoneNumber) {
-                  <span class="contact-line">{{ person.phoneNumber }}</span>
-                }
-              </div>
-            }
-            <!-- Couple-only (hub ADR-0035 §6, widened by ADR-0036) — gated on
-                 the viewer's own role, not on `person.lastSeen`'s presence:
-                 the API returns `undefined` for both "not allowed" and "this
-                 admin-visible guest never signed in", and only `showContact`
-                 tells the two apart (see `people.ts`). "Never signed in"
-                 reads as text here, never colour/opacity alone (rule 14). -->
-            @if (showContact()) {
-              <div class="last-seen">
-                {{ 'people.lastSeen' | translate: { label: lastSeenLabel(person) } }}
-              </div>
+      <!-- The filter chips are named after the bride and groom, whose
+           profiles come from the very read still in flight — so the whole
+           control strip waits with the grid below rather than rendering
+           "'s side" chips with no name in them. -->
+      @if (loading()) {
+        <!-- The strip is skeletoned, not dropped: on desktop `.controls` is a
+             320px column of the `.top` flex row, so removing it moved the
+             header. It is not rendered for real either — the chips are named
+             after the couple, whose profiles come from this very read, and a
+             live search box over a list that does not exist yet is a dead
+             control. -->
+        <div class="controls">
+          <div class="search skeleton search-bar" aria-hidden="true">&nbsp;</div>
+          <div class="filters">
+            @for (chip of pendingFilters; track chip) {
+              <span class="filter-chip skeleton" aria-hidden="true">&nbsp;</span>
             }
           </div>
         </div>
       }
-      @if (filteredPeople().length === 0) {
-        <div class="empty">{{ 'people.empty' | translate: { query: query() } }}</div>
+      @if (!loading()) {
+        <div class="controls">
+          <input
+            app-input
+            type="text"
+            class="search"
+            [attr.placeholder]="'people.search.placeholder' | translate"
+            [value]="query()"
+            (input)="setQuery(inputValue($event))"
+          />
+          <div class="filters">
+            @for (f of filters(); track f.id) {
+              <button
+                type="button"
+                class="filter-chip"
+                [class.on]="filter() === f.id"
+                (click)="setFilter(f.id)"
+              >
+                {{ f.labelKey | translate: f.labelParams }}
+              </button>
+            }
+          </div>
+        </div>
       }
     </div>
+
+    @if (loading()) {
+      <span class="sr-only" role="status">{{ 'people.loading' | translate }}</span>
+      <!-- The grid draws placeholder cards in the settled card's own shape, so
+           the columns and gaps are already correct when the read lands. Both
+           the number of people and each card's optional lines (nickname, second
+           contact line, last-seen) are unknown, so this is a typical card, not
+           a measured one. -->
+      <div class="grid">
+        @for (card of pendingCards; track card) {
+          <div class="card">
+            <app-avatar class="skeleton" [size]="42" />
+            <div class="info">
+              <div class="name-row">
+                <span class="name"><span class="skeleton name-bar" aria-hidden="true">&nbsp;</span></span>
+              </div>
+              <div class="badges">
+                <app-pill [loading]="true" />
+                <app-pill [loading]="true" />
+              </div>
+              <div class="contact">
+                <span class="contact-line"><span class="skeleton contact-bar" aria-hidden="true">&nbsp;</span></span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="grid">
+        @for (person of filteredPeople(); track person.id) {
+          <div
+            class="card"
+            [class.clickable]="isMine(person)"
+            [attr.role]="isMine(person) ? 'link' : null"
+            [attr.tabindex]="isMine(person) ? 0 : null"
+            (click)="goToProfile(person)"
+            (keydown.enter)="goToProfile(person)"
+            (keydown.space)="goToProfile(person)"
+          >
+            <app-avatar [size]="42" [accent]="isCouple(person)">{{ initials(person) }}</app-avatar>
+            <div class="info">
+              <div class="name-row">
+                <span class="name">{{ person.firstName }} {{ person.lastName }}</span>
+                @if (person.preferredLang) {
+                  <span class="lang">{{ person.preferredLang.toUpperCase() }}</span>
+                }
+              </div>
+              @if (person.nickname) {
+                <div class="nickname">“{{ person.nickname }}”</div>
+              }
+              <div class="badges">
+                <app-pill [tone]="isCouple(person) ? 'accent' : 'soft'">{{
+                  'roles.' + person.role | translate
+                }}</app-pill>
+                @if (person.guestInfo?.relation) {
+                  <app-pill>
+                    {{ person.guestInfo.relation | relationLink }}
+                    @if (person.guestInfo.relation.side) {
+                      · {{ 'relation.side.' + person.guestInfo.relation.side | translate }}
+                    }
+                  </app-pill>
+                }
+              </div>
+              @if (person.email || person.phoneNumber) {
+                <div class="contact">
+                  @if (person.email) {
+                    <span class="contact-line">{{ person.email }}</span>
+                  }
+                  @if (person.phoneNumber) {
+                    <span class="contact-line">{{ person.phoneNumber }}</span>
+                  }
+                </div>
+              }
+              <!-- Couple-only (hub ADR-0035 §6, widened by ADR-0036) — gated on
+                   the viewer's own role, not on `person.lastSeen`'s presence:
+                   the API returns `undefined` for both "not allowed" and "this
+                   admin-visible guest never signed in", and only `showContact`
+                   tells the two apart (see `people.ts`). "Never signed in"
+                   reads as text here, never colour/opacity alone (rule 14). -->
+              @if (showContact()) {
+                <div class="last-seen">
+                  {{ 'people.lastSeen' | translate: { label: lastSeenLabel(person) } }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+        @if (filteredPeople().length === 0) {
+          <div class="empty">{{ 'people.empty' | translate: { query: query() } }}</div>
+        }
+      </div>
+    }
   </div>
 </div>

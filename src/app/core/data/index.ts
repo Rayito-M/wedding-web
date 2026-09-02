@@ -9,14 +9,14 @@ import { WeddingConfigDataService } from './wedding-config-data.service';
 import { WeddingConfigPublicDataService } from './wedding-config-public-data.service';
 
 import { EntityNamesEnum } from './entity-metadata';
+import { GuestDataService } from '@app/core/data/guest-data.service';
 
 export * from './entity-metadata';
+export * from './first-load';
+export * from './guest-data.service';
 export * from './milestone-data.service';
 export * from './rsvp-data.service';
-export * from './user-data.service';
 export * from './user-profile-data.service';
-export * from './wedding-config-data.service';
-export * from './wedding-config-public-data.service';
 
 /**
  * Registers the custom entity data services with @ngrx/data so each entity's
@@ -25,23 +25,24 @@ export * from './wedding-config-public-data.service';
  */
 export function provideEntityDataServices(): EnvironmentProviders {
   return provideEnvironmentInitializer(() => {
+    inject(EntityDataService).registerService(EntityNamesEnum.GUEST, inject(GuestDataService));
     inject(EntityDataService).registerService(
-      EntityNamesEnum.WEDDING_CONFIG_PUBLIC,
-      inject(WeddingConfigPublicDataService),
+      EntityNamesEnum.MILESTONE,
+      inject(MilestoneDataService),
     );
     inject(EntityDataService).registerService(EntityNamesEnum.RSVP, inject(RsvpDataService));
-    inject(EntityDataService).registerService(
-      EntityNamesEnum.WEDDING_CONFIG,
-      inject(WeddingConfigDataService),
-    );
     inject(EntityDataService).registerService(EntityNamesEnum.USER, inject(UserDataService));
     inject(EntityDataService).registerService(
       EntityNamesEnum.USER_PROFILE,
       inject(UserProfileDataService),
     );
     inject(EntityDataService).registerService(
-      EntityNamesEnum.MILESTONE,
-      inject(MilestoneDataService),
+      EntityNamesEnum.WEDDING_CONFIG_PUBLIC,
+      inject(WeddingConfigPublicDataService),
+    );
+    inject(EntityDataService).registerService(
+      EntityNamesEnum.WEDDING_CONFIG,
+      inject(WeddingConfigDataService),
     );
   });
 }

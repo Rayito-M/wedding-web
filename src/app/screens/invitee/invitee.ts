@@ -10,6 +10,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import {
   byAgendaTime,
   EntityNamesEnum,
+  isFirstLoad,
   LoginService,
   RsvpDto,
   UserProfileDto,
@@ -114,6 +115,19 @@ export class Invitee {
     this.weddingConfigCollection.entities$.pipe(map((configs) => configs[0])),
     { initialValue: undefined },
   );
+
+  /**
+   * The wedding document this whole screen is written against — date,
+   * countdown, venue, agenda — has not arrived yet. Everything below the
+   * chrome would otherwise render as "0 days" over a nameless venue, so the
+   * template draws the same layout with those values skeletoned until the
+   * read lands.
+   */
+  protected readonly loading = isFirstLoad(this.weddingConfigCollection);
+
+  /** Placeholder agenda rows for the loading state — see the note in the
+   *  template on why the count is a guess. */
+  protected readonly pendingAgendaRows = [0, 1, 2];
 
   constructor() {
     // Trigger the fetch of the RSVP for the current user (if any).

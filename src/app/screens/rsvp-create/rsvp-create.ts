@@ -68,7 +68,7 @@ const EMPTY_DRAFT: CreateDraft = {
   withChildren: false,
   // A partner typed into this screen is always a plus-one — this app cannot
   // provision an account (ADR W-0004 §Decision.3, W-0002 §Decision.5).
-  partner: { firstName: '', lastName: '', kind: 'plus-one' },
+  partner: { firstName: '', lastName: '', kind: 'plus-one', attending: false },
   children: [],
 };
 
@@ -89,8 +89,9 @@ function toCreateDraft(rsvp: RsvpDto): CreateDraft {
           lastName: partner2.lastName,
           nickname: partner2.nickname,
           kind: partner2.kind,
+          attending: partner2.attending,
         }
-      : { firstName: '', lastName: '', kind: 'plus-one' },
+      : { firstName: '', lastName: '', kind: 'plus-one', attending: false },
     children: (rsvp.children ?? []).map((c) => ({
       firstName: c.firstName,
       age: String(c.age),
@@ -354,6 +355,7 @@ export class RsvpCreate {
             lastName: d.partner.lastName.trim(),
             nickname: d.partner.nickname?.trim() || undefined,
             kind: 'plus-one',
+            attending: d.partner.attending,
           }
         : undefined;
 

@@ -203,6 +203,7 @@
     ]
   },
   "rsvp": {
+    "loading": "Cargando tu RSVP…",
     "status": {
       "attending": "Confirmados",
       "pending": "Pendiente",
@@ -382,6 +383,7 @@
     }
   },
   "dashboard": {
+    "loading": "Cargando las respuestas…",
     "greeting": "Buenos días, {{name}}.",
     "daysToGo_singular": "día para el gran día.",
     "daysToGo_plural": "días para el gran día.",
@@ -413,6 +415,7 @@
     }
   },
   "configManager": {
+    "loading": "Cargando la configuración…",
     "headerMeta": "Ajustes",
     "title": "Configuración general",
     "eyebrow": "Ajustes",
@@ -565,6 +568,7 @@
     }
   },
   "invitee": {
+    "loading": "Cargando tu boda…",
     "greeting": "Hola",
     "seeYouIn": "Nos vemos en",
     "countdown": {
@@ -663,6 +667,7 @@
       "provisional": "Provisional",
       "final": "Definitivo"
     },
+    "headCount": "Total de asistentes",
     "adults": {
       "none": "adulto",
       "singular": "adulto",
@@ -779,7 +784,8 @@
       "noResults": "Sin resultados",
       "scrollForMore": "Desplaza para ver más",
       "loadMore": "Cargar más",
-      "endOfList": "Fin de la lista"
+      "endOfList": "Fin de la lista",
+      "loading": "Cargando la lista de invitados…"
     },
     "modal": {
       "viewProfile": "Perfil de invitado",
@@ -862,6 +868,7 @@
     "empty": "Sin invitados. Añade el primer invitado para comenzar."
   },
   "milestones": {
+    "loading": "Cargando los hitos…",
     "headerMeta": "PREPARATIVOS",
     "title": "Hitos",
     "subtitle": "Vuestra propia lista de preparativos — los invitados nunca la ven.",
@@ -988,6 +995,7 @@
     }
   },
   "people": {
+    "loading": "Cargando personas…",
     "eyebrow_singular": "{{count}} persona asistiendo",
     "eyebrow_plural": "{{count}} personas asistiendo",
     "title": "Encuentra",

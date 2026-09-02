@@ -1,30 +1,12 @@
-import { Injectable, computed, inject, type Signal } from '@angular/core';
+import { Injectable, computed, inject, signal, type Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
-import type { UserProfileDto } from '../api';
+import type { UserProfileDto, RsvpDto } from '../api';
 import { EntityNamesEnum } from '../data';
 
 /** RSVP summary carried on a guest profile (`UserProfileDto.guestInfo.rsvp`). */
 export type ProfileRsvp = NonNullable<UserProfileDto['guestInfo']>['rsvp'];
-
-export interface RsvpCount {
-  attending: number;
-  declined: number;
-  /**
-   * Everyone still owed a reply: rows sitting at `status: 'pending'` **plus**
-   * the {@link RsvpCount.undefined} rows that have no RSVP record at all.
-   */
-  pending: number;
-  /** Guest rows with no RSVP record at all — "Not Answered". A subset of {@link RsvpCount.pending}. */
-  undefined: number;
-  /**
-   * Every guest-list row: `attending + declined + pending`. Because `pending`
-   * absorbs the not-answered rows, this still matches what the "All" filter
-   * renders — which includes rows with no RSVP.
-   */
-  total: number;
-}
 
 export interface HeadCount {
   adults: number;
@@ -32,8 +14,49 @@ export interface HeadCount {
 }
 
 export interface GuestStatistics {
-  rsvp: RsvpCount;
+  declined: number;
+  /**
+   * Everyone still owed a reply: rows sitting at `status: 'pending'` **plus**
+   * the {@link RsvpCount.undefined} rows that have no RSVP record at all.
+   */
+  pending: number;
+  /**
+   * Every guest-list row: `attending + declined + pending`. Because `pending`
+   * absorbs the not-answered rows, this still matches what the "All" filter
+   * renders — which includes rows with no RSVP.
+   */
+  total: number;
   headCount: HeadCount;
+}
+
+/**
+ * The profile id behind `adults.partner2`, when that seat is held by a guest
+ * with their own account (`kind: 'guest'`) — a `kind: 'plus-one'` is a named
+ * companion with no account and no id.
+ *
+ * The narrowing is on `id`, not on `kind`, because the generated union widens
+ * `kind` to a plain `string` and so cannot discriminate the two variants.
+ * `wedding-api` narrows the same shape the same way (`'id' in seated`).
+ */
+export function partner2GuestId(rsvp: RsvpDto): string | undefined {
+  const partner2 = rsvp.adults.partner2;
+  return partner2 && 'id' in partner2 ? partner2.id : undefined;
+}
+
+/**
+ * Adult seats one RSVP takes at the reception. `partner1` always counts; the
+ * second seat counts only when someone is coming in it — a `kind: 'guest'`
+ * partner has to have said yes, a `kind: 'plus-one'` carries no `attending`
+ * flag and always counts. Same rule the API applies when it collapses an RSVP
+ * into `UserProfileDto.guestInfo.rsvp.adults`.
+ */
+export function adultHeadCount(rsvp: RsvpDto): number {
+  let count = rsvp.adults.partner1.attending === true ? 1 : 0;
+  if (rsvp.adults.partner2?.attending) {
+    count++;
+  }
+
+  return count;
 }
 
 /**
@@ -50,12 +73,54 @@ export class StatisticService {
     EntityServices,
   ).getEntityCollectionService<UserProfileDto>(EntityNamesEnum.USER_PROFILE);
 
+  private readonly rsvpCollection: EntityCollectionService<RsvpDto> = inject(
+    EntityServices,
+  ).getEntityCollectionService<RsvpDto>(EntityNamesEnum.RSVP);
+
   private readonly userProfileList: Signal<UserProfileDto[]> = toSignal(
     this.userProfileCollection.entities$,
     { initialValue: [] },
   );
 
+  private readonly rsvpList: Signal<RsvpDto[]> = toSignal(this.rsvpCollection.entities$, {
+    initialValue: [],
+  });
+
   private loadRequested = false;
+
+  /**
+   * The `getAll` in {@link load} came back empty-handed. Nothing more is
+   * coming, so the wait has to end or the dashboard spins forever — it has no
+   * error branch of its own.
+   */
+  private readonly readFailed = signal(false);
+
+  /** Whether a full-collection read has completed. See {@link loading}. */
+  private readonly profilesLoaded = toSignal(this.userProfileCollection.loaded$, {
+    initialValue: false,
+  });
+
+  /**
+   * No full read of the profile collection has completed, so every aggregate
+   * below is a zero that means "not known yet", not "none". Screens that render
+   * those numbers show `app-content-loading` instead of publishing them.
+   *
+   * Deliberately **not** {@link isFirstLoad}, and the difference is the whole
+   * bug this replaced. That helper ends its wait as soon as the collection
+   * holds any entity — right for rows, wrong here. `ScreenHeader.ngOnInit`
+   * calls `getByKey(sub)` on this same singleton collection to draw the account
+   * monogram, so on the couple dashboard exactly one profile lands first: their
+   * own, `role: 'bride'` or `'groom'`. The collection is no longer empty, the
+   * wait ends, and {@link guestStatistics} skips that row for not being a guest
+   * — publishing a full set of zeros that the real counts replace a moment
+   * later once `getAll` resolves.
+   *
+   * `loaded` is the one flag that cannot be raised by a partial fill:
+   * `@ngrx/data` sets it only from `QUERY_ALL`/`QUERY_LOAD`, never from
+   * `getByKey` or `getWithQuery`. An aggregate is only meaningful over a
+   * complete collection, so a complete read is exactly what it must wait for.
+   */
+  readonly loading = computed(() => !this.profilesLoaded() && !this.readFailed());
 
   /**
    * A profile is a guest-list row only if it owns the RSVP it points to
@@ -69,48 +134,59 @@ export class StatisticService {
   }
 
   /**
-   * Guest-list counts. Rows are guest profiles, not RSVPs:
-   * `UserProfileDto.guestInfo.rsvp` already carries the status/adults/children
-   * summary, so there is no separate RSVP collection to join. Bride/groom/
-   * provider profiles are not guest-list rows and are excluded.
+   * Guest-list counts. Rows are guest profiles joined to the RSVP collection —
+   * `UserProfileDto.guestInfo.rsvp` carries only a collapsed summary, while the
+   * head count needs the real party (who holds the second adult seat, and how
+   * many children are named). Bride/groom/provider profiles are not guest-list
+   * rows and are excluded.
    */
   readonly guestStatistics = computed<GuestStatistics>(() => {
     const counts: GuestStatistics = {
-      rsvp: { attending: 0, declined: 0, pending: 0, undefined: 0, total: 0 },
+      declined: 0,
+      pending: 0,
+      total: 0,
       headCount: { adults: 0, children: 0 },
     };
 
-    for (const profile of this.userProfileList()) {
+    const userProfiles = this.userProfileList();
+    const rsvpList = this.rsvpList();
+    /** RSVP ids already counted — see the couple check below. */
+
+    const countedRsvpIds = new Set<string>();
+
+    for (const profile of userProfiles) {
       if (profile.role !== 'guest') continue;
 
-      const rsvp = this.ownRsvp(profile);
+      counts.total++;
+
+      const rsvp = rsvpList.find(
+        (rvp) => rvp.id === profile.id || profile.id === partner2GuestId(rvp),
+      );
       if (!rsvp) {
-        // Either no RSVP at all, or a partner row whose RSVP another profile
-        // owns — the latter is already counted on the owning row.
-        if (!profile.guestInfo?.rsvp) counts.rsvp.undefined++;
+        // No RSVP record at all — the only way to land here now that a partner
+        // matches their couple's record through `partner2GuestId`.
+        counts.pending++;
         continue;
       }
 
+      if (countedRsvpIds.has(rsvp.id)) continue;
+
+      countedRsvpIds.add(rsvp.id);
+
       switch (rsvp.status) {
         case 'attending':
-          counts.rsvp.attending++;
-          counts.headCount.adults += rsvp.adults;
-          counts.headCount.children += rsvp.children ?? 0;
+          counts.headCount.adults += adultHeadCount(rsvp);
+          counts.headCount.children += rsvp.children?.length ?? 0;
           break;
         case 'declined':
-          counts.rsvp.declined++;
+          counts.declined++;
           break;
         case 'pending':
-          counts.rsvp.pending++;
+          counts.pending++;
+          if (partner2GuestId(rsvp)) counts.pending++;
           break;
       }
     }
-
-    // Not-answered rows are folded into "pending" — both are guests who still
-    // owe a reply — while `undefined` stays available on its own for the
-    // dedicated "Not Answered" tile and filter badge.
-    counts.rsvp.pending += counts.rsvp.undefined;
-    counts.rsvp.total = counts.rsvp.attending + counts.rsvp.declined + counts.rsvp.pending;
     return counts;
   });
 
@@ -120,8 +196,13 @@ export class StatisticService {
    * owed a reply.
    */
   readonly repliedPercent = computed(() => {
-    const { attending, declined, total } = this.guestStatistics().rsvp;
-    return total === 0 ? 0 : Math.round(((attending + declined) / total) * 100);
+    return this.guestStatistics().total === 0
+      ? 0
+      : Math.round(
+          ((this.guestStatistics().headCount.adults + this.guestStatistics().declined) /
+            this.guestStatistics().total) *
+            100,
+        );
   });
 
   /**
@@ -134,7 +215,20 @@ export class StatisticService {
     this.loadRequested = true;
     this.userProfileCollection.loaded$.subscribe((loaded) => {
       if (!loaded) {
-        this.userProfileCollection.getAll();
+        // Subscribed for the failure only — the entities reach the screen
+        // through the collection, not through here.
+        this.userProfileCollection.getAll().subscribe({
+          error: () => this.readFailed.set(true),
+        });
+      }
+    });
+    this.rsvpCollection.loaded$.subscribe((loaded) => {
+      if (!loaded) {
+        // Subscribed for the failure only — the entities reach the screen
+        // through the collection, not through here.
+        this.rsvpCollection.getAll().subscribe({
+          error: () => this.readFailed.set(true),
+        });
       }
     });
   }

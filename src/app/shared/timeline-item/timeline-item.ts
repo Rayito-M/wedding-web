@@ -29,8 +29,10 @@ import { TRAVEL_ROUTE, travelPlaceQueryParams } from '../travel-link';
   },
 })
 export class TimelineItem {
-  readonly time = input.required<string>();
-  readonly heading = input.required<string>();
+  // Not `input.required`: a `loading` row has no time or heading to give yet.
+  // Every settled call site still passes both.
+  readonly time = input('');
+  readonly heading = input('');
   readonly tag = input('');
   readonly sub = input('');
   readonly venue = input('');
@@ -38,6 +40,8 @@ export class TimelineItem {
   readonly last = input(false);
   readonly status = input<CreateWeddingConfigDtoAgendaItemsInner.StatusEnum>('confirmed');
   readonly showStatus = input(true);
+  /** Render the row as a skeleton — same height, no content. */
+  readonly loading = input(false);
 
   protected readonly showBadge = computed(() => this.showStatus() && this.status() !== 'confirmed');
 
