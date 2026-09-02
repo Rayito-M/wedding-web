@@ -49,14 +49,16 @@ export interface AdultDraft {
    * `RsvpDtoAdultsPartner1.attending` and **both** `partner2` variants'
    * `attending` already are (all three a plain required `boolean` since
    * `wedding-api` a97cbf2 / hub ADR-0040; CLAUDE.md Hard rule 15).
-   * Meaningful on `partner1` whenever a `partner2` exists, and on `partner2`
-   * whenever `partnerHasAccount(partner2)` is `true` (ADR W-0007 §Amendment,
-   * superseding the original §Decision.1/.2 read): any adult with their own
-   * account, in a party of more than one adult, can decline independently of
-   * the RSVP's own `status`. A `kind: 'plus-one'` `partner2` now carries the
-   * flag like any other adult (`RsvpDtoAdultsPartner2OneOf1.attending`, no
-   * longer omitted); whether the editor may ever set it to `false` is an open
-   * product question, not a shape one — ADR-0040 §4, tracked as T339.
+   * Meaningful on **either** adult slot whenever the party has two adults:
+   * any adult, in a party of more than one, can decline independently of the
+   * RSVP's own `status` (ADR W-0007 §Amendment, superseding the original
+   * §Decision.1/.2 narrowing to `partner2`-only). That now includes a
+   * `kind: 'plus-one'` `partner2`, which both carries the flag on the wire
+   * like any other adult (`RsvpDtoAdultsPartner2OneOf1.attending`, no longer
+   * omitted) and can have it set from the editor: a plus-one dropping out is a
+   * decline that keeps the name, not a removal from the party (T339, closing
+   * hub ADR-0040 §4). `partnerHasAccount()` no longer gates this; it still
+   * gates whether the *name* is editable, which is a different question.
    * It does not exist at all for a **child**: the contract has no `attending`
    * on `RsvpDtoChildrenInner`, deliberately, because a child has no
    * independent answer to give (ADR-0040 §Decision). That is why
@@ -288,14 +290,22 @@ export function unnamedAdultCount(draft: RsvpDraft): number {
  *   §Amendment.3 accepts this knowingly as a consequence of following the DS
  *   rule literally, flagged to revisit if it proves wrong in practice — do
  *   not quietly add the stricter gate here.
- * - `partner2` → unchanged: `draft.partner2` exists and
- *   `partnerHasAccount(draft.partner2)` is `true`.
+ * - `partner2` → `true` whenever `draft.partner2` exists, **account or not**
+ *   (T339). Hub ADR-0040 §4 asked whether a plus-one dropping out is the
+ *   inviting partner removing them from the party or a decline that keeps the
+ *   name; the answer recorded there is **a decline** — the name stays on the
+ *   RSVP with `attending: false`, which is also what makes the now-required
+ *   flag mean something on that member rather than being structurally always
+ *   `true`. `partnerHasAccount()` is deliberately no longer consulted here: it
+ *   still governs whether the *name* is editable (ADR W-0004), which is a
+ *   different question from whether the person can decline.
  * - any child key → unchanged `false`, structurally: `RsvpDtoChildrenInner`
  *   has no `attending` field to toggle.
+ *
+ * The two adult branches are therefore the same test, and are written as one.
  */
 export function canDeclineAlone(draft: RsvpDraft, key: PersonKey): boolean {
-  if (key === 'partner1') return !!draft.partner2;
-  if (key === 'partner2') return !!draft.partner2 && partnerHasAccount(draft.partner2);
+  if (key === 'partner1' || key === 'partner2') return !!draft.partner2;
   return false;
 }
 
@@ -342,8 +352,9 @@ export function isPersonComing(person: { attending: boolean | undefined } | unde
  * `total` computed) minus one for **each** adult who both `canDeclineAlone`
  * and has explicitly declined (`attending === false`) — so a party of two
  * adults who have both solo-declined counts 0 adults (plus any children).
- * A plus-one `partner2` or a child can never reduce this count — they
- * structurally cannot decline alone (see `canDeclineAlone` above).
+ * Only a **child** can never reduce this count — a child structurally cannot
+ * decline alone (see `canDeclineAlone` above). A plus-one `partner2` can,
+ * since T339 / hub ADR-0040 §4.
  */
 export function attendingCount(draft: RsvpDraft): number {
   const total = 1 + (draft.partner2 ? 1 : 0) + draft.children.length;
@@ -382,7 +393,9 @@ export function attendingCount(draft: RsvpDraft): number {
  *    per-adult flags at all stays `declined` rather than being promoted.
  *
  * Children never enter into it — they cannot decline (`RsvpDtoChildrenInner`
- * has no `attending` field).
+ * has no `attending` field). Both adult slots do, a plus-one `partner2`
+ * included, since T339 / hub ADR-0040 §4 — so a party whose only second adult
+ * is a declined plus-one rolls up like any other.
  *
  * This is now bidirectional in practice: `setStatus`
  * (`src/app/shared/rsvp-editor/rsvp-editor.ts`) writes the per-adult flags

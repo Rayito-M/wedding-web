@@ -340,14 +340,22 @@ describe('canDeclineAlone (ADR W-0007 §Amendment, T326)', () => {
     expect(canDeclineAlone(draft(), 'partner2')).toBe(false);
   });
 
-  it('is false for a plus-one partner2', () => {
+  it('is true for a plus-one partner2 — dropping out is a decline that keeps the name, not a removal (T339, hub ADR-0040 §4)', () => {
     const value = draft({ partner2: adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one' }) });
-    expect(canDeclineAlone(value, 'partner2')).toBe(false);
+    expect(canDeclineAlone(value, 'partner2')).toBe(true);
   });
 
-  it('is true only for an account-holding partner2', () => {
+  it('is true for an account-holding partner2', () => {
     const value = draft({ partner2: adult({ id: 'usr_partner', firstName: 'Grace', lastName: 'Hopper', kind: 'guest' }) });
     expect(canDeclineAlone(value, 'partner2')).toBe(true);
+  });
+
+  it('does not consult partnerHasAccount — the two adult slots take the same test (T339)', () => {
+    const plusOne = draft({ partner2: adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one' }) });
+    const account = draft({ partner2: adult({ id: 'usr_partner', firstName: 'Grace', lastName: 'Hopper', kind: 'guest' }) });
+    for (const value of [plusOne, account]) {
+      expect(canDeclineAlone(value, 'partner1')).toBe(canDeclineAlone(value, 'partner2'));
+    }
   });
 });
 
@@ -383,11 +391,18 @@ describe('attendingCount (ADR W-0007, T320)', () => {
     expect(attendingCount(value)).toBe(2);
   });
 
-  it('is unaffected by a plus-one partner2 (cannot solo-decline)', () => {
+  it('is unaffected by a plus-one partner2 who has not declined', () => {
     const value = draft({
       partner2: adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one' }),
     });
     expect(attendingCount(value)).toBe(2);
+  });
+
+  it('drops by one when a plus-one partner2 has declined (T339, hub ADR-0040 §4)', () => {
+    const value = draft({
+      partner2: adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one', attending: false }),
+    });
+    expect(attendingCount(value)).toBe(1);
   });
 
   it('is unaffected by a child (cannot solo-decline)', () => {
@@ -518,18 +533,69 @@ describe('attending is carried in every adult slot, both ways (hub ADR-0040, T33
     }
   });
 
-  it('leaves a declined plus-one out of attendingCount and impliedStatus all the same — they gate on canDeclineAlone, not on the flag (T339 is the open question)', () => {
+  it('a declined plus-one moves both roll-ups, like any other adult (T339, hub ADR-0040 §4)', () => {
     const value = draft({
       status: RsvpDto.StatusEnum.ATTENDING,
       partner1: adult({ id: 'usr_self', attending: true }),
       partner2: adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one', attending: false }),
     });
-    // A plus-one is not eligible to decline alone, so the flag it now carries
-    // does not move either roll-up. This is the state ADR-0040 §4 names: the
-    // shape is uniform, the meaning is not.
-    expect(canDeclineAlone(value, 'partner2')).toBe(false);
-    expect(attendingCount(value)).toBe(2);
+    expect(canDeclineAlone(value, 'partner2')).toBe(true);
+    // partner1 is still coming, so the party is still attending — but the
+    // plus-one's seat comes off the total.
+    expect(attendingCount(value)).toBe(1);
     expect(impliedStatus(value)).toBe('attending');
+  });
+});
+
+describe('a plus-one can decline (T339, closing hub ADR-0040 §4)', () => {
+  const plusOne = (patch: Partial<AdultDraft> = {}): AdultDraft =>
+    adult({ firstName: 'Grace', lastName: 'Hopper', kind: 'plus-one', ...patch });
+
+  it('rolls the party up to declined when the only second adult is a declined plus-one and partner1 has declined too', () => {
+    const value = draft({
+      status: RsvpDto.StatusEnum.ATTENDING,
+      partner1: adult({ id: 'usr_self', attending: false }),
+      partner2: plusOne({ attending: false }),
+    });
+    expect(impliedStatus(value)).toBe('declined');
+    expect(fromRsvpDraft(value).status).toBe('declined');
+    expect(attendingCount(value)).toBe(0);
+  });
+
+  it('keeps the party attending when the plus-one declines but partner1 does not', () => {
+    const value = draft({
+      status: RsvpDto.StatusEnum.ATTENDING,
+      partner1: adult({ id: 'usr_self', attending: true }),
+      partner2: plusOne({ attending: false }),
+      children: [child()],
+    });
+    expect(impliedStatus(value)).toBe('attending');
+    // 3 in the party, minus the declined plus-one; the child still counts.
+    expect(attendingCount(value)).toBe(2);
+  });
+
+  it('serialises the declined plus-one rather than pruning them from the party (ADR W-0004 §Decision.6)', () => {
+    const value = draft({ partner2: plusOne({ attending: false }) });
+    expect(fromRsvpDraft(value).adults?.partner2).toEqual({
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      options: {},
+      kind: 'plus-one',
+      attending: false,
+    });
+  });
+
+  it('round-trips a declined plus-one through the wire and back', () => {
+    const dto = rsvpDto({
+      adults: {
+        partner1: { id: 'usr_self', firstName: 'Ada', lastName: 'Lovelace', options: {}, attending: true },
+        partner2: { firstName: 'Grace', lastName: 'Hopper', options: {}, kind: 'plus-one', attending: false },
+      },
+    });
+    const back = toRsvpDraft(dto);
+    expect(back.partner2?.attending).toBe(false);
+    expect(canDeclineAlone(back, 'partner2')).toBe(true);
+    expect(isPersonComing(back.partner2)).toBe(false);
   });
 });
 

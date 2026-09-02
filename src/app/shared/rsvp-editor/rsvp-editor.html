@@ -173,9 +173,10 @@
             </p>
           }
 
-          <!-- Anyone with their own guest account, in a party of more than one
-               adult, can decline independently of the RSVP's own answer (ADR
-               W-0007 §Amendment) — never a child, structurally. -->
+          <!-- Either adult, in a party of more than one, can decline
+               independently of the RSVP's own answer (ADR W-0007 §Amendment) —
+               a plus-one included, since T339 / hub ADR-0040 §4. Never a
+               child, structurally. -->
           @if (canDeclineAlone(draft(), card.key)) {
             <div class="label options-label">{{ 'rsvp.editor.attending.sectionLabel' | translate }}</div>
             <button
@@ -186,12 +187,7 @@
             >
               {{ attendingLabel(card) }}
             </button>
-            <p class="attending-hint">
-              {{
-                (isAttending(card) ? 'rsvp.editor.attending.hint.coming' : 'rsvp.editor.attending.hint.declined')
-                  | translate
-              }}
-            </p>
+            <p class="attending-hint">{{ attendingHintKey(card) | translate }}</p>
           }
 
           <div class="label options-label">{{ 'rsvp.editor.person.meal' | translate }}</div>

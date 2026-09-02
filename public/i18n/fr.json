@@ -308,6 +308,7 @@
         "fallbackName": "Cette personne",
         "hint": {
           "coming": "Désactivez ceci si cette personne ne peut pas venir — son compte, son repas et ses allergies restent enregistrés, elle peut être réactivée à tout moment.",
+          "comingPlusOne": "Désactivez ceci si cette personne ne peut pas venir — son nom, son repas et ses allergies restent enregistrés, elle peut être réactivée à tout moment.",
           "declined": "Elle reste sur cette confirmation et peut redevenir présente jusqu'au jour J."
         }
       },

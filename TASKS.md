@@ -7218,7 +7218,7 @@
   `src/app/core/helper/rsvp-draft.ts` → `isPersonComing()`, `canDeclineAlone()`
 
 ### T339 — Can a plus-one decline? A required flag the editor cannot set
-- **Status:** blocked — needs a product decision before any code
+- **Status:** done — decided **(b) decline** (Product Owner, 2026-09-02); outcome written into hub ADR-0040 §4
 - **Target release:** 1.1.1
 - **Owner:** Product Owner (the decision), then unassigned (the implementation)
 - **Depends on:** T338 (comments first, so the code states the current rule honestly)

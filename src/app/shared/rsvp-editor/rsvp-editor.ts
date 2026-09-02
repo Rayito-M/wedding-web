@@ -363,10 +363,10 @@ export class RsvpEditor {
    * bidirectional): `declined` sets `attending: false` on every eligible
    * adult (`canDeclineAlone`); `attending` sets `attending: true` on the same
    * set, clearing any prior solo decline. `pending` leaves flags untouched —
-   * there is nothing to roll back to. An adult who is not eligible (a
-   * plus-one `partner2`, or `partner1` in a party of one) is never written
-   * to: the wire has no `attending` field for them. One draft emitted, as
-   * before.
+   * there is nothing to roll back to. The only adult who is not eligible is
+   * `partner1` in a party of one, and they are never written to. A plus-one
+   * `partner2` **is** eligible and is written like anyone else (T339, hub
+   * ADR-0040 §4). One draft emitted, as before.
    */
   protected setStatus(status: RsvpDto.StatusEnum): void {
     const draft = this.draft();
@@ -415,6 +415,21 @@ export class RsvpEditor {
    */
   protected isDeclinedSolo(card: PersonCard): boolean {
     return this.canDeclineAlone(this.draft(), card.key) && !this.isAttending(card);
+  }
+
+  /**
+   * Which hint sits under the attending toggle. The "coming" copy names what
+   * survives a decline, and for an account-holding adult that list starts with
+   * their account — a `kind: 'plus-one'` has none (ADR W-0004), so that case
+   * gets its own key rather than a sentence that is false for them. The
+   * "declined" copy is true of either and is shared. (T339 — a plus-one can
+   * decline since hub ADR-0040 §4, so this branch now has a reader.)
+   */
+  protected attendingHintKey(card: PersonCard): string {
+    if (!this.isAttending(card)) return 'rsvp.editor.attending.hint.declined';
+    return card.key === 'partner2' && !partnerHasAccount(this.draft().partner2)
+      ? 'rsvp.editor.attending.hint.comingPlusOne'
+      : 'rsvp.editor.attending.hint.coming';
   }
 
   /** `attending.label`, third-person copy with the card's own name — or the

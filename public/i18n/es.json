@@ -308,6 +308,7 @@
         "fallbackName": "Esta persona",
         "hint": {
           "coming": "Desactiva esto si no puede asistir — su cuenta, comida y detalles de alergias se conservan, así que puede reactivarse en cualquier momento.",
+          "comingPlusOne": "Desactiva esto si no puede asistir — su nombre, comida y detalles de alergias se conservan, así que puede reactivarse en cualquier momento.",
           "declined": "Sigue formando parte de esta confirmación y puede volver a marcarse como asistente hasta el mismo día."
         }
       },

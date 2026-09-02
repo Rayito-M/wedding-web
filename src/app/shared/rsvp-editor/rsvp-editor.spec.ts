@@ -44,6 +44,8 @@ const TRANSLATIONS = {
         hint: {
           coming:
             'Switch this off if they cannot make it — their account, meal and allergy details stay, so they can be switched back any time.',
+          comingPlusOne:
+            'Switch this off if they cannot make it — their name, meal and allergy details stay, so they can be switched back any time.',
           declined: 'They stay on this RSVP and can be switched back to attending right up to the day.',
         },
       },
@@ -495,11 +497,36 @@ describe('RsvpEditor', () => {
       expect(toggle()).toBeNull();
     });
 
-    it('is absent for a plus-one partner2 (no account of their own)', async () => {
+    it('is present for a plus-one partner2, with the hint that does not promise them an account (T339, hub ADR-0040 §4)', async () => {
       await create(draftWith(plusOnePartner));
       queryAll<HTMLButtonElement>('.card-head')[1].click();
       await fixture.whenStable();
-      expect(toggle()).toBeNull();
+
+      const t = toggle();
+      expect(t).not.toBeNull();
+      expect(t!.getAttribute('aria-checked')).toBe('true');
+      expect(t!.textContent?.trim()).toBe('Grace Hopper will be there');
+      // Not the account-holding copy: a plus-one has no account to keep.
+      expect(query('.attending-hint')?.textContent?.trim()).toBe(
+        'Switch this off if they cannot make it — their name, meal and allergy details stay, so they can be switched back any time.',
+      );
+    });
+
+    it('clicking a plus-one\'s toggle emits partner2.attending: false and keeps them on the party (T339)', async () => {
+      await create(draftWith(plusOnePartner));
+      queryAll<HTMLButtonElement>('.card-head')[1].click();
+      await fixture.whenStable();
+
+      toggle()!.click();
+      await fixture.whenStable();
+
+      const last = emitted[emitted.length - 1];
+      expect(last.partner2?.attending).toBe(false);
+      expect(last.partner2?.firstName).toBe('Grace');
+      expect(toggle()!.getAttribute('aria-checked')).toBe('false');
+      expect(query('.attending-hint')?.textContent?.trim()).toBe(
+        'They stay on this RSVP and can be switched back to attending right up to the day.',
+      );
     });
 
     it('is present on the primary card whenever a partner2 exists — the ADR W-0007 amendment: partner1 is eligible too, even next to an account-less plus-one', async () => {
@@ -593,7 +620,7 @@ describe('RsvpEditor', () => {
       expect(last.partner2?.attending).toBe(false);
     });
 
-    it('setStatus("declined") leaves an account-less plus-one partner2 untouched (not eligible)', async () => {
+    it('setStatus("declined") writes an account-less plus-one partner2 too — they are eligible now (T339, hub ADR-0040 §4)', async () => {
       await create(draftWith(plusOnePartner), { showStatus: true });
 
       clickStatus('Sadly no');
@@ -601,10 +628,10 @@ describe('RsvpEditor', () => {
 
       const last = emitted[emitted.length - 1];
       expect(last.status).toBe('declined');
-      // partner1 is eligible (a partner2 exists) and gets the flag; the
-      // plus-one partner2 itself is never eligible and is never written to.
+      // Both adults are eligible, so both carry the flag; the wire has an
+      // `attending` field for a plus-one since hub ADR-0040.
       expect(last.partner1.attending).toBe(false);
-      expect(last.partner2?.attending).toBeUndefined();
+      expect(last.partner2?.attending).toBe(false);
     });
 
     it('setStatus("declined") leaves a child untouched — children cannot decline', async () => {
@@ -746,11 +773,18 @@ describe('RsvpEditor', () => {
       expect(heads[0].querySelector('.summary')?.textContent?.trim()).toBe('Not attending');
     });
 
-    it('never renders the pill or summary prefix for a plus-one, a child, or the primary/partner2 without an eligible partner2 — regardless of a stale attending value', async () => {
-      // Plus-one partner2, even with a stale attending: false — structurally ineligible.
+    it('renders the pill and summary prefix for a declined plus-one partner2 (T339, hub ADR-0040 §4)', async () => {
       await create(draftWith({ ...plusOnePartner, partner2: { ...plusOnePartner.partner2, attending: false } }));
-      let heads = queryAll<HTMLButtonElement>('.card-head');
-      expect(heads[1].querySelectorAll('app-pill').length).toBe(1);
+      const heads = queryAll<HTMLButtonElement>('.card-head');
+      const partnerPills = heads[1].querySelectorAll('app-pill');
+
+      expect(partnerPills.length).toBe(2);
+      expect(partnerPills[1].textContent?.trim()).toBe('Not attending');
+      expect(heads[1].querySelector('.summary')?.textContent?.trim()).toContain('Not attending');
+    });
+
+    it('never renders the pill or summary prefix for a child, or for the primary without a partner2 — regardless of a stale attending value', async () => {
+      let heads: HTMLButtonElement[];
 
       // Child with a stale, structurally-impossible attending-like field — never eligible.
       await create(
@@ -794,9 +828,16 @@ describe('RsvpEditor', () => {
       expect(query('.total')?.textContent?.trim()).toBe('Total: 1');
     });
 
-    it('renders "Total: N" for a party with a plus-one partner2, who can never solo-decline', async () => {
+    it('renders "Total: N" for a party with a plus-one partner2 who has not declined', async () => {
       await create(draftWith(plusOnePartner));
       expect(query('.total')?.textContent?.trim()).toBe('Total: 2');
+    });
+
+    it('renders "Attending: N-1 of N" once the plus-one partner2 declines (T339, hub ADR-0040 §4)', async () => {
+      await create(
+        draftWith({ ...plusOnePartner, partner2: { ...plusOnePartner.partner2, attending: false } }),
+      );
+      expect(query('.total')?.textContent?.trim()).toBe('Attending: 1 of 2');
     });
 
     it('renders "Total: N" for an account-holding partner2 with attending true or undefined', async () => {

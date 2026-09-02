@@ -311,6 +311,7 @@
         "fallbackName": "They",
         "hint": {
           "coming": "Switch this off if they cannot make it — their account, meal and allergy details stay, so they can be switched back any time.",
+          "comingPlusOne": "Switch this off if they cannot make it — their name, meal and allergy details stay, so they can be switched back any time.",
           "declined": "They stay on this RSVP and can be switched back to attending right up to the day."
         }
       },
