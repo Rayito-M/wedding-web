@@ -8,8 +8,11 @@
 > asserted. `files.deleted` and `out_of_scope_touched` are required and an empty array is a claim,
 > not an omission.
 >
-> Note: task numbers T260–T263 referenced by (now superseded) hub ADR-0011 were never
-> created and are void — messaging was cut from scope by hub ADR-0014.
+> Note: hub ADR-0011 (superseded) once reserved T260–T263 for messaging work that hub ADR-0014 cut
+> from scope. Those reservations were never written, and **all four numbers have since been reused
+> for live tasks** — T260/T261 (linked-partner RSVP rules), T262 (`app.spec.ts` TestBed repair),
+> T263 (stand up Playwright). Corrected 2026-09-03: the previous wording called them "void", which
+> invited someone tidying up to delete four real tasks. Nothing here is void.
 
 ---
 
@@ -2206,6 +2209,18 @@
   - At least one **real** smoke spec that would fail if the app were broken — e.g. the app boots,
     the welcome screen renders, and the language switcher changes rendered copy. No placeholder
     or always-true assertions.
+  - **A layout-regression tier, asserting computed geometry rather than DOM presence.** This is the
+    half that earns the dependency: Vitest under JSDOM already checks that elements *exist*, and
+    that is precisely what failed to catch T341 — 556 tests passed while pinning did not work at
+    all in a browser. A spec in this tier reads `getBoundingClientRect()` or
+    `getComputedStyle()` and asserts a *relationship*, never a class name. Two specs from real
+    defects, both of which must fail against the commit before their fix:
+      - **Pinned regions stay put** (`9474809`): on `/guests`, record the head's and foot's
+        `boundingClientRect().y`, scroll the list region, assert both are unchanged and the first
+        row's `y` has decreased. Fails against `9474809^`
+      - **A `clip` flex item does not outgrow its parent** (hub ADR-0041 §4): assert
+        `main.scrollHeight <= main.clientHeight` on a pinned route. This is the `min-height: 0`
+        trap, and T347 is about to convert 47 more sites that can hit it. Fails against `9474809^`
   - The suite must not depend on a live `wedding-api`: either stub network at the Playwright
     layer (`page.route`) or document precisely what must be running. A suite that only passes on
     the author's machine is worse than none.
@@ -7261,7 +7276,8 @@
 > them. 9,883 lines of SCSS across 71 files, of which 412 lines (4%) are shared; 45% of dimensional
 > values are raw `px`; three unnamed breakpoints; 13 files declare their own scroll container. Every
 > screen re-derives its own page shell. This phase adds the missing layer and enforces it.
-> Sequence matters: T340 → T341 → **T348** → T345 → T347 → T342 → T343 → T344.
+> Sequence matters: T340 → T341 → **T348** → T345 → T347 → T342 → T343 (+ T349) → T344,
+> with **T263** (Playwright) landing any time before T349 needs it.
 > T348 is not optional and not deferrable: T341 ships a known regression on `/guests`
 > and T348 is its fix. Nothing in this phase releases without it. T345 sits out of numeric order
 > deliberately: it shares T341's mechanism (a screen's chrome is declared on its route, hub
@@ -7426,6 +7442,39 @@
   keeps screens lazy — but nothing in `core/` may import `tab-bar`, or the cycle closes.
 - **Refs:** hub ADR-0042 §6, §7; hub ADR-0029 §4.7; `src/app/shared/nav-tabs.ts`,
   `src/app/shared/tab-bar/tab-bar.ts`
+
+### T349 — A layout-regression spec per migrated screen, so a device stops being the only check
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T263 (the Playwright harness and its layout tier)
+- **Sequenced with:** T343 — each screen's spec lands in the **same PR** as that screen's migration,
+  not in a batch afterwards. A spec written after the fact is written against what the code does;
+  written alongside, it is written against what the screen is supposed to do.
+- **Why:** this phase moves layout, and layout is the one thing JSDOM does not compute. Two
+  production defects escaped T341 with 556 tests green — pinning that never worked in a browser
+  (`9474809`) and a dead scroll handler (T348) — and both were found in minutes on a device. Three
+  more screens migrate in T343. Without this, "a human checks" is the only gate, and it will be
+  skipped exactly once.
+- **Acceptance:**
+  - One spec per screen T343 migrates — `config-manager`, `milestones`, `seating-plan` — plus
+    `guest-manager`, asserting the invariants that actually broke:
+      - the pinned head and foot do not move while the scroll region scrolls
+      - `main.scrollHeight <= main.clientHeight` on a pinned route (the `min-height: 0` trap)
+      - the screen's *own* scroll affordance still works — for `guest-manager`, that reaching the
+        bottom loads the next page, which is the T348 regression and must be covered here so it
+        cannot silently return
+  - **Each spec is proven by failing first.** Check it out against the commit before its fix and
+    watch it fail; a layout spec that has never failed is asserting the DOM it was written from
+  - At least one spec runs at a **narrow viewport in French** — the locale-plus-width combination
+    that produced the original footer overflow, and the one no English-only check reaches
+  - Specs live beside the harness from T263, not inside `src/`
+- **Non-goals:** no full user-journey coverage — this is a geometry tier, deliberately narrow.
+  **And no CI:** `wedding-web` has no `.github/` workflow today, so this suite is local-only and
+  the task must say so plainly rather than implying a gate that does not run. Wiring CI is a
+  separate decision with its own cost
+- **Refs:** T263; hub ADR-0041 §4 (the `clip` flex-item trap), hub ADR-0042 §Consequences;
+  `tasks/reports/T341.json`
 
 ### T348 — Give a screen back scroll observation and scroll control
 - **Status:** todo — **T341 must not be released until this lands.** It is the fix for a live,
