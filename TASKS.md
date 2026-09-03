@@ -7291,12 +7291,29 @@
   `scrollIntoView()` slide the pinned header and footer out of place with no gesture able to restore
   them. The fix is **not** to give every screen a shell — that would take the app from one scroll
   container to 23. Pinning and scroll ownership are separable, and the layout owns the pinning.
-- **Prototype gate — do this first, on `guest-manager`, before the rest:** a `TemplateRef` declared
-  in a screen but rendered in the layout executes in the screen's injector while living in the
-  layout's change-detection tree (the CDK Portal shape). It should work zoneless, but prove it
-  before it becomes doctrine. If it does not hold, stop and re-open ADR-0042 §2 rather than working
-  around it.
+- **Prototype gate — PASSED 2026-09-03.** The `TemplateRef`-across-injectors question is settled:
+  the projected template is marked dirty through the signal graph with no `markForCheck()`, and the
+  guarded clear is both necessary and sufficient. Evidence and the zoneless confirmation are
+  recorded in hub ADR-0042 §Gate outcome. The spike lives in the tree across 9 files
+  (`core/service/screen-chrome.service.ts`, `core/directive/`, `private-layout`), unscaffolded — see
+  the first acceptance bullet. **Blocked on T340 for the rest.**
 - **Acceptance:**
+  - **De-scaffold the spike before building on it.** It wraps a single `.stat-group` rather than the
+    whole header, deliberately, to dodge the assertion below. Drop that wrap so `guest-manager` is
+    untouched again, keep the three mechanism files, and re-point the proving tests at the throwaway
+    stub screens the teardown case already uses — the mechanism ships without a half-migrated real
+    screen hanging off it
+  - **A shared test harness for projected chrome, decided once here.** A screen that projects its
+    head does not render it when mounted standalone, so screen-level DOM assertions about it fail.
+    All four screens in T343 will hit this; each inventing its own workaround is how four patterns
+    get born. Provide one harness (a host that supplies `ScreenChromeService` and renders the slot),
+    document it in the file header, and use it from the guest-manager spec
+  - **Move `guest-manager.spec.ts:1137`, do not patch it.** `expect(…querySelector('.header'))
+    .not.toBeNull()` — commented *"the header … stays on screen"* — is asserting the **pinning
+    contract**, which under ADR-0042 §2 belongs to `private-layout`. It becomes a layout test. Any
+    sibling assertion in the same shape moves with it
+  - The **foot slot** (`*appScreenFoot`) is built here with tests. Same mechanism as the head, so no
+    separate gate, but it is currently unproven rather than proven — it does not ship untested
   - `RouteChromeData` gains `headPinned?` and `footPinned?` beside the existing `tabBar` / `topNav` /
     `moto` (ADR-0042 §1)
   - `ScreenChromeService` — signals holding a head and a foot `TemplateRef`; **no NgRx slice**
