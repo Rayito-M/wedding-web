@@ -1,0 +1,104 @@
+// ─────────────────────────────────────────────────────────────
+// Wedding App — Layout Layer: Scroll Ownership & Named Breakpoints
+// ─────────────────────────────────────────────────────────────
+// Scope: what a *screen* can apply to itself — the single scrolling
+// region a shell screen owns, the flex-truncation discipline every
+// screen needs, and the three named breakpoints. The page **shell**
+// (the viewport-filling box, the pinned head/foot slots) is owned by
+// `private-layout.scss`, not here — under hub ADR-0042 §2 a screen never
+// declares its own shell, it only opts a region into the scroll model
+// the layout has already decided for the active route and breakpoint.
+// This file therefore holds no `%app-screen` and no `%screen-footer`;
+// see T340 for why those two were struck.
+//
+// Mechanism: SCSS placeholders (%name) + @extend where the boundary
+// allows it; a `@mixin` where it does not — Sass forbids `@extend`ing a
+// placeholder across a media-query boundary, and per hub ADR-0042 §4 the
+// flow/shell choice is decided per breakpoint, so `screen-scroll` below
+// ships as a mixin, not a placeholder (verified empirically, see T340's
+// report). Named breakpoint variables + a `respond-to()` mixin replace
+// hand-spelled `@media (min-width: …)` literals.
+// Ref: T340. Hub ADR-0041 §2 (this file is the deliverable), §4 (the
+// paired `hidden` → `clip` clip declaration), §5 (flex truncation), §6
+// (named breakpoints); hub ADR-0042 §2 (the layout owns pinned regions),
+// §4 (flow vs. shell is per breakpoint, not per screen). Semantic tokens
+// only, as `_primitives.scss` requires — the breakpoint literals below
+// are the deliberate exception: they are what this file exists to name.
+// ─────────────────────────────────────────────────────────────
+
+// ── Named breakpoints (ADR-0041 §6) ──
+// Collapses 34 hand-spelled literals across the repo (900px ×16, 640px
+// ×10, 1024px ×2) into one declaration site.
+$bp-md: 640px;
+$bp-lg: 900px;
+$bp-xl: 1024px;
+
+/// Media-query helper keyed by name, not by value, so a screen never
+/// hand-spells a breakpoint again. Fails loudly on an unknown name rather
+/// than silently emitting nothing, so a typo is a build error, not a
+/// missing style discovered on a phone.
+@mixin respond-to($bp) {
+  @if $bp == 'md' {
+    @media (min-width: $bp-md) {
+      @content;
+    }
+  } @else if $bp == 'lg' {
+    @media (min-width: $bp-lg) {
+      @content;
+    }
+  } @else if $bp == 'xl' {
+    @media (min-width: $bp-xl) {
+      @content;
+    }
+  } @else {
+    @error "respond-to(): unknown breakpoint `#{$bp}` — expected 'md', 'lg' or 'xl'.";
+  }
+}
+
+// ── The single scrolling region (ADR-0041 §3, as amended by ADR-0042 §4) ──
+
+/// A shell screen's one scrolling region. Ships as a mixin, not a
+/// placeholder: Sass raises "You may not @extend selectors across media
+/// queries" when a top-level `%screen-scroll` is `@extend`ed from inside
+/// `respond-to()`, and per ADR-0042 §4 the flow/shell choice is decided
+/// per breakpoint — `seating-plan` is flow on a phone and shell at
+/// `$bp-lg` — so this has to work inside a media query. A mixin does; a
+/// placeholder, verified empirically, does not. Include it unconditionally
+/// on a screen that is always shell, or inside `respond-to()` on one that
+/// is shell only from a given breakpoint up:
+///
+///   .unit-list {
+///     @include layout.respond-to('lg') {
+///       @include layout.screen-scroll;
+///     }
+///   }
+///
+/// Applies to the one element a shell screen designates as its scroller.
+/// Nesting a second one inside it is out of contract (ADR-0041 §3).
+@mixin screen-scroll {
+  flex: 1;
+  // Flex items default to `min-height: auto` and refuse to shrink below
+  // their content's height, which is exactly what stops this box from
+  // ever becoming the scroller it is meant to be.
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow-x: clip; // creates no scroll container, so focus cannot shift the box sideways
+}
+
+// ── Flex truncation discipline (ADR-0041 §5) ──
+
+/// Any flex item that contains text and may need to truncate rather than
+/// grow the row. Generalises the guest-manager footer defect: 47
+/// `overflow: hidden` sites against only 33 `min-width: 0` sites says the
+/// missing half recurs elsewhere. Naming it is what lets T342 lint for it.
+%truncating-flex-child {
+  // Flex items default to `min-width: auto`, so text refuses to shrink
+  // below its own min-content width and pushes the row wider instead of
+  // eliding — the exact failure the guest-manager footer hit in French.
+  min-width: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift the box
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

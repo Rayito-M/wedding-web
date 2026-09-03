@@ -7261,7 +7261,13 @@
 > ADR-0042) and the two land as one PR series.
 
 ### T340 — `_layout.scss`: page shells, scroll ownership, named breakpoints
-- **Status:** todo
+- **Status:** done — `screen-scroll` ships as a **mixin**, not the `%placeholder` named below. Sass
+  cannot `@extend` a top-level placeholder from inside a media query, and hub ADR-0042 §4 requires
+  exactly that (`seating-plan` is flow on mobile, shell at `$bp-lg`). Reproduced empirically before
+  deviating; the acceptance text authorized it. Hub ADR-0041 §3/§Implications and ADR-0042 §4
+  corrected to match (hub `321a257`). `%truncating-flex-child` uses plain `overflow: hidden` — hub
+  ADR-0041 §4 was scoped the same day to layout containers only, so **T342's lint rule must carry
+  that exemption** or it will flag this primitive.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Why:** hub **ADR-0041 §2/§6**, as amended by **ADR-0042 §2/§4**. Nothing in the repo owns what a
