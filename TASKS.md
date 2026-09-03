@@ -7261,7 +7261,7 @@
 > them. 9,883 lines of SCSS across 71 files, of which 412 lines (4%) are shared; 45% of dimensional
 > values are raw `px`; three unnamed breakpoints; 13 files declare their own scroll container. Every
 > screen re-derives its own page shell. This phase adds the missing layer and enforces it.
-> Sequence matters: T340 → T341 + T345 → T342 → T343 → T344. T345 sits out of numeric order
+> Sequence matters: T340 → T341 + T345 → T347 → T342 → T343 → T344. T345 sits out of numeric order
 > deliberately: it shares T341's mechanism (a screen's chrome is declared on its route, hub
 > ADR-0042) and the two land as one PR series.
 
@@ -7309,7 +7309,13 @@
   `src/styles/_tokens.scss`
 
 ### T341 — The layout owns the pinned regions; `main` stays the one scroller
-- **Status:** todo
+- **Status:** in-progress — step 1 (de-scaffold) landed as `34c8a12`; the build step is open.
+- **Scope corrected 2026-09-03 (second time).** Two bullets left this task. The repo-wide sweep —
+  the 47 `overflow: hidden` sites and the per-breakpoint classification of the 13 scroller-declaring
+  files — is now **T347**: it touches ~13 screens, which contradicted this task's own guest-manager
+  scope and made it impossible to prompt honestly. And phone verification is narrowed to
+  `guest-manager`, because the other three screens named in that bullet are migrated by T343, not
+  here. What remains is one coherent piece of work: the mechanism, the harness, and one screen.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T340
@@ -7356,16 +7362,11 @@
     `.screen-scroll` is the one scroller. `display: contents` on that wrapper keeps flow screens
     untouched
   - `data-shell` / `main:has()` from ADR-0041 §3 are **not** implemented — withdrawn by ADR-0042 §5
-  - Every `overflow: hidden` intended as a clip becomes the paired `hidden` → `clip` declaration
-    (ADR-0041 §4). The 47 current sites are audited, not blanket-replaced — a site that genuinely
-    wants a scrollable-but-scrollbar-less box keeps `hidden` and gains a comment saying why
-  - Each of the 13 scroller-declaring files is classified flow or shell **per breakpoint** in its
-    header comment (ADR-0042 §4) — `seating-plan` is flow on mobile and shell at ≥900px, and both
-    of its scrollers already sit inside that media query
   - `guest-manager` sheds `:host { height: 100% }`, the `.guest-manager` shell block,
     `.table-container` entirely, and the `flex`/`min-height`/`overflow` triad on `.table-body`;
     its `<header class="header">` and `.list-footer` move into the two slots
-  - Manually verified on a real phone in **French** (the longest locale), on the four screens of T343
+  - `guest-manager` manually verified on a real phone in **French** (the longest locale) — the
+    other three screens of T343 are verified there, not here, because this task does not migrate them
 - **Non-goals:** no change to `main`'s 52px/58px header and tab-bar clearance — those are measured
   values, see `private-layout.scss`. The doubled header on `guest-manager` (its own `<header>` under
   the layout's `app-screen-header`) is *surfaced* by this task but removed in T343.
@@ -7405,6 +7406,30 @@
   keeps screens lazy — but nothing in `core/` may import `tab-bar`, or the cycle closes.
 - **Refs:** hub ADR-0042 §6, §7; hub ADR-0029 §4.7; `src/app/shared/nav-tabs.ts`,
   `src/app/shared/tab-bar/tab-bar.ts`
+
+### T347 — The `overflow` audit and the per-breakpoint scroller classification
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T341 (the mechanism must exist before a file can be classified against it)
+- **Why:** hub **ADR-0041 §4** and **ADR-0042 §4**. Carved out of T341 on 2026-09-03: it is a
+  repo-wide sweep across ~13 screens, which sat badly inside a task otherwise scoped to
+  `private-layout` and one screen. Sequenced before **T343**, which migrates four screens and wants
+  this classification already written down.
+- **Acceptance:**
+  - Every `overflow: hidden` intended as a clip becomes the paired `hidden` → `clip` declaration.
+    The 47 current sites are **audited, not blanket-replaced** — a site that genuinely wants a
+    scrollable-but-scrollbar-less box keeps `hidden` and gains a comment saying why
+  - **ADR-0041 §4 was scoped on 2026-09-03 and the audit must honour it:** the rule governs *layout
+    containers*, boxes establishing a scrolling context a focus event could shift. A single-line,
+    `nowrap`, ellipsizing text child is not one and keeps plain `hidden` — see
+    `%truncating-flex-child` in `_layout.scss` for the canonical case
+  - Each of the 13 scroller-declaring files is classified flow or shell **per breakpoint** in its
+    header comment — `seating-plan` is flow on mobile and shell at ≥900px, with both its scrollers
+    already inside that media query
+  - No visual change: this task writes comments and pairs declarations, it does not restructure
+- **Non-goals:** no screen migrated onto the layout layer — that is T343
+- **Refs:** hub ADR-0041 §4 (as scoped, hub `321a257`), hub ADR-0042 §4; `src/styles/_layout.scss`
 
 ### T342 — stylelint, because guidance alone already failed once
 - **Status:** todo
