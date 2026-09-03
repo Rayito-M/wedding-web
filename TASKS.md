@@ -7276,8 +7276,13 @@
 > them. 9,883 lines of SCSS across 71 files, of which 412 lines (4%) are shared; 45% of dimensional
 > values are raw `px`; three unnamed breakpoints; 13 files declare their own scroll container. Every
 > screen re-derives its own page shell. This phase adds the missing layer and enforces it.
-> Sequence matters: T340 → T341 → **T348** → T345 → T347 → T342 → T343 (+ T349) → T344,
-> with **T263** (Playwright) landing any time before T349 needs it.
+> Sequence matters: T340 → T341 → **T263** → **T348** → T345 → T347 → T342 → T343 (+ T349) → T344.
+> **T263 (Playwright) moved ahead of T348 on 2026-09-04**, from "any time before T349 needs it".
+> T348's load-bearing acceptance bullet is a test that fails against current `main`, and its fix is
+> an `IntersectionObserver` sentinel — JSDOM implements neither real layout nor intersection, so
+> without the harness that bullet can only be met by mocking the observer, which rebuilds the exact
+> blind spot T348 exists to close. T263 is not in this phase; it is a prerequisite pulled in from
+> Phase J.
 > T348 is not optional and not deferrable: T341 ships a known regression on `/guests`
 > and T348 is its fix. Nothing in this phase releases without it. T345 sits out of numeric order
 > deliberately: it shares T341's mechanism (a screen's chrome is declared on its route, hub
@@ -7481,7 +7486,8 @@
   user-visible regression on `/guests`, knowingly shipped by T341 and documented at both call sites.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
-- **Depends on:** T341
+- **Depends on:** T341, and **T263** (the Playwright harness) — see below: without it this task's
+  central acceptance bullet cannot honestly be met.
 - **Why:** hub **ADR-0042 §Consequences** ("a screen that gives up its scroller loses both scroll
   observation and scroll control"). `guest-manager` bound `(scroll)` to `.table-body` to auto-load
   the next page near the bottom, and wrote `.table-body.scrollTop = 0` to jump to the top on a
@@ -7510,8 +7516,11 @@
     device-verified until the footer holds two strings at once** — the hint renders only when
     `hasMore()` is true, so a fully-loaded list hides it and the row fits trivially. Verify with a
     guest list longer than one page, in French, at 360–375px
-  - **A test that fails against current `main`.** The existing scroll tests pass while the feature is
-    broken, which is the actual defect here; whatever replaces them must not share that property
+  - **A test that fails against current `main`, in Playwright — not in Vitest.** The existing scroll
+    tests pass while the feature is broken, and that is the actual defect. Reproducing it under
+    JSDOM is not possible honestly: JSDOM implements neither real layout nor `IntersectionObserver`,
+    so a unit test here could only assert against a mocked observer — which is the same blind spot
+    in a new costume. This bullet is why **T263 was pulled ahead of this task** (2026-09-04)
   - Verified in a real browser at `/guests` with more than one page of guests: scrolling to the
     bottom loads the next page, and changing a filter returns the view to the top
 - **Non-goals:** no change to the pinning mechanism, the slots, or the `.screen-scroll` structure —
