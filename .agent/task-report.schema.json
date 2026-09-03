@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wedding.local/schemas/wedding-web/task-report.schema.json",
+  "title": "wedding-web task report",
+  "description": "The shape an implementer agent reports a TASKS.md task in. Every field is measured from command output or `git status --short`, never asserted from memory. Three fields exist because of specific incidents: `files.deleted` and `out_of_scope_touched` because a concurrent edit once removed nine held files and the loss was inferred from a test count rather than read off a report; `checks.test.before`/`after` with `new_failures` separated because a stale baseline in a prompt was reported back as repo drift.",
+  "type": "object",
+  "required": ["task", "status", "summary", "acceptance", "checks", "files", "out_of_scope_touched", "commits"],
+  "additionalProperties": false,
+  "properties": {
+    "task": { "type": "string", "pattern": "^T[0-9]{3}$" },
+    "status": { "enum": ["complete", "complete_with_deviation", "blocked", "abandoned"] },
+    "summary": { "type": "string", "maxLength": 600 },
+    "acceptance": {
+      "type": "array",
+      "minItems": 1,
+      "description": "One entry per acceptance bullet in the task, in the task's order. Never merge two bullets into one entry.",
+      "items": {
+        "type": "object",
+        "required": ["criterion", "met", "evidence"],
+        "additionalProperties": false,
+        "properties": {
+          "criterion": { "type": "string" },
+          "met": { "enum": [true, false, "partial"] },
+          "evidence": {
+            "type": "string",
+            "description": "Command output, file:line, or test name. Restating the criterion is not evidence."
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "deviations": {
+      "type": "array",
+      "description": "Anything built differently from the task's literal text. An empty array asserts there were none.",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "reason", "authorized_by", "verified_how"],
+        "additionalProperties": false,
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "reason": { "type": "string" },
+          "authorized_by": {
+            "type": "string",
+            "description": "The task bullet or ADR section permitting it, or the literal string \"none — needs a decision\"."
+          },
+          "verified_how": {
+            "type": "string",
+            "description": "How the deviation was proven necessary — a reproduction, not a belief."
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "required": ["typecheck", "lint", "test", "build"],
+      "additionalProperties": false,
+      "properties": {
+        "typecheck": { "$ref": "#/$defs/simpleCheck" },
+        "lint": { "$ref": "#/$defs/countCheck" },
+        "test": {
+          "type": "object",
+          "required": ["before", "after", "new_failures"],
+          "additionalProperties": false,
+          "properties": {
+            "before": { "$ref": "#/$defs/testCounts" },
+            "after": { "$ref": "#/$defs/testCounts" },
+            "new_failures": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Empty unless this task caused them. Pre-existing failures belong in the counts, never here."
+            }
+          }
+        },
+        "build": {
+          "type": "object",
+          "required": ["result", "global_stylesheet_bytes_before", "global_stylesheet_bytes_after"],
+          "additionalProperties": false,
+          "properties": {
+            "result": { "enum": ["pass", "fail"] },
+            "global_stylesheet_bytes_before": { "type": "integer" },
+            "global_stylesheet_bytes_after": { "type": "integer" },
+            "budget_warnings": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "object",
+      "required": ["added", "modified", "deleted"],
+      "additionalProperties": false,
+      "properties": {
+        "added": { "type": "array", "items": { "type": "string" } },
+        "modified": { "type": "array", "items": { "type": "string" } },
+        "deleted": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Every path removed, including untracked files cleaned and tracked files reverted to HEAD."
+        }
+      }
+    },
+    "out_of_scope_touched": {
+      "type": "array",
+      "description": "An empty array is the expected answer and is an explicit claim, not an omission.",
+      "items": {
+        "type": "object",
+        "required": ["path", "why"],
+        "additionalProperties": false,
+        "properties": { "path": { "type": "string" }, "why": { "type": "string" } }
+      }
+    },
+    "blocked_on": { "type": "array", "items": { "type": "string" } },
+    "risks": {
+      "type": "array",
+      "description": "Things a later task inherits. Not a place for hedging about work that is done.",
+      "items": {
+        "type": "object",
+        "required": ["risk", "surfaces_at"],
+        "additionalProperties": false,
+        "properties": { "risk": { "type": "string" }, "surfaces_at": { "type": "string" } }
+      }
+    },
+    "commits": { "type": "array", "items": { "type": "string" } }
+  },
+  "$defs": {
+    "simpleCheck": {
+      "type": "object",
+      "required": ["result"],
+      "additionalProperties": false,
+      "properties": { "result": { "enum": ["pass", "fail"] }, "detail": { "type": "string" } }
+    },
+    "countCheck": {
+      "type": "object",
+      "required": ["errors_before", "errors_after", "new_errors"],
+      "additionalProperties": false,
+      "properties": {
+        "errors_before": { "type": "integer" },
+        "errors_after": { "type": "integer" },
+        "new_errors": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "testCounts": {
+      "type": "object",
+      "required": ["total", "failing"],
+      "additionalProperties": false,
+      "properties": { "total": { "type": "integer" }, "failing": { "type": "integer" } }
+    }
+  }
+}

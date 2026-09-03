@@ -3,6 +3,11 @@
 > Atomic, agent-sized tasks. One task = one PR. Tasks numbered T2xx to avoid collision with `wedding-api` (T1xx).
 > Status: `todo` | `in-progress` | `blocked` | `done`.
 >
+> An implementer agent reports a finished task as a single JSON object validating against
+> `.agent/task-report.schema.json` — measured from command output and `git status --short`, never
+> asserted. `files.deleted` and `out_of_scope_touched` are required and an empty array is a claim,
+> not an omission.
+>
 > Note: task numbers T260–T263 referenced by (now superseded) hub ADR-0011 were never
 > created and are void — messaging was cut from scope by hub ADR-0014.
 
