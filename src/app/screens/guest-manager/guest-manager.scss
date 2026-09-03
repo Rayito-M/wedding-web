@@ -15,16 +15,7 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
-  // `overflow: hidden` is not a clip — it is a scroll container with the
-  // scrollbar suppressed. Touch cannot pan it, but focus and
-  // `scrollIntoView()` can: tapping the search field or a row let the UA
-  // scroll this box to reveal the target, sliding the header and footer out
-  // of place with no gesture able to bring them back. `clip` renders
-  // identically and creates no scroll container, so nothing can shift it.
-  // Paired declaration, not a duplicate: pre-Safari-16 UAs drop the `clip`
-  // line and keep the `hidden` fallback rather than falling to `visible`.
   overflow: hidden;
-  overflow: clip;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -202,12 +193,7 @@
 
 .table-container {
   flex: 1;
-  // `clip` over `hidden` for the same reason as `.guest-manager` above: this
-  // box only ever clips the focus outline of `.table-body` (see the comment
-  // there); it must never become a scrollable box of its own. `.table-body`
-  // remains the one real scroller on this screen.
   overflow: hidden;
-  overflow: clip;
   padding: 0 t.$space-3;
   display: flex;
   flex-direction: column;
@@ -545,33 +531,11 @@
   gap: 8px;
 }
 
-// Flex items default to `min-width: auto`, i.e. they refuse to shrink below
-// their min-content width. Untouched, this pair overflows the bar on a phone
-// in every locale but English: fr is "Affichage de {n} sur {n}" +
-// "Faites défiler pour voir plus" — ~52 characters at 11px plus the 8px gap
-// and 24px of gutters, past 360px of irreducible width on a 360–375px
-// viewport. `min-width: 0` lets them yield, and the ellipsis keeps a yielded
-// label readable instead of spilling past its box.
 .list-footer-info,
 .list-footer-hint {
   font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--text-muted);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-// The info line is the `aria-live` region carrying the actual counts, so it
-// holds its width; the hint is decorative — on touch the scroll affordance is
-// self-evident — so it is the one that gives way first when both cannot fit.
-.list-footer-info {
-  flex: 0 1 auto;
-}
-
-.list-footer-hint {
-  flex: 0 3 auto;
 }
 
 // ─────────────────────────────────────────────────────────────
