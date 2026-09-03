@@ -7318,6 +7318,17 @@
   contract test in `layouts/private-layout/screen-chrome.spec.ts`. Not done here: `guest-manager`
   verified on a real phone in French — that needs a human with a device, not an agent; see the T341
   report for the rest of the acceptance list checked off with evidence.
+- **Device-verified 2026-09-03 — and it failed first.** Pinning did not work at all in a browser
+  while all 556 tests passed: the head and foot scrolled away with the rows. Two CSS defects in
+  `private-layout.scss`, fixed in `9474809` — `main` was missing `min-height: 0` (a flex item's
+  automatic minimum size is zero only for a *scroll container*, and `clip` is deliberately not one,
+  so ADR-0041 §4's `hidden` → `clip` change silently revived it), and `.screen-scroll.pinned` never
+  overrode `display: contents`, so the mixin applied to no box. Re-verified after the fix: pinning
+  holds, and flow screens are unaffected by `main`'s now-unconditional `min-height: 0`. The first
+  defect generalises — see hub **ADR-0041 §4** and **T347**, which converts 47 more sites.
+- **One check did not exercise its target.** The French footer looked correct only because a
+  fully-loaded list sets `hasMore()` false, so the hint span renders empty and the row carries one
+  string instead of two. The truncation defect is untouched and moves to **T348**.
 - **Scope corrected 2026-09-03 (second time).** Two bullets left this task. The repo-wide sweep —
   the 47 `overflow: hidden` sites and the per-breakpoint classification of the 13 scroller-declaring
   files — is now **T347**: it touches ~13 screens, which contradicted this task's own guest-manager
@@ -7442,6 +7453,14 @@
   - `guest-manager`'s `onListScroll` and `resetWindow` are rewritten onto both, and the doc comments
     T341 left at each call site describing the gap are removed — not amended, removed, because the
     gap is gone
+  - **The French footer truncation, still unfixed.** `.list-footer-info` / `.list-footer-hint` have
+    no `min-width: 0` and no ellipsis: the fix was reverted in `e340cff`, and T341 moved the footer
+    into the pinned slot without re-applying it. `_layout.scss` now carries
+    `%truncating-flex-child`, built for exactly this case, and this screen does not use it
+    (`grep -c truncating-flex-child guest-manager.scss` → 0). Apply it to both spans. **It cannot be
+    device-verified until the footer holds two strings at once** — the hint renders only when
+    `hasMore()` is true, so a fully-loaded list hides it and the row fits trivially. Verify with a
+    guest list longer than one page, in French, at 360–375px
   - **A test that fails against current `main`.** The existing scroll tests pass while the feature is
     broken, which is the actual defect here; whatever replaces them must not share that property
   - Verified in a real browser at `/guests` with more than one page of guests: scrolling to the
