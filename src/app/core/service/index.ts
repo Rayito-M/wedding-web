@@ -5,6 +5,7 @@ export * from './login.service';
 export * from './notification-center.service';
 export * from './profile-modal.service';
 export * from './route-config.service';
+export * from './screen-chrome.service';
 export * from './statistic.service';
 export * from './toast-center.service';
 export * from './translate-language.service';

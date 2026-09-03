@@ -1,5 +1,6 @@
 export * from './api';
 export * from './data';
+export * from './directive';
 export * from './guard';
 export * from './helper';
 export * from './interceptor';

@@ -10,6 +10,7 @@ import {
   ElementRef,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet } from '@angular/common';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 import { filter, map } from 'rxjs';
@@ -20,6 +21,7 @@ import {
   LoginService,
   ProfileModalService,
   RouteChromeData,
+  ScreenChromeService,
   ToastCenterService,
   UserProfileDto,
   WeddingUserProfileService,
@@ -95,6 +97,13 @@ type RouteChrome = Partial<RouteChromeData>;
  * rule 16's `lastSeen` reasoning); and delegation is a guest-only relation
  * (ADR-0039 §1 omits `delegateTo` from the bride/groom/provider documents),
  * so the couple must not see even its empty state.
+ *
+ * **Prototype gate (hub ADR-0042 §2, T341).** Renders whichever `TemplateRef`
+ * `ScreenChromeService.head()` currently holds — a screen registers one via
+ * `*appScreenHead` on an element in its own template (e.g. `guest-manager`'s
+ * `.stat-group`), and this layout projects it via `NgTemplateOutlet`. This is
+ * a spike only: no `headPinned`/`footPinned` route-data gating yet, no foot
+ * slot, and the slot is unstyled — see `screen-chrome-prototype.spec.ts`.
  */
 @Component({
   selector: 'app-private-layout',
@@ -107,6 +116,7 @@ type RouteChrome = Partial<RouteChromeData>;
     Toast,
     DecorMotorcycleRider,
     ProfileModal,
+    NgTemplateOutlet,
   ],
   templateUrl: './private-layout.html',
   styleUrl: './private-layout.scss',
@@ -116,6 +126,13 @@ export class PrivateLayout {
   private readonly login = inject(LoginService);
   protected readonly toastCenter = inject(ToastCenterService);
   protected readonly profileModal = inject(ProfileModalService);
+
+  /**
+   * Prototype gate (hub ADR-0042 §2, T341) — the screen-registered pinned
+   * head, rendered here via `NgTemplateOutlet`. See `ScreenChromeService`'s
+   * own class doc for why this is a service and not an NgRx slice.
+   */
+  protected readonly screenChrome = inject(ScreenChromeService);
 
   private readonly userProfileCollection: EntityCollectionService<UserProfileDto> = inject(
     EntityServices,

@@ -5,6 +5,13 @@
   [class.scrolled]="isScrolled()"
 />
 
+<!-- Prototype gate (hub ADR-0042 §2, T341): the active route's registered
+     head, projected from the screen's own injector into this layout's view.
+     Unstyled on purpose — this spike is about mechanism, not chrome. -->
+@if (screenChrome.head(); as headTemplate) {
+  <ng-container [ngTemplateOutlet]="headTemplate" />
+}
+
 <main #mainContent (scroll)="onMainScroll()">
   <router-outlet />
 </main>
