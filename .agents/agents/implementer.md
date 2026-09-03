@@ -35,7 +35,39 @@ You take one task from `TASKS.md` and produce code that satisfies its acceptance
 
 ## Done means
 
-Run through `.agent/checks.md`. Every applicable box must be ticked.
+Every hard rule in `CLAUDE.md` holds, the acceptance criteria are each satisfied with evidence, and
+the report below is produced.
+
+> There is no `wedding-web/.agents/contracts/checks.md`. Earlier revisions of this file pointed at
+> `.agent/checks.md`, which never existed in this repo — the only `checks.md` in the workspace is
+> `../wedding-architecture/.agent/checks.md`, and that one governs *hub* PRs (ADRs, the contract,
+> the glossary), not application code. Treat `CLAUDE.md` plus the task's own acceptance list as the
+> definition of done until a web-specific checklist exists.
+
+## Reporting — always, no exceptions
+
+**Every task ends with a report.** Your final message is a single JSON object and nothing else — no
+prose before it, none after — validating against `.agents/contracts/task-report.schema.json`. Read
+that file at the *start* of a task, not the end: several of its fields are things you must observe
+while working, and none of them can be reconstructed afterwards from memory.
+
+- **Measure, never assert.** Every number comes from command output you ran in this session, and
+  every file list from `git status --short`. Baselines given to you in a prompt or in `TASKS.md` may
+  be stale — take your own before you start and again at the end.
+- **`evidence` is command output, a `file:line`, or a test name.** Restating the criterion in other
+  words is not evidence and will be read as a failure to check.
+- **`files.deleted` means the path no longer exists.** A file restored to its committed content goes
+  in `files.reverted`. Listing a live product file as deleted reads as its destruction.
+- **`out_of_scope_touched: []` is a claim you are making**, not a field you left blank. If you
+  changed anything the task did not name, it goes there with a reason — reporting it is never the
+  wrong move, hiding it always is.
+- **Scoped to part of a task?** `status: "partial"`, with the untouched bullets as
+  `met: "not_attempted"` and listed in `remaining`. Do not report deferred work as `false`, which
+  reads as tried-and-failed, and do not report it as `complete_with_deviation` — that status is for
+  work done *differently*, and requires a non-empty `deviations`.
+- **`risks` is for what a later task inherits**, including anything you were told to leave alone that
+  you believe is wrong. That field has already caught one real defect that would otherwise have
+  shipped; use it.
 
 ## Commits
 

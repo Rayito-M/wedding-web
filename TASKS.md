@@ -4,7 +4,7 @@
 > Status: `todo` | `in-progress` | `blocked` | `done`.
 >
 > An implementer agent reports a finished task as a single JSON object validating against
-> `.agent/task-report.schema.json` — measured from command output and `git status --short`, never
+> `.agents/contracts/task-report.schema.json` — measured from command output and `git status --short`, never
 > asserted. `files.deleted` and `out_of_scope_touched` are required and an empty array is a claim,
 > not an omission.
 >
@@ -3586,7 +3586,7 @@
   and 8 above, which settle what to port, what to adapt and what to ignore. Do **not** go looking
   for `ui_kits/wedding-app/ConfirmDialog.jsx` — `ccea99a` deleted it. This task mirrors two tokens,
   builds the component and the two additive `app-modal` inputs it needs, and wires it to
-  **nothing**: T278 is the first call site. Follow `.agent/skills/design-component-author.md`.
+  **nothing**: T278 is the first call site. Follow `.agents/skills/design-component-author.md`.
 - **Acceptance:**
   - **First: mirror the two tokens into `src/styles/_tokens.scss`** — `--danger: #a8443c;` and
     `--on-danger: var(--surface);`, **exactly two variables, no theme maps, no ramp** (T276's
@@ -3719,7 +3719,7 @@
   `confirm-dialog.card.html` (both tones × three themes);
   `../wedding-ui-design/tokens/colors.css:62–72`; Phase M decisions 1–5 and 8; T276's resolution;
   hub ADR-0025 (`--scrim`, `--shadow-modal`, no OS dark mode);
-  `.agent/skills/design-component-author.md`; `src/styles/_tokens.scss`;
+  `.agents/skills/design-component-author.md`; `src/styles/_tokens.scss`;
   `src/app/shared/modal/modal.{ts,html,scss}`; `src/app/shared/button/button.{ts,scss}`;
   new `src/app/shared/confirm-dialog/`
 
@@ -4302,7 +4302,7 @@
   references and `toast.card.html` (all tones × both variants × nine placements × three themes).
   This task builds **two presentational components and wires them to nothing** — T285 mounts the
   stack, T289 is the first producer. Same shipping shape as T277. Follow
-  `.agent/skills/design-component-author.md`.
+  `.agents/skills/design-component-author.md`.
 - **Acceptance:**
   - New `src/app/shared/toast/toast.{ts,html,scss,spec.ts}` and
     `src/app/shared/toast-stack/toast-stack.{ts,html,scss}` — standalone, `OnPush`, selectors
@@ -4388,7 +4388,7 @@
   `../wedding-ui-design/components/overlays/Toast.prompt.md` (**the spec**), `Toast.d.ts`,
   `Toast.jsx`, `ToastStack.prompt.md`, `ToastStack.d.ts`, `ToastStack.jsx`, `toast.card.html`;
   Phase O decisions 1–3, 10, 11, 13; hub ADR-0025 (`--shadow-overlay` vs. `--shadow-modal`);
-  `.agent/skills/design-component-author.md`; `src/styles/_tokens.scss`;
+  `.agents/skills/design-component-author.md`; `src/styles/_tokens.scss`;
   `src/app/shared/icons/icon.ts`; `src/app/layouts/private-layout/private-layout.scss:7`;
   new `src/app/shared/toast/`, new `src/app/shared/toast-stack/`
 

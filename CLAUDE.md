@@ -12,7 +12,7 @@
 - **`../wedding-api`** — NestJS backend; exposes the API this SPA consumes.
 - **`.` (this repo)** — Angular 22 SPA implementation.
 
-The architecture hub may edit this file, `TASKS.md`, `.agent/skills/`, and cross-refs as part of a coordinated change. See `../wedding-architecture/.agent/authority.md`. **Never** application code.
+The architecture hub may edit this file, `TASKS.md`, `.agents/skills/`, and cross-refs as part of a coordinated change. See `../wedding-architecture/.agent/authority.md`. **Never** application code.
 
 ## Project
 
@@ -108,7 +108,7 @@ Angular 22 single-page app. Standalone components, signals-first, zoneless (no c
 - **Current task** → `TASKS.md`
 - **Generated API client** → `src/app/core/api/` (read-only)
 - **Feature map** → `src/app/features/` folder structure
-- **How to build a component from the design system** → `.agent/skills/design-component-author.md`
+- **How to build a component from the design system** → `.agents/skills/design-component-author.md`
 - **Design tokens & component reference** → invoke skill `wedding-design` (from `../wedding-ui-design/`)
 
 ## When in doubt
@@ -117,5 +117,5 @@ Stop and ask. Do not invent new components, styling, or flows. Before changing a
 
 ## Skills available in this repo
 
-- **design-component-author** (`.agent/skills/design-component-author.md`) — step-by-step guide for implementing a component from the design system spec, including validation against the reference.
+- **design-component-author** (`.agents/skills/design-component-author.md`) — step-by-step guide for implementing a component from the design system spec, including validation against the reference.
 - **wedding-design** (imported from `../wedding-ui-design/SKILL.md`) — design system reference tool; use it to understand tokens, see component examples, or prototype UI mocks.
