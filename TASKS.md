@@ -4,7 +4,7 @@
 > Status: `todo` | `in-progress` | `blocked` | `done`.
 >
 > An implementer agent reports a finished task as a single JSON object validating against
-> `.agents/contracts/task-report.schema.json` — measured from command output and `git status --short`, never
+> `../wedding-architecture/.agent/contracts/task-report.schema.json` — measured from command output and `git status --short`, never
 > asserted. `files.deleted` and `out_of_scope_touched` are required and an empty array is a claim,
 > not an omission.
 >
@@ -7454,3 +7454,36 @@
   - A production build passes clean
   - Hub `ARCHITECTURE.md` § Performance budgets updated to drop the "currently a warning" caveat
 - **Refs:** hub ADR-0041 §7; hub `ARCHITECTURE.md` § Performance budgets
+
+---
+
+## Phase Z — Task-file ergonomics (no ADR; this is tooling, not a decision)
+
+### T346 — Split `TASKS.md` into `tasks/<phase>/`, with an index
+- **Status:** todo — **do not start mid-phase.** Run this only once Phase X (T340–T345) is closed;
+  it rewrites the file every queued task lives in.
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Why:** `TASKS.md` is past 7,400 lines and 100+ tasks. Nothing but `grep` reaches into it, and
+  finding a task by number means scrolling. The file is also where every phase's history accumulates
+  with no natural place to put a task's report.
+- **Acceptance:**
+  - `tasks/<phase-slug>/TASKS.md`, one directory per `## Phase` heading, named
+    `phase-<letter>-<slug>` so directories sort chronologically and read meaningfully
+  - `tasks/README.md` is the **index**, and is the reason this is worth doing: one row per task —
+    number, title, status, phase directory. Task numbers are global and cited bare across repos and
+    ADRs ("`wedding-web` T341"), and nothing in a number says which phase holds it. Without the
+    index this trades one large file for a directory you have to search
+  - `tasks/<phase-slug>/reports/T<N>.json` — where an implementer's report lands, validating against
+    the hub's `task-report.schema.json`. Reports in a subdirectory, not beside `TASKS.md`, so a phase
+    with a dozen tasks does not bury its own task list
+  - Every task's text is moved **verbatim**. No renumbering, no rewording, no status changes, no
+    tasks dropped — including the void T260–T263 entries, which stay void and stay explained
+  - The root `TASKS.md` becomes a stub pointing at `tasks/README.md`, so existing links and habits
+    do not dead-end
+  - References updated: `CLAUDE.md`, `.agents/agents/*.md`, and the hub's
+    `.agent/skills/task-management.md` § 1 table
+- **Non-goals:** no change to task content, numbering, status or phase membership — this is a move,
+  and a reviewer should be able to confirm that with `git log --follow` and a word count
+- **Refs:** hub `.agent/skills/task-management.md`; `wedding-api` T243 (the same split, same layout)
+

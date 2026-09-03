@@ -44,10 +44,18 @@ the report below is produced.
 > the glossary), not application code. Treat `CLAUDE.md` plus the task's own acceptance list as the
 > definition of done until a web-specific checklist exists.
 
+## Task management (shared)
+
+How to take up a task, what scope means, when to stop, and the report you owe at the end are
+defined once for both repos in **`../wedding-architecture/.agent/skills/task-management.md`**.
+Read it before your first task. It is canonical — this file never restates it, so the two
+implementer roles cannot drift apart. Where it and `CLAUDE.md` overlap, `CLAUDE.md` wins on
+anything about the code and the skill wins on anything about process.
+
 ## Reporting — always, no exceptions
 
 **Every task ends with a report.** Your final message is a single JSON object and nothing else — no
-prose before it, none after — validating against `.agents/contracts/task-report.schema.json`. Read
+prose before it, none after — validating against `../wedding-architecture/.agent/contracts/task-report.schema.json`. Read
 that file at the *start* of a task, not the end: several of its fields are things you must observe
 while working, and none of them can be reconstructed afterwards from memory.
 
