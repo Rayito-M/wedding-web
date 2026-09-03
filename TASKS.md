@@ -7309,7 +7309,13 @@
   `src/styles/_tokens.scss`
 
 ### T341 — The layout owns the pinned regions; `main` stays the one scroller
-- **Status:** in-progress — step 1 (de-scaffold) landed as `34c8a12`; the build step is open.
+- **Status:** done — step 1 (de-scaffold) landed as `34c8a12`. The mechanism (route-data flags,
+  `ScreenChromeService` head **and** foot, `AppScreenHead`/`AppScreenFoot`), the shared
+  `ScreenChromeHarness` test harness, `private-layout`'s pinning (`main`/`.screen-scroll`), and the
+  `guest-manager` migration all land together in the rest of this series, with the moved pinning-
+  contract test in `layouts/private-layout/screen-chrome.spec.ts`. Not done here: `guest-manager`
+  verified on a real phone in French — that needs a human with a device, not an agent; see the T341
+  report for the rest of the acceptance list checked off with evidence.
 - **Scope corrected 2026-09-03 (second time).** Two bullets left this task. The repo-wide sweep —
   the 47 `overflow: hidden` sites and the per-breakpoint classification of the 13 scroller-declaring
   files — is now **T347**: it touches ~13 screens, which contradicted this task's own guest-manager
@@ -7330,9 +7336,10 @@
 - **Prototype gate — PASSED 2026-09-03.** The `TemplateRef`-across-injectors question is settled:
   the projected template is marked dirty through the signal graph with no `markForCheck()`, and the
   guarded clear is both necessary and sufficient. Evidence and the zoneless confirmation are
-  recorded in hub ADR-0042 §Gate outcome. The spike lives in the tree across 9 files
-  (`core/service/screen-chrome.service.ts`, `core/directive/`, `private-layout`), unscaffolded — see
-  the first acceptance bullet. **Blocked on T340 for the rest.**
+  recorded in hub ADR-0042 §Gate outcome. The mechanism files
+  (`core/service/screen-chrome.service.ts`, `core/directive/`, `private-layout`) are de-scaffolded
+  (`34c8a12`) and T340 landed (`81ea900`), so the rest of this task builds on both directly — see the
+  acceptance list below.
 - **Acceptance:**
   - **De-scaffold the spike before building on it.** It wraps a single `.stat-group` rather than the
     whole header, deliberately, to dodge the assertion below. Drop that wrap so `guest-manager` is
