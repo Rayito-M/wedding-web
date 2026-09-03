@@ -22,4 +22,19 @@ export interface RouteChromeData {
   topNav?: boolean;
   /** Decorative motorcycle-rider crossing above the mobile tab bar. */
   moto?: boolean;
+  /**
+   * The screen's title/stat head stays pinned while its content scrolls
+   * (hub ADR-0042 §1). A screen declares the pinned head with
+   * `*appScreenHead` on the element that should render there;
+   * `PrivateLayout` renders it via `ScreenChromeService` and yields scroll
+   * ownership from `main` to `.screen-scroll` whenever this — or
+   * {@link footPinned} — is `true`. Default: the screen's head scrolls with
+   * the rest of its content (a "flow" screen, ADR-0041 §3).
+   */
+  headPinned?: boolean;
+  /**
+   * The screen has a bar below the scroll region that stays pinned (hub
+   * ADR-0042 §1). Same mechanism as {@link headPinned}, via `*appScreenFoot`.
+   */
+  footPinned?: boolean;
 }
