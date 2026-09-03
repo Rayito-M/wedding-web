@@ -5,16 +5,35 @@
   [class.scrolled]="isScrolled()"
 />
 
-<!-- Prototype gate (hub ADR-0042 §2, T341): the active route's registered
-     head, projected from the screen's own injector into this layout's view.
-     Unstyled on purpose — this spike is about mechanism, not chrome. -->
+<!-- Hub ADR-0042 §1/§2, T341: the active route's registered head, projected
+     from the screen's own injector into this layout's view. Pinned above the
+     scroll region — see `.screen-head` in private-layout.scss. -->
 @if (screenChrome.head(); as headTemplate) {
-  <ng-container [ngTemplateOutlet]="headTemplate" />
+  <div class="screen-head">
+    <ng-container [ngTemplateOutlet]="headTemplate" />
+  </div>
 }
 
-<main #mainContent (scroll)="onMainScroll()">
-  <router-outlet />
+<!-- `main` stays the single scroller (ADR-0041 §3) for a flow screen; it
+     yields only when the active route pins something (`pinned()`), in which
+     case `.screen-scroll` below becomes the one region that scrolls — see
+     private-layout.scss for both halves of the contract. -->
+<main
+  #mainContent
+  (scroll)="onMainScroll()"
+  [class.pinned]="pinned()"
+  [class.after-head]="!!chrome().headPinned"
+>
+  <div class="screen-scroll" [class.pinned]="pinned()">
+    <router-outlet />
+  </div>
 </main>
+
+@if (screenChrome.foot(); as footTemplate) {
+  <div class="screen-foot">
+    <ng-container [ngTemplateOutlet]="footTemplate" />
+  </div>
+}
 
 @if (chrome().moto) {
   <app-decor-motorcycle-rider

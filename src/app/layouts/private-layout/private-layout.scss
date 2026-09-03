@@ -1,3 +1,5 @@
+@use '../../../styles/layout' as layout;
+
 :host {
   display: flex;
   flex-direction: column;
@@ -7,7 +9,10 @@
   // `.tab-bar` below is `position: fixed`, out of flow, so this reserves the
   // matching clearance in `main`'s scrollable area beneath it. Measured
   // against the real rendered `app-tab-bar` (DM Sans loaded): 58px — not a
-  // round number, don't "tidy" it back up without re-measuring.
+  // round number, don't "tidy" it back up without re-measuring. A pinned
+  // `.screen-foot` (hub ADR-0042 §1/§2) is a flex sibling of `main` below,
+  // so it clears the tab bar through this same reservation — no clearance
+  // of its own needed.
   padding-bottom: 58px;
 }
 
@@ -20,6 +25,15 @@
   width: 100%;
 }
 
+// The active route's registered head (hub ADR-0042 §1/§2, T341) — only
+// present in the DOM at all when a screen registers one (`*appScreenHead`).
+// Carries the 52px clearance from the fixed `.header` above that `main`
+// normally carries itself, so a screen with a pinned head gets it exactly
+// once — see `main.after-head` below, which drops main's own copy.
+.screen-head {
+  margin-top: 52px;
+}
+
 main {
   flex: 1;
   overflow-y: auto;
@@ -27,7 +41,44 @@ main {
   flex-direction: column;
   margin-top: 52px;
   padding-bottom: 20px;
+
+  // The active route's `headPinned`/`footPinned` route data is `true`
+  // (`pinned()`, hub ADR-0042 §1/§2): scroll ownership moves to
+  // `.screen-scroll` below, so `main` must stop being a scroll container of
+  // its own. `hidden` alone is not enough — it is still a scroll container
+  // with the scrollbar suppressed, and focus/`scrollIntoView()` could shift
+  // it (ADR-0041 §4), which is the exact guest-manager defect this ADR
+  // exists to fix.
+  &.pinned {
+    overflow-y: hidden; // fallback: pre-Safari-16 UAs drop the next line
+    overflow-y: clip; // creates no scroll container, so focus cannot shift it
+  }
+
+  // See `.screen-head` above: when a head is pinned, it — not `main` —
+  // carries the 52px clearance from the fixed header.
+  &.after-head {
+    margin-top: 0;
+  }
 }
+
+// Wraps `<router-outlet />`. Transparent to layout (`display: contents`) for
+// a flow screen, so `main` above is the single scroller exactly as before
+// this task (ADR-0041 §3). Becomes the one scrolling region itself only when
+// the active route pins something — see `screen-scroll()`
+// (`src/styles/_layout.scss`, T340) for what `.pinned` adds.
+.screen-scroll {
+  display: contents;
+
+  &.pinned {
+    @include layout.screen-scroll;
+  }
+}
+
+// The active route's registered foot (hub ADR-0042 §1/§2, T341) — only
+// present in the DOM when a screen registers one (`*appScreenFoot`). No CSS
+// of its own needed: it is a flex sibling of `main` inside `:host`'s column,
+// so it naturally sits directly above the tab-bar clearance `:host`
+// reserves (see the `padding-bottom` comment above).
 
 .tab-bar {
   position: fixed;

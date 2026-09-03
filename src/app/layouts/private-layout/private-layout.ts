@@ -98,12 +98,22 @@ type RouteChrome = Partial<RouteChromeData>;
  * (ADR-0039 §1 omits `delegateTo` from the bride/groom/provider documents),
  * so the couple must not see even its empty state.
  *
- * **Prototype gate (hub ADR-0042 §2, T341).** Renders whichever `TemplateRef`
- * `ScreenChromeService.head()` currently holds — a screen registers one via
- * `*appScreenHead` on an element in its own template (e.g. `guest-manager`'s
- * `.stat-group`), and this layout projects it via `NgTemplateOutlet`. This is
- * a spike only: no `headPinned`/`footPinned` route-data gating yet, no foot
- * slot, and the slot is unstyled — see `screen-chrome-prototype.spec.ts`.
+ * **Owns the pinned regions (hub ADR-0042 §2, T341).** Renders whichever
+ * `TemplateRef`s `ScreenChromeService.head()`/`foot()` currently hold — a
+ * screen registers one via `*appScreenHead` / `*appScreenFoot` on an element
+ * in its own template (e.g. `guest-manager`'s `<header class="header">` and
+ * `.list-footer`), and this layout projects them via `NgTemplateOutlet`.
+ * `main` stays the scroller for a "flow" screen (`.screen-scroll` is
+ * `display: contents`, so it is transparent to layout); the moment the
+ * active route's `data` sets `headPinned` or `footPinned` (`pinned()`
+ * below), `main` yields (`overflow-y: hidden` → `clip`, the ADR-0041 §4
+ * paired declaration — it is a layout container a focus event could shift)
+ * and `.screen-scroll` becomes the one region that actually scrolls. See
+ * `private-layout.scss` for the CSS side of the contract and
+ * `screen-chrome.spec.ts` for the coverage — registration/placement,
+ * change-detection and guarded-clear teardown were proven zoneless-safe by
+ * the T341 prototype gate (ADR-0042 §Gate outcome, `screen-chrome-prototype
+ * .spec.ts`) before this shipped.
  */
 @Component({
   selector: 'app-private-layout',
@@ -128,9 +138,9 @@ export class PrivateLayout {
   protected readonly profileModal = inject(ProfileModalService);
 
   /**
-   * Prototype gate (hub ADR-0042 §2, T341) — the screen-registered pinned
-   * head, rendered here via `NgTemplateOutlet`. See `ScreenChromeService`'s
-   * own class doc for why this is a service and not an NgRx slice.
+   * Hub ADR-0042 §2, T341 — the screen-registered pinned head/foot,
+   * rendered here via `NgTemplateOutlet`. See `ScreenChromeService`'s own
+   * class doc for why this is a service and not an NgRx slice.
    */
   protected readonly screenChrome = inject(ScreenChromeService);
 
@@ -253,6 +263,19 @@ export class PrivateLayout {
       map(() => this.deepestChrome()),
     ),
     { initialValue: this.deepestChrome() },
+  );
+
+  /**
+   * `true` exactly when the active route's `data` pins a head, a foot, or
+   * both (hub ADR-0042 §1/§2, T341). Drives `main`'s yield to
+   * `.screen-scroll` in the template/`private-layout.scss` — the two flags
+   * are read together because the single-scroller rule (ADR-0041 §3) has
+   * only one "who owns scrolling" answer per route, not one per slot: a
+   * route pinning only a foot still needs `.screen-scroll` to be the
+   * scroller, exactly like one pinning only a head.
+   */
+  protected readonly pinned = computed(
+    () => !!(this.chrome().headPinned || this.chrome().footPinned),
   );
 
   constructor() {
