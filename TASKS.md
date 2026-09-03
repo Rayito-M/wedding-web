@@ -7264,19 +7264,38 @@
 - **Status:** todo
 - **Target release:** 1.2.0
 - **Owner:** unassigned
-- **Why:** hub **ADR-0041 §2/§3/§6**. Nothing in the repo owns what a screen shell *is*, so each
-  screen invents one. `_primitives.scss` is deliberately scoped to atoms ("not behavior-bearing UI",
-  its own header comment) and is the wrong home for structure.
+- **Why:** hub **ADR-0041 §2/§6**, as amended by **ADR-0042 §2/§4**. Nothing in the repo owns what a
+  screen shell *is*, so each screen invents one. `_primitives.scss` is deliberately scoped to atoms
+  ("not behavior-bearing UI", its own header comment) and is the wrong home for structure.
+- **Scope corrected 2026-09-03.** This task was written under ADR-0041 alone. ADR-0042 then moved the
+  page shell and the pinned regions *into the layout*, so two of the three placeholders originally
+  listed here no longer have an owner in this file. They are struck below rather than silently
+  built — building them would produce a second, unused way to declare a shell.
 - **Acceptance:**
   - New `src/styles/_layout.scss`, a sibling of `_primitives.scss`, with a header comment stating
-    its contract exactly as `_primitives.scss` states its own
-  - `%app-screen` (viewport-filling shell), `%screen-scroll` (the single scrolling region),
-    `%screen-footer` (pinned bar; carries `min-width: 0` and the truncation discipline of ADR-0041 §5)
-  - `$bp-md: 640px`, `$bp-lg: 900px`, `$bp-xl: 1024px` and a `respond-to($bp)` mixin
+    its contract exactly as `_primitives.scss` states its own — including that the *shell* lives in
+    `private-layout.scss` and this file holds only what a screen itself can apply
+  - `$bp-md: 640px`, `$bp-lg: 900px`, `$bp-xl: 1024px` and a `respond-to($bp)` mixin. This is the
+    highest-value half of the task: 34 media queries currently spell three literals by hand
+  - `%screen-scroll` — the single scrolling region. **Must compose inside `respond-to()`**, because
+    per ADR-0042 §4 the flow/shell choice is per breakpoint, not per screen: `seating-plan` is flow
+    on mobile and shell at `$bp-lg`, and both its scrollers already sit inside that media query
+  - `%truncating-flex-child` — `min-width: 0` plus the ellipsis discipline of ADR-0041 §5. This is
+    the guest-manager footer defect generalised: 47 `overflow: hidden` sites against 33
+    `min-width: 0` sites says it recurs. Naming it is what lets T342 lint for it
   - Emits nothing unless extended — verified by a production build showing no growth in the global
-    stylesheet
-- **Non-goals:** no screen migrated yet (that is T343); no visual change of any kind
-- **Refs:** hub ADR-0041 §2, §3, §5, §6; `src/styles/_primitives.scss` (T247)
+    stylesheet (2,472 bytes at the time of writing)
+- **Struck by ADR-0042 — do not build:**
+  - ~~`%app-screen` (viewport-filling shell)~~ — under ADR-0042 §2 the screen does not own a shell;
+    `private-layout` does, and `main` yields to it. Any screen-side viewport box would be a second
+    declaration of the same thing
+  - ~~`%screen-footer` (pinned bar)~~ — the pinned *box* is the layout's `.screen-foot` slot and its
+    CSS belongs in `private-layout.scss` (T341). What a screen projects into it needs only
+    `%truncating-flex-child` above
+- **Non-goals:** no screen migrated yet (that is T343); no visual change of any kind; no change to
+  `_primitives.scss` — atoms stay there, structure comes here
+- **Refs:** hub ADR-0041 §2, §5, §6; hub ADR-0042 §2, §4; `src/styles/_primitives.scss` (T247),
+  `src/styles/_tokens.scss`
 
 ### T341 — The layout owns the pinned regions; `main` stays the one scroller
 - **Status:** todo
