@@ -7247,3 +7247,163 @@
   `attending` is already required on both `partner2` variants.
 - **Refs:** hub ADR-0040 §4; `src/app/core/helper/rsvp-draft.ts` → `canDeclineAlone()`,
   `partnerHasAccount()`; ADR W-0007 §Amendment.3
+
+---
+
+## Phase X — The layout layer (hub ADR-0041, amended by ADR-0042)
+
+> `wedding-web` has a token layer (`_tokens.scss`) and a component library, and nothing between
+> them. 9,883 lines of SCSS across 71 files, of which 412 lines (4%) are shared; 45% of dimensional
+> values are raw `px`; three unnamed breakpoints; 13 files declare their own scroll container. Every
+> screen re-derives its own page shell. This phase adds the missing layer and enforces it.
+> Sequence matters: T340 → T341 + T345 → T342 → T343 → T344. T345 sits out of numeric order
+> deliberately: it shares T341's mechanism (a screen's chrome is declared on its route, hub
+> ADR-0042) and the two land as one PR series.
+
+### T340 — `_layout.scss`: page shells, scroll ownership, named breakpoints
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Why:** hub **ADR-0041 §2/§3/§6**. Nothing in the repo owns what a screen shell *is*, so each
+  screen invents one. `_primitives.scss` is deliberately scoped to atoms ("not behavior-bearing UI",
+  its own header comment) and is the wrong home for structure.
+- **Acceptance:**
+  - New `src/styles/_layout.scss`, a sibling of `_primitives.scss`, with a header comment stating
+    its contract exactly as `_primitives.scss` states its own
+  - `%app-screen` (viewport-filling shell), `%screen-scroll` (the single scrolling region),
+    `%screen-footer` (pinned bar; carries `min-width: 0` and the truncation discipline of ADR-0041 §5)
+  - `$bp-md: 640px`, `$bp-lg: 900px`, `$bp-xl: 1024px` and a `respond-to($bp)` mixin
+  - Emits nothing unless extended — verified by a production build showing no growth in the global
+    stylesheet
+- **Non-goals:** no screen migrated yet (that is T343); no visual change of any kind
+- **Refs:** hub ADR-0041 §2, §3, §5, §6; `src/styles/_primitives.scss` (T247)
+
+### T341 — The layout owns the pinned regions; `main` stays the one scroller
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T340
+- **Sequenced with:** T345 (same mechanism — both put a screen's chrome on its route — and the two
+  land as one PR series; numbered apart only because T342–T344 were filed first)
+- **Why:** hub **ADR-0042**, which amends ADR-0041 §3. `private-layout`'s `main` is
+  `overflow-y: auto` while 12 other files declare scrollers of their own. The guest manager had
+  three nested scroll containers on one axis, and `overflow: hidden` on its shell let focus and
+  `scrollIntoView()` slide the pinned header and footer out of place with no gesture able to restore
+  them. The fix is **not** to give every screen a shell — that would take the app from one scroll
+  container to 23. Pinning and scroll ownership are separable, and the layout owns the pinning.
+- **Prototype gate — do this first, on `guest-manager`, before the rest:** a `TemplateRef` declared
+  in a screen but rendered in the layout executes in the screen's injector while living in the
+  layout's change-detection tree (the CDK Portal shape). It should work zoneless, but prove it
+  before it becomes doctrine. If it does not hold, stop and re-open ADR-0042 §2 rather than working
+  around it.
+- **Acceptance:**
+  - `RouteChromeData` gains `headPinned?` and `footPinned?` beside the existing `tabBar` / `topNav` /
+    `moto` (ADR-0042 §1)
+  - `ScreenChromeService` — signals holding a head and a foot `TemplateRef`; **no NgRx slice**
+    (ADR-0042 §3). Clears are guarded (`if (this._head() === t)`), because the incoming screen
+    registers before the outgoing one is destroyed
+  - `*appScreenHead` / `*appScreenFoot` structural directives register on construction and clear via
+    `DestroyRef.onDestroy` — registration and teardown co-located, never split
+  - `private-layout` renders the slots and yields: `main` keeps `overflow-y: auto`, and takes the
+    paired `hidden` → `clip` only when the active route pins something, in which case
+    `.screen-scroll` is the one scroller. `display: contents` on that wrapper keeps flow screens
+    untouched
+  - `data-shell` / `main:has()` from ADR-0041 §3 are **not** implemented — withdrawn by ADR-0042 §5
+  - Every `overflow: hidden` intended as a clip becomes the paired `hidden` → `clip` declaration
+    (ADR-0041 §4). The 47 current sites are audited, not blanket-replaced — a site that genuinely
+    wants a scrollable-but-scrollbar-less box keeps `hidden` and gains a comment saying why
+  - Each of the 13 scroller-declaring files is classified flow or shell **per breakpoint** in its
+    header comment (ADR-0042 §4) — `seating-plan` is flow on mobile and shell at ≥900px, and both
+    of its scrollers already sit inside that media query
+  - `guest-manager` sheds `:host { height: 100% }`, the `.guest-manager` shell block,
+    `.table-container` entirely, and the `flex`/`min-height`/`overflow` triad on `.table-body`;
+    its `<header class="header">` and `.list-footer` move into the two slots
+  - Manually verified on a real phone in **French** (the longest locale), on the four screens of T343
+- **Non-goals:** no change to `main`'s 52px/58px header and tab-bar clearance — those are measured
+  values, see `private-layout.scss`. The doubled header on `guest-manager` (its own `<header>` under
+  the layout's `app-screen-header`) is *surfaced* by this task but removed in T343.
+- **Refs:** hub ADR-0042 §1–§5; hub ADR-0041 §3 (as amended), §4;
+  `src/app/core/guard/route-chrome-data.ts`, `src/app/layouts/private-layout/`
+
+### T345 — The nav derives from the route tree, and stops failing open
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Sequenced with:** T341 (same mechanism, same PR series)
+- **Why:** hub **ADR-0042 §6**. `shared/nav-tabs.ts` hand-writes `link` and `labelKey` for eleven
+  entries whose routes already exist, and derives only `roles` back out of the route tree by path.
+  That lookup **fails open**: `rolesForLink()` returns `undefined` on a miss and `tab-bar.ts:44`
+  reads `undefined` as *no role restriction*. Rename a route path and the couple-only preparation
+  timeline appears in every guest's nav — exactly what hub **ADR-0029 §4.7** forbids — with nothing
+  failing loudly. This is the reason to do the task; the de-duplication is a bonus.
+- **Acceptance:**
+  - `RouteChromeData` gains `navLabel` (the i18n key for the nav entry — distinct from `title`,
+    which names the page), and becomes a discriminated union so a `tabBar: true` or `topNav: true`
+    route **cannot compile** without one (ADR-0042 §7). A missing label is invisible, not broken,
+    so the compiler has to catch it
+  - `nav-tabs.ts` keeps a `collect()` walk emitting one `NavTab` per route whose data sets `tabBar`
+    or `topNav`, composing `link` from the route tree and carrying `roles` on the tab itself
+  - `NAV_TABS` (the hand-written array), `rolesForLink()` and `chromeDataByPath` are **deleted**
+  - `tab-bar.ts` filters on `tab.roles` directly; `overflows` / `primaryTabs` / `restTabs` and the
+    More sheet are untouched, because `NavTab` keeps its shape
+  - Order stays an explicit constant — a route cannot know it is third, and declaration order exists
+    for matching, not navigation — but shrinks to a list of ids (ADR-0042 §6)
+  - A test asserts the guest role sees no `milestones`, `guests`, `seating` or `config` entry. This
+    is the regression the task exists to prevent; it must fail against the current code
+  - Both `home` entries (`/me`, `/dashboard`) still resolve, and role filtering still renders exactly
+    one
+- **Non-goals:** no change to `RouteConfigService.isRouteEnabled()` — it shares the path-drift
+  exposure but fails *closed* (tab hidden), so it is benign and out of scope
+- **Watch:** `nav-tabs.ts` already imports `routes`, so this adds no new coupling and `loadComponent`
+  keeps screens lazy — but nothing in `core/` may import `tab-bar`, or the cycle closes.
+- **Refs:** hub ADR-0042 §6, §7; hub ADR-0029 §4.7; `src/app/shared/nav-tabs.ts`,
+  `src/app/shared/tab-bar/tab-bar.ts`
+
+### T342 — stylelint, because guidance alone already failed once
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T340 (rules must have something to point at)
+- **Why:** hub **ADR-0041 §7**. `_primitives.scss` has existed since T247 and 54 of 71 files ignore
+  it. There is no stylelint in this repo today; `pnpm lint` checks TS and templates only.
+- **Acceptance:**
+  - stylelint added and wired into `pnpm lint` so CI fails on violation
+  - Rules: no raw `px` for spacing/font-size (tokens only), no bare `@media (min-width:` (use
+    `respond-to()`), no unpaired `overflow: hidden`
+  - Existing violations are baselined, not auto-fixed — a blanket rewrite of 1,037 literals across a
+    live app is exactly the kind of change ADR-0041 §8 says not to make in one cut
+- **Refs:** hub ADR-0041 §7
+
+### T343 — Migrate the four oversized screens onto the layer
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T340, T341
+- **Why:** hub **ADR-0041 §Consequences**. config-manager (1,049 lines), guest-manager (777),
+  milestones (753) and seating-plan (545) are 31% of all CSS in the repo and are exactly the four
+  screens that breach the 8 KB `anyComponentStyle` budget.
+- **Acceptance:**
+  - Migrated in descending size order — config-manager, guest-manager, milestones, seating-plan —
+    **one screen per PR**, each independently shippable and revertible (ADR-0041 §8: this is a live
+    app, never one cut-over)
+  - Each screen classified flow or shell, extending `%app-screen` / `%screen-scroll` /
+    `%screen-footer` rather than re-authoring them
+  - Each drops below the 8 KB budget
+  - No visual change intended: each PR is checked against the previous build in all three themes and
+    all three locales, at 360px and at ≥900px
+- **Non-goals:** the other 67 files are not in scope — they migrate opportunistically when next
+  touched, and get no task of their own
+- **Refs:** hub ADR-0041 §2, §Consequences
+
+### T344 — `anyComponentStyle` becomes an error
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T343 (all four screens under budget first)
+- **Why:** hub **ADR-0041 §7**. The budget has been a warning long enough that four screens grew
+  through it unnoticed. A warning nobody fails on is documentation, not a budget.
+- **Acceptance:**
+  - `angular.json` production budgets: `anyComponentStyle` gains `maximumError: "8kB"`
+  - A production build passes clean
+  - Hub `ARCHITECTURE.md` § Performance budgets updated to drop the "currently a warning" caveat
+- **Refs:** hub ADR-0041 §7; hub `ARCHITECTURE.md` § Performance budgets
