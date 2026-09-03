@@ -7261,7 +7261,9 @@
 > them. 9,883 lines of SCSS across 71 files, of which 412 lines (4%) are shared; 45% of dimensional
 > values are raw `px`; three unnamed breakpoints; 13 files declare their own scroll container. Every
 > screen re-derives its own page shell. This phase adds the missing layer and enforces it.
-> Sequence matters: T340 → T341 + T345 → T347 → T342 → T343 → T344. T345 sits out of numeric order
+> Sequence matters: T340 → T341 → **T348** → T345 → T347 → T342 → T343 → T344.
+> T348 is not optional and not deferrable: T341 ships a known regression on `/guests`
+> and T348 is its fix. Nothing in this phase releases without it. T345 sits out of numeric order
 > deliberately: it shares T341's mechanism (a screen's chrome is declared on its route, hub
 > ADR-0042) and the two land as one PR series.
 
@@ -7413,6 +7415,41 @@
   keeps screens lazy — but nothing in `core/` may import `tab-bar`, or the cycle closes.
 - **Refs:** hub ADR-0042 §6, §7; hub ADR-0029 §4.7; `src/app/shared/nav-tabs.ts`,
   `src/app/shared/tab-bar/tab-bar.ts`
+
+### T348 — Give a screen back scroll observation and scroll control
+- **Status:** todo — **T341 must not be released until this lands.** It is the fix for a live,
+  user-visible regression on `/guests`, knowingly shipped by T341 and documented at both call sites.
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T341
+- **Why:** hub **ADR-0042 §Consequences** ("a screen that gives up its scroller loses both scroll
+  observation and scroll control"). `guest-manager` bound `(scroll)` to `.table-body` to auto-load
+  the next page near the bottom, and wrote `.table-body.scrollTop = 0` to jump to the top on a
+  filter/search/sort change. T341 correctly made `.table-body` stop scrolling, so the handler never
+  fires and the write is a no-op. The visible "Load more" button still works, so it degrades rather
+  than breaks — but on a 104-guest list the couple now scrolls to the bottom and nothing happens.
+  **The test suite cannot see this**: `guest-manager.spec.ts` dispatches synthetic scroll events on
+  `.table-body` with mocked geometry, which JSDOM never exercises through real layout.
+- **Acceptance:**
+  - **Observation, without a channel:** near-bottom auto-load works again via an
+    `IntersectionObserver` on a sentinel element. Intersection resolves against the viewport whoever
+    scrolls, so the screen never needs to know which ancestor is the scroller — this is what makes it
+    the right shape for every screen T343 migrates
+  - **Control, with one:** `ScreenChromeService` gains the ability for a screen to ask for its scroll
+    region to be reset to the top, and `private-layout` implements it. The layout owns the scroller,
+    so it owns scrolling it — a screen asking for this is the same shape as a screen handing over a
+    head template (ADR-0042 §2)
+  - `guest-manager`'s `onListScroll` and `resetWindow` are rewritten onto both, and the doc comments
+    T341 left at each call site describing the gap are removed — not amended, removed, because the
+    gap is gone
+  - **A test that fails against current `main`.** The existing scroll tests pass while the feature is
+    broken, which is the actual defect here; whatever replaces them must not share that property
+  - Verified in a real browser at `/guests` with more than one page of guests: scrolling to the
+    bottom loads the next page, and changing a filter returns the view to the top
+- **Non-goals:** no change to the pinning mechanism, the slots, or the `.screen-scroll` structure —
+  this adds a channel and an observer, it does not revisit ADR-0042 §2
+- **Refs:** hub ADR-0042 §Consequences; `tasks/reports/T341.json` `risks[0]`;
+  `src/app/screens/guest-manager/guest-manager.ts` (`onListScroll`, `resetWindow`)
 
 ### T347 — The `overflow` audit and the per-breakpoint scroller classification
 - **Status:** todo

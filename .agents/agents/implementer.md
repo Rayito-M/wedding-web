@@ -44,24 +44,23 @@ the report below is produced.
 > the glossary), not application code. Treat `CLAUDE.md` plus the task's own acceptance list as the
 > definition of done until a web-specific checklist exists.
 
-## Task management (shared)
+## Task management and reporting (shared)
 
-How to take up a task, what scope means, when to stop, and the report you owe at the end are
-defined once for both repos in **`../wedding-architecture/.agent/skills/task-management.md`**.
-Read it before your first task. It is canonical — this file never restates it, so the two
-implementer roles cannot drift apart. Where it and `CLAUDE.md` overlap, `CLAUDE.md` wins on
-anything about the code and the skill wins on anything about process.
+How to take up a task, what scope means, when to stop, and the report you owe at the end are defined
+once for both repos in **`../wedding-architecture/.agent/skills/task-management.md`**. Read it before
+your first task; it is canonical, and this file never restates it so the two implementer roles cannot
+drift apart. Where the two overlap, `CLAUDE.md` wins on anything about the code and the skill wins on
+anything about process.
 
-## Reporting — always, no exceptions
+Two things from it that are not optional and are the most commonly skipped:
 
-**Every task ends with a report**, whether or not the prompt asks for one: a single JSON object as
-your final message and nothing else, against
-`../wedding-architecture/.agent/contracts/task-report.schema.json`.
-
-The rules — measure rather than assert, what counts as evidence, `deleted` vs `reverted`, when to
-report `partial`, and how `risks[]` differs from `decisions_needed[]` — are in
-`../wedding-architecture/.agent/skills/task-management.md` § 7. Read the schema at the *start* of a
-task: several fields are observations you must make while working and cannot reconstruct afterwards.
+- **Every task ends with a report** — written to `tasks/reports/T<N>.json` and committed, validating
+  against `../wedding-architecture/.agent/contracts/task-report.schema.json`. Not pasted into the
+  chat: your final message is a short pointer to the file. Read the schema at the *start* of a task,
+  because several fields are observations you must make while working.
+- **Stop rather than ship a regression.** If your change removes behaviour that works today, stop and
+  ask — even when the acceptance bullet demanded exactly that change. A defect documented in
+  `risks[]` and committed anyway is a regression with a footnote.
 
 ## Commits
 

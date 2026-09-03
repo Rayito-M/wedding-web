@@ -1,0 +1,135 @@
+{
+  "task": "T341",
+  "status": "complete_with_deviation",
+  "summary": "T341 step 1 only, per explicit instruction: de-scaffolded the guest-manager prototype wrap (git diff HEAD -- src/app/screens/guest-manager/ is empty) while keeping the three mechanism files (ScreenChromeService, AppScreenHead/core/directive, private-layout's head-slot rendering), and re-pointed the (a)/(b) registration/change-detection tests at throwaway stub screens instead of the real GuestManager. Committed alone as 34c8a12. The rest of T341's acceptance list (harness, foot slot, route-data keys, overflow audit, per-breakpoint classification, guest-manager migration, phone verification) is explicitly out of scope for this step and untouched — a human must confirm the guest manager in a browser before that work starts.",
+  "acceptance": [
+    {
+      "criterion": "De-scaffold the spike before building on it — drop the *appScreenHead wrap so guest-manager is untouched again, keep the three mechanism files, re-point the proving tests at the throwaway stub screens the teardown case already uses",
+      "met": true,
+      "evidence": "`git diff HEAD -- src/app/screens/guest-manager/` prints nothing (verified twice: pre-commit and post-commit, both empty). Mechanism files kept: src/app/core/service/screen-chrome.service.ts, src/app/core/directive/{index.ts,screen-head.directive.ts}, private-layout's ScreenChromeService injection and *ngTemplateOutlet head-slot rendering (src/app/layouts/private-layout/private-layout.ts:20-21,101-103,130-134; private-layout.html:8-11) all unchanged from the pre-de-scaffold spike. screen-chrome-prototype.spec.ts (a)/(b) now route to a throwaway `StubScreenA` (own `count` signal) instead of `@app/screens/guest-manager/guest-manager` — `GuestManager` import removed from the spec entirely (grep confirms no reference to it remains in the file). Test run: `npx ng test --include \"src/app/layouts/private-layout/screen-chrome-prototype.spec.ts\" --reporters=verbose` → 7/7 passed, including '(a) registers and renders in private-layout's own DOM, not inside <app-stub-screen-a>' and '(b) re-renders when the screen-owned signal changes, with no manual CD nudge in app code'."
+    },
+    {
+      "criterion": "A shared test harness for projected chrome, decided once here (a host that supplies ScreenChromeService and renders the slot), documented and used from the guest-manager spec",
+      "met": false,
+      "evidence": "Deferred to the build step; not started. No harness file exists and guest-manager.spec.ts was not touched (out of scope per the prompt's explicit file list)."
+    },
+    {
+      "criterion": "Move guest-manager.spec.ts:1137 (the '.header … stays on screen' assertion), do not patch it — it becomes a private-layout test asserting the pinning contract",
+      "met": false,
+      "evidence": "Deferred to the build step; not started. guest-manager.spec.ts is unmodified — `git diff HEAD -- src/app/screens/guest-manager/guest-manager.spec.ts` prints nothing; ran `npx ng test --include \"src/app/screens/guest-manager/guest-manager.spec.ts\"` → 45/45 pass, unchanged from HEAD."
+    },
+    {
+      "criterion": "The foot slot (*appScreenFoot) is built here with tests — same mechanism as the head, unproven until now",
+      "met": false,
+      "evidence": "Deferred to the build step; not started. No appScreenFoot directive or foot-slot rendering exists anywhere in the tree — `grep -r appScreenFoot src/app` finds none."
+    },
+    {
+      "criterion": "RouteChromeData gains headPinned? and footPinned? beside the existing tabBar / topNav / moto (ADR-0042 §1)",
+      "met": false,
+      "evidence": "Deferred to the build step; not started. src/app/core/guard/route-chrome-data.ts was not touched this session — not in the diff of the commit (`git show --stat 34c8a12` lists 8 files, route-chrome-data.ts is not among them)."
+    },
+    {
+      "criterion": "ScreenChromeService — signals holding a head and a foot TemplateRef; no NgRx slice (ADR-0042 §3); clears guarded (if (this._head() === t))",
+      "met": "partial",
+      "evidence": "The head half shipped in the prior spike session and is kept as-is: `src/app/core/service/screen-chrome.service.ts` holds a guarded `_head` signal with `registerHead`/`clearHead` (no NgRx). No `_foot`/`registerFoot`/`clearFoot` exists — `grep -n foot src/app/core/service/screen-chrome.service.ts` returns nothing. Foot half deferred to the build step; not started this session."
+    },
+    {
+      "criterion": "*appScreenHead / *appScreenFoot structural directives register on construction and clear via DestroyRef.onDestroy — registration and teardown co-located, never split",
+      "met": "partial",
+      "evidence": "`*appScreenHead` (src/app/core/directive/screen-head.directive.ts) already does this, kept unchanged. `*appScreenFoot` does not exist. Foot half deferred to the build step; not started this session."
+    },
+    {
+      "criterion": "private-layout renders the slots and yields: main keeps overflow-y: auto, taking the paired hidden → clip only when the active route pins something (.screen-scroll the one scroller then); display: contents on that wrapper keeps flow screens untouched",
+      "met": false,
+      "evidence": "Deferred to the build step; not started. private-layout.html/.ts render only the unconditional head slot from the prior spike (no route-data gating, no yield/clip logic, no .screen-scroll wrapper) — unchanged from the pre-de-scaffold state, confirmed by `git diff HEAD -- src/app/layouts/private-layout/private-layout.ts src/app/layouts/private-layout/private-layout.html` showing only the pre-existing spike diff, no new lines added this session."
+    },
+    {
+      "criterion": "data-shell / main:has() from ADR-0041 §3 are not implemented — withdrawn by ADR-0042 §5",
+      "met": false,
+      "evidence": "Not evaluated as part of this step; deferred to the build step per the prompt's scope. (Trivially still true today since neither was ever added, but this step made no change bearing on it, so it is not claimed as met here.)"
+    },
+    {
+      "criterion": "Every overflow: hidden intended as a clip becomes the paired hidden → clip declaration (ADR-0041 §4); the 47 current sites are audited, not blanket-replaced",
+      "met": false,
+      "evidence": "Deferred to the build step; not started. No .scss file was touched this session (`git show --stat 34c8a12` contains no .scss paths)."
+    },
+    {
+      "criterion": "Each of the 13 scroller-declaring files is classified flow or shell per breakpoint in its header comment (ADR-0042 §4)",
+      "met": false,
+      "evidence": "Deferred to the build step; not started. Same evidence as above — no .scss files touched this session."
+    },
+    {
+      "criterion": "guest-manager sheds :host { height: 100% }, .guest-manager shell block, .table-container, and the flex/min-height/overflow triad on .table-body; header and .list-footer move into the two slots",
+      "met": false,
+      "evidence": "Deferred to the build step; not started. guest-manager.scss and guest-manager.html are byte-identical to HEAD (`git diff HEAD -- src/app/screens/guest-manager/` empty), so none of this migration has happened."
+    },
+    {
+      "criterion": "Manually verified on a real phone in French (the longest locale), on the four screens of T343",
+      "met": false,
+      "evidence": "Deferred — not applicable to this step and not performable in this environment (no browser tool, no Playwright per T263). The de-scaffold's own correctness is instead proven mechanically: `git diff HEAD -- src/app/screens/guest-manager/` is empty, so the production guest-manager screen a human will check in a browser is bit-for-bit what was already live. Browser confirmation is pending human verification, not claimed as met."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "`pnpm typecheck` (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit) — 0 errors before and after, output empty both times."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": { "total": 542, "failing": 2 },
+      "after": { "total": 542, "failing": 2 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 294.40 kB over 500.00 kB budget (pre-existing)",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget by 8.64 kB (pre-existing)",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget by 3.46 kB (pre-existing)",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget by 3.32 kB (pre-existing)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget by 1.53 kB (pre-existing)"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "src/app/core/directive/index.ts",
+      "src/app/core/directive/screen-head.directive.ts",
+      "src/app/core/service/screen-chrome.service.ts",
+      "src/app/layouts/private-layout/screen-chrome-prototype.spec.ts"
+    ],
+    "modified": [
+      "src/app/core/index.ts",
+      "src/app/core/service/index.ts",
+      "src/app/layouts/private-layout/private-layout.ts",
+      "src/app/layouts/private-layout/private-layout.html"
+    ],
+    "deleted": [
+      "src/app/screens/guest-manager/guest-manager.ts",
+      "src/app/screens/guest-manager/guest-manager.html"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "src/styles/_layout.scss pairs overflow: hidden with overflow: clip in %truncating-flex-child, which per ADR-0041 §4's 2026-09-03 scoping note should use plain overflow: hidden for text-only truncation. Left as-is on explicit instruction; not touched this session.",
+      "surfaces_at": "T342 (stylelint rule for the paired-declaration exemption) or whenever %truncating-flex-child is next reviewed."
+    },
+    {
+      "risk": "release.ts (auto-generated by scripts/generate-release.mjs) is rewritten by every `pnpm build` invocation with the current commit hash; two builds were run during this session's verification and both times the file was hand-reverted to match HEAD before finishing, so the committed tree is unaffected — but any agent running `pnpm build` for verification should expect this file to churn and revert it by hand rather than leaving it dirty or using a git command to clean it.",
+      "surfaces_at": "Any future session that runs `pnpm build` for verification purposes."
+    },
+    {
+      "risk": "The rest of T341 (harness, foot slot, headPinned/footPinned route-data keys, overflow audit, per-breakpoint classification, guest-manager migration itself, phone verification) is entirely unbuilt after this step; a human must confirm the de-scaffolded guest-manager in a browser before that work starts, per the task's explicit gate.",
+      "surfaces_at": "The next T341 session, once human browser confirmation is given."
+    }
+  ],
+  "commits": ["34c8a12"]
+}

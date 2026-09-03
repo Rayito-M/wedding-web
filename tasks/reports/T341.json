@@ -1,0 +1,134 @@
+{
+  "task": "T341",
+  "status": "partial",
+  "summary": "Built the rest of T341 on top of the already-committed de-scaffold (34c8a12) and T340 (81ea900): foot slot mechanism with tests, RouteChromeData headPinned/footPinned, private-layout's pinning of main/.screen-scroll, the shared ScreenChromeHarness, the moved pinning-contract test, and the guest-manager migration off its own shell CSS. Real-phone French verification is not attempted (no browser/device access). One file outside the named scope (app.routes.ts) was touched to give the new route-data flags a real consumer.",
+  "acceptance": [
+    {
+      "criterion": "De-scaffold the spike before building on it",
+      "met": true,
+      "evidence": "Commit 34c8a12 (landed before this session, per dispatch note); git diff HEAD~1..34c8a12 -- src/app/screens/guest-manager/ is empty per that commit's own message"
+    },
+    {
+      "criterion": "A shared test harness for projected chrome, decided once here, documented in the file header, used from the guest-manager spec",
+      "met": true,
+      "evidence": "src/app/core/directive/screen-chrome-harness.ts (ScreenChromeHarness, documented class doc with usage example); used in src/app/screens/guest-manager/guest-manager.spec.ts describe('GuestManager — pinned head/foot content, via the projected-chrome harness (T341)') — 3 passing tests"
+    },
+    {
+      "criterion": "Move guest-manager.spec.ts:1137, do not patch it — becomes a layout test",
+      "met": true,
+      "evidence": "Assertion removed from guest-manager.spec.ts (pointer comment left in its place); re-proven against the real GuestManager under a real PrivateLayout in src/app/layouts/private-layout/screen-chrome.spec.ts, describe(\"PrivateLayout — GuestManager's pinned head/foot render here, end-to-end (T341)\") — 2 passing tests, including 'renders the header outside <app-guest-manager>, not destroyed by the route pinning it'"
+    },
+    {
+      "criterion": "The foot slot (*appScreenFoot) is built here with tests",
+      "met": true,
+      "evidence": "src/app/core/directive/screen-foot.directive.ts (AppScreenFoot), ScreenChromeService.registerFoot/clearFoot; 9 tests in screen-chrome.spec.ts covering registration/placement (1), guarded clear necessary+sufficient+independence (3), and end-to-end teardown ordering A->B / A->C (2) — plus 2 pinning tests that also exercise footPinned alone; pnpm test: 554 passed, 2 pre-existing failures (unchanged from baseline)"
+    },
+    {
+      "criterion": "RouteChromeData gains headPinned? and footPinned?",
+      "met": true,
+      "evidence": "src/app/core/guard/route-chrome-data.ts:26-40"
+    },
+    {
+      "criterion": "ScreenChromeService — signals holding head and foot TemplateRef; no NgRx slice; guarded clears",
+      "met": true,
+      "evidence": "src/app/core/service/screen-chrome.service.ts — _head/_foot signals, clearHead/clearFoot both guarded on `if (this._x() === template)`; no provideStore/reducer touched"
+    },
+    {
+      "criterion": "*appScreenHead / *appScreenFoot register on construction and clear via DestroyRef.onDestroy, co-located",
+      "met": true,
+      "evidence": "src/app/core/directive/screen-head.directive.ts:34-38, src/app/core/directive/screen-foot.directive.ts:23-27 — both directives register+onDestroy in the same constructor"
+    },
+    {
+      "criterion": "private-layout renders the slots and yields: main keeps overflow-y: auto, paired hidden->clip only when pinned, .screen-scroll is the one scroller, display: contents keeps flow screens untouched",
+      "met": true,
+      "evidence": "src/app/layouts/private-layout/private-layout.scss:37-75 (main.pinned overflow-y hidden->clip, .screen-scroll display:contents / &.pinned @include layout.screen-scroll); private-layout.ts pinned computed; screen-chrome.spec.ts describe('PrivateLayout — pinning follows the active route's headPinned/footPinned...') — 3 passing tests"
+    },
+    {
+      "criterion": "data-shell / main:has() are not implemented — withdrawn by ADR-0042 §5",
+      "met": true,
+      "evidence": "grep -rn 'data-shell|main:has' src/app/layouts/private-layout/ src/styles/ — no matches"
+    },
+    {
+      "criterion": "guest-manager sheds :host{height:100%}, .guest-manager shell block, .table-container entirely, flex/min-height/overflow triad on .table-body; header and .list-footer move into the two slots",
+      "met": true,
+      "evidence": "git show f7fa397 -- src/app/screens/guest-manager/guest-manager.scss guest-manager.html; :host no longer has height:100%, .guest-manager ruleset deleted, .table-container ruleset deleted (both breakpoints), .table-body no longer has flex/min-height/overflow-y/overflow-x; header/list-footer carry *appScreenHead/*appScreenFoot"
+    },
+    {
+      "criterion": "guest-manager manually verified on a real phone in French",
+      "met": "not_attempted",
+      "evidence": "No browser tool or device access in this environment; per dispatch instructions this is reported not_attempted rather than false"
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": { "result": "pass" },
+    "lint": { "errors_before": 5, "errors_after": 5, "new_errors": [] },
+    "test": {
+      "before": { "total": 542, "failing": 2 },
+      "after": { "total": 556, "failing": 2 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget (295.52 kB over 500 kB) — pre-existing",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded 8 kB budget — pre-existing",
+        "src/app/screens/milestones/milestones.scss exceeded 8 kB budget — pre-existing",
+        "src/app/screens/config-manager/config-manager.scss exceeded 8 kB budget — pre-existing",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded 8 kB budget (3.06 kB over, down from 3.32 kB before this task) — pre-existing, narrowed not widened"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "src/app/core/directive/screen-foot.directive.ts",
+      "src/app/core/directive/screen-chrome-harness.ts",
+      "src/app/layouts/private-layout/screen-chrome.spec.ts"
+    ],
+    "modified": [
+      "src/app/core/guard/route-chrome-data.ts",
+      "src/app/core/service/screen-chrome.service.ts",
+      "src/app/core/directive/screen-head.directive.ts",
+      "src/app/core/directive/index.ts",
+      "src/app/layouts/private-layout/private-layout.ts",
+      "src/app/layouts/private-layout/private-layout.html",
+      "src/app/layouts/private-layout/private-layout.scss",
+      "src/app/screens/guest-manager/guest-manager.ts",
+      "src/app/screens/guest-manager/guest-manager.html",
+      "src/app/screens/guest-manager/guest-manager.scss",
+      "src/app/screens/guest-manager/guest-manager.spec.ts",
+      "src/app/app.routes.ts",
+      "TASKS.md"
+    ],
+    "deleted": [],
+    "reverted": ["src/environments/release.ts"]
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/app/app.routes.ts",
+      "why": "Not in the prompt's named file list. Added headPinned: true / footPinned: true to the `guests` route's data. RouteChromeData is declared to gain these fields (acceptance bullet 5) and private-layout is built to read them (bullet 8), but nothing in the named scope ever sets them to true on a real route — without this, the whole pinning mechanism this task ships would have no production consumer, and the moved guest-manager pinning-contract test (bullet 3) would only be provable against a synthetic test-only route rather than the real `guests` route guest-manager actually serves. Judged necessary to satisfy the acceptance bullets' evident intent; flagged here per the skill's §3 rather than made silently."
+    }
+  ],
+  "blocked_on": [],
+  "risks": [
+    {
+      "risk": "guest-manager's scroll-triggered auto-grow (onListScroll, bound to .table-body's own (scroll) event) and its scroll-to-top-on-filter/search/sort (resetWindow, writing .table-body's scrollTop) both become dead code in a real browser once .table-body sheds overflow-y:auto (this task's own acceptance bullet 10) — .table-body no longer scrolls, so its scroll event never fires and its scrollTop is never non-zero. The real scrolling element is now PrivateLayout's .screen-scroll, which lives outside GuestManager's own template with no channel back to it. guest-manager.spec.ts's scroll tests keep passing because they dispatch synthetic scroll events directly on .table-body with mocked geometry, which JSDOM never exercises via real layout — so the test suite cannot see this regression. The manual 'Load more' button is unaffected. Documented at both call sites in guest-manager.ts; not fixed here because a correct fix (e.g. an IntersectionObserver-based trigger, or a cross-layer channel to .screen-scroll) is a design decision beyond this task's named scope, and I could not verify any fix in a real browser.",
+      "surfaces_at": "T343 (when the other three oversized screens migrate and may hit the same class of gap) or the first real-device QA pass on /guests after this ships — nearing the bottom of a long guest list will silently stop auto-loading the next page, and changing a filter/search/sort while scrolled down will silently leave the view mid-list instead of jumping to the top"
+    },
+    {
+      "risk": "The desktop .table-header/.table-row alignment fix (calc(#{t.$space-6} + 16px) padding on .table-header, replacing the outer gutter .table-container used to supply) is a reasoned, token-only calculation but was never visually verified — no browser tool available. If the arithmetic is off, column labels would sit slightly misaligned above their cells at >=900px only (mobile is unaffected, .table-header is display:none there).",
+      "surfaces_at": "First real-browser or screenshot-based review of /guests at desktop width"
+    }
+  ],
+  "commits": [
+    "ddc9ea1 feat(layout): T341 — the foot slot and headPinned/footPinned route data",
+    "3e6a16c feat(layout): T341 — private-layout renders and pins the head/foot slots",
+    "f7fa397 feat(guest-manager): T341 — migrate onto the layout's pinned head/foot slots",
+    "fca6ac5 docs(tasks): T341 — status update and stale prototype-gate sentences"
+  ],
+  "remaining": [
+    "guest-manager manually verified on a real phone in French — needs a human with a physical device; not attempted here"
+  ]
+}
