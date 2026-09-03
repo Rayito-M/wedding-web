@@ -36,6 +36,16 @@
 
 main {
   flex: 1;
+  // Required, and easy to lose: a flex item's automatic minimum size is only
+  // zero when the item is a **scroll container** (CSS Sizing §5.1). `main` was
+  // one for free while it was `overflow-y: auto`. Under `&.pinned` below it
+  // becomes `overflow-y: clip`, which is deliberately *not* a scroll container
+  // (that is the whole point of ADR-0041 §4) — so `min-height: auto` comes back
+  // to life, `main` refuses to shrink below its content, grows past the
+  // viewport, and the entire layout scrolls as one with the pinned head and
+  // foot riding along. Stating it explicitly makes it independent of whichever
+  // `overflow` value is in play.
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -70,6 +80,11 @@ main {
   display: contents;
 
   &.pinned {
+    // `display: contents` above generates no box at all, so without this the
+    // mixin's `flex`, `min-height` and `overflow-y` have nothing to apply to
+    // and the region silently never scrolls. The wrapper must become a real
+    // box exactly when it takes scroll ownership.
+    display: block;
     @include layout.screen-scroll;
   }
 }

@@ -7464,6 +7464,14 @@
   - Every `overflow: hidden` intended as a clip becomes the paired `hidden` → `clip` declaration.
     The 47 current sites are **audited, not blanket-replaced** — a site that genuinely wants a
     scrollable-but-scrollbar-less box keeps `hidden` and gains a comment saying why
+  - **Every converted site that is a flex item gains an explicit `min-height: 0`** (or
+    `min-width: 0` on the inline axis). A flex item's automatic minimum size is zero only when it is
+    a *scroll container*: `hidden` makes one, `clip` does not. Converting therefore revives
+    `min-height: auto` and the item stops shrinking below its content. Not theoretical — it is
+    precisely how `private-layout`'s `main` broke in T341, growing to the full height of a 104-row
+    list so the pinned head and foot scrolled away with the rows, with every test passing because
+    JSDOM computes no layout. **A `hidden` → `clip` conversion with no `min-*: 0` beside it is a
+    defect this task must not ship 47 times.**
   - **ADR-0041 §4 was scoped on 2026-09-03 and the audit must honour it:** the rule governs *layout
     containers*, boxes establishing a scrolling context a focus event could shift. A single-line,
     `nowrap`, ellipsizing text child is not one and keeps plain `hidden` — see
