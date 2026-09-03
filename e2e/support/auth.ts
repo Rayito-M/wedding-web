@@ -1,0 +1,31 @@
+import type { Page } from '@playwright/test';
+import { expect } from '@playwright/test';
+
+import { installApiMocks } from './api-mocks';
+
+/**
+ * Signs a couple (bride) in through the real `/login` OTP flow, network
+ * stubbed via {@link installApiMocks} — never a token seeded into storage.
+ * `LoginService` keeps auth state in an in-memory signal (CLAUDE.md hard rule
+ * 10), so there is nothing to seed even if this suite wanted to; driving the
+ * actual form is the only way in.
+ *
+ * Leaves the page on `/dashboard` (the couple's landing route,
+ * `LoginService.landingUrl`) — callers that need `/guests` navigate there
+ * themselves afterwards.
+ */
+export async function signInAsCouple(page: Page, opts: { guestCount?: number } = {}): Promise<void> {
+  await installApiMocks(page, opts);
+
+  await page.goto('/login');
+
+  await page.locator('input[formcontrolname="phoneNumber"]').fill('612345678');
+  await page.locator('form.form button[type="submit"]').click();
+
+  const codeInput = page.locator('input[formcontrolname="code"]');
+  await expect(codeInput).toBeVisible();
+  await codeInput.fill('123456');
+  await page.locator('form.form button[type="submit"]').click();
+
+  await page.waitForURL('**/dashboard');
+}

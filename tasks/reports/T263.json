@@ -1,0 +1,126 @@
+{
+  "task": "T263",
+  "status": "complete_with_deviation",
+  "summary": "Stood up Playwright: config + webServer + 4 mobile projects (rule 4). e2e/support/ stubs every endpoint and drives the real /login flow — no live wedding-api, no seeded token. Smoke spec plus both layout-regression specs, each proven to fail against 9474809^ and pass against 9474809. clip-flex-item deviates from its literal text (see deviations[]): main.scrollHeight<=clientHeight is always true; compares against the flex parent instead. angular.json scopes ng test to src/ so e2e/ is never picked up. CLAUDE.md's e2e mentions restored in this commit. Local-only, no CI.",
+  "acceptance": [
+    {
+      "criterion": "@playwright/test added as a dev dependency; playwright.config.ts at the repo root; \"test:e2e\": \"playwright test\" in package.json.",
+      "met": true,
+      "evidence": "package.json devDependencies: \"@playwright/test\": \"^1.62.1\"; scripts: \"test:e2e\": \"playwright test\"; playwright.config.ts at repo root"
+    },
+    {
+      "criterion": "Config starts the app itself (webServer running pnpm start) so the suite is one command from a cold checkout, and targets the browsers CLAUDE.md rule 4 names: mobile Safari (iPhone SE/12/14) and current Chrome Android, mobile-first.",
+      "met": true,
+      "evidence": "playwright.config.ts: webServer.command = 'pnpm start', url 'http://localhost:4200', reuseExistingServer: !CI; projects: 'iPhone SE (iOS Safari)', 'iPhone 12 (iOS Safari)', 'iPhone 14 (iOS Safari)' (all devices['...'] → WebKit), 'Pixel 7 (Chrome Android)' (devices['Pixel 7'] → Chromium, the engine Chrome for Android itself ships — Playwright has no real Android Chrome binary). `pnpm test:e2e` run from a cold shell (no server pre-started, verified via `lsof -i :4200` before running) — webServer log line '[WebServer] $ ng serve' confirms it started its own server."
+    },
+    {
+      "criterion": "At least one real smoke spec that would fail if the app were broken — the app boots, the welcome screen renders, and the language switcher changes rendered copy. No placeholder or always-true assertions.",
+      "met": true,
+      "evidence": "e2e/smoke.spec.ts — asserts page.getByText('Save the date') and getByRole('button', {name: \"Let's start\"}) visible on boot, then clicks the language dropdown to 'ES' and asserts the CTA button text actually changed to 'Abrir invitación' (and the English button has count 0). `npx playwright test e2e/smoke.spec.ts` — 2 passed per project, 8/8 across all 4 projects in the full run below."
+    },
+    {
+      "criterion": "A layout-regression tier asserting computed geometry rather than DOM presence. Two specs, both proven to fail against 9474809^: 'Pinned regions stay put' and 'A clip flex item does not outgrow its parent'.",
+      "met": "partial",
+      "evidence": "Both specs exist, use getBoundingClientRect()/scrollHeight/clientHeight relationships (never a class name), and both were run against 9474809^ (private-layout.scss checked out via `git checkout 9474809^ -- src/app/layouts/private-layout/private-layout.scss`) and failed there, then run again against HEAD and passed. Marked 'partial' only because the clip-flex-item spec could not be built exactly as the bullet's literal text describes — see deviations[] and notes.",
+      "notes": "pinned-regions.spec.ts failure against 9474809^: 'Error: expect(received).toBeLessThan(expected) / Expected: < 236 / Received: 236' at pinned-regions.spec.ts:57 (the row's y did not decrease — nothing scrolled). clip-flex-item.spec.ts failure against 9474809^: 'Error: expect(received).toBeLessThanOrEqual(expected) / Expected: <= 568 / Received: 4097' at clip-flex-item.spec.ts:52. Both then pass against HEAD (2 passed, 7.3s). Full runner output for both runs captured verbatim in this session's transcript; representative excerpt: '1) [iPhone SE (iOS Safari)] › e2e/layout/clip-flex-item.spec.ts:32:5 ... Expected: <= 568, Received: 4097 ... 2) ... pinned-regions.spec.ts:15:5 ... Expected: < 236, Received: 236 ... 2 failed'."
+    },
+    {
+      "criterion": "The suite must not depend on a live wedding-api: stub network at the Playwright layer or document precisely what must be running.",
+      "met": true,
+      "evidence": "e2e/support/api-mocks.ts installApiMocks() stubs every endpoint the app calls (config/public, auth/otp/request+verify, profile list + profile/{id}, rsvp list, notifications/unread-count) plus a catch-all `**/v1/**` returning 501 for anything unmocked, registered FIRST so specific routes (registered after, per Playwright's 'most recently registered route takes precedence') win. No wedding-api process was running for any of the runs in this report — verified via `lsof -i :3000` returning nothing before each full-suite run."
+    },
+    {
+      "criterion": "pnpm test:e2e passes from a clean checkout after pnpm install.",
+      "met": true,
+      "evidence": "`pnpm test:e2e` → 'Running 16 tests using 5 workers' ... '16 passed (12.8s)' across all 4 projects × 4 specs, run as the literal package.json script (not `npx playwright test` directly), with no pre-existing dev server (checked via `lsof -i :4200`)."
+    },
+    {
+      "criterion": "CI note: if no CI workflow runs it yet, say so explicitly rather than implying coverage that does not exist.",
+      "met": true,
+      "evidence": "TASKS.md T263 status line: 'Local-only: no .github/ CI workflow runs pnpm test:e2e.' Same sentence added to CLAUDE.md Hard rule 11 and the Testing entry. Confirmed no .github/ directory exists in this repo (`ls -la .github` → no such file or directory)."
+    },
+    {
+      "criterion": "Once green, restore pnpm test:e2e to CLAUDE.md Hard rule 11 and the Commands list in the same commit.",
+      "met": true,
+      "evidence": "CLAUDE.md Hard rule 11 now reads 'pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e all pass'; Commands list 'Test (e2e): pnpm test:e2e (...)'; Testing entry rewritten to describe the real suite. All three land in the same commit as the green e2e suite (see commits[])."
+    },
+    {
+      "criterion": "pnpm typecheck && pnpm lint && pnpm test still green.",
+      "met": true,
+      "evidence": "typecheck: no output, exit clean, both tsconfig.app.json and tsconfig.spec.json. lint: 5 pre-existing errors, unchanged before/after (see checks.lint — one is a drift found in guest-profile-modal.ts, not caused by this task; see risks[]). test: 556 total, 2 failing both before and after, 0 new_failures."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "The acceptance bullet's literal assertion for the clip-flex-item spec: `main.scrollHeight <= main.clientHeight`.",
+      "to": "`main.scrollHeight <= app-private-layout.clientHeight` (main's flex parent's client height, i.e. the space the parent actually gave it).",
+      "reason": "Measured directly against 9474809^ (broken CSS) via a temporary debug spec: mainScrollHeight === mainClientHeight === 4097 — always equal, in both the broken and fixed CSS, so the literal comparison can never distinguish them. This is a consequence of the exact CSS mechanism the bug report describes: without `min-height: 0`, the flex algorithm's content-based automatic minimum makes `main`'s own box (what `clientHeight` measures) grow to match its content — there is nothing left over for `scrollHeight` to exceed, because the box grew instead of clipping. The real overflow surfaces one level up: `app-private-layout` (main's flex parent, fixed to the viewport height, 568 in both states) does not grow, so `main` visually overflows past it into `document`/`body` — matching T341's own commit message ('grew past the viewport, and the whole layout scrolled as one'). The bullet's own title, 'a clip flex item does not outgrow its parent', is exactly this relationship; its literal follow-up sentence just named the wrong pair of properties.",
+      "authorized_by": "T263 acceptance bullet 'A clip flex item does not outgrow its parent' (hub ADR-0041 §4) — its own title, not its literal assertion text, which is empirically unmeetable (see verified_how)",
+      "verified_how": "Temporary debug spec (e2e/layout/zzdebug.spec.ts, deleted before commit) logged mainScrollHeight/mainClientHeight/parentClientHeight/docScrollHeight/windowInnerHeight against 9474809^: {mainScrollHeight: 4097, mainClientHeight: 4097, hostClientHeight: 568, docScrollHeight: 4279, windowInnerHeight: 568} — main's own two properties equal even while broken. Same debug spec against HEAD: {mainScrollHeight: 329, mainClientHeight: 329, hostClientHeight: 568, docScrollHeight: 568, windowInnerHeight: 568} — main's own two properties equal even while fixed. The rewritten assertion (mainScrollHeight vs parentClientHeight) correctly fails against 9474809^ (4097 > 568) and passes against HEAD (329 <= 568) — captured runner output in the acceptance table above."
+    }
+  ],
+  "checks": {
+    "typecheck": { "result": "pass" },
+    "lint": { "errors_before": 5, "errors_after": 5, "new_errors": [] },
+    "test": {
+      "before": { "total": 556, "failing": 2 },
+      "after": { "total": 556, "failing": 2 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget (295.52 kB over 500 kB) — pre-existing",
+        "src/app/screens/config-manager/config-manager.scss exceeded 8 kB budget — pre-existing",
+        "src/app/screens/milestones/milestones.scss exceeded 8 kB budget — pre-existing",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded 8 kB budget — pre-existing",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded 8 kB budget — pre-existing"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "playwright.config.ts",
+      "e2e/smoke.spec.ts",
+      "e2e/layout/pinned-regions.spec.ts",
+      "e2e/layout/clip-flex-item.spec.ts",
+      "e2e/support/api-mocks.ts",
+      "e2e/support/auth.ts",
+      "tasks/reports/T263.json"
+    ],
+    "modified": [
+      "package.json",
+      "pnpm-lock.yaml",
+      "angular.json",
+      ".gitignore",
+      "CLAUDE.md",
+      "TASKS.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/app/layouts/private-layout/private-layout.scss"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "blocked_on": [],
+  "risks": [
+    {
+      "risk": "`pnpm lint` currently reports 5 pre-existing errors, not the 4 CLAUDE.md's Hard rule 11 exception clause names — the 5th is `'WeddingGuestsService' is defined but never used` in src/app/screens/guest-manager/modal/guest-profile-modal.ts, outside src/app/shared/modal/ entirely. Present before this task started (baseline measured first) and unrelated to Playwright/e2e, so left as found rather than fixed or renumbered in the exception clause — fixing it was out of this task's named scope.",
+      "surfaces_at": "The next task that touches guest-profile-modal.ts, or a future lint-baseline cleanup task"
+    },
+    {
+      "risk": "`npx playwright install` downloaded fresh WebKit/Chromium binaries into ~/Library/Caches/ms-playwright/ in this environment. A CI runner or a teammate's machine without those binaries cached will need to run it once before `pnpm test:e2e` can pass — CLAUDE.md's Commands entry says so, but there is no postinstall hook enforcing it, by design (the task's own acceptance list only requires documenting what must be running, not automating browser installs).",
+      "surfaces_at": "First `pnpm test:e2e` run on a machine that has never run `npx playwright install`"
+    },
+    {
+      "risk": "`e2e/support/api-mocks.ts` hand-mirrors generated DTO shapes (UserProfileDto, WeddingConfigPublicResponseDto, AuthTokenDto, etc.) rather than importing them, because Playwright specs compile outside the Angular tsconfig project and importing `@app/core/api` models would pull the whole Angular build graph into the e2e project. A future `pnpm gen:api` that changes one of these DTOs' required fields would not be caught by `pnpm typecheck` (which never touches e2e/) — only by `pnpm test:e2e` itself failing at runtime against a real shape mismatch, or not failing at all if the fixture is now looser than the real contract.",
+      "surfaces_at": "The next `pnpm gen:api` that changes a field on UserProfileDto, WeddingConfigPublicResponseDto, or AuthTokenDto"
+    }
+  ],
+  "commits": [
+    "feat(e2e): T263 — stand up the Playwright e2e suite (single commit; includes this report)"
+  ],
+  "decisions_needed": []
+}

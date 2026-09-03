@@ -2190,7 +2190,19 @@
   `EntityServices` / `provideEntityData`
 
 ### T263 — Stand up the Playwright e2e suite (the gate CLAUDE.md has always promised)
-- **Status:** todo
+- **Status:** done — 2026-09-04. `@playwright/test` + `playwright.config.ts` (webServer runs
+  `pnpm start`; 4 mobile projects: iPhone SE/12/14 via WebKit, Pixel 7 via Chromium for Chrome
+  Android — CLAUDE.md rule 4). `e2e/support/api-mocks.ts` + `e2e/support/auth.ts` stub every
+  endpoint the app calls and drive the real `/login` OTP flow (no live `wedding-api`, no token
+  seeded into storage). `e2e/smoke.spec.ts` — welcome screen renders real copy and the language
+  switcher changes it. `e2e/layout/` — both required specs, each proven to fail against
+  `9474809^` and pass against `9474809` (captured output in `tasks/reports/T263.json`); the
+  `clip`-flex-item spec deviates from its literal acceptance text — see that report's
+  `deviations[]`, `main.scrollHeight <= main.clientHeight` is always true and cannot see the
+  defect; compares against the flex parent's `clientHeight` instead. `angular.json`'s `test`
+  target now sets `include: ["src/**/*.spec.ts"]` so `ng test` never touches `e2e/`. **Local-only:
+  no `.github/` CI workflow runs `pnpm test:e2e`.** CLAUDE.md Hard rule 11 + Testing + Commands
+  restored in the same commit as the green suite.
 - **Owner:** agent (implementer)
 - **Depends on:** —
 - **Context:** CLAUDE.md listed Playwright under **Testing** and Hard rule 11 required
