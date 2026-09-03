@@ -1,6 +1,12 @@
 <div class="guest-manager">
-  <!-- Header -->
-  <header class="header">
+  <!-- Header — pinned by the layout (hub ADR-0042 §1/§2, T341): the `guests`
+       route sets `headPinned: true` (app.routes.ts), so PrivateLayout renders
+       this in its own pinned head slot instead of here. It therefore never
+       renders inside `.guest-manager`'s own DOM in production — see
+       `screen-chrome.spec.ts` for the pinning-contract test this replaced
+       (formerly guest-manager.spec.ts:1137), and `ScreenChromeHarness` for
+       how this screen's own spec still asserts on this content. -->
+  <header class="header" *appScreenHead>
     <div class="header-left">
       <div class="header-title">
         <div class="header-meta">
@@ -150,7 +156,8 @@
       </div>
     </div>
 
-    <div class="list-footer" aria-hidden="true">
+    <!-- Pinned by the layout, same as the header above — see its comment. -->
+    <div class="list-footer" aria-hidden="true" *appScreenFoot>
       <span class="list-footer-info skeleton footer-bar">&nbsp;</span>
     </div>
   } @else {
@@ -490,8 +497,9 @@
 
     <!-- List footer — the count line is `aria-live` because it is the only
          announcement a grow produces; there is no loading affordance to convey
-         progress (ADR W-0008 §4). -->
-    <div class="list-footer">
+         progress (ADR W-0008 §4). Pinned by the layout, same as the header —
+         see its comment above (hub ADR-0042 §1/§2, T341). -->
+    <div class="list-footer" *appScreenFoot>
       <span class="list-footer-info" aria-live="polite">
         @if (filteredGuests().length === 0) {
           {{ 'guest_manager.list.noResults' | translate }}

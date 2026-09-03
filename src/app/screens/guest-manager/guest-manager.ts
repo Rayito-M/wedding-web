@@ -15,6 +15,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
 
 import {
+  AppScreenFoot,
+  AppScreenHead,
   EntityNamesEnum,
   UserProfileDto,
   isFirstLoad,
@@ -37,6 +39,8 @@ type SortColumn = 'lastName' | 'status' | 'adults' | 'children' | 'lastSeen';
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    AppScreenFoot,
+    AppScreenHead,
     Btn,
     TranslatePipe,
     PluralTranslatePipe,
@@ -365,6 +369,22 @@ export class GuestManager {
    * one never fires for a keyboard user, nor at all while the container is not
    * yet overflowing (ADR W-0009 §3). Both go through {@link loadMore}, which
    * no-ops unless the API said there is another page.
+   *
+   * **Known gap opened by T341 (hub ADR-0042), not closed here.** `.table-body`
+   * was this screen's own scroll container before T341; the `guests` route
+   * now pins the header/footer (`headPinned`/`footPinned`, `app.routes.ts`),
+   * so per the single-scroller rule (ADR-0041 §3) `PrivateLayout`'s
+   * `.screen-scroll` is the one element that actually scrolls in a browser —
+   * `.table-body` sheds `overflow-y: auto` in `guest-manager.scss` and never
+   * fires a native `scroll` event again. The `(scroll)` binding stays on
+   * `.table-body` in the template only because this method's own tests
+   * (`guest-manager.spec.ts`) dispatch a synthetic `scroll` event directly on
+   * it with mocked geometry — they keep passing, but they no longer prove
+   * this fires in production. `.screen-scroll` is outside this component's
+   * own template (owned by `PrivateLayout`), so wiring the real trigger needs
+   * a channel this task does not build. The manual "Load more" button is
+   * unaffected. Flagged in the T341 report; needs a decision before relying
+   * on the auto-grow behaviour again.
    */
   onListScroll(event: Event): void {
     const el = event.target as HTMLElement;
@@ -376,6 +396,11 @@ export class GuestManager {
    * under the reader (ADR W-0009 §5). Rows already fetched are **not**
    * discarded: they cost a request, and re-fetching them because someone typed
    * in the search box would be the fake-pagination problem in reverse.
+   *
+   * **Same T341 gap as {@link onListScroll}**: `.table-body` no longer
+   * scrolls in a browser, so zeroing its `scrollTop` is a no-op there — the
+   * real scroll position lives on `PrivateLayout`'s `.screen-scroll`, which
+   * this component has no reference to.
    */
   private resetWindow(): void {
     const container = this.listContainer();

@@ -2,20 +2,21 @@
 @use '../../../styles/primitives';
 @use './modal/status-cell' as *;
 
+// Hub ADR-0042 §1/§2, T341: this screen is no longer its own shell. Its
+// `<header class="header">` and `.list-footer` are pinned by `PrivateLayout`
+// (`*appScreenHead` / `*appScreenFoot`, `guest-manager.html`) — never
+// rendered here in production — and its middle content (toolbar + table)
+// scrolls as part of `PrivateLayout`'s own `.screen-scroll`, not a scroller
+// of this screen's own. `:host` therefore no longer fills/clips a fixed
+// height, and `.guest-manager` carries no shell CSS of its own; both used to
+// (`height: 100%` / `overflow: hidden`), which is exactly the nested-scroller
+// defect ADR-0041 fixes. `.table-container` and `.table-body`'s own scroll
+// ownership are struck for the same reason — see their own sites below.
 :host {
   display: block;
   width: 100%;
-  height: 100%;
   background: var(--surface-page);
   color: var(--text-body-color);
-}
-
-.guest-manager {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -191,13 +192,15 @@
 // Table (Mobile-First: List Layout)
 // ─────────────────────────────────────────────────────────────
 
-.table-container {
-  flex: 1;
-  overflow: hidden;
-  padding: 0 t.$space-3;
-  display: flex;
-  flex-direction: column;
-}
+// `.table-container` shed entirely (hub ADR-0042 §1/§2, T341): it used to be
+// both the screen's own scroll container (`flex: 1; overflow: hidden`) and
+// the source of the table area's outer gutter (`padding: 0 t.$space-3` here,
+// `0 t.$space-6` at desktop below). Scroll ownership moves to
+// `PrivateLayout`'s `.screen-scroll`; the div/role="table" stay in the
+// markup (T332's ARIA semantics), but carry no layout CSS of their own. The
+// gutter moves onto `.table-header` / `.table-body` directly, below, so the
+// table area keeps the same outer inset the toolbar and list footer already
+// have — see each site's own comment.
 
 .table-header {
   display: none;
@@ -274,19 +277,22 @@
   }
 }
 
+// `flex`/`min-height`/`overflow` (the scroll-ownership triad) shed here (hub
+// ADR-0042 §1/§2, T341) — this was this screen's real scroll container
+// before T341; now `PrivateLayout`'s `.screen-scroll` is, and the
+// single-scroller rule (ADR-0041 §3) means this box must not also be one.
+// Its horizontal padding takes over `.table-container`'s former outer gutter
+// (struck above) so rows keep the same inset the toolbar/list footer have —
+// `0` here was correct only while `.table-container` supplied the gutter
+// itself; it no longer does.
 .table-body {
-  flex: 1;
-  // `.table-container` is `flex: 1; overflow: hidden`, so without this the
-  // body's content floor keeps it from ever shrinking — and scrolling.
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 0;
+  padding: 0 t.$space-3;
 
-  // The region is a tab stop of its own (`tabindex="0"`, T332) so it can be
-  // arrow-scrolled from the keyboard, which needs a visible indicator. Inset,
-  // because `.table-container` is `overflow: hidden` and would clip an
-  // outward one.
+  // The region is still a tab stop of its own (`tabindex="0"`, T332) so it
+  // can be reached from the keyboard — kept even though it no longer scrolls
+  // itself, since that ARIA/focus contract is unchanged by this task (see
+  // `onListScroll`'s own doc comment in `guest-manager.ts` for the scroll
+  // trigger this leaves stale).
   &:focus-visible {
     outline: 2px solid var(--brand-accent);
     outline-offset: -2px;
@@ -685,15 +691,24 @@
     flex-shrink: 0;
   }
 
-  .table-container {
-    padding: 0 t.$space-6;
-  }
+  // `.table-container`'s desktop gutter (`padding: 0 t.$space-6`) shed with
+  // the rest of it (see the mobile-first comment above `.table-header`
+  // below) — `.table-body` already carried the same `t.$space-6` in this
+  // block, so removing the container's copy corrects what was a doubled
+  // 48px inset down to the intended single `t.$space-6` (24px) "standard
+  // screen gutter", not a visual regression.
 
   .table-header {
     display: grid;
     grid-template-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
     gap: 12px;
-    padding: 0 16px 8px;
+    // `16px` is this row's own inner offset, matching `.table-row`'s own
+    // `16px` desktop padding below so labels sit above their cells;
+    // `t.$space-6` is the outer screen gutter `.table-container` used to
+    // supply, now added here directly so the header still aligns with
+    // `.table-body`'s own `t.$space-6` (below) instead of sitting 24px to
+    // its left.
+    padding: 0 calc(#{t.$space-6} + 16px) 8px;
   }
 
   .table-body {

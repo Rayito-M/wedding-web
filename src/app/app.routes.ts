@@ -154,6 +154,12 @@ export const routes: Routes = [
           roles: ['groom', 'bride'],
           tabBar: true,
           topNav: true,
+          // Hub ADR-0042 §1/§2, T341 — the title/stat header and the list
+          // footer are pinned via `*appScreenHead` / `*appScreenFoot`
+          // (`guest-manager.html`); `PrivateLayout` yields scroll ownership
+          // to `.screen-scroll` for this route because of these two flags.
+          headPinned: true,
+          footPinned: true,
         } satisfies RouteChromeData,
       },
       {

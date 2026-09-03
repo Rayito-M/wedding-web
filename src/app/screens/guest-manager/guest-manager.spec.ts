@@ -1,3 +1,4 @@
+import { Component } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -13,6 +14,7 @@ import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import {
   EntityNamesEnum,
   RsvpDto,
+  ScreenChromeHarness,
   UserProfileDto,
   entityConfig,
   provideEntityDataServices,
@@ -1133,8 +1135,16 @@ describe('GuestManager — in-place loading state', () => {
     // row real, and the placeholders deliberately carry none.
     expect(fixture.nativeElement.querySelectorAll('.table-row').length).toBeGreaterThan(0);
     expect(fixture.nativeElement.querySelector('.row-open-btn')).toBeNull();
-    // The header is not part of the content region and stays on screen.
-    expect(fixture.nativeElement.querySelector('.header')).not.toBeNull();
+    // The header used to be asserted here ("not part of the content region,
+    // stays on screen"). Since T341 (hub ADR-0042 §1/§2) it is pinned via
+    // `*appScreenHead` and rendered by `PrivateLayout`, not by this screen —
+    // it never renders inside `GuestManager`'s own fixture at all, mounted
+    // standalone as this one is. That is now `PrivateLayout`'s own pinning
+    // contract, proven end-to-end with the real `GuestManager` in
+    // `layouts/private-layout/screen-chrome.spec.ts`. See
+    // `ScreenChromeHarness`, used below, for how *this* spec still asserts
+    // on the header's own content (the stat counts) without mounting the
+    // full layout.
 
     TestBed.inject(HttpTestingController)
       .expectOne((req) => req.method === 'GET' && req.url.endsWith('/v1/profile'))
@@ -1154,5 +1164,98 @@ describe('GuestManager — in-place loading state', () => {
 
     expect(fixture.nativeElement.querySelectorAll('.skeleton').length).toBe(0);
     expect(fixture.nativeElement.querySelectorAll('.table-row').length).toBe(1);
+  });
+});
+
+/**
+ * T341 (hub ADR-0042 §1/§2) — `GuestManager`'s `<header class="header">` and
+ * `.list-footer` are pinned via `*appScreenHead` / `*appScreenFoot`
+ * (`guest-manager.html`), so `AppScreenHead`/`AppScreenFoot` only register
+ * the `TemplateRef` with `ScreenChromeService`; neither renders in place.
+ * Mounted standalone the way every other test above does, this screen's own
+ * fixture therefore never shows that content at all — not because it is
+ * wrong, but because nothing in the fixture ever asks `ScreenChromeService`
+ * what to render (`PrivateLayout` is the only thing that does, in
+ * production). `ScreenChromeHarness` (`core/directive/screen-chrome-harness
+ * .ts`) reproduces just enough of that rendering to let this spec assert on
+ * the pinned content anyway — the shared harness T341 decided once so every
+ * screen T343 migrates does not invent its own workaround.
+ */
+@Component({
+  selector: 'app-guest-manager-chrome-host',
+  imports: [ScreenChromeHarness, GuestManager],
+  template: `<app-screen-chrome-harness><app-guest-manager /></app-screen-chrome-harness>`,
+})
+class GuestManagerChromeHost {}
+
+describe('GuestManager — pinned head/foot content, via the projected-chrome harness (T341)', () => {
+  async function createHost(
+    profiles: UserProfileDto[],
+  ): Promise<ComponentFixture<GuestManagerChromeHost>> {
+    await TestBed.configureTestingModule({
+      imports: [GuestManagerChromeHost],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTranslateService({ lang: 'en', fallbackLang: 'en' }),
+        provideStore(),
+        provideEffects(),
+        provideEntityData(entityConfig, withEffects()),
+        provideEntityDataServices(),
+      ],
+    }).compileComponents();
+
+    TestBed.inject(TranslateService).setTranslation('en', {}, true);
+
+    const collection = TestBed.inject(EntityServices).getEntityCollectionService<UserProfileDto>(
+      EntityNamesEnum.USER_PROFILE,
+    );
+    for (const p of profiles) collection.addOneToCache(p);
+
+    const fixture = TestBed.createComponent(GuestManagerChromeHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('renders the pinned header through the harness, outside <app-guest-manager> itself', async () => {
+    const fixture = await createHost([profile()]);
+    const host = fixture.nativeElement as HTMLElement;
+
+    const screen = host.querySelector('app-guest-manager') as HTMLElement;
+    const header = host.querySelector('.header');
+
+    expect(header).not.toBeNull();
+    expect(screen.contains(header)).toBe(false);
+  });
+
+  it('renders the real guest count in the pinned header', async () => {
+    const fixture = await createHost([profile(), profile({ id: 'guest-2', lastName: 'Alvarez' })]);
+    const host = fixture.nativeElement as HTMLElement;
+
+    const totalValue = host.querySelector('.stat-group .stat-value');
+    expect(totalValue?.textContent?.trim()).toBe('2');
+  });
+
+  it('renders the pinned footer through the harness, outside <app-guest-manager> itself, showing the real (non-empty) result state', async () => {
+    const fixture = await createHost([profile()]);
+    const host = fixture.nativeElement as HTMLElement;
+
+    const screen = host.querySelector('app-guest-manager') as HTMLElement;
+    const footer = host.querySelector('.list-footer');
+
+    expect(footer).not.toBeNull();
+    expect(screen.contains(footer)).toBe(false);
+    // No translation is loaded (see `createHost`), so this reads the key
+    // itself rather than the rendered copy — what matters here is which
+    // branch rendered: "showing" (rows present), never "noResults" (there is
+    // one seeded guest).
+    expect(footer!.querySelector('.list-footer-info')?.textContent).toContain(
+      'guest_manager.list.showing',
+    );
+    expect(footer!.querySelector('.list-footer-info')?.textContent).not.toContain(
+      'guest_manager.list.noResults',
+    );
   });
 });
