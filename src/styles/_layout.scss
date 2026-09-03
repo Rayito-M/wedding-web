@@ -97,8 +97,16 @@ $bp-xl: 1024px;
   // below its own min-content width and pushes the row wider instead of
   // eliding — the exact failure the guest-manager footer hit in French.
   min-width: 0;
-  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
-  overflow: clip; // creates no scroll container, so focus cannot shift the box
+  // Plain `hidden`, deliberately NOT the paired `hidden` → `clip` of
+  // ADR-0041 §4. That rule was scoped on 2026-09-03 to *layout containers* —
+  // boxes establishing a scrolling context a focus event could shift. A
+  // single-line, `nowrap`, ellipsizing text child is not one: nothing
+  // focusable inside it, no `scrollIntoView()` target, and a few pixels of
+  // elided text as its entire scrollable overflow. `clip` buys nothing here
+  // and costs the less-travelled `text-overflow: ellipsis` under
+  // `overflow: clip` path, in a file every migrated screen inherits.
+  // T342's lint rule must carry this exemption or it flags this primitive.
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
