@@ -762,6 +762,31 @@
   require, not from any trim): per the task's own instruction this is reported, not gutted to hit
   a number. `guest-manager`, `milestones`, `seating-plan` remain — see
   `tasks/28-phase-x-layout-layer/reports/T343.json` for full evidence.
+  **`guest-manager` landed 2026-09-04** (second of the four, after T355 restored `e2e/layout`'s
+  clean-run baseline): its flow/scroll classification was already settled by hub ADR-0043 §5 and
+  its scroll-ownership CSS by T341/T348 — nothing there was re-opened. What this slice did:
+  `@media (min-width: 900px)` → `@include layout.respond-to('lg')`; every raw `px`
+  padding/margin/gap/font-size that exactly matched an existing token now uses it (values with no
+  scale match — decorative dot/icon sizes, the 44px WCAG touch target, one-off numbers — stay
+  literal rather than forced onto a token that doesn't name their value); two genuinely duplicated
+  blocks extracted (`.partner-account-note` now extends `%sr-only` instead of hand-copying it,
+  flagged as a duplicate by T347/T351 but left alone there on purpose; the repeated 7-column
+  `grid-template-columns` string now reads a local `$table-grid-columns`); one dead empty ruleset
+  removed. stylelint's own count for this file dropped 77 → 35 (baseline refreshed,
+  `pnpm stylelint:baseline`, 609 → 567 pre-existing repo-wide). **Still over budget, and slightly
+  more so: 11.19 kB → 11.69 kB (3.19 kB over → 3.69 kB over).** Isolated the cause: a dedup-only
+  build (respond-to + the two extractions, no token substitution) compiles to 14,151 bytes against
+  the pre-migration 14,261 — a genuine, if small, reduction. Adding the token substitutions this
+  same bullet requires (hub ADR-0041 §6, CLAUDE.md hard rule 3) compiles to 14,735 — `var(--space-3)`
+  (14 chars) is textually longer than `12px` (4 chars) at every one of the ~30 sites converted, and
+  that cost outweighs the dedup savings several times over. This is the same shape config-manager's
+  slice already reported (a correct migration landing a few hundred bytes *higher*, not lower) but a
+  cleaner demonstration of it: ADR-0041 §6 (tokens) and §7 (the byte budget) pull in opposite
+  directions on a file whose gap was never shell/scroll CSS to begin with. Reported, not gutted, per
+  this task's own instruction — see `tasks/28-phase-x-layout-layer/reports/T343-guest-manager.json`
+  for full evidence, including the new `.scrolled`-header regression spec (proven failing against
+  `58935c7`, the commit before hub ADR-0043) and the layout-regression coverage already in place from
+  T341/T348/T355 for this screen. `milestones`, `seating-plan` remain.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T340, T341, **T352** (landed) for every screen after `config-manager` —

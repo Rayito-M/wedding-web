@@ -1,0 +1,156 @@
+{
+  "task": "T343",
+  "status": "partial",
+  "summary": "guest-manager slice only. Classification/scroll-ownership already settled (ADR-0043/T341/T348), untouched. Migrated: @media->respond-to('lg'); matching raw px converted to tokens; .partner-account-note extends %sr-only instead of duplicating it; grid-template-columns deduped; one dead ruleset removed. stylelint 77->35, baseline 609->567. Still over budget, slightly more: 11.19kB->11.69kB — tokens are textually longer than the px replaced, outweighing dedup savings; reported, not gutted. New .scrolled-header e2e spec, fails pre-fix, passes now; e2e/layout 45/45, 7/7 clean runs.",
+  "acceptance": [
+    {
+      "criterion": "Migrated in descending size order — config-manager, guest-manager, milestones, seating-plan — one screen per PR, each independently shippable and revertible (ADR-0041 §8)",
+      "met": "partial",
+      "evidence": "This PR touches only guest-manager.scss (the second-largest, second in the stated order) plus a new e2e spec and the stylelint baseline. git diff --stat: .stylelint-baseline.json, src/app/screens/guest-manager/guest-manager.scss, tasks/28-phase-x-layout-layer/TASKS.md, tasks/README.md, e2e/layout/guest-manager-scrolled-header.spec.ts (new). No milestones/seating-plan file touched.",
+      "notes": "milestones and seating-plan deliberately not attempted — explicit prompt scope (\"only the second screen: guest-manager\"), listed in remaining[]."
+    },
+    {
+      "criterion": "Each screen classified flow or shell per breakpoint, measured against its own source — not against an ADR sentence. Applied with the screen-scroll() mixin rather than re-authored",
+      "met": true,
+      "evidence": "guest-manager's classification was already ruled by hub ADR-0043 §5 as amended (flow — no screenScroll, both pin flags kept) and confirmed in a browser by T355 (tasks/28-phase-x-layout-layer/reports/T355.json). Nothing in this slice reopens it: app.routes.ts's /guests entry is unmodified (git diff confirms). This bullet's own mechanism — screen-scroll() — does not apply to guest-manager at all (it is flow, not shell), consistent with the task prompt's own framing (\"do not add screenScroll to /guests\").",
+      "notes": "milestones/seating-plan classification not attempted here."
+    },
+    {
+      "criterion": "Corrected premise, 2026-09-04 — re-measure each screen before migrating; this task's list was wrong once already",
+      "met": "not_attempted",
+      "evidence": "This bullet's specific content (seating-plan as unconditional shell, milestones as the true per-breakpoint case) does not name guest-manager — guest-manager's own classification was separately re-confirmed by T355, not re-derived here (see previous bullet).",
+      "notes": "seating-plan/milestones re-measurement is out of this slice's scope."
+    },
+    {
+      "criterion": "Each drops below the 8 KB anyComponentStyle budget",
+      "met": false,
+      "evidence": "pnpm build before this PR's edits: guest-manager.scss exceeded maximum budget by 3.19 kB (11.19 kB of 8 kB) — matches T355's own measured figure. After this PR's edits (typecheck/lint/test/build all re-run clean, see checks below): exceeded by 3.69 kB (11.69 kB of 8 kB) — a small net INCREASE. Isolated the cause with a dedup-only compile (respond-to() conversion + the two genuine-duplication extractions, no token substitution): 14,151 bytes raw CSS vs 14,261 pre-migration (a real, if small, reduction). Compiling with the token substitutions this same task bullet also requires (\"tokens for raw px\", CLAUDE.md hard rule 3) instead measures 14,735 bytes — var(--space-N) (14 chars) is textually longer than a literal Npx (2-5 chars) at every one of the ~30 sites converted, and that cost exceeds the dedup savings several times over.",
+      "notes": "Per the task's own explicit instruction (\"do not gut the screen to hit the number and do not silently miss the bullet... A correct migration that is over budget is a better outcome than a screen rewritten past what this task authorizes\"), the token conversion was kept (it is mandated by the same bullet and by CLAUDE.md hard rule 3) and the shortfall reported honestly rather than reverted to chase the number. See decisions_needed[] — this generalizes config-manager's own finding (T343.json) into a clearer structural tension between ADR-0041 §6 (tokens) and §7 (the byte budget)."
+    },
+    {
+      "criterion": "No visual change intended: each PR is checked against the previous build in all three themes and all three locales, at 360px and at ≥900px",
+      "met": "partial",
+      "evidence": "No interactive browser available in this environment. Verified via Playwright (scratch specs, run and deleted — not committed, per this task's own instruction on how T355 handled the same limitation): 6 combinations of theme (terracotta/mauve/verdeagua) x width (360px/1280px) all passed (header/nav/table/footer render, data-theme attribute correct) with full-page screenshots taken and visually reviewed by hand (all 4 sampled screenshots showed correct rendering, no overlap/clipping, correct theme colors); 3 locale sanity checks (es/en/fr, via signInAsCouple + localStorage 'language' + fresh navigation, matching T352/T355's own convention) all passed (translated header text present, non-empty).",
+      "notes": "This is a Playwright-driven check against real WebKit/Chromium engines, not a physical device — stated plainly per CLAUDE.md's own instruction not to claim a device check that wasn't done. The underlying change is CSS-value-preserving (respond-to() compiles to the identical @media rule; every token substitution maps to the exact pixel value it replaced; the two extractions are structurally equivalent CSS) so the a-priori regression risk was low, and the sweep found none."
+    },
+    {
+      "criterion": "guest-manager's slice additionally carries the coverage T355 could not commit — a spec asserting .scrolled's background/box-shadow appears on /guests once the list has scrolled, and that head and foot hold position",
+      "met": true,
+      "evidence": "New e2e/layout/guest-manager-scrolled-header.spec.ts. Proven failing first: run against a worktree at 58935c7 (the commit immediately before hub ADR-0043/e11d826, when /guests' main was overflow-y:clip and never scrolled) — failed on all 5 projects with \"main did not move when scrolled\" (the header's dead-scroll defect ADR-0043 §5's addendum describes). Run against current code: 5/5 projects pass. Background assertion is width-conditional (checked in the spec's own header comment): below 900px the header is transparent until .scrolled supplies --surface-card; at/above 900px screen-header.scss's own @media block gives header a solid background unconditionally, so there is nothing to change there — box-shadow (supplied only by .scrolled, at every width) is the assertion that holds unconditionally. Uses expect.poll for the post-scroll read because header's CSS transition (0.2s) meant an immediate getComputedStyle read could land mid-transition (reproduced once during authoring, fixed before commit).",
+      "notes": "pinned-regions.spec.ts (existing, T341) already covers the generic pinned head/foot invariant; this spec re-asserts it only as its own guard clause, not to duplicate that file's coverage."
+    },
+    {
+      "criterion": "Each screen's T349 layout-regression spec lands in the same PR as that screen's migration, not batched afterwards",
+      "met": true,
+      "evidence": "guest-manager already carries this coverage from prior tasks in this same phase, landed alongside guest-manager's own scroll-mechanism work rather than batched: pinned-regions.spec.ts (T341/T263 — pinned head/foot), clip-flex-item.spec.ts (re-targeted for guest-manager's flow classification by T352 — main never outgrows its flex parent), guest-list-scroll.spec.ts (T348, hardened by T355/T356 — the auto-load/scroll-affordance invariant). This slice adds the one piece T349's own coverage did not yet have (bullet above): the .scrolled header spec.",
+      "notes": "milestones/seating-plan's own T349 specs are not attempted here — they land with their own T343 PRs per T349's sequencing note."
+    },
+    {
+      "criterion": "Each spec is proven by failing first — checked out against the commit before its fix and watched to fail",
+      "met": true,
+      "evidence": "guest-manager-scrolled-header.spec.ts run via `git worktree add` at 58935c7 (all 5 projects): 5/5 failed with \"main did not move when scrolled — nothing to prove\", confirming /guests' main was not yet the real scroller at that commit. Same spec against current HEAD: 5/5 passed.",
+      "notes": "The other three guest-manager specs (pinned-regions/clip-flex-item/guest-list-scroll) were already proven fail-first by their own originating tasks (T341/T263, T352, T348) — not re-proven here, since this slice did not touch their subject matter."
+    },
+    {
+      "criterion": "Each screen is checked in a real browser before its PR is called done — npx playwright test e2e/layout plus a look at the screen itself",
+      "met": true,
+      "evidence": "npx playwright test e2e/layout run 7 times consecutively after all edits landed: 45/45 passed every time (40 pre-existing + 5 new from this slice's spec, all 5 projects). \"A look at the screen itself\": scratch Playwright screenshots reviewed by hand (bullet above) — no interactive browser/device in this environment, stated plainly.",
+      "notes": "Playwright's WebKit/Chromium/Chrome-Android emulation are real browser engines (T263's own framing), not a physical device."
+    },
+    {
+      "criterion": "Watch for the scroll-ownership consequence on every screen — a screen giving up its scroller loses scroll observation and control; check before migrating, not after",
+      "met": true,
+      "evidence": "grep -n \"(scroll)|scrollTop|scrollIntoView|scrollTo\\b\" guest-manager.ts guest-manager.html before any edit, and again after: only comment mentions (guest-manager.ts:469's doc comment, guest-manager.html:369's doc comment) — no live scroll binding was touched or needed to be. guest-manager already went through T348's repair; this slice did not reopen its scroll mechanism (git diff --stat confirms guest-manager.ts/.html are untouched by this PR).",
+      "notes": "milestones/seating-plan not checked in this PR."
+    },
+    {
+      "criterion": "Two inherited min-height: 0 gaps land with the screen that owns them (T347 risks[1]): config-manager.scss's .modal-dialog .modal-body (done in T343's first slice) and milestones.scss's .detail-body",
+      "met": "not_attempted",
+      "evidence": "Neither gap named in this bullet belongs to guest-manager; config-manager's was already fixed in the first T343 slice, milestones' is unowned until that screen's own PR.",
+      "notes": "N/A to this slice — included only because it is one of T343's own acceptance bullets and every bullet gets an entry per the report schema."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass"
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 567,
+        "failing": 2
+      },
+      "after": {
+        "total": 567,
+        "failing": 2
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 795.70 kB of 500 kB (pre-existing, unrelated to this task)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget: 9.60 kB of 8 kB (pre-existing, not this PR's screen)",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget: 16.81 kB of 8 kB (pre-existing, not this PR's screen)",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget: 11.49 kB of 8 kB (pre-existing, not this PR's screen)",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget: 11.69 kB of 8 kB (this PR's screen — was 11.19 kB before, see acceptance bullet 4 / decisions_needed)"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/layout/guest-manager-scrolled-header.spec.ts",
+      "tasks/28-phase-x-layout-layer/reports/T343-guest-manager.json"
+    ],
+    "modified": [
+      ".stylelint-baseline.json",
+      "src/app/screens/guest-manager/guest-manager.scss",
+      "tasks/28-phase-x-layout-layer/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "guest-manager.scss remains 3.69 kB over the 8 kB anyComponentStyle budget after a complete, correct layout-layer migration — and the migration this task requires (converting existing raw px to matching tokens) made the gap slightly WORSE (11.19 kB -> 11.69 kB), not better, because var(--space-N) is textually longer than the literal px it replaces. No further layout-layer work will close this gap: it was never shell/scroll CSS (that was fixed by T341/T348 already). T344 ('anyComponentStyle becomes an error') depends on 'T343: the other three screens under budget'; guest-manager joins config-manager as a screen this precondition cannot be met for without either a structural extraction (out of this task's authorization) or a per-file override (an ADR-0041 §7 decision, per T344's own text for config-manager).",
+      "surfaces_at": "T344, once milestones/seating-plan are migrated — see decisions_needed[] for the options, which mirror config-manager's own open question in tasks/28-phase-x-layout-layer/reports/T343.json decisions_needed[0]."
+    },
+    {
+      "risk": "The scratch Playwright specs used to verify \"no visual change\" (3 themes x 2 widths, 3 locales) were written, run, and deleted within this session — never committed, matching T355's own precedent for the same class of check. If a future change to guest-manager.scss's token values or breakpoint regresses rendering in a specific theme/locale/width combination, nothing in the committed e2e suite would catch it beyond the functional (non-visual) assertions guest-manager-scrolled-header.spec.ts and the pre-existing specs make.",
+      "surfaces_at": "Any future guest-manager.scss change; a permanent per-theme/locale visual-regression spec was out of this task's scope (T349's own tier is deliberately geometry-only, not visual)."
+    }
+  ],
+  "commits": [
+    "e13688e5fdeb227956b6aa36d50b5b6e81b7c837"
+  ],
+  "remaining": [
+    "milestones: migrate onto the layout layer (T343) — screenScroll: 'lg', including the milestones.scss .detail-body min-height: 0 gap (T347 risks[1]) — currently 11.49 kB of 8 kB",
+    "seating-plan: migrate onto the layout layer (T343) as an unconditional shell (screenScroll: true) — currently 9.60 kB of 8 kB",
+    "guest-manager: close the remaining 3.69 kB anyComponentStyle budget gap — not authorized by this task to gut or restructure the screen to reach it; needs the same scoping decision as config-manager's identical gap, see decisions_needed[]"
+  ],
+  "decisions_needed": [
+    {
+      "question": "guest-manager.scss is now 11.69 kB against an 8 kB anyComponentStyle budget (was 11.19 kB before this migration), and the token-substitution half of a correct ADR-0041 §6 migration made the gap larger, not smaller, because CSS custom property references are textually longer than the literal px values they replace. This is the same open question config-manager's T343 slice already raised (tasks/28-phase-x-layout-layer/reports/T343.json decisions_needed[0]) but demonstrated more starkly here. How should the remaining ~3.7 kB be closed, given T344 depends on all four T343 screens being under budget?",
+      "options": [
+        "Extract a genuinely reusable piece into its own component — the strongest candidate is the loading-skeleton block (~55 lines: .skeleton, .stat-bar, .count-bar, .name-bar, .caption-bar, .status-bar, .cell-bar, .dietary-bar, .footer-bar), which rides on real settled elements per _primitives.scss's own skeleton-bar mixin doc. Genuinely reduces guest-manager.scss's own anyComponentStyle count; costs a new component/directive and a review of whether a shared 'skeleton row' pattern would also help milestones/seating-plan (both also over budget) — a design-system question this task cannot answer alone.",
+        "Raise guest-manager's own anyComponentStyle budget via a per-file override (angular.json), on the same terms T344 already grants config-manager: 'a complete, correct migration' whose remaining gap is not shell/scroll CSS. Cheap and immediate; is a second per-path override (T344's own text calls a second one 'a hub decision under §7 as amended').",
+        "Reconsider whether hard rule 3's token substitution is worth doing for already-baselined violations at all, given it demonstrably works against ADR-0041 §7's own budget goal on this file. Not something this task is authorized to decide unilaterally — it would mean treating 'tokens for raw px' as optional during a budget migration, contradicting this task's own explicit instruction.",
+        "Leave it over budget and scope T344 to exclude both config-manager and guest-manager (or delay T344 until a later, separately-scoped cleanup covering both). No new work now; T344's acceptance text needs amending regardless once a second screen hits the same wall."
+      ],
+      "recommendation": "Extract the skeleton block (option 1) if a shared 'loading skeleton row' pattern is judged to have a real home in the design system — it is the most self-contained, least risky piece of this file, and milestones/seating-plan (also over budget, also table/list screens) are plausible co-beneficiaries. Failing that, option 2 (a second per-file ratchet) is honest and consistent with T344's own precedent for config-manager, but it is a hub-level call under ADR-0041 §7 as amended, not a repo decision.",
+      "blocking": false,
+      "needed_by": "T344"
+    }
+  ]
+}
