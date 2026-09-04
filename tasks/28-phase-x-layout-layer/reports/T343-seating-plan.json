@@ -122,7 +122,7 @@
       "surfaces_at": "Any future report or reviewer citing this slice as having the same visual-verification rigor as config-manager's or milestones' own — it does not, and this is the gap between 'provably identical CSS' and 'seen to render identically'."
     }
   ],
-  "commits": [],
+  "commits": ["419ba5f85f47c0bb965bc3316de56ee2e837ade1"],
   "decisions_needed": [
     {
       "question": "Should /seating be added to environment.ts's and environment.prod.ts's enabledRoutes (and therefore to the couple's nav via tab-bar.ts) now that it is migrated onto the layout layer, or does it stay gated off as the T229 scaffold it currently is?",
