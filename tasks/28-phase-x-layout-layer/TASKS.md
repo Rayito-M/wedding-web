@@ -4,6 +4,26 @@
 > them. 9,883 lines of SCSS across 71 files, of which 412 lines (4%) are shared; 45% of dimensional
 > values are raw `px`; three unnamed breakpoints; 13 files declare their own scroll container. Every
 > screen re-derives its own page shell. This phase adds the missing layer and enforces it.
+>
+> ## Phase X is done when — stated 2026-09-04, because it never was
+>
+> **`T343` finishes `milestones` and `seating-plan`, and `T344` lands the error ratchet.** That is
+> the whole exit condition. `T357` rides along because T343's remaining specs are worthless if the
+> suite flakes.
+>
+> **Not gating, and explicitly parked outside that path:** `T353` (do the pin flags still earn their
+> place — a cleanup that turns on a measurement) and `T354` (is the config-manager modal in the
+> right place — decoupled from the budget entirely, and "it belongs where it is" closes it). Neither
+> blocks the phase, neither blocks the other, and neither should be treated as unfinished business
+> when Phase X closes.
+>
+> **Why this section exists.** The phase opened with five tasks (T340–T344) and now holds seventeen.
+> Eleven are done and most were found by measurement that would otherwise have shipped defects — the
+> expansion was largely honest. But the phase had **no stated exit condition**, so every escalation
+> produced a task and nothing ever produced a boundary. A ratchet with no counterweight always looks
+> like divergence from the outside, and eventually is. Any further finding in this phase either fits
+> the exit condition above or is filed **outside** it.
+>
 > Sequence matters: T340 → T341 → **T263** → **T348** → T345 → T347 → T342 → T343 (+ T349) →
 > **T350** → T344 → **T354**. **T351** is parallel to all of it and blocks nothing.
 > **T352 (hub ADR-0043) is inserted before T343's remaining three screens** — `config-manager`
@@ -539,6 +559,7 @@
   `tasks/28-phase-x-layout-layer/reports/T343.json` `risks[0]`
 
 ### T353 — Do `headPinned` / `footPinned` still earn their place?
+- **Gating:** none. Parked outside Phase X's exit condition (see the phase header). Run it when there is capacity.
 - **Status:** todo
 - **Target release:** 1.2.0 (or later — this is a cleanup, not a fix)
 - **Owner:** unassigned
@@ -568,6 +589,7 @@
 - **Refs:** hub ADR-0043 §Alternatives (the open question), §1–§3; hub ADR-0042 §1, §Context ¶3
 
 ### T354 — Close `config-manager`'s residual budget gap and retire its override
+- **Gating:** none. Parked outside Phase X's exit condition (see the phase header). No longer a budget task.
 - **Status:** todo
 - **Target release:** 1.2.0
 - **Owner:** unassigned
