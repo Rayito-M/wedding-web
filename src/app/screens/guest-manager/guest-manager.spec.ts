@@ -15,6 +15,7 @@ import {
   EntityNamesEnum,
   RsvpDto,
   ScreenChromeHarness,
+  ScreenChromeService,
   UserProfileDto,
   entityConfig,
   provideEntityDataServices,
@@ -401,32 +402,6 @@ describe('GuestManager — growing list (T330, ADR W-0009)', () => {
     return fixture.nativeElement.querySelector('.table-body') as HTMLElement;
   }
 
-  /**
-   * jsdom has no layout, so the scroll geometry the handler reads has to be
-   * stood up by hand before the event is dispatched.
-   */
-  function scrollList(
-    fixture: ComponentFixture<GuestManager>,
-    geometry: { scrollHeight: number; scrollTop: number; clientHeight: number },
-  ): void {
-    const body = tableBody(fixture);
-    Object.defineProperty(body, 'scrollHeight', {
-      value: geometry.scrollHeight,
-      configurable: true,
-    });
-    Object.defineProperty(body, 'clientHeight', {
-      value: geometry.clientHeight,
-      configurable: true,
-    });
-    Object.defineProperty(body, 'scrollTop', {
-      value: geometry.scrollTop,
-      configurable: true,
-      writable: true,
-    });
-    body.dispatchEvent(new Event('scroll'));
-    fixture.detectChanges();
-  }
-
   /** Every outstanding `GET /v1/profile`, newest last. */
   function listRequests(http: HttpTestingController): TestRequest[] {
     return http.match((req) => req.method === 'GET' && req.url.endsWith('/v1/profile'));
@@ -514,52 +489,57 @@ describe('GuestManager — growing list (T330, ADR W-0009)', () => {
     expect(fixture.nativeElement.querySelector('.end-of-list')).not.toBeNull();
   });
 
-  it('a scroll within 120px of the bottom fetches the next page', async () => {
-    const { fixture, http } = await createWithPage(guests(12), 'cursor-1');
+  /**
+   * T348 (hub ADR-0042 §Consequences): since T341, `.table-body` is no
+   * longer the scroll container in a browser, so a synthetic `scroll` event
+   * dispatched on it here would prove nothing about production behaviour —
+   * that was exactly the blind spot T341 shipped and T348 exists to close.
+   * The real auto-load trigger is `IntersectionObserver` on `.scroll-sentinel`
+   * (`guest-manager.ts`'s constructor), which JSDOM does not implement
+   * (`typeof IntersectionObserver === 'undefined'` here — the component
+   * guards on exactly that and skips constructing one, so this suite cannot
+   * crash on it, but also cannot exercise it). That gap is deliberate and is
+   * covered instead by `e2e/layout/guest-list-scroll.spec.ts` (a real
+   * browser, per T348's own acceptance bullet). What stays testable here is
+   * everything downstream of "the observer decided to call `loadMore()`" —
+   * structural presence of the target, and `loadMore()`'s own in-flight
+   * guard, called directly rather than through a fabricated event.
+   */
+  it('renders a stable sentinel after the list settles — the target IntersectionObserver watches in a real browser', async () => {
+    const { fixture } = await createWithPage(guests(12), 'cursor-1');
 
-    scrollList(fixture, { scrollHeight: 1000, scrollTop: 900, clientHeight: 50 });
-    await fixture.whenStable();
-
-    expect(listRequests(http).length).toBe(1);
-  });
-
-  it('a scroll far from the bottom fetches nothing', async () => {
-    const { fixture, http } = await createWithPage(guests(12), 'cursor-1');
-
-    scrollList(fixture, { scrollHeight: 1000, scrollTop: 100, clientHeight: 50 });
-    await fixture.whenStable();
-
-    http.expectNone((req) => req.method === 'GET' && req.url.endsWith('/v1/profile'));
-  });
-
-  it('a scroll to the bottom of an exhausted list fetches nothing', async () => {
-    const { fixture, http } = await createWithPage(guests(30), null);
-
-    scrollList(fixture, { scrollHeight: 1000, scrollTop: 900, clientHeight: 50 });
-    await fixture.whenStable();
-
-    // The old screen would have grown here. Without a cursor there is nothing
-    // to grow into, and firing a request to discover that is the waste this
-    // ADR exists to remove.
-    http.expectNone((req) => req.method === 'GET' && req.url.endsWith('/v1/profile'));
+    expect(tableBody(fixture).querySelector('.scroll-sentinel')).not.toBeNull();
   });
 
   it('does not queue a second request for a cursor already in flight', async () => {
     const { fixture, http } = await createWithPage(guests(12), 'cursor-1');
 
-    (fixture.nativeElement.querySelector('.load-more-btn') as HTMLButtonElement).click();
-    await fixture.whenStable();
-    scrollList(fixture, { scrollHeight: 1000, scrollTop: 900, clientHeight: 50 });
+    // Two calls back to back — the same shape an IntersectionObserver
+    // callback firing twice in quick succession (still-intersecting on the
+    // next frame) would produce — must still cost one request.
+    fixture.componentInstance.loadMore();
+    fixture.componentInstance.loadMore();
     await fixture.whenStable();
 
     expect(listRequests(http).length).toBe(1);
   });
 
-  it('changing the filter scrolls back to the top and keeps the fetched rows', async () => {
-    const { fixture } = await createWithPage(guests(30), null);
+  /**
+   * The "control" half (ADR-0042 §Consequences): since T341 this screen has
+   * no reference to the element that actually scrolls (`PrivateLayout`'s
+   * `.screen-scroll`), so the reset is a request through `ScreenChromeService`
+   * rather than a `scrollTop` write on a local element — see
+   * `resetWindow`'s own doc comment. `PrivateLayout`'s own
+   * `screen-chrome.spec.ts` / `e2e/layout/guest-list-scroll.spec.ts` prove the
+   * request is actually carried out; this only proves the screen asks.
+   */
+  function resetRequests(): number {
+    return TestBed.inject(ScreenChromeService).scrollResetRequest();
+  }
 
-    const body = tableBody(fixture);
-    Object.defineProperty(body, 'scrollTop', { value: 480, configurable: true, writable: true });
+  it('changing the filter requests a scroll reset and keeps the fetched rows', async () => {
+    const { fixture } = await createWithPage(guests(30), null);
+    const before = resetRequests();
 
     // Every seeded guest has no RSVP record, so "pending" keeps all 30 rows.
     const pendingFilter = fixture.nativeElement.querySelectorAll(
@@ -571,14 +551,12 @@ describe('GuestManager — growing list (T330, ADR W-0009)', () => {
     // Rows survive: they cost a request, and re-fetching them because someone
     // touched a filter would be the fake window's problem in reverse.
     expect(rowNames(fixture).length).toBe(30);
-    expect(body.scrollTop).toBe(0);
+    expect(resetRequests()).toBe(before + 1);
   });
 
-  it('changing the search scrolls back to the top', async () => {
+  it('changing the search requests a scroll reset', async () => {
     const { fixture } = await createWithPage(guests(30), null);
-
-    const body = tableBody(fixture);
-    Object.defineProperty(body, 'scrollTop', { value: 480, configurable: true, writable: true });
+    const before = resetRequests();
 
     const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
     input.value = 'guest'; // matches every seeded last name
@@ -586,14 +564,12 @@ describe('GuestManager — growing list (T330, ADR W-0009)', () => {
     fixture.detectChanges();
 
     expect(rowNames(fixture).length).toBe(30);
-    expect(body.scrollTop).toBe(0);
+    expect(resetRequests()).toBe(before + 1);
   });
 
-  it('clicking a column header scrolls back to the top', async () => {
+  it('clicking a column header requests a scroll reset', async () => {
     const { fixture } = await createWithPage(guests(30), null);
-
-    const body = tableBody(fixture);
-    Object.defineProperty(body, 'scrollTop', { value: 480, configurable: true, writable: true });
+    const before = resetRequests();
 
     const header = fixture.nativeElement.querySelector(
       '.table-header .col-guest .col-sort',
@@ -602,7 +578,7 @@ describe('GuestManager — growing list (T330, ADR W-0009)', () => {
     fixture.detectChanges();
 
     expect(rowNames(fixture).length).toBe(30);
-    expect(body.scrollTop).toBe(0);
+    expect(resetRequests()).toBe(before + 1);
   });
 });
 

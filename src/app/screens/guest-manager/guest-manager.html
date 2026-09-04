@@ -360,18 +360,19 @@
         </div>
       </div>
 
-      <!-- Table body — the `rowgroup`, and also the scroll container: nearing its
-           bottom grows the window by one batch (ADR W-0008 §5). It takes
-           `tabindex="0"` and a name of its own so a keyboard-only user can reach
-           and arrow-scroll the region (WCAG 2.1.1), which a scrollable div with no
-           tab stop of its own does not satisfy. -->
+      <!-- Table body — the `rowgroup`. It is no longer the scroll container
+           itself (hub ADR-0042 §2, T341: `PrivateLayout`'s `.screen-scroll`
+           is); it keeps `tabindex="0"` and a name of its own regardless, so a
+           keyboard-only user can still tab into and read the region
+           (WCAG 2.1.1). Growing the window by one batch as the reader nears
+           the bottom (ADR W-0008 §5) is wired below via `scrollSentinel`
+           (T348), not a `(scroll)` handler on this element. -->
       <div
         #tableBody
         class="table-body"
         role="rowgroup"
         tabindex="0"
         [attr.aria-label]="'guest_manager.table.rowsAriaLabel' | translate"
-        (scroll)="onListScroll($event)"
       >
         @if (sortedGuests().length > 0) {
           @for (profile of sortedGuests(); track profile.id) {
@@ -492,6 +493,14 @@
             </div>
           </div>
         }
+
+        <!-- Auto-load sentinel (hub ADR-0042 §Consequences, T348) — always
+             rendered, never a row of its own content, so `IntersectionObserver`
+             has a stable target regardless of `hasMore()`/`reachedEnd()`;
+             `loadMore()` itself no-ops without a cursor. `aria-hidden`: it
+             carries no content and must not appear in the `rowgroup`'s
+             accessible structure. -->
+        <div #scrollSentinel class="scroll-sentinel" aria-hidden="true"></div>
       </div>
     </div>
 

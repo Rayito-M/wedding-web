@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  effect,
   signal,
   computed,
   inject,
@@ -22,6 +23,7 @@ import {
   isFirstLoad,
   UserProfileDataService,
   PluralTranslatePipe,
+  ScreenChromeService,
   StatisticService,
   TranslateLanguageService,
   lastSeenLabel as formatLastSeen,
@@ -59,12 +61,17 @@ export class GuestManager {
   protected readonly partnerHasAccount = partnerHasAccount;
 
   /**
-   * The scrolling list container. Any change to the row set (filter, search,
-   * sort) scrolls it back to the top, so a user who was at the bottom does not
-   * land mid-list with a clamped scroll position and trigger a fetch they
-   * never asked for (ADR W-0009 §5).
+   * A zero-height marker after the last row (`guest-manager.html`). Intersecting
+   * it — via {@link IntersectionObserver}, wired in the constructor — is the
+   * "observation" half of hub ADR-0042 §Consequences / T348: it resolves
+   * against the real viewport regardless of which ancestor actually scrolls
+   * (`PrivateLayout`'s `.screen-scroll`, not any element of this screen's own
+   * template), so this screen never needs a reference to that element.
    */
-  private readonly listContainer = viewChild<ElementRef<HTMLElement>>('tableBody');
+  private readonly scrollSentinel = viewChild<ElementRef<HTMLElement>>('scrollSentinel');
+
+  /** The "control" half of the same gap — see {@link resetWindow}. */
+  private readonly screenChrome = inject(ScreenChromeService);
 
   @ViewChild(GuestProfileModal) profileModal!: GuestProfileModal;
   @ViewChild(ManageRsvpModal) manageRsvpModal!: ManageRsvpModal;
@@ -226,6 +233,37 @@ export class GuestManager {
 
   constructor() {
     this.statistics.load(); // Only fetches if cache is empty
+
+    // Auto-load the next page as {@link scrollSentinel} nears the viewport
+    // (hub ADR-0042 §Consequences, T348) — see that field's own doc for why
+    // this needs no reference to whichever element actually scrolls.
+    // `rootMargin` re-creates the old "within 120px of the bottom" trigger
+    // (the pre-T341 `onListScroll` threshold) without reading any scroll
+    // geometry directly. The observer is rebuilt whenever the sentinel's
+    // `ElementRef` changes (it does not exist while `initialLoading()` shows
+    // the skeleton instead) and torn down via `effect`'s own cleanup, never
+    // left dangling across that swap.
+    //
+    // The `typeof` guard is feature detection, not a test seam: `IntersectionObserver`
+    // is a real browser global every target here ships (CLAUDE.md hard rule 4's
+    // browser list), but JSDOM — this screen's own Vitest environment — has
+    // never implemented it (T348's whole reason for a Playwright spec instead
+    // of a Vitest one, `e2e/layout/`). Skipping construction where the global
+    // is absent keeps the unit suite from crashing on every test that renders
+    // past the loading skeleton; it does not stand in for exercising the
+    // observer itself, which no mock here claims to do.
+    effect((onCleanup) => {
+      const sentinel = this.scrollSentinel()?.nativeElement;
+      if (!sentinel || typeof IntersectionObserver === 'undefined') return;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) this.loadMore();
+        },
+        { rootMargin: '120px' },
+      );
+      observer.observe(sentinel);
+      onCleanup(() => observer.disconnect());
+    });
   }
 
   /**
@@ -364,47 +402,20 @@ export class GuestManager {
   }
 
   /**
-   * The DS's primary grow affordance: nearing the bottom of the list pulls in
-   * the next page. The real "Load more" button ships alongside it because this
-   * one never fires for a keyboard user, nor at all while the container is not
-   * yet overflowing (ADR W-0009 §3). Both go through {@link loadMore}, which
-   * no-ops unless the API said there is another page.
-   *
-   * **Known gap opened by T341 (hub ADR-0042), not closed here.** `.table-body`
-   * was this screen's own scroll container before T341; the `guests` route
-   * now pins the header/footer (`headPinned`/`footPinned`, `app.routes.ts`),
-   * so per the single-scroller rule (ADR-0041 §3) `PrivateLayout`'s
-   * `.screen-scroll` is the one element that actually scrolls in a browser —
-   * `.table-body` sheds `overflow-y: auto` in `guest-manager.scss` and never
-   * fires a native `scroll` event again. The `(scroll)` binding stays on
-   * `.table-body` in the template only because this method's own tests
-   * (`guest-manager.spec.ts`) dispatch a synthetic `scroll` event directly on
-   * it with mocked geometry — they keep passing, but they no longer prove
-   * this fires in production. `.screen-scroll` is outside this component's
-   * own template (owned by `PrivateLayout`), so wiring the real trigger needs
-   * a channel this task does not build. The manual "Load more" button is
-   * unaffected. Flagged in the T341 report; needs a decision before relying
-   * on the auto-grow behaviour again.
-   */
-  onListScroll(event: Event): void {
-    const el = event.target as HTMLElement;
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) this.loadMore();
-  }
-
-  /**
    * Back to the top of the list. Called whenever the row set changes out from
    * under the reader (ADR W-0009 §5). Rows already fetched are **not**
    * discarded: they cost a request, and re-fetching them because someone typed
    * in the search box would be the fake-pagination problem in reverse.
    *
-   * **Same T341 gap as {@link onListScroll}**: `.table-body` no longer
-   * scrolls in a browser, so zeroing its `scrollTop` is a no-op there — the
-   * real scroll position lives on `PrivateLayout`'s `.screen-scroll`, which
-   * this component has no reference to.
+   * Goes through `ScreenChromeService` (hub ADR-0042 §Consequences, T348)
+   * rather than zeroing a `scrollTop` this screen holds a reference to: since
+   * T341 the element that actually scrolls is `PrivateLayout`'s
+   * `.screen-scroll`, outside this component's own template, so the reset is
+   * a request the layout carries out — the same shape as handing over a
+   * head/foot template.
    */
   private resetWindow(): void {
-    const container = this.listContainer();
-    if (container) container.nativeElement.scrollTop = 0;
+    this.screenChrome.requestScrollReset();
   }
 
   /** Add a new guest — opens the dedicated create-guest modal on a blank draft. */
