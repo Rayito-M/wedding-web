@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:playwright": "ng serve --port 4201 --configuration development",
     "build": "node scripts/generate-release.mjs && ng build",
     "build:prod": "node scripts/generate-release.mjs && ng build --configuration production",
     "watch": "ng build --watch --configuration development",

@@ -22,7 +22,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: [['list']],
   use: {
-    baseURL: 'http://localhost:4200',
+    baseURL: 'http://localhost:4201',
     trace: 'on-first-retry',
   },
   projects: [
@@ -30,10 +30,11 @@ export default defineConfig({
     { name: 'iPhone 12 (iOS Safari)', use: { ...devices['iPhone 12'] } },
     { name: 'iPhone 14 (iOS Safari)', use: { ...devices['iPhone 14'] } },
     { name: 'Pixel 7 (Chrome Android)', use: { ...devices['Pixel 7'] } },
+    { name: 'Desktop Chrome', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
-    command: 'pnpm start',
-    url: 'http://localhost:4200',
+    command: 'pnpm start:playwright',
+    url: 'http://localhost:4201',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
