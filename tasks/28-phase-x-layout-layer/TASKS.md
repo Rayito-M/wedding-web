@@ -853,7 +853,7 @@
 - **Refs:** hub ADR-0041 §2, §Consequences; hub ADR-0042 §Context ¶2, §Consequences
 
 ### T350 — `people` stops nesting a scroller inside `main`
-- **Status:** done — `.people` and `:host` shed `height`/`overflow-y`; `main` is now `/people`'s only
+- **Status:** done — `fe0367f`. `.people` and `:host` shed `height`/`overflow-y`; `main` is now `/people`'s only
   scroller (`people.scss`), route data unchanged (no `headPinned`/`footPinned`/`screenScroll`,
   per hub ADR-0043's amendment). No `(scroll)`/`scrollTop`/`scrollIntoView`/`scrollTo` found in
   `people.ts`/`people.html` — no observation/control mechanism needed. New

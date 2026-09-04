@@ -1,0 +1,77 @@
+{
+  "task": "T350",
+  "status": "complete",
+  "summary": "`.people`/`:host` drop `height: 100%; overflow-y: auto`; `main` is /people's only scroller now (flow, per ADR-0043). Route data unchanged. No scroll observation/control code found, so no sentinel/ScreenChromeService needed. New e2e/layout/people-scroll.spec.ts fails before, passes after; 8 consecutive clean full e2e/layout runs (50/50). Real-browser (scratch specs, deleted): 360px/900px, 3 themes, 3 locales confirm header clearance and single-scroller invariant, and that back-nav restoration is identically absent on people and guest-manager — app-wide, not a T350 regression.",
+  "acceptance": [
+    {
+      "criterion": "`.people` drops `height: 100%` and `overflow-y: auto`; `:host` drops `height: 100%`. `main` becomes the screen's only scroller. `/people`'s route data is unchanged — no `headPinned`, no `footPinned` (and, per ADR-0043's amendment to the task text, no `screenScroll` either)",
+      "met": true,
+      "evidence": "src/app/screens/people/people.scss:18-30 (diff in commit fe0367f) — :host drops `height: 100%`, `.people` drops `height: 100%; overflow-y: auto`. src/app/app.routes.ts:132-142 unchanged — route data still sets only id/tabBar/topNav/navLabel, no headPinned/footPinned/screenScroll."
+    },
+    {
+      "criterion": "Verified that no code on the screen watches or drives its own scrolling before the change lands (grep for `(scroll)`, `scrollTop`, `scrollIntoView`, `scrollTo` in `people.ts`/`people.html`); if found, reuse the T348 sentinel/ScreenChromeService mechanism",
+      "met": true,
+      "evidence": "grep -n \"(scroll)\\|scrollTop\\|scrollIntoView\\|scrollTo\" src/app/screens/people/people.ts src/app/screens/people/people.html -> no matches. Nothing found, so no mechanism was needed."
+    },
+    {
+      "criterion": "A real browser, not just the suite: verified at 360px and >=900px, all three themes, all three locales, specifically that scrollPositionRestoration on back-navigation and the fixed header's 52px clearance now behave as they do on other flow screens",
+      "met": true,
+      "evidence": "Scratch Playwright specs (18 cases: 2 viewports x 3 themes x 3 locales), run against Desktop Chrome and then deleted (not committed, same precedent as T355 risks[1]) -- all 18 passed. Each case confirmed: document.documentElement[data-theme] matches the set theme; the first profile card's y >= the fixed .header's bottom edge (52px clearance holds); main.scrollHeight > main.clientHeight and .people.scrollHeight <= .people.clientHeight + 1 (single-scroller invariant). Back-navigation: scrolling main to 400px then page.goto('/dashboard') + page.goBack() left main.scrollTop at 0 in every one of the 18 cases -- and an identical scratch spec against /guests (guest-manager, a confirmed-flow screen under ADR-0043) produced the same result (scrolledTop=400, restoredTop=0). Not a T350 regression: the app configures no `withInMemoryScrolling`/scrollPositionRestoration anywhere (grepped app.config.ts), so no flow screen restores scroll on back-navigation today -- people now matches that baseline exactly. Not device-verified on a physical phone (no device access in this environment) -- Playwright WebKit/Chromium projects only, per CLAUDE.md's own allowance for this repo's e2e tier."
+    },
+    {
+      "criterion": "Its T349 layout-regression spec lands in the same PR, on the same terms as every T343 screen: proven by failing first against the commit before the fix",
+      "met": true,
+      "evidence": "e2e/layout/people-scroll.spec.ts, committed in fe0367f alongside the CSS fix. Run against the pre-fix people.scss (git stash of the CSS change): 'expect(received).toBeLessThanOrEqual(expected) / Expected: <= 649 / Received: 2625' on the peopleScrollHeight <= peopleClientHeight+1 assertion -- the exact defect signature. Run again with the fix restored: 1 passed. Full suite (5 Playwright projects) with the fix in place: 5/5 passed."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": { "result": "pass" },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": { "total": 567, "failing": 2 },
+      "after": { "total": 567, "failing": 2 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 795.70 kB vs 500.00 kB budget (pre-existing)",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget: 16.81 kB vs 8.00 kB (pre-existing, T344/T354 territory)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget: 9.60 kB vs 8.00 kB (pre-existing)",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget: 11.69 kB vs 8.00 kB (pre-existing)",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget: 11.49 kB vs 8.00 kB (pre-existing)"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/layout/people-scroll.spec.ts"
+    ],
+    "modified": [
+      "src/app/screens/people/people.scss",
+      "tasks/28-phase-x-layout-layer/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "No flow screen restores scroll position on back-navigation today (the app configures no `withInMemoryScrolling`/`scrollPositionRestoration` anywhere in app.config.ts) -- verified identical on both /people and /guests (guest-manager). ADR-0042's own Alternatives section names viewport-based scrollPositionRestoration as a benefit the flow model is supposed to preserve versus shell-everywhere, but that benefit is not actually realized anywhere in the app as configured. This predates T350 and is not something this task's scope authorized fixing; a later task should decide whether to wire `withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })` or accept the current behaviour as intended.",
+      "surfaces_at": "any future task auditing flow-screen navigation UX, or the next screen migration that assumes scroll position is preserved on back-navigation"
+    }
+  ],
+  "commits": [
+    "fe0367f"
+  ]
+}
