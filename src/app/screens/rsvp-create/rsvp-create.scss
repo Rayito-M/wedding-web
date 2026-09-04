@@ -189,11 +189,16 @@ footer {
     // the bottom of a full-height screen) — the desktop card has no such
     // requirement and must size to its content, matching the DS reference
     // (ScreenRSVPCreate.jsx's wide wrapper carries no height rule at all).
+    // Flex item of `app-rsvp`'s column `:host` (rsvp.scss), main axis =
+    // height — already explicit, not `auto`, so the automatic-minimum-size
+    // clause (hub ADR-0041 §4 amendment) has nothing to revive here (T347
+    // audit).
     min-height: 0;
     background: var(--surface-card);
     border: 1px solid var(--border-hairline);
     border-radius: t.$radius-card;
-    overflow: hidden;
+    overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+    overflow: clip; // creates no scroll container, so focus cannot shift it
   }
 
   .content {

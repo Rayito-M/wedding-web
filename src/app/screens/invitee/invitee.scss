@@ -37,7 +37,13 @@
 .countdown {
   padding: 16px;
   position: relative;
-  overflow: hidden;
+  // Redundant with `%card-shell`'s own (also paired, `_primitives.scss`)
+  // but kept as the explicit local override it was. `.card.countdown` is a
+  // flex item of `.content` (`%content-block`: column), default shrink —
+  // see `%card-shell`'s own `min-height: 0` in `_primitives.scss`, which
+  // this element already inherits via `@extend` above (T347 audit).
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 
   .deco-fish {
     @extend %deco-fish-compact;

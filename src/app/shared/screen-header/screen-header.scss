@@ -125,7 +125,11 @@ header {
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-input);
   box-shadow: var(--shadow-overlay);
-  overflow: hidden;
+  // Clips the menu sections to the panel's rounded corners. `position:
+  // absolute` — never a flex item, so no min-*: 0 pairing applies (hub
+  // ADR-0041 §4, T347 audit).
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
   z-index: 10;
 }
 

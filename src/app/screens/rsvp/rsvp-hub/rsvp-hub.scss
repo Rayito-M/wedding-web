@@ -1,6 +1,14 @@
 @use '../../../../styles/tokens' as t;
 @use '../../../../styles/primitives';
 
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
+// flow, at every breakpoint — `:host` carries no `height`/`max-height`, so
+// this box always sizes to its content and `main` (private-layout.scss)
+// remains the page's actual scroller. `overflow-y: auto` below is inert
+// without a height constraint to pair it with (a scroll container whose
+// `scrollHeight` always equals its `clientHeight`) — not a competing second
+// scroller in practice, but dead-weight worth a future cleanup, out of
+// scope here (no restructuring).
 :host {
   display: block;
   width: 100%;

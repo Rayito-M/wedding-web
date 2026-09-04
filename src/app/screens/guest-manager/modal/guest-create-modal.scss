@@ -7,6 +7,16 @@
 // shared `app-input` component and `shared/guest-seg`'s `app-guest-seg`
 // (moved there in T309) for their own chrome (border, radius, focus state);
 // only layout lives here.
+//
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
+// not a screen, so outside the page-level flow/shell model. The modal's own
+// scroll is `app-modal`'s (`modal.scss`, see its header comment);
+// `.candidate-list` below (`max-height: 156px; overflow-y: auto`,
+// unconditional) is a small nested picker scroller inside that already-
+// scrolling body — pre-existing, same accepted shape as `guest-profile-
+// modal.scss`'s identically-named list (that file's own doc comment on
+// `.candidate-list` explains why it is a deliberate duplicate rather than a
+// shared class). Not introduced or altered by this task.
 
 // Partner section (DS `ScreenGuestManager.jsx` `partnerDraft` block). Local to
 // this modal rather than `_shared-modal-form.scss`: `guest-profile-modal` has

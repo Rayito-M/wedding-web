@@ -6,12 +6,24 @@
 // Angular component styles are scoped, and this is a distinct host element
 // from `app-rsvp-edit`'s (see this component's own class doc for why it
 // isn't reused directly). The editable body belongs to `app-rsvp-editor`.
+//
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
+// shell at every breakpoint — `.content` below is the unconditional
+// internal scroller, mobile and `≥900px` alike (see `rsvp-edit.scss`'s
+// identical classification).
 
 :host {
   display: flex;
   flex-direction: column;
   width: 100%;
-  overflow: hidden;
+  // Flex item of `app-rsvp`'s column `:host` (rsvp.scss). `flex-shrink: 0`
+  // below stops sibling space pressure from shrinking this box, but does
+  // not stop `min-height: auto` acting as a floor on top of the explicit
+  // `height` below (hub ADR-0041 §4 amendment) — declared explicitly, same
+  // as `rsvp-edit.scss`'s identical rule (T347 audit).
+  min-height: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
   flex-shrink: 0;
   // See `rsvp-edit.scss`'s identical rule for the full rationale — this
   // host fills `app-rsvp`'s available height the same way.

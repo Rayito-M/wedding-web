@@ -13,7 +13,12 @@
   display: flex;
   flex-direction: column;
   max-height: 100%;
-  overflow: hidden;
+  // Caps the stack to the viewport rather than letting extra toasts push
+  // past it. `position: fixed` — removed from flow, so `:host` is never a
+  // flex item and no min-*: 0 pairing applies (hub ADR-0041 §4, T347
+  // audit).
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 }
 
 // The nine placements factor into two independent axes — `top|middle|bottom`

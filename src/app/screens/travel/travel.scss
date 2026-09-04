@@ -41,7 +41,12 @@
   position: relative;
   height: 150px;
   border-radius: t.$radius-card;
-  overflow: hidden;
+  // Clips the embedded `iframe` to the card's rounded corners. `:host` is
+  // `display: block` (a flow screen, page scrolls via `main`) and `.map` is
+  // a plain block sibling, not a flex item — no min-*: 0 pairing applies
+  // (hub ADR-0041 §4, T347 audit).
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
   background: var(--surface-chip);
   border: 1px solid var(--border-hairline);
 

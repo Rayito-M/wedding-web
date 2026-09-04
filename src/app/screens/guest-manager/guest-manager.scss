@@ -441,6 +441,11 @@
 }
 
 // Account status is also announced, never colour-only (WCAG 2.1 AA / rule 14).
+// Same visually-hidden-but-announced technique as `%sr-only`
+// (`_primitives.scss`) — kept as plain `hidden`, not the paired `hidden` →
+// `clip` of hub ADR-0041 §4, for the same reason: `overflow: hidden` here is
+// load-bearing for the technique itself (T347 audit; see `%sr-only`'s doc
+// comment for the full reasoning). `position: absolute` — never a flex item.
 .partner-account-note {
   position: absolute;
   width: 1px;

@@ -7,6 +7,14 @@
 // `maxWidth: 980`), same precedent as `seating-plan` (T229). This screen owns
 // its own header markup (not `app-screen-header`/`HeaderService`) since T237
 // is scaffold-only and explicitly out of AppShell wiring.
+//
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
+// shell at every breakpoint, not per-breakpoint flow/shell — `.people`
+// below (`height: 100%; overflow-y: auto`) is unconditional, not gated by
+// the `@media (min-width: 900px)` block. Same actual pattern as
+// `seating-plan.scss` despite this file's own comment above pointing to it
+// as precedent — see that file's header comment for the ADR-0042 §2
+// discrepancy this confirms.
 :host {
   display: block;
   width: 100%;

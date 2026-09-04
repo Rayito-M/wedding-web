@@ -64,7 +64,11 @@
   display: flex;
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-pill);
-  overflow: hidden;
+  // Clips the option buttons to the pill shape. `.field` (its parent) is a
+  // plain block, so `.seg-row` is never itself a flex item — no min-*: 0
+  // pairing applies (hub ADR-0041 §4, T347 audit).
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
   background: var(--surface-page);
 }
 

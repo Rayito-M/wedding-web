@@ -4,12 +4,28 @@
 // Host chrome only: page header, the save footer and the desktop card
 // wrapper. The editable body — status row, cards, chips, add links, note —
 // belongs to `app-rsvp-editor` and is styled there (ADR W-0003).
+//
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
+// shell at every breakpoint, not per-breakpoint flow/shell — `.content`
+// below is the unconditional internal scroller both on the mobile
+// full-screen route and the ≥900px floating card (see the `@media` block
+// below); there is no width at which this screen hands scroll ownership
+// back to `main`.
 
 :host {
   display: flex;
   flex-direction: column;
   width: 100%;
-  overflow: hidden;
+  // Flex item of `app-rsvp`'s column `:host` (rsvp.scss). `flex-shrink: 0`
+  // below stops sibling space pressure from shrinking this box, but it does
+  // not stop `min-height: auto` acting as a floor on top of the explicit
+  // `height` below if content ever needed more room than that — the two
+  // mechanisms are independent (hub ADR-0041 §4 amendment). Declared
+  // explicitly rather than relying on which `overflow` value is in play,
+  // same as `private-layout.scss`'s `main` (T347 audit).
+  min-height: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
   flex-shrink: 0;
   // This is a full-screen route on mobile, not a floating card, so it always
   // fills the space `app-rsvp`'s :host leaves available (itself `height:

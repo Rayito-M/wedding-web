@@ -7,24 +7,46 @@
 // precedent set by `config-manager` (rail vs. pills). This screen owns its
 // own header markup (not `app-screen-header`/`HeaderService`) since T229 is
 // scaffold-only and explicitly out of AppShell wiring.
+//
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit) —
+// **contradicts hub ADR-0042 §2's characterization.** `:host`/`.seating-plan`
+// (`height: 100%; overflow: hidden`, below) and both `.unassigned-body` /
+// `.tables`'s `overflow-y: auto` (T347 verified: lines then at 217/306, now
+// shifted by this task's own edits) are all **unconditional** — none of them
+// sits inside the `@media (min-width: 900px)` block (only `.body`'s
+// `flex-direction` and panel widths change there; git blame `d6ae1fa`/
+// `192f2e1` predate ADR-0042 and the file hasn't changed since). This screen
+// is shell at every breakpoint, including mobile — `.body` stacks
+// `.unassigned`/`.tables` and JS-driven tabs (`.mobile-hidden`) show one at a
+// time, each with its own always-on internal scroller — not "flow on a
+// phone, shell at `≥900px`" as ADR-0042 §2 states ("both of seating-plan's
+// overflow-y: auto declarations sit inside @media (min-width: 900px)").
+// Flagged in T347's report as an ADR correction, not resolved here (no
+// restructuring).
 :host {
   display: flex;
   flex-direction: column;
   flex: 1;
+  // Flex item of `main` (private-layout.scss, column). Already explicit —
+  // confirmed correct as-is (hub ADR-0041 §4 amendment, T347 audit).
   min-height: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 }
 
 .seating-plan {
   display: flex;
   flex-direction: column;
   flex: 1;
+  // Flex item of `:host` (column). Already explicit — confirmed correct
+  // as-is (hub ADR-0041 §4 amendment, T347 audit).
   min-height: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
   background: var(--surface-page);
   color: var(--text-body-color);
   font-family: var(--font-sans);
@@ -150,10 +172,13 @@
 // ── Body: unassigned column + tables grid ──
 .body {
   flex: 1;
+  // Flex item of `.seating-plan` (column). Already explicit — confirmed
+  // correct as-is (hub ADR-0041 §4 amendment, T347 audit).
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 }
 
 .section-label {
@@ -385,7 +410,14 @@
   height: 4px;
   border-radius: 2px;
   background: var(--border-hairline);
-  overflow: hidden;
+  // `flex: 1` on the row's main axis (width) — its own content (`.progress-
+  // fill`) carries no text, so a revived `min-width: auto`'s min-content
+  // floor is effectively zero regardless; `min-width: 0` declared anyway,
+  // explicitly, rather than relying on it (hub ADR-0041 §4 amendment, T347
+  // audit).
+  min-width: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 }
 
 .progress-fill {

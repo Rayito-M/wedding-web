@@ -3,7 +3,14 @@
   display: block;
   position: relative;
   background: var(--surface-chip);
-  overflow: hidden;
+  // Clips the absolutely-positioned `svg`/`.caption` to the tile bounds.
+  // Consumed as a `flex-shrink: 0` flex item (`stay-card.scss`'s `.thumb`)
+  // and as a grid item (`album.scss`'s `.grid`, not flex — the flex-item
+  // automatic-minimum-size clause this rule guards against doesn't apply to
+  // grid items) — neither risks the shrink-past-content trap, so no
+  // min-*: 0 pairing is needed here (hub ADR-0041 §4, T347 audit).
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
   color: var(--text-muted);
 }
 

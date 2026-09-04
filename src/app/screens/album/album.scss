@@ -1,5 +1,11 @@
 @use '../../../styles/tokens' as t;
 
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
+// flow, at every breakpoint — `:host` stays `display: block`, page scrolls
+// via `main`. `.filters` below (`overflow-x: auto`, unconditional) is an
+// independent horizontal chip-row scroller — a different axis from the
+// single vertical-scroller rule this ADR governs, not a competing second
+// scroller on the same axis.
 :host {
   display: block;
   width: 100%;

@@ -1,5 +1,14 @@
 @use '../../../styles/tokens' as t;
 
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
+// this is an overlay component, not a screen, so it sits outside the
+// page-level flow/shell model — it is its own always-on shell, unconditional
+// at every breakpoint (no `@media` here changes which element scrolls, only
+// sizing/padding). `.modal-card`'s base rule owns `overflow-y: auto` for the
+// default (sm/md) size; the `lg`/`xl` variant instead clips itself
+// (`.modal-card.lg`, paired below) and hands the scroll region to
+// `.modal-card.lg .modal-body` (`flex: 1; min-height: 0; overflow-y: auto`),
+// the same shell shape `private-layout.scss`'s `main`/`.screen-scroll` use.
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -38,7 +47,18 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    // `.modal-card` is a flex item of `.modal-backdrop` (row-direction, the
+    // default) with the default `flex-shrink: 1` — its own main axis is
+    // therefore width, and the automatic-minimum-size clause (hub ADR-0041
+    // §4 amendment) applies there, not to height: without this, a long
+    // untruncated title could revive `min-width: auto` and push the card
+    // wider than its `max-width`/mobile `width: 100%`. Height is this box's
+    // cross axis and is already safely bounded — `max-height` above plus
+    // `.modal-card.lg .modal-body`'s own `min-height: 0` below, not this
+    // rule (T347 audit).
+    min-width: 0;
+    overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+    overflow: clip; // creates no scroll container, so focus cannot shift it
 
     @media (max-width: 640px) {
       max-width: none;

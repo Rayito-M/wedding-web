@@ -8,6 +8,16 @@
 // which own their own layout/chrome — this file no longer needs
 // `shared-modal-form`'s `.field`/`.field-row`/`.seg-row`/`.select-native`/
 // `.field-hint`/`.field-error` partial.
+//
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
+// not a screen, so outside the page-level flow/shell model. `.modal-scroll`
+// below is unconditional (not breakpoint-gated) — the `@media
+// (max-width: 640px)` blocks elsewhere in this file only reflow button
+// order, not scroll ownership. `.candidate-list` further down (`max-height:
+// 156px; overflow-y: auto`) is a nested picker scroller inside it, same
+// accepted shape as `guest-create-modal.scss`'s identically-named list
+// (this file's own doc comment on that class explains the deliberate
+// duplication). Not introduced or altered by this task.
 
 // Own scroll container for the profile/edit content, independent of the
 // shared `app-modal`'s body sizing — caps at a fraction of the viewport and

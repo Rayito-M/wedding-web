@@ -1,4 +1,10 @@
 // Country dial-code dropdown — visually aligned with the phone input field.
+//
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
+// not a screen, so outside the page-level flow/shell model. `.dropdown-menu`
+// below (`max-height: 280px; overflow-y: auto`, unconditional) is a
+// self-contained overlay scroller, like a native `<select>` list —
+// unconditional, not breakpoint-dependent.
 :host {
   position: relative;
   display: inline-block;

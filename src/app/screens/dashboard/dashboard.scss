@@ -36,11 +36,18 @@
   border-radius: t.$radius-card;
   border: 1px solid var(--border-hairline);
   position: relative;
-  overflow: hidden;
+  // Flex item of `.content` (`%content-block`: column), default shrink —
+  // `min-height: 0` here is the automatic-minimum-size guard (hub ADR-0041
+  // §4 amendment, T347 audit), unrelated to the *content-driven* floor the
+  // comment below declines to add.
+  min-height: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 
-  // No min-height: the loading state renders the settled elements as skeletons
-  // (see %skeleton-bar), so the card measures the same in both states without a
-  // hand-computed floor to keep in step with the type scale.
+  // No hand-computed min-height floor: the loading state renders the
+  // settled elements as skeletons (see %skeleton-bar), so the card measures
+  // the same in both states without one to keep in step with the type
+  // scale.
 }
 
 .deco-fish {
@@ -136,7 +143,12 @@
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
   border-radius: t.$radius-card;
-  overflow: hidden;
+  // Flex item of `.content` (`%content-block`: column), default shrink —
+  // declared explicitly rather than relying on which `overflow` value is
+  // in play (hub ADR-0041 §4 amendment, T347 audit).
+  min-height: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 }
 
 .manage-row {

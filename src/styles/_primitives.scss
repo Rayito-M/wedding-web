@@ -74,11 +74,23 @@
 
 /// Base card surface: border, background, radius, overflow clipping. No layout/padding.
 /// Used by screens that add their own padding/flex/grid on top.
+///
+/// T347 audit: a corner-radius clip, not a text-truncation exemption, so it
+/// takes the paired `hidden` → `clip` declaration (hub ADR-0041 §4) rather
+/// than `%truncating-flex-child`'s plain `hidden`. Every current consumer
+/// (`rsvp-editor.scss`'s `.card`, `invitee.scss`'s `.card`/`.countdown`,
+/// `config-manager.scss`'s `.card`, `people.scss`'s `.card`) is a flex item
+/// of a column-direction parent with the default `flex-shrink: 1`, so
+/// `min-height: 0` is declared here too, once, rather than at each of the
+/// four call sites — harmless for any future non-flex-item consumer (hub
+/// ADR-0041 §4 amendment).
 %card-shell {
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
   border-radius: t.$radius-card;
-  overflow: hidden;
+  min-height: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 }
 
 /// Card with padding: standard inner spacing. Use when card is a
@@ -214,6 +226,20 @@
 
 /// Text carried for screen readers only — a `role="status"` line naming a wait
 /// whose visible form is a skeleton.
+///
+/// T347 audit finding: this is neither of hub ADR-0041 §4's two shapes —
+/// not a corner-radius clip (no visible box at all) and not
+/// `%truncating-flex-child`'s single-line ellipsis. It is the standard
+/// visually-hidden-but-announced technique (1px×1px + `overflow: hidden` +
+/// `clip-path`), where `overflow: hidden` is load-bearing for the technique
+/// itself, not for clipping layout overflow — pairing it to `clip` is an
+/// unproven change to a load-bearing accessibility primitive with no
+/// established browser-compatibility record, and out of this audit's "no
+/// visual/behavioural change" mandate. `position: absolute` also means it
+/// is never a flex item, so the min-*: 0 concern this rule exists for does
+/// not apply either way. Left as plain `hidden`, deliberately. See the same
+/// pattern hand-duplicated (not consolidated here — no restructuring) in
+/// `guest-manager.scss`'s `.partner-account-note`.
 %sr-only {
   position: absolute;
   width: 1px;

@@ -9,7 +9,11 @@
   left: 0;
   right: 0;
   pointer-events: none;
-  overflow: hidden;
+  // Clips the crossing rider's travel path. `position: absolute` — never a
+  // flex item, so no min-*: 0 pairing applies (hub ADR-0041 §4, T347
+  // audit).
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 }
 
 .crossing {

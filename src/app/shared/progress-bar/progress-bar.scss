@@ -3,7 +3,15 @@
   display: block;
   background: var(--surface-chip);
   border-radius: var(--radius-pill);
-  overflow: hidden;
+  // Clips `.fill` to the pill shape. Consumed as a flex item of a
+  // column-direction flex parent in `magic-link-callback`/`social-callback`
+  // (`.content { display: flex; flex-direction: column }`), with the
+  // default `flex-shrink: 1` — declared explicitly rather than relying on
+  // which `overflow` value happens to be in play (hub ADR-0041 §4 amendment,
+  // T347 audit). Harmless in `invitee`/`dashboard`'s non-flex-item usage.
+  min-height: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 }
 
 .fill {

@@ -50,7 +50,11 @@
   border-radius: 4px;
   margin-top: 0.5rem;
   box-shadow: var(--shadow-overlay);
-  overflow: hidden;
+  // Clips the dropdown items to the menu's own rounded corners. `position:
+  // absolute` — never a flex item, so no min-*: 0 pairing applies (hub
+  // ADR-0041 §4, T347 audit).
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
   z-index: 1000;
 }
 

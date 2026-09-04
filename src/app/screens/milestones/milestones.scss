@@ -1,6 +1,19 @@
 @use '../../../styles/tokens' as t;
 @use '../../../styles/primitives';
 
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
+// genuinely flow on mobile, shell at `≥900px` — the one file in this audit
+// that matches the split ADR-0042 §2 describes. `:host` stays `display:
+// block` (page scrolls via `main`) until the `@media (min-width: 900px)`
+// block below flips it to `display: flex; height: 100%`, at which point
+// `.list` becomes the internal scroller (`overflow-y: auto`, declared
+// inside that same media query) alongside `.detail-overlay`/`.detail`
+// switching from a mobile bottom-sheet overlay to an in-flow side pane.
+// `.detail-body`'s own `overflow-y: auto` (unconditional, both
+// breakpoints) is a separate, independent scroller inside the fixed/static
+// overlay itself — not nested inside `.list`'s scroll region — same shape
+// as the shared `app-modal`'s `.modal-body`, not a second competing
+// scroller on the same axis.
 :host {
   display: block;
   width: 100%;
@@ -425,7 +438,18 @@
   box-shadow: var(--shadow-modal);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  // Flex item of `.detail-overlay` (row direction, the default — unchanged
+  // at `≥900px`, only `position`/`flex` change there), default shrink. Main
+  // axis is width, so `min-width: 0` guards against `width: 100%` being
+  // overridden upward by a revived `min-width: auto` (hub ADR-0041 §4
+  // amendment). Height is cross-axis, bounded by `max-height` (mobile) /
+  // `height: 100%` (desktop) — `.detail-body` below (`flex: 1;
+  // overflow-y: auto`, no explicit `min-height: 0`) is a **pre-existing**
+  // gap on that axis, unrelated to this conversion — flagged in T347's
+  // report, not fixed here (no restructuring; T347 audit).
+  min-width: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 }
 
 .detail-header {

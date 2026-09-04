@@ -5,6 +5,17 @@
 // The reference's own header (Monogram + title + Save) is replaced by this
 // app's shared app-screen-header (HeaderService); this component only owns
 // the section rail/pills, content pane, and the save/status row.
+//
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
+// shell at every breakpoint, not per-breakpoint flow/shell. `.content`
+// below (`flex: 1; min-height: 0; overflow-y: auto`, unconditional) is the
+// content-pane scroller on both mobile and desktop; `.rail` gains its own,
+// independent `overflow-y: auto` only at `≥900px` (desktop sidebar nav) —
+// a sibling scroller alongside `.content`, not nested inside it, so it is
+// not the "second scroller inside a shell's scrolling region" hub
+// ADR-0041 §3 rules out. `.modal-overlay`/`.modal-dialog` below is a
+// further, separate local modal (`position: fixed`, its own top layer),
+// same shape as the shared `app-modal`.
 :host {
   display: flex;
   flex-direction: column;
@@ -12,7 +23,8 @@
   min-height: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 }
 
 // ── Save/status row — top of content pane (desktop) ──
@@ -132,7 +144,14 @@
   margin-top: auto;
   position: relative;
   height: 72px;
-  overflow: hidden;
+  // Flex item of `.rail` (`≥900px` only — `.rail{display:none}` on mobile,
+  // so this box only ever participates in layout at desktop), column
+  // direction, default shrink. `min-height` is declared explicitly rather
+  // than relying on which `overflow` value is in play (hub ADR-0041 §4
+  // amendment, T347 audit).
+  min-height: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
   opacity: 0.7;
   display: flex;
   align-items: flex-end;
@@ -630,7 +649,14 @@
   gap: 0;
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-pill);
-  overflow: hidden;
+  // Flex item of `.agenda-filter-row` (row direction), default shrink —
+  // unlike `.segmented.schedule-status-toggle` below, which declares its
+  // own `flex-shrink: 0`, this one doesn't, so `min-width: 0` is declared
+  // explicitly rather than relying on which `overflow` value is in play
+  // (hub ADR-0041 §4 amendment, T347 audit).
+  min-width: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
   background: var(--surface-card);
 
   .segment {
@@ -817,7 +843,17 @@
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  // Flex item of `.modal-overlay` (row direction, the default), default
+  // shrink — main axis is width, so `min-width: 0` guards against a long
+  // title reviving `min-width: auto` and pushing past `width: 90%` (hub
+  // ADR-0041 §4 amendment). Height is cross-axis and already bounded by
+  // `max-height`; `.modal-body` below (`flex: 1; overflow-y: auto`, no
+  // explicit `min-height: 0`) is a **pre-existing** gap on that axis,
+  // unrelated to this conversion — flagged in T347's report, not fixed
+  // here (no restructuring).
+  min-width: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
 }
 
 .modal-header {
@@ -967,11 +1003,18 @@
   // container with `overflow: hidden`, borderless inner segments meeting
   // edge-to-edge.
   .segmented.schedule-status-toggle {
+    // Flex item of `.schedule-status-card` (row direction) with its own
+    // `flex-shrink: 0` and no explicit width — flex-basis is `auto`
+    // (sizes to content), so there is no constrained-size-vs-content-
+    // minimum conflict for the automatic-minimum-size clause (hub
+    // ADR-0041 §4 amendment) to revive: no min-*: 0 pairing needed (T347
+    // audit).
     flex-shrink: 0;
     gap: 0;
     border: 1px solid var(--border-hairline);
     border-radius: var(--radius-pill);
-    overflow: hidden;
+    overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+    overflow: clip; // creates no scroll container, so focus cannot shift it
     background: var(--surface-card);
 
     .segment {

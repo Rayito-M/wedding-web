@@ -8,7 +8,14 @@
   justify-content: center;
   font-family: var(--font-serif);
   line-height: 1;
-  overflow: hidden;
+  // Clips initials/photo to the circle. Explicit `width`/`height` come from
+  // the `size` input (avatar.ts), so this box's own size is never content-
+  // driven, and `flex-shrink: 0` below already means a flex-context
+  // consumer never asks it to shrink — the automatic-minimum-size revival
+  // this pairing can trigger elsewhere (hub ADR-0041 §4 amendment) has
+  // nothing to act on here. No min-*: 0 pairing needed (T347 audit).
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
   flex-shrink: 0;
   user-select: none;
 }

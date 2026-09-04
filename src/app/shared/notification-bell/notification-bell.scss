@@ -64,7 +64,11 @@
   // use `--shadow-modal` in the DS prototype only because that was the
   // token that happened to exist at the time — `NotificationBell.jsx:72`).
   box-shadow: var(--shadow-overlay);
-  overflow: hidden;
+  // Clips the row list to the panel's rounded corners. `position: absolute`
+  // — never a flex item, so no min-*: 0 pairing applies (hub ADR-0041 §4,
+  // T347 audit).
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
   z-index: 10;
 }
 
@@ -185,6 +189,13 @@
   font-size: var(--text-caption);
   line-height: 1.45;
   color: var(--text-muted);
+  // Deliberately plain `hidden`, not the paired `hidden` → `clip` of hub
+  // ADR-0041 §4 (T347 audit). `-webkit-line-clamp` is a browser-implemented
+  // truncation that requires `overflow: hidden` specifically — `clip` does
+  // not trigger the 2-line clamp at all, so pairing here would silently
+  // un-truncate this snippet. Outside `%truncating-flex-child`'s single-line
+  // shape (this clamps two lines), but the same rationale applies: no
+  // focusable content, no `scrollIntoView()` target.
   overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
