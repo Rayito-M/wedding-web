@@ -90,7 +90,9 @@
       "why": "Temporarily removed main's `min-height: 0` to prove the false-pass direction is closed — the task's own step 3 explicitly calls for 'break a CSS declaration one of the layout specs asserts, confirm the relevant case now fails under the full parallel suite, then revert the break'. Reverted immediately after; `git diff` against this file is empty."
     }
   ],
-  "commits": [],
+  "commits": [
+    "3f0eb04"
+  ],
   "remaining": [
     "config-manager layout-regression spec (T343 migration PR)",
     "milestones layout-regression spec (T343 migration PR)",
