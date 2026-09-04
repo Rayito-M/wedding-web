@@ -3,6 +3,21 @@
 @use '../../../styles/layout';
 @use './modal/status-cell' as *;
 
+// T343 (hub ADR-0041 §2/§6/§7): budget migration onto the layout layer.
+// This screen's flow/scroll classification was already settled by
+// ADR-0043 §5 (flow — no `screenScroll`, see `app.routes.ts`) and its
+// scroll-ownership CSS by T341/T348; nothing here changes either. What
+// moved: the desktop `@media (min-width: 900px)` became
+// `@include layout.respond-to('lg')` (ADR-0041 §6, `_layout.scss`), the
+// raw `px` spacing/font-size literals that exactly matched an existing
+// token now use it (the rest — decorative dot/icon sizes, WCAG touch
+// targets, one-off values with no scale match — stay literal rather than
+// forced onto a token that doesn't actually name their value), and two
+// genuinely duplicated blocks were extracted: `.partner-account-note` now
+// extends `%sr-only` instead of hand-copying it (see its own site below),
+// and the repeated 7-column grid template ($table-grid-columns below).
+$table-grid-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
+
 // Hub ADR-0042 §1/§2, T341: this screen is no longer its own shell. Its
 // `<header class="header">` and `.list-footer` are pinned by `PrivateLayout`
 // (`*appScreenHead` / `*appScreenFoot`, `guest-manager.html`) — never
@@ -26,7 +41,7 @@
 
 .header {
   flex: 0 0 auto;
-  padding: 12px t.$space-3 10px;
+  padding: t.$space-3 t.$space-3 10px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -39,7 +54,7 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: t.$space-3;
 }
 
 .header-title {
@@ -67,18 +82,18 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: t.$space-1;
   justify-content: flex-start;
 }
 
 .stat-group {
   flex: 1;
   text-align: left;
-  padding-right: 8px;
+  padding-right: t.$space-2;
   min-width: 0;
 
   &.divider {
-    padding-left: 8px;
+    padding-left: t.$space-2;
     border-left: 1px solid var(--border-hairline);
   }
 }
@@ -97,7 +112,7 @@
 }
 
 .stat-label {
-  font-size: 10px;
+  font-size: t.$text-label;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -110,17 +125,17 @@
 
 .toolbar {
   flex: 0 0 auto;
-  padding: 8px t.$space-3;
+  padding: t.$space-2 t.$space-3;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: t.$space-2;
   flex-wrap: wrap;
 }
 
 .filters {
   display: flex;
-  gap: 4px;
+  gap: t.$space-1;
 }
 
 .filter-btn {
@@ -130,7 +145,7 @@
   background: transparent;
   color: var(--text-body-color);
   font-family: t.$font-sans;
-  font-size: 12px;
+  font-size: t.$text-caption;
   cursor: pointer;
   transition: all var(--transition-fast);
   flex: 1;
@@ -154,7 +169,7 @@
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: t.$space-2;
 }
 
 .search-box {
@@ -163,7 +178,7 @@
 
 .search-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: t.$space-2 t.$space-3;
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-pill);
@@ -184,8 +199,8 @@
 }
 
 .add-btn {
-  padding: 8px 12px;
-  font-size: 12px;
+  padding: t.$space-2 t.$space-3;
+  font-size: t.$text-caption;
   white-space: nowrap;
 }
 
@@ -205,7 +220,7 @@
 
 .table-header {
   display: none;
-  padding: 0 16px 8px;
+  padding: 0 t.$space-4 t.$space-2;
   border-bottom: 1px solid var(--border-hairline);
 }
 
@@ -228,7 +243,7 @@
 .table-header .col-sort {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: t.$space-1;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -311,8 +326,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 13px 4px;
+  gap: t.$space-3;
+  padding: 13px t.$space-1;
   margin-bottom: 0;
   border: none;
   border-bottom: 1px solid var(--border-hairline);
@@ -389,7 +404,7 @@
 // in" — the label text itself says so (rule 14), this is just its type scale.
 .last-seen-mobile {
   display: block;
-  font-size: 10px;
+  font-size: t.$text-label;
   letter-spacing: 0.04em;
   color: var(--text-muted);
   white-space: nowrap;
@@ -442,19 +457,15 @@
 
 // Account status is also announced, never colour-only (WCAG 2.1 AA / rule 14).
 // Same visually-hidden-but-announced technique as `%sr-only`
-// (`_primitives.scss`) — kept as plain `hidden`, not the paired `hidden` →
-// `clip` of hub ADR-0041 §4, for the same reason: `overflow: hidden` here is
-// load-bearing for the technique itself (T347 audit; see `%sr-only`'s doc
-// comment for the full reasoning). `position: absolute` — never a flex item.
+// (`_primitives.scss`) — extends it directly rather than re-declaring it
+// (T343: genuinely duplicated block, was a hand-copy per T347/T351, both
+// comments-and-pairs-only passes that left it alone on purpose). The two
+// extra declarations below are this site's own: a negative-margin variant
+// of the 1px box (avoids nudging inline layout by the extra pixel) and an
+// explicit border reset. `position: absolute` — never a flex item.
 .partner-account-note {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
+  @extend %sr-only;
   margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
   border: 0;
 }
 
@@ -462,7 +473,7 @@
 // list-row layout; hidden while the desktop data grid is in use.
 .guest-caption {
   display: block;
-  font-size: 11px;
+  font-size: t.$text-micro;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -476,7 +487,7 @@
   border-radius: 50%;
   background-color: var(--surface-chip);
   color: var(--brand-accent);
-  font-size: 12px;
+  font-size: t.$text-caption;
   font-weight: 600;
 }
 
@@ -488,12 +499,12 @@
 .empty-state {
   padding: 30px t.$space-3;
   text-align: center;
-  font-size: 13px;
+  font-size: t.$text-body;
   color: var(--text-muted);
 }
 
 .status-cell {
-  font-size: 12px;
+  font-size: t.$text-caption;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -505,11 +516,11 @@
 .load-more-row {
   display: flex;
   justify-content: center;
-  padding: 14px 4px;
+  padding: 14px t.$space-1;
 }
 
 .load-more-btn {
-  padding: 8px 16px;
+  padding: t.$space-2 t.$space-4;
   // Touch target (WCAG 2.5.5) — the DS's own mobile controls carry it too.
   min-height: 44px;
   border-radius: var(--radius-pill);
@@ -528,9 +539,9 @@
 }
 
 .end-of-list {
-  padding: 14px 4px;
+  padding: 14px t.$space-1;
   text-align: center;
-  font-size: 11px;
+  font-size: t.$text-micro;
   letter-spacing: 0.06em;
   color: var(--text-muted);
 }
@@ -541,12 +552,12 @@
 
 .list-footer {
   flex: 0 0 auto;
-  padding: 8px t.$space-3;
+  padding: t.$space-2 t.$space-3;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-top: 1px solid var(--border-hairline);
-  gap: 8px;
+  gap: t.$space-2;
 }
 
 // T348: both spans are flex children of `.list-footer` above and can hold
@@ -560,7 +571,7 @@
 .list-footer-info,
 .list-footer-hint {
   @extend %truncating-flex-child;
-  font-size: 11px;
+  font-size: t.$text-micro;
   letter-spacing: 0.06em;
   color: var(--text-muted);
 }
@@ -631,7 +642,7 @@
   @extend %sr-only;
 }
 
-@media (min-width: 900px) {
+@include layout.respond-to('lg') {
   .header {
     padding: 18px t.$space-6 14px;
     flex-direction: row;
@@ -650,7 +661,7 @@
 
   .header-stats {
     width: auto;
-    gap: 24px;
+    gap: t.$space-6;
     justify-content: flex-end;
   }
 
@@ -661,12 +672,12 @@
     min-width: auto;
 
     &.divider {
-      padding-left: 20px;
+      padding-left: t.$space-5;
     }
   }
 
   .stat-value {
-    font-size: 22px;
+    font-size: t.$text-display-sm;
   }
 
   .stat-label {
@@ -674,13 +685,13 @@
   }
 
   .toolbar {
-    padding: 12px t.$space-6 24px;
+    padding: t.$space-3 t.$space-6 t.$space-6;
     flex-wrap: nowrap;
-    gap: 16px;
+    gap: t.$space-4;
   }
 
   .filters {
-    gap: 8px;
+    gap: t.$space-2;
   }
 
   .filter-btn {
@@ -696,7 +707,7 @@
   }
 
   .toolbar-right {
-    gap: 12px;
+    gap: t.$space-3;
   }
 
   .search-box {
@@ -721,15 +732,15 @@
 
   .table-header {
     display: grid;
-    grid-template-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
-    gap: 12px;
+    grid-template-columns: $table-grid-columns;
+    gap: t.$space-3;
     // `16px` is this row's own inner offset, matching `.table-row`'s own
     // `16px` desktop padding below so labels sit above their cells;
     // `t.$space-6` is the outer screen gutter `.table-container` used to
     // supply, now added here directly so the header still aligns with
     // `.table-body`'s own `t.$space-6` (below) instead of sitting 24px to
     // its left.
-    padding: 0 calc(#{t.$space-6} + 16px) 8px;
+    padding: 0 calc(#{t.$space-6} + #{t.$space-4}) t.$space-2;
   }
 
   .table-body {
@@ -738,9 +749,9 @@
 
   .table-row {
     display: grid;
-    grid-template-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
-    gap: 12px;
-    padding: 12px 16px;
+    grid-template-columns: $table-grid-columns;
+    gap: t.$space-3;
+    padding: t.$space-3 t.$space-4;
 
     &:last-child {
       border-bottom: 1px solid var(--border-hairline);
@@ -754,15 +765,10 @@
     }
   }
 
-  .col-guest,
-  .col-status,
-  .col-adults,
-  .col-children,
-  .col-dietary,
-  .col-table,
-  .col-last-seen {
-    // Grid children inherit font styling from .table-header > div
-  }
+  // .col-guest / .col-status / .col-adults / .col-children / .col-dietary /
+  // .col-table / .col-last-seen: grid children inherit font styling from
+  // `.table-header > div` — no rule needed here (T343: an empty ruleset
+  // emitted no styling and was removed, comment kept as the reason).
 
   .guest-name {
     font-size: t.$text-body;
@@ -791,20 +797,20 @@
   }
 
   .load-more-row {
-    padding: 16px;
+    padding: t.$space-4;
   }
 
   .load-more-btn {
-    padding: 7px 16px;
+    padding: 7px t.$space-4;
     min-height: auto;
   }
 
   .end-of-list {
-    padding: 16px;
+    padding: t.$space-4;
   }
 
   .list-footer {
-    padding: 12px t.$space-6 18px;
+    padding: t.$space-3 t.$space-6 18px;
   }
 
   .list-footer-info,
