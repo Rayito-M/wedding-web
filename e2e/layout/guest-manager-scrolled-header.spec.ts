@@ -56,13 +56,14 @@ import { signInAsCouple } from '../support/auth';
  * `guest-manager-scrolled-header.spec.ts:58` failed once in six full
  * parallel runs, WebKit only (iPhone 14 — the other two flakes in this
  * suite, T349 and T355, were Chromium-only), passing clean alone and in
- * eleven runs afterward. T357 root-caused it. Both prior flakes were
- * *"measuring before the thing had settled"* in a different disguise each
- * time, so that class of cause was checked first here too, with real
- * instrumentation rather than by reasoning about it: font-loading settle
- * (`footer-truncation.spec.ts`'s own T349 precedent — `document.fonts.
- * ready`; instrumented separately, `document.fonts.status` was already
- * `'loaded'` and `main.scrollHeight` never changed across the wait, in
+ * eleven runs afterward. T357 investigated it, and did not root-cause it:
+ * both prior flakes were *"measuring before the thing had settled"* in a
+ * different disguise each time, so that class of cause was checked first
+ * here too, with real instrumentation rather than by reasoning about it —
+ * two candidate mechanisms, ruled out rather than confirmed: font-loading
+ * settle (`footer-truncation.spec.ts`'s own T349 precedent —
+ * `document.fonts.ready`; instrumented separately, `document.fonts.status`
+ * was already `'loaded'` and `main.scrollHeight` never changed, in
  * five runs under three concurrent full-suite invocations) and a
  * `main.scrollTop`/`.scrolled` oscillation from a second, corrective
  * native `scroll` event (instrumented with a `MutationObserver` plus a
