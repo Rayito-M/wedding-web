@@ -86,7 +86,7 @@
       "surfaces_at": "The next occurrence of this specific flake, if it recurs — the next investigator starts from this report's prose rather than from working instrumentation."
     }
   ],
-  "commits": ["0520fc31fc7dd25bc8f05693a6444735493cb708"],
+  "commits": ["6add6827c4743ca0ebd4fd3257c9199c900dd7dc"],
   "decisions_needed": [
     {
       "question": "Is a hardened-but-unproven spec, backed by a 32-run floor and two ruled-out hypotheses, an acceptable closure for T357 — given the phase header's own framing that T357 exists specifically so T343's remaining `milestones`/`seating-plan` slices aren't built on a suite nobody has just watched flake?",
