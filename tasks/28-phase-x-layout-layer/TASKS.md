@@ -338,7 +338,16 @@
 - **Refs:** hub ADR-0041 §4 (as scoped, hub `321a257`), hub ADR-0042 §4; `src/styles/_layout.scss`
 
 ### T342 — stylelint, because guidance alone already failed once
-- **Status:** todo
+- **Status:** done — stylelint 17.14.1 + postcss-scss, wired as a second binary in `pnpm lint`
+  (`ng lint && node scripts/stylelint-check.mjs`), no CI gate (none exists in this repo). The
+  unpaired-`hidden` rule (`stylelint-rules/no-unpaired-overflow-hidden.mjs`) reads a declaration
+  block's own sibling declarations for ADR-0041 §4's positive definition — proven to pass
+  `%truncating-flex-child` and `%sr-only`/`.partner-account-note` with no per-site ignore comment.
+  610 pre-existing violations (591 px, 18 media-query, 1 unpaired-hidden) baselined in
+  `.stylelint-baseline.json`, compared per-`(file, rule)`, not auto-fixed. One genuine third shape
+  surfaced during verification — `notification-bell.scss`'s `-webkit-line-clamp` truncation — and is
+  baselined rather than given a third local exemption; see the T342 report's `decisions_needed` for
+  the ADR question it raises.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T340 (rules must have something to point at)
