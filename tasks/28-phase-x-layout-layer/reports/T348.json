@@ -1,0 +1,108 @@
+{
+  "task": "T348",
+  "status": "complete_with_deviation",
+  "summary": "Restored scroll observation (IntersectionObserver sentinel driving loadMore()) and control (ScreenChromeService.requestScrollReset() + a PrivateLayout effect) on /guests, closing the T341 regression. Applied %truncating-flex-child to the list footer. New e2e/layout/guest-list-scroll.spec.ts fails against pre-fix main and passes with the fix. footer-truncation.spec.ts runs at 320px, not the bullet's 360-375px, because the historical overflow does not reproduce there with realistic content once fonts settle — recorded as a deviation.",
+  "acceptance": [
+    {
+      "criterion": "Observation, without a channel: near-bottom auto-load works again via an IntersectionObserver on a sentinel element",
+      "met": true,
+      "evidence": "src/app/screens/guest-manager/guest-manager.ts constructor() effect() (added in 878639a): IntersectionObserver on #scrollSentinel (guest-manager.html), rootMargin '120px', calls loadMore() on intersect. Proven in a real browser by e2e/layout/guest-list-scroll.spec.ts:23 (pass, see acceptance bullet 5's evidence for the fail-before/pass-after runs)."
+    },
+    {
+      "criterion": "Control, with one: ScreenChromeService gains the ability for a screen to ask for its scroll region to be reset to the top, and private-layout implements it",
+      "met": true,
+      "evidence": "src/app/core/service/screen-chrome.service.ts: _scrollResetRequest signal + requestScrollReset() (5de22a8). src/app/layouts/private-layout/private-layout.ts constructor() effect() scrolls screenScrollContent (pinned) or mainContent (flow) to { top: 0 } on every scrollResetRequest() change. Proven by e2e/layout/guest-list-scroll.spec.ts:55 (pass) and by Vitest src/app/screens/guest-manager/guest-manager.spec.ts 'changing the filter/search/column header requests a scroll reset' (3 tests, all pass)."
+    },
+    {
+      "criterion": "guest-manager's onListScroll and resetWindow are rewritten onto both, and the T341 doc comments describing the gap at each call site are removed",
+      "met": true,
+      "evidence": "onListScroll deleted entirely (was guest-manager.ts, removed in 878639a); resetWindow() now reads `this.screenChrome.requestScrollReset();` only. `grep -rn 'Known gap opened by T341\\|Same T341 gap' src/app/screens/guest-manager/` returns no matches. `grep -n 'onListScroll' src/app/screens/guest-manager/guest-manager.ts` returns only one explanatory comment line (the rootMargin note), not the method."
+    },
+    {
+      "criterion": "The French footer truncation, still unfixed — apply %truncating-flex-child to both spans",
+      "met": true,
+      "evidence": "src/app/screens/guest-manager/guest-manager.scss: `@use '../../../styles/layout';` added; `.list-footer-info, .list-footer-hint { @extend %truncating-flex-child; ... }` (c443667). `grep -c truncating-flex-child src/app/screens/guest-manager/guest-manager.scss` -> 2 (was 0).",
+      "notes": "Verification is a geometry spec (e2e/layout/footer-truncation.spec.ts), not a real device — see acceptance bullet 5 and deviations[] for why it runs at 320px instead of the bullet's suggested 360-375px, and why it cannot demonstrate a fail-before/pass-after difference in this environment despite the fix being structurally necessary and correct (matches T340's own %truncating-flex-child contract, and the same primitive already fixes real overflow at other sites in the app)."
+    },
+    {
+      "criterion": "A test that fails against current main, in Playwright — not in Vitest",
+      "met": true,
+      "evidence": "e2e/layout/guest-list-scroll.spec.ts. FAILING run (guest-manager.ts/.html/.scss, private-layout.ts/.html, screen-chrome.service.ts reverted to HEAD via `git checkout HEAD -- <paths>`, then restored byte-identical afterwards, verified via diff against a backup): `npx playwright test e2e/layout/guest-list-scroll.spec.ts --project=\"iPhone SE (iOS Safari)\"` -> '2 failed' - 'scrolling near the bottom...' failed with `Expected: 40, Received: 20` (auto-load never fires); 'changing a filter...' failed with `Expected: 0, Received: 3768` (scroll never resets), both against the real .screen-scroll element. PASSING run on the restored fix: same command -> '2 passed'. Also passes across all four projects (`npx playwright test e2e/layout/guest-list-scroll.spec.ts` -> '2 passed' x4)."
+    },
+    {
+      "criterion": "Verified in a real browser at /guests with more than one page of guests: scrolling to the bottom loads the next page, and changing a filter returns the view to the top",
+      "met": true,
+      "evidence": "e2e/layout/guest-list-scroll.spec.ts (WebKit and Chromium via Playwright, not JSDOM) — 60 fixture guests over 3 real cursor-paginated pages (guestCount:60, pageSize:20 for the auto-load case); filter-reset case with 60 guests on one page. `npx playwright test e2e/layout` -> '20 passed' (includes both these tests across all 4 projects, plus the two pre-existing layout specs). No real-phone/device verification attempted — no browser/device access in this environment, same limitation T341's own report recorded for this screen."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "T348's footer-truncation bullet: 'Verify with a guest list longer than one page, in French, at 360-375px.'",
+      "to": "e2e/layout/footer-truncation.spec.ts runs at 320x568 (iPhone SE's own viewport) instead.",
+      "reason": "Measured empirically (Playwright, WebKit) that the French two-string footer does not overflow or wrap its container at 360-375px even with realistic-to-extreme totals (tried 2 through 6 digits on both 'shown' and 'total', up to guestCount:5000/pageSize:1234) once font-swap settles (document.fonts.ready) - the current padding/token values leave more margin at that width than the bullet's framing implies. The defect (each span wrapping onto a second line rather than the container overflowing horizontally - confirmed via getBoundingClientRect() height doubling and getClientRects().length) only reproduced at 320px with a guest count echoing T341's own 104-guest example, and even then only reliably once the initial font-swap reflow had settled - an earlier unsettled-font measurement looked like it reproduced at 360px too, which did not hold up under repeated, font-ready-gated runs.",
+      "authorized_by": "T348's own footer-truncation bullet framing ('It cannot be device-verified...Consider covering it that way' is offered as a suggestion, not a mandate on the exact figure) plus task-management skill S5 ('deviate minimally, staying inside the task's intent') - 320px is still one of CLAUDE.md hard rule 4's four target devices and the narrower of the two, so it stays inside 'narrow viewport in French', just not the literal 360-375 range.",
+      "verified_how": "Repeated Playwright runs (single-project and all-four-project) at 320px with document.fonts.ready awaited before measuring: 4/4 and 3x-repeated single-project runs all consistent. At 360px with the same content and settled fonts, neither the fixed nor the reverted CSS wrapped or overflowed in any of ~8 tried scenarios - see the spec's own header comment for the full account."
+    }
+  ],
+  "checks": {
+    "typecheck": { "result": "pass" },
+    "lint": { "errors_before": 5, "errors_after": 5, "new_errors": [] },
+    "test": {
+      "before": { "total": 556, "failing": 2 },
+      "after": { "total": 554, "failing": 2 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget (295.67 kB over 500 kB) — pre-existing",
+        "src/app/screens/milestones/milestones.scss exceeded 8 kB budget — pre-existing",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded 8 kB budget — pre-existing",
+        "src/app/screens/config-manager/config-manager.scss exceeded 8 kB budget — pre-existing",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded 8 kB budget (3.19 kB over, up from 3.06 kB before this task — the sentinel rule and the footer-truncation @extend) — pre-existing, widened slightly, still a warning not an error (T344 not landed)"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/layout/guest-list-scroll.spec.ts",
+      "e2e/layout/footer-truncation.spec.ts"
+    ],
+    "modified": [
+      "src/app/core/service/screen-chrome.service.ts",
+      "src/app/layouts/private-layout/private-layout.ts",
+      "src/app/layouts/private-layout/private-layout.html",
+      "src/app/screens/guest-manager/guest-manager.ts",
+      "src/app/screens/guest-manager/guest-manager.html",
+      "src/app/screens/guest-manager/guest-manager.scss",
+      "src/app/screens/guest-manager/guest-manager.spec.ts",
+      "e2e/support/api-mocks.ts",
+      "e2e/support/auth.ts",
+      "tasks/28-phase-x-layout-layer/TASKS.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "No automated test proves the historical footer-truncation defect can actually happen under this app's current CSS tokens/padding at any width up to 6-digit guest counts once web fonts settle — %truncating-flex-child is applied per the bullet's literal instruction (correct and harmless regardless), but a future session revisiting this footer (e.g. T349's own guest-manager layout-regression spec) attempting to reproduce a fail-before state for it the same way will likely hit the same wall documented in this spec's header comment and in deviations[] above.",
+      "surfaces_at": "T349 (the layout-regression spec per migrated screen names guest-manager explicitly and lists a similar footer/overflow class of check)"
+    },
+    {
+      "risk": "playwright.config.ts and package.json were modified on disk during this session by a concurrent process/session (baseURL/webServer moved from port 4200 (`pnpm start`) to port 4201 (`pnpm start:playwright`), matching a real `start:playwright` script already present in package.json) — not made by this session and left untouched per task-management skill §3. All e2e evidence above was captured against whichever config was live at the time of each run; both configurations produced identical pass/fail results in this task's own specs, so it did not affect this task's conclusions, but a reader diffing this report's commits against a later `git log` should not expect those two files to appear there.",
+      "surfaces_at": "Any session diffing this task's commits against the working tree and expecting playwright.config.ts/package.json to be unchanged since main"
+    }
+  ],
+  "commits": [
+    "5de22a8 feat(layout): give a screen a channel to reset its scroll position",
+    "878639a feat(guest-manager): restore near-bottom auto-load and scroll-to-top",
+    "c443667 fix(guest-manager): sentinel styling and list-footer truncation",
+    "ec20312 test(e2e): guest-list scroll and footer-truncation layout specs",
+    "af33eaf docs(tasks): T348 status - scroll observation and control restored"
+  ]
+}
