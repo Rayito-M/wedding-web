@@ -18,6 +18,19 @@ import { signInAsCouple } from '../support/auth';
  * Must fail against current `main` (no `IntersectionObserver` sentinel, no
  * `ScreenChromeService.scrollResetRequest` channel) and pass with T348's fix
  * — both runs captured in `tasks/28-phase-x-layout-layer/reports/T348.json`.
+ *
+ * `.table-row` is scoped to `.table-container[role="table"]` throughout
+ * this file (T349, `tasks/28-phase-x-layout-layer/reports/T349.json`):
+ * `guest-manager.html`'s `initialLoading()` skeleton renders its own 8
+ * identically-classed `.table-row`s under a `.table-container` that carries
+ * no `role` attribute (only the real, data-backed table carries
+ * `role="table"`). The unscoped selector let this spec's second test — the
+ * one that only checks `.toBeVisible()`, not a row count — resolve against
+ * the skeleton under worker contention; on a viewport tall/wide enough that
+ * 8 rows do not overflow the scroll region, the ancestor walk below then
+ * throws "no scrollable ancestor found above .table-row", on whichever
+ * project happened to be slowest to fetch that run — the false-fail this
+ * task exists to close.
  */
 test.describe('guest list scroll: observation and control (T348)', () => {
   test('scrolling near the bottom of the list loads the next page — IntersectionObserver, not .table-body', async ({
@@ -29,7 +42,7 @@ test.describe('guest list scroll: observation and control (T348)', () => {
     await signInAsCouple(page, { guestCount: 60, pageSize: 20 });
     await page.goto('/guests');
 
-    const rows = page.locator('.table-row');
+    const rows = page.locator('.table-container[role="table"] .table-row');
     await expect(rows).toHaveCount(20);
 
     // Real user gesture: scroll whichever ancestor of the first row actually
@@ -38,7 +51,7 @@ test.describe('guest list scroll: observation and control (T348)', () => {
     // spec keeps testing "the list the user sees scrolls", not one
     // implementation of it.
     await page.evaluate(() => {
-      const row = document.querySelector('.table-row');
+      const row = document.querySelector('.table-container[role="table"] .table-row');
       let el: HTMLElement | null = row?.parentElement ?? null;
       while (el && el.scrollHeight <= el.clientHeight) {
         el = el.parentElement;
@@ -60,11 +73,11 @@ test.describe('guest list scroll: observation and control (T348)', () => {
     await signInAsCouple(page, { guestCount: 60 });
     await page.goto('/guests');
 
-    const rows = page.locator('.table-row');
+    const rows = page.locator('.table-container[role="table"] .table-row');
     await expect(rows.first()).toBeVisible();
 
     const scroller = await page.evaluateHandle(() => {
-      const row = document.querySelector('.table-row');
+      const row = document.querySelector('.table-container[role="table"] .table-row');
       let el: HTMLElement | null = row?.parentElement ?? null;
       while (el && el.scrollHeight <= el.clientHeight) {
         el = el.parentElement;

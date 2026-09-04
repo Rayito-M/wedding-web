@@ -1,0 +1,107 @@
+{
+  "task": "T349",
+  "status": "partial",
+  "summary": "Scoped to T349s flake-fix bullet only. Reproduced the parallel-load race on demand (600ms delay injected into the mocked fetch, reverted), found the cause (.table-row matched guest-managers 8-row loading skeleton, not just its real table), and fixed it by scoping the selector in the four e2e/layout specs. Proved both directions: 5 clean full-suite runs (25/25) plus 5 under the artificial delay (25/25); a deliberate CSS break failed 20/25 cases under full parallel load, then reverted. playwright.config.ts untouched.",
+  "acceptance": [
+    {
+      "criterion": "One spec per screen T343 migrates — config-manager, milestones, seating-plan — plus guest-manager, plus people from T350, asserting: pinned head/foot stay put while the scroll region scrolls; main.scrollHeight <= main.clientHeight on a pinned route; the screen's own scroll affordance still works (guest-manager's bottom-of-list auto-load)",
+      "met": "not_attempted",
+      "evidence": "Not started this session — prompt scoped work to the flake-fix bullet only. guest-manager already has coverage for all three invariants from T263/T348 (pinned-regions.spec.ts, clip-flex-item.spec.ts, guest-list-scroll.spec.ts); config-manager, milestones, seating-plan, people have none."
+    },
+    {
+      "criterion": "Each spec is proven by failing first — checked out against the commit before its fix and watched to fail",
+      "met": "not_attempted",
+      "evidence": "Applies to the not-yet-written per-screen specs above; not attempted this session."
+    },
+    {
+      "criterion": "At least one spec runs at a narrow viewport (320px) in French, gated on document.fonts.ready, not a fail-first spec for the footer",
+      "met": "not_attempted",
+      "evidence": "guest-manager already has this (footer-truncation.spec.ts, from T348) but the remaining per-screen specs this bullet also covers were not attempted this session."
+    },
+    {
+      "criterion": "Specs live beside the harness from T263, not inside src/",
+      "met": "not_attempted",
+      "evidence": "True of the existing e2e/layout/*.spec.ts (unchanged by this session's edits, which only altered selectors inside those files), but the bullet is about the not-yet-written per-screen specs, not attempted."
+    },
+    {
+      "criterion": "Fix the parallel-load flake first, and note it is worse than first recorded: 25 cases across 5 projects (not 8, not 4), false-passes AND false-fails, guest-list-scroll.spec.ts:55 the observed false-fail moving between Pixel 7 and Desktop Chrome across two full-suite runs. Find the actual race, fix the cause not the symptom, and prove both directions closed.",
+      "met": true,
+      "evidence": "Suite confirmed 25 cases / 5 projects (5 tests x 4 spec files x 5 projects) via `npx playwright test e2e/layout --list` -> 'Total: 25 tests in 4 files'. Root cause reproduced: added a 600ms delay to e2e/support/api-mocks.ts's json() helper (reverted immediately after each experiment; final `diff` against the pre-session copy is empty) and ran `npx playwright test e2e/layout` — reproduced 'Error: no scrollable ancestor found above .table-row' on Pixel 7 (Chrome Android), Desktop Chrome, and iPhone 14, on both guest-list-scroll.spec.ts:55 and pinned-regions.spec.ts, on the first attempt. Mechanism: guest-manager.html's `initialLoading()` branch renders its own 8-row skeleton under `.table-row` (identical class name to the real, data-backed rows) inside a `.table-container` that carries no `role` attribute (`aria-hidden=\"true\"` instead) — only the real table carries `role=\"table\"`. Under worker contention the mocked fetch can resolve slower than the skeleton's first paint, so a bare `page.locator('.table-row').first().toBeVisible()` or `document.querySelector('.table-row')` can resolve against the 8-row skeleton; on a viewport tall/wide enough that 8 short rows do not overflow the scroll region (Desktop Chrome and Pixel 7's viewports, occasionally iPhone 14's), the ancestor-walk in guest-list-scroll.spec.ts:66/pinned-regions.spec.ts:39 finds nothing scrollable and throws exactly the observed error — explaining both 'no scrollable ancestor' and 'the moving project is the tell' (which project fails is whichever happened to be slowest that run and has a tall/wide-enough viewport, not a CSS regression pinned to one engine). guest-list-scroll.spec.ts:23 and the pageSize test never showed this because it gates on `toHaveCount(20)`, which the 8-row skeleton can never satisfy. Fix: scoped every `.table-row` query in the four layout specs to `.table-container[role=\"table\"] .table-row` (e2e/layout/pinned-regions.spec.ts, e2e/layout/guest-list-scroll.spec.ts, e2e/layout/clip-flex-item.spec.ts) — this is what makes Playwright's own auto-wait retry past the skeleton instead of resolving against it; no config, retry count, or waitForTimeout added. playwright.config.ts left unmodified (confirmed via `git diff --stat playwright.config.ts` — no output). False-fail direction closed: 5 consecutive clean `npx playwright test e2e/layout` runs, 25/25 passed each (run outputs captured in this session's transcript, e.g. '25 passed (31.8s)', '25 passed (24.9s)', '25 passed (21.1s)', '25 passed (20.9s)', '25 passed (19.6s)'), plus 5 more runs under the same 600ms artificial delay that reliably reproduced the failure before the fix, all 25/25 ('25 passed (34.0s)', '25 passed (35.3s)', '25 passed (34.7s)', plus two more, run twice before and after the delay round-trip). False-pass direction closed: removed `min-height: 0` from `main` in src/app/layouts/private-layout/private-layout.scss (the exact declaration clip-flex-item.spec.ts's own header comment documents as the historical defect) and re-ran `npx playwright test e2e/layout` under the full parallel suite — 20 of 25 cases failed (every case touching clip-flex-item.spec.ts, guest-list-scroll.spec.ts, and pinned-regions.spec.ts, across all 5 projects; footer-truncation.spec.ts's 5 cases correctly kept passing, since that declaration is unrelated to what it asserts), then reverted the break (`git diff src/app/layouts/private-layout/private-layout.scss` — no output, confirmed clean)."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck: `tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit` — no output, exit 0. Ran identically before and after this session's changes."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 559,
+        "failing": 2
+      },
+      "after": {
+        "total": 559,
+        "failing": 2
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 795.61 kB vs 500.00 kB budget (pre-existing)",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget by 3.19 kB (pre-existing)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget by 1.59 kB (pre-existing)",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget by 3.49 kB (pre-existing)",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget by 8.78 kB (pre-existing)"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "tasks/28-phase-x-layout-layer/reports/T349.json"
+    ],
+    "modified": [
+      "e2e/layout/clip-flex-item.spec.ts",
+      "e2e/layout/guest-list-scroll.spec.ts",
+      "e2e/layout/pinned-regions.spec.ts",
+      "tasks/28-phase-x-layout-layer/TASKS.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "e2e/support/api-mocks.ts",
+      "src/app/layouts/private-layout/private-layout.scss"
+    ]
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "e2e/support/api-mocks.ts",
+      "why": "Temporarily added a 600ms delay to the mocked fetch response to reproduce the race on demand (rather than waiting for it to reoccur naturally), per the task's own instruction to reproduce before patching. Reverted immediately after each experiment; final diff against the session-start copy is empty."
+    },
+    {
+      "path": "src/app/layouts/private-layout/private-layout.scss",
+      "why": "Temporarily removed main's `min-height: 0` to prove the false-pass direction is closed — the task's own step 3 explicitly calls for 'break a CSS declaration one of the layout specs asserts, confirm the relevant case now fails under the full parallel suite, then revert the break'. Reverted immediately after; `git diff` against this file is empty."
+    }
+  ],
+  "commits": [],
+  "remaining": [
+    "config-manager layout-regression spec (T343 migration PR)",
+    "milestones layout-regression spec (T343 migration PR)",
+    "seating-plan layout-regression spec (T343 migration PR)",
+    "people layout-regression spec (T350)",
+    "fail-first proof for each of the above, checked out against the pre-fix commit"
+  ],
+  "risks": [
+    {
+      "risk": "The skeleton/real-content class-name collision that caused this flake (`.table-row` shared between guest-manager's initialLoading() skeleton and its real table) is a pattern, not a one-off — config-manager, milestones, seating-plan and people may render their own loading skeletons with the same class names as their real content. Any T343/T350 spec that locates content by a bare class name without checking whether that screen has a skeleton state risks the identical race.",
+      "surfaces_at": "T343 (config-manager, milestones, seating-plan specs) and T350 (people spec)"
+    }
+  ]
+}

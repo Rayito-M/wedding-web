@@ -28,6 +28,15 @@ import { signInAsCouple } from '../support/auth';
  * not outgrow its parent" (the bullet's own title) means literally. Confirmed
  * against `9474809^`: fails (`4097 > 568`); against `9474809`: passes
  * (`329 <= 568`).
+ *
+ * `.table-row` is scoped to `.table-container[role="table"]` (T349,
+ * `tasks/28-phase-x-layout-layer/reports/T349.json`): `guest-manager.html`'s
+ * `initialLoading()` skeleton renders 8 identically-classed `.table-row`s of
+ * its own under a `.table-container` carrying no `role` attribute (only the
+ * real, data-backed table carries `role="table"`). Unscoped, this spec's
+ * `.toBeVisible()` could resolve against the skeleton under worker
+ * contention, measuring 8 placeholder rows instead of the 60 real ones this
+ * spec's own `guestCount` exists to guarantee.
  */
 test("a pinned route's main never outgrows the space its flex parent gives it", async ({
   page,
@@ -35,7 +44,7 @@ test("a pinned route's main never outgrows the space its flex parent gives it", 
   await signInAsCouple(page, { guestCount: 60 });
   await page.goto('/guests');
 
-  await expect(page.locator('.table-row').first()).toBeVisible();
+  await expect(page.locator('.table-container[role="table"] .table-row').first()).toBeVisible();
 
   const { mainScrollHeight, parentClientHeight } = await page.evaluate(() => {
     const main = document.querySelector('main');

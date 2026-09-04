@@ -11,6 +11,21 @@ import { signInAsCouple } from '../support/auth';
  *
  * Must fail against `9474809^` and pass against `9474809` — see
  * `tasks/reports/T263.json` for the captured failing run.
+ *
+ * `.table-row` alone is ambiguous: `guest-manager.html`'s `initialLoading()`
+ * branch renders its own 8-row skeleton under an identically-classed
+ * `.table-row`, inside a `.table-container` that carries no `role`
+ * attribute (`aria-hidden="true"` instead) — only the real, data-backed
+ * table carries `role="table"`. Scoping to `.table-container[role="table"]`
+ * is what makes `.toBeVisible()` actually wait for real data rather than
+ * resolving against the skeleton the moment it mounts, which is the T349
+ * parallel-load flake (`tasks/28-phase-x-layout-layer/reports/T349.json`):
+ * under worker contention the skeleton can be the only `.table-row` in the
+ * DOM long enough for this spec to scroll it, and on a tall/wide viewport
+ * its 8 rows do not overflow the scroll region at all, so the ancestor walk
+ * below throws "no scrollable ancestor found above .table-row" — which
+ * project sees it depends only on how much slower that project's real fetch
+ * was than its neighbours' that run, not on any CSS regression.
  */
 test('pinned head and foot stay put while the guest list scrolls, and the list itself moves', async ({
   page,
@@ -18,7 +33,7 @@ test('pinned head and foot stay put while the guest list scrolls, and the list i
   await signInAsCouple(page, { guestCount: 60 });
   await page.goto('/guests');
 
-  const firstRow = page.locator('.table-row').first();
+  const firstRow = page.locator('.table-container[role="table"] .table-row').first();
   await expect(firstRow).toBeVisible();
 
   const head = page.locator('.screen-head');
@@ -36,7 +51,7 @@ test('pinned head and foot stay put while the guest list scrolls, and the list i
   // the real user gesture (scroll the list) rather than one implementation
   // of it.
   await page.evaluate(() => {
-    const row = document.querySelector('.table-row');
+    const row = document.querySelector('.table-container[role="table"] .table-row');
     let el: HTMLElement | null = row?.parentElement ?? null;
     while (el && el.scrollHeight <= el.clientHeight) {
       el = el.parentElement;

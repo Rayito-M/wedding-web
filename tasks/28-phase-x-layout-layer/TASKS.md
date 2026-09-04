@@ -192,7 +192,25 @@
   `src/app/shared/tab-bar/tab-bar.ts`
 
 ### T349 — A layout-regression spec per migrated screen, so a device stops being the only check
-- **Status:** todo
+- **Status:** todo — partial slice landed 2026-09-04 (`tasks/28-phase-x-layout-layer/reports/T349.json`):
+  the parallel-load-flake bullet is **done**, everything else (`config-manager`, `milestones`,
+  `seating-plan`, `people` specs) is **not started**. The flake was a spec bug, not a config or app
+  bug: `.table-row` (all four existing `e2e/layout/*.spec.ts`) matched both the real,
+  data-backed table (`.table-container[role="table"]`) and `guest-manager.html`'s 8-row
+  `initialLoading()` skeleton (identically classed, inside a `.table-container` with no `role`
+  attribute). Under worker contention a spec's `.toBeVisible()`/`document.querySelector('.table-row')`
+  could resolve against the still-mounted skeleton before the mocked fetch resolved; on a viewport
+  tall/wide enough that 8 skeleton rows don't overflow the scroll region (Desktop Chrome, Pixel 7,
+  occasionally an iPhone), the ancestor walk in `guest-list-scroll.spec.ts`/`pinned-regions.spec.ts`
+  then threw "no scrollable ancestor found above `.table-row`" — reproduced on demand by adding a
+  600ms delay to the mocked fetch (`e2e/support/api-mocks.ts`, reverted after) and closed by scoping
+  every `.table-row` query to `.table-container[role="table"] .table-row`. `playwright.config.ts` was
+  not touched — the race was never about worker count or a shared `webServer`. Proof: 5 consecutive
+  clean full-suite runs (25/25 each), 5 more runs under the artificial fetch delay (25/25 each, the
+  same delay reproduced the failure 100% of the time before the fix), and the false-pass direction
+  closed by removing `main`'s `min-height: 0` in `private-layout.scss` — 20/25 cases failed under the
+  **full parallel suite** with that break in, all reverted afterwards. See the report for full
+  evidence and command output.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T263 (the Playwright harness and its layout tier)
