@@ -9,7 +9,9 @@
 > **T352 (hub ADR-0043) is inserted before T343's remaining three screens** — `config-manager`
 > shipped on 2026-09-04 (`0bd2892`), and `guest-manager`/`milestones`/`seating-plan` each need
 > `screenScroll` first; two of the three have no correct declaration without it. **T353** is a
-> cleanup that follows T352 and blocks nothing.
+> cleanup that follows T352 and blocks nothing. **T355** follows T352 and holds T343's
+> `guest-manager` slice: `milestones` and `seating-plan` are formally unblocked, but they are the
+> two migrations that most need a suite nobody has just watched flake.
 > **T263 (Playwright) moved ahead of T348 on 2026-09-04**, from "any time before T349 needs it".
 > T348's load-bearing acceptance bullet is a test that fails against current `main`, and its fix is
 > an `IntersectionObserver` sentinel — JSDOM implements neither real layout nor intersection, so
@@ -578,6 +580,73 @@
 - **Refs:** hub ADR-0041 §7 (as amended), §8; T344;
   `tasks/28-phase-x-layout-layer/reports/T343.json` `decisions_needed[0]`
 
+### T355 — `guest-manager` after T352: confirm the classification, correct the comment, root-cause the flake
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T352 (landed, `e11d826`)
+- **Blocks:** **T343's `guest-manager` slice.** `milestones` and `seating-plan` are unblocked by
+  T352 and could proceed in parallel — but they are the two migrations that most need a trustworthy
+  `e2e/layout`, and item 3 below is a reliability regression in it. Prefer settling this first; it
+  is deliberately scoped small so the hold is short.
+- **Why:** hub **ADR-0043 §5 as amended 2026-09-04**. T352's mechanism is right and verified, but it
+  changed the app's flagship screen as a consequence nobody had named, and surfaced a flake on the
+  one behaviour T348 exists to protect.
+- **Three items, and the first and third may be the same thing.**
+
+  **1. `guest-manager`'s flow classification is CONFIRMED — verify it, do not re-decide it.**
+  Ruled in hub ADR-0043 §5: it declares no `screenScroll` and keeps both pin flags, so `main` is its
+  scroller. Correct on three counts — the screen shed its own `flex`/`min-height`/`overflow` triad in
+  T341 (`guest-manager.scss:281` says so) so it matches ADR-0041 §3's definition of *flow* exactly;
+  `.screen-head`/`.screen-foot` are flex **siblings** of `main`, never descendants, so pinning is
+  unaffected by which box below them scrolls; and it is ADR-0042 §Context ¶1's own finding
+  (*"pinning does not require owning the scroller"*) finally reaching the screen it was derived
+  from. **Verify in a real browser; do not reopen the ruling.**
+  - **Including one visual change nobody flagged.** `(scroll)="onMainScroll()"` on `main` drives
+    `isScrolled()` and hence `app-screen-header`'s `.scrolled` — a card background and `box-shadow`
+    (`screen-header.scss:7`). While `main` was `overflow-y: clip` on this route it never scrolled,
+    so **that treatment was dead on `/guests`** and the header stayed transparent however far the
+    list moved. It now works. Confirm it reads correctly in all three themes at both widths. It is
+    a fix, but it is visible, and it should be seen now rather than discovered later
+  - Re-verify what T341 device-verified under the old mechanism: head and foot stay put while the
+    list scrolls, at 360px and >=900px, three themes, three locales
+
+  **2. The route comment is false — correct it.** `/guests`' route data still reads *"`PrivateLayout`
+  yields scroll ownership to `.screen-scroll` for this route because of these two flags"*
+  (`app.routes.ts:181-184`). The flags do nothing of the kind any more. T352 deleted
+  `config-manager`'s false comment in this same file and left this one standing — **the same class
+  of defect ADR-0043 was written about, one screen over.** Replace it with what is now true: the two
+  flags declare that this screen projects a head and a foot, and scroll ownership is not among their
+  effects. While in that file, read every other route comment mentioning scroll ownership — this is
+  the second comment to outlive its mechanism and the sweep is nearly free.
+
+  **3. Root-cause the auto-load flake — do not retry-mask it.** `guest-list-scroll.spec.ts:36`
+  ("scrolling near the bottom of the list loads the next page — IntersectionObserver, not
+  `.table-body`") failed on Desktop Chrome on one full run in five after `e11d826`; it passes alone,
+  and T349 left this suite at 8+ consecutive clean runs. **Treat it as a regression T352 introduced
+  until measurement says otherwise**, and note where it sits: the T348 auto-load behaviour, on the
+  exact screen whose scrolling ancestor just changed.
+  - **Leading hypothesis, to confirm or kill first, cheaply.** The spec walks up from `.table-row`
+    to the first ancestor with `scrollHeight > clientHeight`. Under the old mechanism
+    `.screen-scroll` was that ancestor and was reached almost immediately. It is now
+    `display: contents` — no box, so `0 <= 0` — and the walk must continue to `main`. If `main` has
+    not yet overflowed when `page.evaluate` runs, **nothing above it in the layout will overflow
+    either**, so the walk either throws or silently lands on `body`/`documentElement`, scrolls
+    something inert, and the sentinel never fires. Same class as the flake T349 closed (measuring
+    before the list settled), with a longer fuse and a new landing spot
+  - **The discriminating measurement is cheap: report which element the walk terminated on.** If it
+    is outside the layout, the hypothesis holds. Do that before changing anything
+  - Whatever the cause, the fix asserts the walk found a box **inside the layout** and that the
+    scroll actually moved, and waits for the scroller to be overflowing before scrolling it. A walk
+    that can silently succeed against `body` is a defect regardless of how often it bites
+  - Prove it under the load that produced it — all four projects in parallel, repeated — the way
+    T349 did. Restore a clean consecutive-run baseline and state the number
+- **Non-goals:** no `screenScroll` on `/guests`; no change to the T348 sentinel or to
+  `ScreenChromeService` unless the root cause is genuinely there; no `guest-manager.scss` work —
+  that is T343's slice, which resumes after this
+- **Refs:** hub ADR-0043 §1, §5 (as amended); hub ADR-0042 §Context ¶1; hub ADR-0041 §3;
+  `tasks/28-phase-x-layout-layer/reports/T352.json`, `T349.json`, `T348.json`
+
 ### T343 — Migrate the four oversized screens onto the layer
 - **Status:** in-progress — `config-manager` landed 2026-09-04 (one screen per PR, ADR-0041 §8):
   measured `:host` (shell, unconditional) and its only `@media` (opens at 964, not the task's
@@ -597,8 +666,10 @@
   `tasks/28-phase-x-layout-layer/reports/T343.json` for full evidence.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
-- **Depends on:** T340, T341, **T352** for every screen after `config-manager` — `milestones` and
-  `seating-plan` have no correct route declaration without `screenScroll` (hub ADR-0043)
+- **Depends on:** T340, T341, **T352** (landed) for every screen after `config-manager` —
+  `milestones` and `seating-plan` have no correct route declaration without `screenScroll` (hub
+  ADR-0043). The **`guest-manager` slice additionally depends on T355**, which confirms that
+  screen's classification in a browser and restores `e2e/layout`'s clean-run baseline
 - **Why:** hub **ADR-0041 §Consequences**. config-manager (1,049 lines), guest-manager (777),
   milestones (753) and seating-plan (545) are 31% of all CSS in the repo and are exactly the four
   screens that breach the 8 KB `anyComponentStyle` budget.
