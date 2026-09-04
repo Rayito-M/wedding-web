@@ -26,6 +26,7 @@ export const PHONE_COUNTRIES: PhoneCountry[] = [
   { iso: 'DE', name: 'Deutschland', dialCode: '+49', flag: '🇩🇪' },
   { iso: 'BE', name: 'Belgique', dialCode: '+32', flag: '🇧🇪' },
   { iso: 'CH', name: 'Suisse', dialCode: '+41', flag: '🇨🇭' },
+  { iso: 'AT', name: 'Österreich', dialCode: '+43', flag: '🇦🇹' },
   { iso: 'NL', name: 'Nederland', dialCode: '+31', flag: '🇳🇱' },
   { iso: 'IE', name: 'Ireland', dialCode: '+353', flag: '🇮🇪' },
   { iso: 'MX', name: 'México', dialCode: '+52', flag: '🇲🇽' },
