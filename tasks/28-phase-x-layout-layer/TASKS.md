@@ -783,7 +783,10 @@
     16.78 kB to 16.81 kB — the gap is a seven-section CRUD editor with a local modal, not shell or
     scroll CSS, so no layout-layer work closes it and this task's original "all four under budget
     first" precondition can never be met. The override is a **ratchet**: set it at the measured
-    value so the screen cannot grow, never at a round number above it. T354 removes it
+    value so the screen cannot grow, never at a round number above it. T354 removes it.
+    **Measure at the moment this task lands — never reuse the 16.81 kB figure from T343's report.**
+    Whichever of T354 and this task runs first sets the number, and if T354 lands first the right
+    override may be none at all: check whether the file is already under 8 kB before adding one
   - The other three screens come under the blanket 8 kB with no override
   - A production build passes clean
   - Hub `ARCHITECTURE.md` § Performance budgets updated to drop the "currently a warning" caveat
