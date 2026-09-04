@@ -4,7 +4,8 @@
 > them. 9,883 lines of SCSS across 71 files, of which 412 lines (4%) are shared; 45% of dimensional
 > values are raw `px`; three unnamed breakpoints; 13 files declare their own scroll container. Every
 > screen re-derives its own page shell. This phase adds the missing layer and enforces it.
-> Sequence matters: T340 → T341 → **T263** → **T348** → T345 → T347 → T342 → T343 (+ T349) → T344.
+> Sequence matters: T340 → T341 → **T263** → **T348** → T345 → T347 → T342 → T343 (+ T349) →
+> **T350** → T344.
 > **T263 (Playwright) moved ahead of T348 on 2026-09-04**, from "any time before T349 needs it".
 > T348's load-bearing acceptance bullet is a test that fails against current `main`, and its fix is
 > an `IntersectionObserver` sentinel — JSDOM implements neither real layout nor intersection, so
@@ -19,7 +20,9 @@
 ### T340 — `_layout.scss`: page shells, scroll ownership, named breakpoints
 - **Status:** done — `screen-scroll` ships as a **mixin**, not the `%placeholder` named below. Sass
   cannot `@extend` a top-level placeholder from inside a media query, and hub ADR-0042 §4 requires
-  exactly that (`seating-plan` is flow on mobile, shell at `$bp-lg`). Reproduced empirically before
+  exactly that (`milestones` is flow on mobile, shell at `$bp-lg`; the ADR named `seating-plan` here
+  until 2026-09-04 and was wrong — the deviation stands on the corrected screen, re-derived rather
+  than re-asserted). Reproduced empirically before
   deviating; the acceptance text authorized it. Hub ADR-0041 §3/§Implications and ADR-0042 §4
   corrected to match (hub `321a257`). `%truncating-flex-child` uses plain `overflow: hidden` — hub
   ADR-0041 §4 was scoped the same day to layout containers only, so **T342's lint rule must carry
@@ -40,8 +43,10 @@
   - `$bp-md: 640px`, `$bp-lg: 900px`, `$bp-xl: 1024px` and a `respond-to($bp)` mixin. This is the
     highest-value half of the task: 34 media queries currently spell three literals by hand
   - `%screen-scroll` — the single scrolling region. **Must compose inside `respond-to()`**, because
-    per ADR-0042 §4 the flow/shell choice is per breakpoint, not per screen: `seating-plan` is flow
-    on mobile and shell at `$bp-lg`, and both its scrollers already sit inside that media query
+    per ADR-0042 §4 the flow/shell choice is per breakpoint, not per screen: `milestones` is flow on
+    mobile and shell at `$bp-lg` — `:host` takes `height: 100%` and `.list` its `overflow-y: auto`
+    only inside that media query. (This bullet named `seating-plan` until 2026-09-04; that screen is
+    shell at every breakpoint. The requirement is unchanged.)
   - `%truncating-flex-child` — `min-width: 0` plus the ellipsis discipline of ADR-0041 §5. This is
     the guest-manager footer defect generalised: 47 `overflow: hidden` sites against 33
     `min-width: 0` sites says it recurs. Naming it is what lets T342 lint for it
@@ -201,7 +206,7 @@
   skipped exactly once.
 - **Acceptance:**
   - One spec per screen T343 migrates — `config-manager`, `milestones`, `seating-plan` — plus
-    `guest-manager`, asserting the invariants that actually broke:
+    `guest-manager`, plus `people` from **T350**, asserting the invariants that actually broke:
       - the pinned head and foot do not move while the scroll region scrolls
       - `main.scrollHeight <= main.clientHeight` on a pinned route (the `min-height: 0` trap)
       - the screen's *own* scroll affordance still works — for `guest-manager`, that reaching the
@@ -217,11 +222,16 @@
     `document.fonts.ready`; an unsettled measurement looked like it reproduced at 360px and did not
     hold up. The truncation fix is correct and shipped regardless — see hub ADR-0041 §5 as corrected
   - Specs live beside the harness from T263, not inside `src/`
-  - **Fix the parallel-load flake first.** Verified 2026-09-04: running `e2e/layout` across all four
-    projects at once, one case passed against deliberately-broken CSS that it fails correctly when
-    run alone. A layout suite that is 7/8 reliable is worse than none — it will be believed. Find
-    the race (most likely measuring before the list has settled, or four projects sharing one
-    `webServer`) before adding four more specs to the same runner
+  - **Fix the parallel-load flake first, and note it is worse than first recorded.** Re-measured
+    twice on `main` with T347 landed (2026-09-04), after T348 grew the suite: it is **25 cases, not
+    8**. It false-**passes** — one case passed against deliberately-broken CSS that it fails
+    correctly alone — *and* it false-**fails**: `guest-list-scroll.spec.ts:55` failed in both
+    full-suite runs with `no scrollable ancestor found above .table-row`, on **Pixel 7 (Chrome
+    Android)** in one run and **Desktop Chrome** in the other, while passing deterministically when
+    run alone under either project. **The moving project is the tell** — a real regression pins to
+    one. A suite that is unreliable in both directions is worse than none: it will be believed when
+    green and dismissed when red. Find the race (most likely measuring before the list has settled,
+    or four projects sharing one `webServer`) before adding four more specs to the same runner
 - **Non-goals:** no full user-journey coverage — this is a geometry tier, deliberately narrow.
   **And no CI:** `wedding-web` has no `.github/` workflow today, so this suite is local-only and
   the task must say so plainly rather than implying a gate that does not run. Wiring CI is a
@@ -338,13 +348,21 @@
   - stylelint added and wired into `pnpm lint` so CI fails on violation
   - Rules: no raw `px` for spacing/font-size (tokens only), no bare `@media (min-width:` (use
     `respond-to()`), no unpaired `overflow: hidden`
-  - **The unpaired-`hidden` rule must exempt text truncation, or it flags the primitive this phase
-    built.** hub ADR-0041 §4 was scoped on 2026-09-03 to *layout containers* — boxes establishing a
-    scrolling context a focus event could shift. A single-line, `nowrap`, ellipsizing text child is
-    not one, and `%truncating-flex-child` in `_layout.scss` deliberately ships plain
-    `overflow: hidden`. A lint rule that cannot express the difference should not ship: prefer
-    scoping by context (paired with `text-overflow`/`white-space`) over a blanket ignore comment,
-    which would have to be repeated at every call site
+  - **The unpaired-`hidden` rule encodes hub ADR-0041 §4's *positive* definition, not an exemption
+    list.** §4 was restated on 2026-09-04, after T347 found a second legitimate shape within two
+    days of the first: the rule governs **boxes that establish a scrolling context a focus event
+    could shift** — a container whose content can exceed it and whose descendants can take focus or
+    be a `scrollIntoView()` target. Scope the rule to that, by the declarations that reveal it.
+    The two known shapes outside it are worked examples, not the closed set the rule is built from:
+    - `%truncating-flex-child` (`_layout.scss`) — recognisable by `text-overflow` and/or
+      `white-space: nowrap` on the same box. Deliberately ships plain `overflow: hidden`
+    - `%sr-only` (`_primitives.scss`) and its hand-duplicate `guest-manager.scss`'s
+      `.partner-account-note` — recognisable by `clip-path` on a `1px` box. `overflow: hidden` is
+      part of the visually-hidden technique itself, T347 left both as plain `hidden` with a comment,
+      and pairing them to `clip` has no cross-browser record
+    A rule that can only reach these through per-site ignore comments has not encoded §4 and should
+    not ship. If a third shape appears that the positive definition cannot express, that is a hub
+    question — escalate it rather than appending a third special case here
   - **`_layout.scss` and `_tokens.scss` are exempt from the raw-`px` rule.** They are where the
     literals are *defined* — `$bp-md: 640px`, the type scale, the spacing scale. A rule that flags
     its own token source is misconfigured
@@ -364,8 +382,20 @@
   - Migrated in descending size order — config-manager, guest-manager, milestones, seating-plan —
     **one screen per PR**, each independently shippable and revertible (ADR-0041 §8: this is a live
     app, never one cut-over)
-  - Each screen classified flow or shell, extending `%app-screen` / `%screen-scroll` /
-    `%screen-footer` rather than re-authoring them
+  - Each screen classified flow or shell **per breakpoint, measured against its own source** — not
+    against an ADR sentence. Applied with the `screen-scroll()` mixin (`%app-screen` and
+    `%screen-footer` were struck by hub ADR-0042 §2 and do not exist) rather than re-authored
+  - **Corrected premise, 2026-09-04 (hub ADR-0042 §Context ¶2 / §Consequences).** The ADR named
+    `seating-plan` as the per-breakpoint case and this task inherited that. It is false:
+    `seating-plan` is `height: 100%; overflow: hidden` on `:host` and `.seating-plan`
+    unconditionally, its only `@media` opens at line 490, and its 217/306 scrollers are panes
+    (`.unassigned-body`, `.tables`) inside an already-shell screen. **Migrate it as an
+    unconditional shell** — `headPinned: true` on its route, `screen-scroll()` outside any
+    `respond-to()`. `config-manager` is the same shape (`:host` at 14–15, `@media` at 928).
+    **`milestones` is the real per-breakpoint screen**: `:host` is `display: block` at base and
+    takes `height: 100%` only at 663, with `.list` scrolling at 681 inside the `@media` at 659; its
+    unconditional `overflow-y: auto` at 486 is `.detail-body`, a pane. Re-measure each screen before
+    migrating it — this task's list was wrong once already
   - Each drops below the 8 KB budget
   - No visual change intended: each PR is checked against the previous build in all three themes and
     all three locales, at 360px and at ≥900px
@@ -381,9 +411,61 @@
     scroll *control*. `milestones` and `config-manager` each declare three scrollers and
     `seating-plan` two, so any of them binding a `(scroll)` handler or writing `scrollTop` will hit
     what T348 had to repair. Check before migrating, not after
+  - **Two inherited `min-height: 0` gaps land with the screen that owns them** (T347 `risks[1]`,
+    flagged inline at both sites, deliberately not fixed there — T347 was comments-and-pairs only).
+    `config-manager.scss`'s `.modal-dialog .modal-body` and `milestones.scss`'s `.detail-body` are
+    both `flex: 1; overflow-y: auto` in a flex column without `min-height: 0`. Same class as hub
+    ADR-0041 §4's flex-item trap, on the `auto` side rather than the `hidden`→`clip` side
 - **Non-goals:** the other 67 files are not in scope — they migrate opportunistically when next
-  touched, and get no task of their own
-- **Refs:** hub ADR-0041 §2, §Consequences
+  touched, and get no task of their own. `people` is the one exception and has its own task (T350),
+  because it carries a live nested-scroller defect rather than a size problem
+- **Refs:** hub ADR-0041 §2, §Consequences; hub ADR-0042 §Context ¶2, §Consequences
+
+### T350 — `people` stops nesting a scroller inside `main`
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T341 (the route-data flags and `main`'s yielding must exist), T343 (migrate the
+  four over-budget screens first, so the pattern is settled before it is applied to a fifth)
+- **Why:** hub **ADR-0042 §Consequences** (added 2026-09-04), hub **ADR-0041 §Context/§3**. This is
+  the defect ADR-0041 was written to eliminate, sitting on a screen no task in any phase owned.
+  `.people` declares `height: 100%; overflow-y: auto` (`people.scss:19–20`) at **every** breakpoint —
+  its only `@media` opens at 266 — while `/people`'s route data (`app.routes.ts:136–141`) sets
+  `tabBar`, `topNav` and `navLabel` but neither `headPinned` nor `footPinned`. `main` therefore
+  keeps `overflow-y: auto`, and the screen nests a second scroll container inside it: **two scroll
+  containers competing for one axis**, in every locale and at every width.
+- **How it was missed, which is the part worth keeping:** T343's screen list was drawn by size — the
+  four screens over the 8 KB `anyComponentStyle` budget. `people` is ~300 lines and comfortably under
+  it. **Nested scroll ownership does not correlate with stylesheet size**, so the heuristic that
+  built T343's list could not have found this. Its own header comment names `seating-plan` as the
+  precedent it follows, and it followed it faithfully — including the part that was wrong.
+- **The screen is flow, not shell.** It pins nothing: its header scrolls away with the content
+  today, and there is no toolbar or result count to keep in view. So the fix is to **delete the
+  screen's scroll ownership**, not to declare it shell in route data. That is the single-scroller
+  rule being applied, not a new behaviour being chosen — hub ADR-0042 §Consequences rules on this
+  explicitly, and the task is not authorized to reach the opposite conclusion without escalating.
+- **Acceptance:**
+  - `.people` drops `height: 100%` and `overflow-y: auto`; `:host` drops `height: 100%`. `main`
+    becomes the screen's only scroller. `/people`'s route data is **unchanged** — no `headPinned`,
+    no `footPinned`
+  - Verified that no code on the screen watches or drives its own scrolling before the change lands
+    (`grep` for `(scroll)`, `scrollTop`, `scrollIntoView`, `scrollTo` in `people.ts`/`people.html`).
+    This is the hub ADR-0042 §Consequences trap that cost T348 a repair on `guest-manager`; if
+    anything is found, it uses the `IntersectionObserver` sentinel and `ScreenChromeService` that
+    T348 already built, not a new mechanism
+  - **A real browser, not just the suite.** Two production defects escaped T341 with 556 tests
+    green because JSDOM computes no layout. Check at 360px and ≥900px, all three themes, all three
+    locales — and specifically that `scrollPositionRestoration` on back-navigation and the fixed
+    header's 52px clearance now behave as they do on other flow screens, since those are what the
+    nested scroller was quietly breaking
+  - Its T349 layout-regression spec lands in the **same PR**, on the same terms as every T343
+    screen: proven by failing first against the commit before the fix
+- **Non-goals:** no restyling, no token migration, no `respond-to()` conversion of the `@media` at
+  266 — this task removes one nested scroller and nothing else. `people` is not over budget and is
+  not a T343 screen; if it wants the rest of the layer it gets it opportunistically, like the other
+  66 files
+- **Refs:** hub ADR-0042 §Context ¶2, §Consequences, §Implications; hub ADR-0041 §3, §Implications;
+  `tasks/28-phase-x-layout-layer/reports/T347.json` `risks[2]`
 
 ### T344 — `anyComponentStyle` becomes an error
 - **Status:** todo
