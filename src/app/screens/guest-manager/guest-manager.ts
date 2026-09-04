@@ -36,6 +36,56 @@ import { GuestProfileModal, ManageRsvpModal, GuestCreateModal } from './modal';
 /** Columns backed by real per-guest data — the only ones the table can sort by. */
 type SortColumn = 'lastName' | 'status' | 'adults' | 'children' | 'lastSeen';
 
+/**
+ * Pure guard for {@link scrollSentinel}'s `IntersectionObserver` callback
+ * (hub ADR-0042 §Consequences, T356). `observe()` **always** delivers one
+ * callback synchronously, carrying the target's *current* intersection
+ * state, the moment it is called — not only on a later real change. Before a
+ * route's layout has settled, every ancestor box is still stacked at the
+ * document origin with no height, so that first callback reports the
+ * sentinel (a 1px marker after the last row) sitting at a viewport-relative
+ * `boundingClientRect.top` of `0` with `isIntersecting: true`, even though
+ * nobody scrolled and no page was actually requested — the observer cannot
+ * tell "the sentinel is near the bottom" from "the whole page collapsed to
+ * the origin because nothing has been measured yet". T355 measured this
+ * firing `loadMore()` unprompted, twice, under real parallel load.
+ *
+ * A settled, genuinely-near-the-bottom sentinel is never at the viewport's
+ * own top edge — it renders below rows that occupy real vertical space — so
+ * requiring `boundingClientRect.top > 0` alongside `isIntersecting` rejects
+ * exactly the unsettled-layout artifact without accepting anything a real
+ * gesture would produce.
+ *
+ * **Why this shape, not the other two plausible guards** (both raised
+ * alongside this one in T356):
+ * - *Skip the first callback per observer instance* — rejected: that is
+ *   state about the observer's call count, not a fact about one entry, so it
+ *   cannot be "a pure predicate over an `IntersectionObserverEntry`" the way
+ *   this is, and it reconnects (and therefore re-arms) every time this
+ *   screen's `effect()` rebuilds the observer for a fresh `ElementRef` —
+ *   which happens on every navigation back to `/guests`, i.e. exactly when
+ *   the race is live.
+ * - *Gate on the scroller having non-zero `scrollHeight`* — rejected: it
+ *   needs a reference to whichever ancestor actually scrolls, which is
+ *   precisely the coupling {@link scrollSentinel}'s own doc comment says
+ *   this mechanism exists to avoid (`PrivateLayout`'s `.screen-scroll` under
+ *   ADR-0042, `main` under ADR-0043) — this screen would have to learn that
+ *   again just to guard a callback.
+ *
+ * Deliberately entry-only, so it is directly unit-testable with synthetic
+ * entries (`guest-manager.spec.ts`) — JSDOM implements neither real layout
+ * nor `IntersectionObserver`, so nothing about the observer wiring itself
+ * can be exercised under Vitest; this predicate, in isolation, can be.
+ * `milestones` and `seating-plan` (hub ADR-0042 §Consequences) are the
+ * likely next adopters of the sentinel pattern — this guard is the piece to
+ * bring with it.
+ */
+export function isSettledIntersection(
+  entry: Pick<IntersectionObserverEntry, 'isIntersecting' | 'boundingClientRect'>,
+): boolean {
+  return entry.isIntersecting && entry.boundingClientRect.top > 0;
+}
+
 @Component({
   selector: 'app-guest-manager',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -252,12 +302,20 @@ export class GuestManager {
     // is absent keeps the unit suite from crashing on every test that renders
     // past the loading skeleton; it does not stand in for exercising the
     // observer itself, which no mock here claims to do.
+    //
+    // Every entry is filtered through {@link isSettledIntersection} (T356,
+    // hub ADR-0042 §Consequences) before it is allowed to trigger `loadMore()`:
+    // `observe()`'s own initial callback reports the sentinel's state before
+    // this route's layout has settled, which can read as "near the bottom"
+    // when nobody has scrolled at all. See that function's doc comment for
+    // why this fires spuriously, what the guard checks, and why the two other
+    // plausible guards were not used instead.
     effect((onCleanup) => {
       const sentinel = this.scrollSentinel()?.nativeElement;
       if (!sentinel || typeof IntersectionObserver === 'undefined') return;
       const observer = new IntersectionObserver(
         (entries) => {
-          if (entries.some((entry) => entry.isIntersecting)) this.loadMore();
+          if (entries.some(isSettledIntersection)) this.loadMore();
         },
         { rootMargin: '120px' },
       );

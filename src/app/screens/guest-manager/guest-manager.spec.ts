@@ -21,7 +21,7 @@ import {
   provideEntityDataServices,
 } from '@app/core';
 
-import { GuestManager } from './guest-manager';
+import { GuestManager, isSettledIntersection } from './guest-manager';
 
 /**
  * An `attending` flag that is **absent**, not `false`.
@@ -579,6 +579,35 @@ describe('GuestManager — growing list (T330, ADR W-0009)', () => {
 
     expect(rowNames(fixture).length).toBe(30);
     expect(resetRequests()).toBe(before + 1);
+  });
+});
+
+/**
+ * T356 (hub ADR-0042 §Consequences) — `isSettledIntersection` is exercised
+ * directly with synthetic entries, exactly as the task requires: neither
+ * JSDOM's missing `IntersectionObserver` nor its lack of real layout is in
+ * the loop, because the predicate never touches either. This is the only
+ * place this guard is unit-tested; its effect on the observer wiring itself
+ * is only provable in a real browser (`e2e/layout/guest-list-scroll.spec.ts`).
+ */
+describe('GuestManager — sentinel guard rejects an unsettled-layout intersection (T356)', () => {
+  function entry(isIntersecting: boolean, top: number): IntersectionObserverEntry {
+    return {
+      isIntersecting,
+      boundingClientRect: { top } as DOMRectReadOnly,
+    } as IntersectionObserverEntry;
+  }
+
+  it('accepts a settled sentinel that is genuinely intersecting', () => {
+    expect(isSettledIntersection(entry(true, 480))).toBe(true);
+  });
+
+  it('rejects an unsettled sentinel reporting the initial-callback artifact — stacked at the origin, but "intersecting"', () => {
+    expect(isSettledIntersection(entry(true, 0))).toBe(false);
+  });
+
+  it('rejects a settled sentinel that is genuinely not intersecting', () => {
+    expect(isSettledIntersection(entry(false, 2400))).toBe(false);
   });
 });
 
