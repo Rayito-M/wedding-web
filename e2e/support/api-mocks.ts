@@ -76,6 +76,65 @@ function guestProfiles(count: number): unknown[] {
   }));
 }
 
+/** `WeddingConfigResponseDto` (admin `GET /v1/config`, `ConfigManager`'s own
+ *  read) — a different, larger document than `CONFIG_PUBLIC` above, which is
+ *  the read-only public mirror. `dietaryPreferencesCount` seeds the
+ *  `dietaryPreferences` tag list, the one section long enough to overflow
+ *  `.content` at every target viewport (T343's `config-manager` layout spec)
+ *  — each existing target width is comfortably taller than a handful of
+ *  fields, so the section needs real length, not just a few rows. */
+function weddingConfigAdmin(dietaryPreferencesCount: number): unknown {
+  return {
+    id: 'e2e-config-1',
+    version: 3,
+    brideName: 'Sara',
+    groomName: 'Christophe',
+    tagline: 'Como la trucha al trucho',
+    date: '2026-10-10T00:00:00.000Z',
+    language: { en: 'English', es: 'Español', fr: 'Français' },
+    themeId: 'terracotta',
+    city: 'Granada',
+    country: 'ES',
+    rsvpDeadline: '2026-09-01T00:00:00.000Z',
+    venues: [],
+    agenda: { status: 'provisional', items: [] },
+    hotels: [],
+    dietaryPreferences: Array.from({ length: dietaryPreferencesCount }, (_, i) => ({
+      id: `e2e-dietary-${i}`,
+      label: { es: `Preferencia ${i}`, en: `Preference ${i}`, fr: `Préférence ${i}` },
+    })),
+    allergies: [],
+    menus: [],
+  };
+}
+
+/** `UserListResponseDto` (`GET /v1/users`, `ConfigManager`'s "the couple"
+ *  section) — the bride/groom pair `coupleProfiles` resolves from. */
+const COUPLE_USERS = {
+  items: [
+    {
+      id: COUPLE_ID,
+      version: 1,
+      firstName: 'Sara',
+      lastName: 'Bride',
+      phoneNumber: '+34600000001',
+      role: 'bride',
+      preferredLang: 'en',
+    },
+    {
+      id: 'e2e-groom-1',
+      version: 1,
+      firstName: 'Christophe',
+      lastName: 'Groom',
+      phoneNumber: '+34600000002',
+      role: 'groom',
+      preferredLang: 'en',
+    },
+  ],
+  nextCursor: null,
+  count: 2,
+};
+
 async function json(route: Route, body: unknown, status = 200): Promise<void> {
   await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 }
@@ -87,10 +146,11 @@ async function json(route: Route, body: unknown, status = 200): Promise<void> {
  */
 export async function installApiMocks(
   page: Page,
-  opts: { guestCount?: number; pageSize?: number } = {},
+  opts: { guestCount?: number; pageSize?: number; dietaryPreferencesCount?: number } = {},
 ): Promise<void> {
   const guestCount = opts.guestCount ?? 40;
   const pageSize = opts.pageSize;
+  const dietaryPreferencesCount = opts.dietaryPreferencesCount ?? 3;
 
   // Pre-seeds a GA consent decision (`ConsentService`, hub ADR-0027) so
   // `<app-consent-banner>` — fixed to the bottom of every page, mounted
@@ -116,6 +176,13 @@ export async function installApiMocks(
   );
 
   await page.route('**/v1/config/public', (route) => json(route, CONFIG_PUBLIC));
+
+  // `ConfigManager`'s own reads (T343) — the admin document and the
+  // bride/groom accounts its "the couple" section resolves.
+  await page.route('**/v1/config', (route) =>
+    json(route, weddingConfigAdmin(dietaryPreferencesCount)),
+  );
+  await page.route('**/v1/users', (route) => json(route, COUPLE_USERS));
 
   await page.route('**/v1/auth/otp/request', (route) => json(route, { ok: true }));
 

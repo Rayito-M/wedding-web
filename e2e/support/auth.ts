@@ -17,10 +17,12 @@ import { installApiMocks } from './api-mocks';
  * `opts.pageSize`, when set, turns on real cursor pagination in the
  * `GET /v1/profile` stub (`installApiMocks`) instead of the single-page
  * default every other caller relies on — see that function's own doc.
+ * `opts.dietaryPreferencesCount` passes through to the same function's
+ * `GET /v1/config` stub — see its own doc.
  */
 export async function signInAsCouple(
   page: Page,
-  opts: { guestCount?: number; pageSize?: number } = {},
+  opts: { guestCount?: number; pageSize?: number; dietaryPreferencesCount?: number } = {},
 ): Promise<void> {
   await installApiMocks(page, opts);
 

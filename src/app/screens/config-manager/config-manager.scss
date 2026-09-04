@@ -1,26 +1,42 @@
 @use '../../../styles/tokens' as t;
 @use '../../../styles/primitives';
+@use '../../../styles/layout';
 
 // Per design reference ScreenConfigManager.jsx / ScreenConfigManagerMobile.jsx.
 // The reference's own header (Monogram + title + Save) is replaced by this
 // app's shared app-screen-header (HeaderService); this component only owns
 // the section rail/pills, content pane, and the save/status row.
 //
-// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
-// shell at every breakpoint, not per-breakpoint flow/shell. `.content`
-// below (`flex: 1; min-height: 0; overflow-y: auto`, unconditional) is the
-// content-pane scroller on both mobile and desktop; `.rail` gains its own,
-// independent `overflow-y: auto` only at `≥900px` (desktop sidebar nav) —
-// a sibling scroller alongside `.content`, not nested inside it, so it is
-// not the "second scroller inside a shell's scrolling region" hub
-// ADR-0041 §3 rules out. `.modal-overlay`/`.modal-dialog` below is a
-// further, separate local modal (`position: fixed`, its own top layer),
-// same shape as the shared `app-modal`.
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit,
+// migrated onto the layer T343): shell at every breakpoint, not
+// per-breakpoint flow/shell — the same shape as `seating-plan`, not
+// `milestones`' per-breakpoint case. This screen registers no
+// `*appScreenHead` / `*appScreenFoot` (`config-manager.html`) — nothing of
+// its own is pinned by `PrivateLayout` — so `footPinned: true`
+// (`app.routes.ts`, not `headPinned` — see that route's own comment for
+// why) exists only to make `main` yield (`.pinned`, `overflow-y: clip`) to
+// `PrivateLayout`'s own `.screen-scroll`, matching what `:host`'s own local
+// shell below already assumed unpinned. `.content`
+// (`@include layout.screen-scroll`, unconditional) is the content-pane
+// scroller on both mobile and desktop; `.rail` gains its own, independent
+// `overflow-y: auto` only at `≥900px` (desktop sidebar nav) — a sibling
+// scroller alongside `.content`, not nested inside it, so it is not the
+// "second scroller inside a shell's scrolling region" hub ADR-0041 §3 rules
+// out. `.modal-overlay`/`.modal-dialog` below is a further, separate local
+// modal (`position: fixed`, its own top layer), same shape as the shared
+// `app-modal`.
 :host {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  // `flex: 1; min-height: 0;` (a flex-item-only pair, T340/T347) were
+  // struck here by T343: with `footPinned: true` on the route,
+  // `PrivateLayout`'s own `.screen-scroll` wrapper (`private-layout.scss`)
+  // becomes `display: block` and takes over that flex-item role one level
+  // up — `:host` is now its plain block child, not `main`'s flex item, so
+  // the pair had become dead weight. `height: 100%` stays: it is what
+  // gives `.layout` → `.rail`/`.content` below a bounded height to size
+  // against, resolved against `.screen-scroll`'s own definite
+  // (flex-derived) height.
   width: 100%;
   height: 100%;
   overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
@@ -193,10 +209,13 @@
 }
 
 .content {
-  flex: 1;
+  // The screen's own single scroll region (hub ADR-0042 §Context ¶2, T343)
+  // — `screen-scroll()` (`_layout.scss`, T340) replaces the hand-written
+  // `flex: 1; min-height: 0; overflow-y: auto;` triad this box already had,
+  // adding the `overflow-x` pair (ADR-0041 §4) it was missing. `min-width: 0`
+  // stays: the mixin's own `overflow-x` pair does not size the inline axis.
+  @include layout.screen-scroll;
   min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
   padding: var(--space-5) var(--space-6) var(--space-6);
   display: flex;
   flex-direction: column;
@@ -847,10 +866,7 @@
   // shrink — main axis is width, so `min-width: 0` guards against a long
   // title reviving `min-width: auto` and pushing past `width: 90%` (hub
   // ADR-0041 §4 amendment). Height is cross-axis and already bounded by
-  // `max-height`; `.modal-body` below (`flex: 1; overflow-y: auto`, no
-  // explicit `min-height: 0`) is a **pre-existing** gap on that axis,
-  // unrelated to this conversion — flagged in T347's report, not fixed
-  // here (no restructuring).
+  // `max-height`.
   min-width: 0;
   overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
   overflow: clip; // creates no scroll container, so focus cannot shift it
@@ -894,6 +910,13 @@
 
 .modal-body {
   flex: 1;
+  // Flex item of `.modal-dialog` (column direction) — stated explicitly
+  // rather than relying on which `overflow` value is in play (hub ADR-0041
+  // §4 amendment), matching `.rail-decor`/`.segmented.agenda-filter` below.
+  // Flagged as a gap by T347 (comments-and-pairs only, no new declarations)
+  // and left for the screen's own migration to fix — this is that fix
+  // (T343 `risks[1]`).
+  min-height: 0;
   overflow-y: auto;
   padding: var(--space-5);
 }

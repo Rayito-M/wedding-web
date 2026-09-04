@@ -453,7 +453,22 @@
   `.stylelint-baseline.json`, `src/app/shared/notification-bell/notification-bell.scss`
 
 ### T343 — Migrate the four oversized screens onto the layer
-- **Status:** todo
+- **Status:** in-progress — `config-manager` landed 2026-09-04 (one screen per PR, ADR-0041 §8):
+  measured `:host` (shell, unconditional) and its only `@media` (opens at 964, not the task's
+  originally-cited 928 — file grew via T347's own comments, no other discrepancy) against the
+  source before migrating, confirming the corrected premise (shell at every breakpoint, the
+  `seating-plan` shape). Route gets `footPinned: true` — deliberately **not** `headPinned`: this
+  screen registers no `*appScreenHead`/`*appScreenFoot`, and `headPinned` alone strands `main`'s
+  content under the fixed header (`[class.after-head]` assumes a registered head supplies its own
+  clearance) — reproduced empirically via the new e2e spec before landing on `footPinned`, which
+  `pinned()` treats identically for scroll ownership with no clearance coupling; not documented
+  anywhere in the ADRs and worth a hub follow-up (see the report's `risks[]`). `.content` now uses
+  `screen-scroll()`; the `.modal-body` `min-height: 0` gap T347 flagged (`risks[1]`) is fixed.
+  Still **8.81 kB over budget** (16.81 kB of 16.78 kB before — a small net *increase*, from closing
+  two genuine correctness gaps the ADR's own `overflow-x` pairing and `min-height: 0` discipline
+  require, not from any trim): per the task's own instruction this is reported, not gutted to hit
+  a number. `guest-manager`, `milestones`, `seating-plan` remain — see
+  `tasks/28-phase-x-layout-layer/reports/T343.json` for full evidence.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T340, T341

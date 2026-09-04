@@ -1,0 +1,160 @@
+{
+  "task": "T343",
+  "status": "partial",
+  "summary": "Migrated config-manager only (explicit scope) onto the layout layer: re-measured source (task cited wrong lines; classification unchanged). Route gets footPinned:true, not headPinned, which strands content under the fixed header with no head registered — reproduced/fixed before commit, see risks[]. .content uses screen-scroll(); dead :host flex/min-height shed; .modal-body gets min-height:0 (T347 risks[1]). New e2e spec lands here, verified 3 themes x 3 locales x 2 widths via Playwright. Still 8.81 kB over budget (was 8.78) — a correctness fix, not gutted. Other screens untouched.",
+  "acceptance": [
+    {
+      "criterion": "Migrated in descending size order — config-manager, guest-manager, milestones, seating-plan — one screen per PR, each independently shippable and revertible (ADR-0041 §8)",
+      "met": "partial",
+      "evidence": "This PR touches only config-manager (the largest, first in the stated order) and its own route entry/spec — git diff --stat shows e2e/support/api-mocks.ts, e2e/support/auth.ts, src/app/app.routes.ts, src/app/screens/config-manager/config-manager.scss, plus new e2e/layout/config-manager.spec.ts. No guest-manager/milestones/seating-plan file is touched.",
+      "notes": "guest-manager, milestones, seating-plan are deliberately not attempted — explicit prompt scope, listed in remaining[]."
+    },
+    {
+      "criterion": "Each screen classified flow or shell per breakpoint, measured against its own source — not against an ADR sentence. Applied with the screen-scroll() mixin (%app-screen/%screen-footer do not exist) rather than re-authored",
+      "met": "partial",
+      "evidence": "config-manager: measured before editing — grep -n \"@media|overflow-y: auto|:host\" config-manager.scss showed :host at lines 19-28 (pre-edit) with unconditional overflow:hidden/clip, one @media at line 964 (pre-edit); confirmed shell-at-every-breakpoint, the seating-plan shape, not milestones' per-breakpoint one. .content now `@include layout.screen-scroll;` (config-manager.scss:215, unconditional — not inside respond-to()).",
+      "notes": "guest-manager/milestones/seating-plan not classified or migrated in this PR."
+    },
+    {
+      "criterion": "Corrected premise, 2026-09-04 — re-measure each screen before migrating; this task's list was wrong once already",
+      "met": "partial",
+      "evidence": "Re-measured config-manager against the current source rather than trusting the task's own cited line numbers. Two discrepancies found and reported: :host is at lines 19-28 pre-edit (task said 14-15), and the only @media opens at line 964 pre-edit (task said 928). Both are explained by T347's earlier comment-only pass growing the file, not a wrong classification — the shape (shell at every breakpoint, .content/.modal-body as panes) the task described is exactly what the source shows.",
+      "notes": "Only config-manager was re-measured. guest-manager (already scroll-migrated by T341/T348, not yet budget-migrated by T343), milestones and seating-plan were not re-measured in this PR — their numbers in the task/ADR text are unverified by this session."
+    },
+    {
+      "criterion": "Each drops below the 8 KB anyComponentStyle budget",
+      "met": false,
+      "evidence": "pnpm build (production) before this PR's edits: config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.78 kB with a total of 16.78 kB. After this PR's edits (typecheck/lint/test/build all re-run clean, see checks below): config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.81 kB with a total of 16.81 kB — essentially flat, a ~30-byte increase from adding the missing overflow-x pair to .content (screen-scroll()) and the missing min-height: 0 to .modal-body, both genuine ADR-0041 §4 correctness fixes, against a small reduction from :host shedding its now-dead flex: 1; min-height: 0.",
+      "notes": "The task explicitly anticipates and authorizes this outcome rather than gutting the screen to hit the number (\"A migration that is correct and 2 kB over is a better outcome than a screen rewritten past what this task authorizes\"): reported here as a finding, not silently missed. Closing the remaining ~8.8 kB would need a restructure this task does not authorize — see decisions_needed[]."
+    },
+    {
+      "criterion": "No visual change intended: each PR is checked against the previous build in all three themes and all three locales, at 360px and at ≥90px",
+      "met": "partial",
+      "evidence": "config-manager only, via Playwright (no interactive browser available in this environment): a throwaway spec (not committed) drove /config across all 3 data-theme values (terracotta/mauve/verdeagua) x all 3 languages (es/en/fr) x 2 viewports (360x740, 1280x800) = 18 combinations, all passing (nav visible, main.scrollHeight <= parent.clientHeight held in every case). Two full-page screenshots taken by hand (1280x800 desktop rail view and 360x740 mobile pills view, both on the seeded 'dietary' section) and visually reviewed — header/nav/content/mobile-bar/tab-bar all render correctly, no overlap or clipping.",
+      "notes": "This is a Playwright-driven check, not a real device — stated plainly per the prompt's own instruction not to claim a device check that wasn't done. guest-manager/milestones/seating-plan not checked (not migrated in this PR)."
+    },
+    {
+      "criterion": "Each screen's T349 layout-regression spec lands in the same PR as that screen's migration, not batched afterwards",
+      "met": "partial",
+      "evidence": "New e2e/layout/config-manager.spec.ts added in this PR, two tests: 'the section nav stays put while the content pane scrolls, and the content itself moves' and \"a pinned route's main never outgrows the space its flex parent gives it\". Written alongside the migration (drafted before the SCSS/route edits landed, run against the pre-migration commit first — see next bullet).",
+      "notes": "Only config-manager's spec lands here. guest-manager already has its own (T348); milestones and seating-plan's specs are not attempted (they land with their own T343 PRs, per T349's own sequencing note)."
+    },
+    {
+      "criterion": "Each spec is proven by failing first — checked out against the commit before its fix and watched to fail",
+      "met": "partial",
+      "evidence": "Both config-manager.spec.ts tests were run against the pre-migration commit (before any config-manager.scss/app.routes.ts edit in this PR): `npx playwright test e2e/layout/config-manager.spec.ts` -> 10/10 passed on all 5 projects, i.e. they did NOT fail first. Documented honestly in the spec's own header comment and explained below.",
+      "notes": "Unlike guest-manager (an active, provable regression T341/T348 fixed), config-manager's pre-migration :host already carried its own local height:100%/overflow:clip shell, which already made both invariants hold — the screen owned its shell correctly, just via a declaration site (:host itself) ADR-0042 §2 has since moved to route data. This PR's change is a genuine formalisation, not a fix for an observable defect, so — like T348's own footer-truncation.spec.ts precedent — these specs cannot demonstrate a fail-before/pass-after difference in this environment and ship as forward-looking regression guards. The spec DID catch a real, different defect mid-development: an initial headPinned:true attempt (instead of footPinned) failed all 8 mobile-project cases (every .pill/.rail-item click intercepted by the fixed header) — caught and fixed before commit, see risks[] and the spec's own header comment."
+    },
+    {
+      "criterion": "Each screen is checked in a real browser before its PR is called done — npx playwright test e2e/layout plus a look at the screen itself",
+      "met": true,
+      "evidence": "npx playwright test e2e/layout run 8 times across this session (both against pre-migration and post-migration code): final state is 35/35 (25 pre-existing + 10 new) across iPhone SE/12/14 (WebKit), Pixel 7 (Chromium) and Desktop Chrome, run clean 7 of 8 times; the 1 exception was a single unrelated flake in the pre-existing guest-list-scroll.spec.ts on Desktop Chrome (not a config-manager test, not reproduced on re-run — matches the parallel-load flake class T349's own report already investigated). Also visually reviewed via two full-page Playwright screenshots (desktop rail + mobile pills, both on the seeded long 'dietary' section) — see the bullet above.",
+      "notes": "Playwright's WebKit/Chromium are real browser engines (T263's own framing), not a physical device."
+    },
+    {
+      "criterion": "Watch for the scroll-ownership consequence on every screen — a screen giving up its scroller loses scroll observation and control; check before migrating, not after",
+      "met": "partial",
+      "evidence": "config-manager: `grep -n \"(scroll)|scrollTop|scrollIntoView|scrollTo\\b\" config-manager.ts config-manager.html` returns no matches — the screen binds no scroll handler and reads/writes no scrollTop, so the T348 IntersectionObserver/ScreenChromeService repair mechanisms were not needed here.",
+      "notes": "Only config-manager checked. guest-manager already went through this in T348. milestones and seating-plan (the task's own text: 'milestones and config-manager each declare three scrollers and seating-plan two') are not checked in this PR — the next PR to touch either must grep them before migrating, per this same bullet."
+    },
+    {
+      "criterion": "Two inherited min-height: 0 gaps land with the screen that owns them (T347 risks[1]): config-manager.scss's .modal-dialog .modal-body and milestones.scss's .detail-body",
+      "met": "partial",
+      "evidence": "config-manager.scss's .modal-body now carries an explicit min-height: 0 (config-manager.scss, .modal-body rule) with a comment explaining the fix and citing T347's flag. milestones.scss's .detail-body gap is untouched — out of scope for this PR (lands with the milestones PR, per the prompt's own instruction).",
+      "notes": "Could not construct an e2e reproduction that fails before/passes after this specific fix: the modal's own content (5 short fields) never gets tall enough to exercise .modal-body's max-height:90vh bound, and CSS Flexbox's automatic-minimum-size rule already zeroes min-height on a flex item whose relevant-axis overflow is auto (not clip) — unlike main's clip case, .modal-body's overflow-y:auto likely already got min-height:0 for free. Fixed anyway per the task's explicit instruction (T347 flagged it, comments-and-pairs only, left for this migration to actually fix) and per ADR-0041 §4's own closing sentence ('state it rather than inheriting it')."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass"
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 559,
+        "failing": 2
+      },
+      "after": {
+        "total": 559,
+        "failing": 2
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 795.63 kB of 500 kB (pre-existing, unrelated to this task)",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget: 11.19 kB of 8 kB (pre-existing, not this PR's screen)",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget: 11.49 kB of 8 kB (pre-existing, not this PR's screen)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget: 9.60 kB of 8 kB (pre-existing, not this PR's screen)",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget: 16.81 kB of 8 kB (this PR's screen — was 16.78 kB before, see acceptance bullet 4)"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/layout/config-manager.spec.ts"
+    ],
+    "modified": [
+      "e2e/support/api-mocks.ts",
+      "e2e/support/auth.ts",
+      "src/app/app.routes.ts",
+      "src/app/screens/config-manager/config-manager.scss",
+      "tasks/28-phase-x-layout-layer/TASKS.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts",
+      ".claude/settings.json"
+    ]
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "e2e/support/api-mocks.ts",
+      "why": "config-manager's new T349 spec needs the app to render real data on /config — GET /v1/config and GET /v1/users were unmocked (the e2e suite fails closed with a 501 catch-all on any unmocked endpoint by design). Added weddingConfigAdmin()/COUPLE_USERS fixtures and two page.route() registrations, additive only, no existing mock changed. Judged as genuinely required by this PR's own T349 spec rather than a separate task, but flagged here for visibility since it is shared test infrastructure, not config-manager itself."
+    },
+    {
+      "path": "e2e/support/auth.ts",
+      "why": "Threaded a new dietaryPreferencesCount option through signInAsCouple() to installApiMocks() so the new spec can seed a long enough dietary section to overflow .content at every target viewport. One added optional field on an existing options object, default unchanged for every other caller."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "hub ADR-0042 §2's headPinned/footPinned mechanism silently breaks main's fixed-header clearance when headPinned is set on a route whose screen registers no *appScreenHead template. main's own [class.after-head] (private-layout.html) drops the 52px fixed-header margin-top whenever chrome().headPinned is truthy, on the unstated assumption that a registered *appScreenHead always supplies that clearance itself via .screen-head's own margin-top. config-manager has nothing natural to project as a head, so an initial headPinned:true attempt stranded every interactive element under the fixed app-screen-header (reproduced: 8/10 new spec cases failed, every .pill/.rail-item click intercepted). footPinned:true achieves the same scroll-ownership yield (pinned() is headPinned || footPinned) without the clearance coupling, and was used instead — but this is a workaround, not a documented supported path, and nothing in ADR-0042 says a screen may pin without registering a template, or that footPinned is the safe choice for it.",
+      "surfaces_at": "T343's seating-plan PR is the immediate exposure: ADR-0042 §Context ¶2 / T343's own corrected acceptance text instructs 'headPinned: true on its route, screen-scroll() outside any respond-to()' for seating-plan, and seating-plan.html currently registers no *appScreenHead or *appScreenFoot either (grep confirmed, 2026-09-04) — following that instruction literally will very likely reproduce this exact regression. milestones is a second candidate for the same trap once its own migration reaches route data. Worth a hub ADR-0042 amendment (or an explicit T343 correction) stating the headPinned/footPinned choice depends on whether a head/foot is actually registered, not just on which single-scroller effect is wanted."
+    },
+    {
+      "risk": "config-manager.scss remains 8.81 kB over the 8 kB anyComponentStyle budget after a complete, correct scroll/shell migration — the gap did not come from unmigrated shell/scroll CSS, so no further layer-layer work will close it. T344 ('anyComponentStyle becomes an error') depends on 'T343 (all four screens under budget first)'; if the other three screens close their own (smaller) gaps but config-manager's ~8.8 kB gap is never separately planned for, T344 cannot land as written.",
+      "surfaces_at": "T344, once guest-manager/milestones/seating-plan are migrated — see decisions_needed[] for the options."
+    }
+  ],
+  "commits": [
+    "3f59c6254d31adcf02486c67b39708914e5c2a58"
+  ],
+  "remaining": [
+    "guest-manager: migrate onto the layout layer (T343) — already scroll-migrated by T341/T348, still needs its own budget-focused PR (currently 11.19 kB of 8 kB)",
+    "milestones: migrate onto the layout layer (T343), including the milestones.scss .detail-body min-height: 0 gap (T347 risks[1]) — currently 11.49 kB of 8 kB",
+    "seating-plan: migrate onto the layout layer (T343) as an unconditional shell — currently 9.60 kB of 8 kB, and read risks[0] above before setting headPinned on its route",
+    "config-manager: close the remaining 8.81 kB anyComponentStyle budget gap — not authorized by this task to gut or restructure the screen to reach it; needs a scoping decision, see decisions_needed[]"
+  ],
+  "decisions_needed": [
+    {
+      "question": "config-manager.scss is 16.81 kB against an 8 kB anyComponentStyle budget, and a correct, complete layout-layer migration only moved it from 16.78 kB — the gap is not scroll/shell CSS. How should the remaining ~8.8 kB be closed, given T344 depends on all four T343 screens being under budget?",
+      "options": [
+        "Extract the local 'add couple member' modal (.modal-overlay/.modal-dialog/.modal-header/.modal-body/.modal-footer and its ~15 form-field rules, roughly a fifth of the file by rule count) into its own standalone component, the same shape as the shared app-modal it already mirrors structurally. Genuinely reduces config-manager.scss's own anyComponentStyle count; costs a new component file and a review of whether it duplicates app-modal enough to reuse it instead — a design-system question this task cannot answer alone.",
+        "Raise config-manager's own anyComponentStyle budget via a per-file Angular budget override (angular.json supports per-path budgets), accepting it as a structurally large screen (7 sections, a full CRUD editor) rather than forcing parity with the other three. Cheap and immediate; weakens the blanket 8 kB rule ADR-0041 §7 states, and needs a decision on whether that is acceptable system-wide precedent before T344 flips the budget to an error.",
+        "Leave it over budget and scope T344 to exclude config-manager (or delay T344 until a later, separately-scoped cleanup). No new work now; T344 as currently written ('T343: all four screens under budget first') would need its own acceptance text amended to match, or it cannot be marked done."
+      ],
+      "recommendation": "Option 1 (extract the modal) is the most consistent with this phase's own diagnosis — ADR-0041 §Context: '96% of the stylesheet volume is per-screen code that no other screen can reuse', and a full create-user modal is exactly that. It is also the only option that does not touch ADR-0041 §7's budget rule itself. It is a new component, though, which this task is not authorized to create unilaterally.",
+      "blocking": false,
+      "needed_by": "T344"
+    }
+  ]
+}
