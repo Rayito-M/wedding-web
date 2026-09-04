@@ -393,8 +393,18 @@
         `boundingClientRect().y`, scroll the list region, assert both are unchanged and the first
         row's `y` has decreased. Fails against `9474809^`
       - **A `clip` flex item does not outgrow its parent** (hub ADR-0041 §4): assert
-        `main.scrollHeight <= main.clientHeight` on a pinned route. This is the `min-height: 0`
-        trap, and T347 is about to convert 47 more sites that can hit it. Fails against `9474809^`
+        `main.scrollHeight <= app-private-layout.clientHeight` — the space `main`'s flex parent
+        actually gave it. This is the `min-height: 0` trap, and T347 is about to convert 47 more
+        sites that can hit it. Fails against `9474809^`.
+        **Corrected 2026-09-04.** This bullet originally said
+        `main.scrollHeight <= main.clientHeight`, which is *always* true and can never distinguish
+        broken from fixed — measured at `4097 = 4097` while broken and `329 = 329` while fixed.
+        That was an error in the task, not in the implementation: without `min-height: 0` the flex
+        algorithm's content-based automatic minimum grows `main`'s **own** box, so its `clientHeight`
+        balloons with its content and there is nothing left for `scrollHeight` to exceed. The
+        overflow surfaces one level up, against the viewport-pinned parent that does *not* grow. The
+        bullet's title was right; its assertion named the wrong pair of properties. Deviation
+        reported and accepted — see this phase's `reports/T263.json`
   - The suite must not depend on a live `wedding-api`: either stub network at the Playwright
     layer (`page.route`) or document precisely what must be running. A suite that only passes on
     the author's machine is worse than none.
