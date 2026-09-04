@@ -178,10 +178,16 @@ export const routes: Routes = [
           roles: ['groom', 'bride'],
           tabBar: true,
           topNav: true,
-          // Hub ADR-0042 §1/§2, T341 — the title/stat header and the list
-          // footer are pinned via `*appScreenHead` / `*appScreenFoot`
-          // (`guest-manager.html`); `PrivateLayout` yields scroll ownership
-          // to `.screen-scroll` for this route because of these two flags.
+          // Hub ADR-0042 §1/§2, T341, corrected by ADR-0043 §5 (T355) — the
+          // title/stat header and the list footer are pinned via
+          // `*appScreenHead` / `*appScreenFoot` (`guest-manager.html`); that
+          // is all these two flags declare. Scroll ownership is not among
+          // their effects (ADR-0043 §1/§2): this route sets no
+          // `screenScroll`, so it is flow and `main` is its scroller —
+          // correct, because the screen shed its own scroll container in
+          // T341 and `.screen-head`/`.screen-foot` are flex siblings of
+          // `main`, never descendants, so pinning is unaffected by which box
+          // below them scrolls.
           headPinned: true,
           footPinned: true,
           navLabel: 'nav.guests',

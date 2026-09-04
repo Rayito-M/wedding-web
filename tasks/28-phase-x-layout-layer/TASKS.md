@@ -581,7 +581,28 @@
   `tasks/28-phase-x-layout-layer/reports/T343.json` `decisions_needed[0]`
 
 ### T355 — `guest-manager` after T352: confirm the classification, correct the comment, root-cause the flake
-- **Status:** todo
+- **Status:** done — all three items closed. **(1)** Classification confirmed via Playwright (no
+  device available this session — see the report for exactly what was and was not verified that
+  way): `.scrolled` header treatment reads correctly in all 3 themes at 360px and ≥900px, and
+  T341's pinned head/foot behaviour re-verified at both widths across all 3 locales (fresh
+  navigation per locale — `TranslateLanguageService` has no in-session switch on this screen, per
+  T352's own finding). **(2)** `app.routes.ts:181-184`'s comment corrected; it was the only other
+  scroll-ownership comment in the file besides `config-manager`'s (already correct, from T352). **(3)**
+  Root-caused, and it is a different bug than the leading hypothesis. Reproduced naturally twice
+  (Desktop Chrome once, Pixel 7 once, under real 5-project parallel load — not forced): the walk was
+  never reached either time. `guest-list-scroll.spec.ts`'s own `toHaveCount(20)` observed the row
+  count jump straight from 0 to 40, meaning `guest-manager.ts`'s `IntersectionObserver` sentinel can
+  report its initial intersection state, and fire `loadMore()` once, before this route's layout has
+  settled under load — the discriminating measurement kills the "walk lands on `body`" hypothesis
+  outright (it never got a chance to run). Not reproducible on demand via CPU throttling (16
+  attempts) or added network jitter (11 attempts) alone, so the exact browser-internal trigger is
+  unproven; the sentinel/`ScreenChromeService` are untouched (T355's own non-goal short of proof).
+  Fixed at the test layer: `waitForStableRowCount` accepts whichever page-aligned count the list has
+  genuinely settled on before asserting growth, and the ancestor walk (`findOverflowingAncestor`,
+  shared by both tests) now polls until it finds a box inside the layout rather than inspecting
+  geometry once, and every scroll asserts it actually moved. Proven clean at **25/25** full-suite
+  parallel runs after the fix (up from a baseline that flaked 2 times across roughly 25 such runs
+  before it) — exceeds T349's own 8+ bar. Full accounting: `tasks/28-phase-x-layout-layer/reports/T355.json`.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T352 (landed, `e11d826`)
