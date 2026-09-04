@@ -204,6 +204,19 @@ export const routes: Routes = [
           roles: ['groom', 'bride'],
           tabBar: true,
           topNav: true,
+          // Hub ADR-0043 §1/§5 — shell at every breakpoint, the same shape
+          // as `config-manager`, not `milestones`' per-breakpoint case
+          // (`seating-plan.scss`'s own header comment / T347). This screen
+          // registers no `*appScreenHead` / `*appScreenFoot` — nothing of
+          // its own is pinned by `PrivateLayout` — so it declares neither
+          // pin flag. `screenScroll: true` is the only key that makes
+          // `main` yield (`overflow-y: clip`) to `PrivateLayout`'s own
+          // `.screen-scroll`; per hub ADR-0043 §4a that box never scrolls
+          // itself — it only gives `:host`'s `height: 100%` a resolved
+          // height to size against. `.unassigned-body` and `.tables` keep
+          // their own, independent scrollers exactly as before this flag
+          // existed; the two-pane split stays this screen's to own.
+          screenScroll: true,
           navLabel: 'nav.seating',
         } satisfies RouteChromeData,
       },

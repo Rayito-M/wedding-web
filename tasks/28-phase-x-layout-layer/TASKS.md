@@ -772,7 +772,7 @@
   `tasks/28-phase-x-layout-layer/reports/T355.json` `risks[0]`, `T348.json`
 
 ### T343 — Migrate the four oversized screens onto the layer
-- **Status:** in-progress — `config-manager` landed 2026-09-04 (one screen per PR, ADR-0041 §8):
+- **Status:** done — `config-manager` landed 2026-09-04 (one screen per PR, ADR-0041 §8):
   measured `:host` (shell, unconditional) and its only `@media` (opens at 964, not the task's
   originally-cited 928 — file grew via T347's own comments, no other discrepancy) against the
   source before migrating, confirming the corrected premise (shell at every breakpoint, the
@@ -867,6 +867,49 @@
   already held. `seating-plan` (the same `.unassigned-body`/`.tables` shape, and hub ADR-0043 §5's
   own worked example of the identical answer) remains and is a separate, later PR — full evidence in
   `tasks/28-phase-x-layout-layer/reports/T343-milestones.json`.
+  **`seating-plan` landed 2026-09-04 — the last of the four, and T343 is now complete.** Re-measured
+  against source before touching anything, confirming ADR-0043 §5's own worked example exactly:
+  `:host`/`.seating-plan` are `height: 100%; overflow: clip` unconditionally, the file's only
+  `@media` opened at line 522 (T347's own comments moved it from 490), and `.unassigned-body`/
+  `.tables` (217/306 at T347's time) are unconditional panes, not gated by that query — shell at
+  every breakpoint, the `config-manager` shape, not `milestones`'. Route now sets
+  `screenScroll: true`, no pin flags (`seating-plan.html` registers neither
+  `*appScreenHead`/`*appScreenFoot`, reconfirmed). `@media (min-width: 900px)` →
+  `@include layout.respond-to('lg')`; 8 raw-px `margin`/`padding`/`font-size` sites that exactly
+  matched an existing token now use it (values with no scale match — the 9px/14px pill paddings, the
+  7px dot size, the 18px table-name font, the 40px `.table-guests` min-height — stay literal, same
+  precedent as the other three slices); three genuinely duplicated blocks (`.stat-label`,
+  `.section-label`, `.table-count` — each a byte-for-byte copy of `%eyebrow-wide`'s four
+  declarations) now `@extend` it instead of hand-copying. `.unassigned-body` gains an explicit
+  `min-height: 0` (T347 `risks[1]`-shaped gap, same "state it, don't inherit it" treatment as
+  `milestones.scss`'s `.detail-body` — the box already scrolled correctly via its own `overflow-y:
+  auto`, so this is not a bug fix). `:host` sheds the now-dead `flex: 1; min-height: 0` pair
+  (`.screen-scroll` takes over that flex-item role one level up once `screenScroll: true` is set,
+  the same finding `config-manager`'s own slice made); `.seating-plan` keeps its own `flex: 1;
+  min-height: 0` unchanged, since it is still a flex item of `:host`'s own flex container regardless
+  of the ancestor chain change. stylelint's own count for this file dropped from 31/1
+  (`declaration-property-value-disallowed-list`/`media-feature-name-disallowed-list`) to 25/0,
+  baseline refreshed (557 pre-existing repo-wide, confirmed the other 556 entries are pure
+  key-reordering). **Closes below budget for the first time of the four: 9.60 kB → 9.45 kB (1.59 kB
+  over → 1.45 kB over)** — a genuine net reduction (the `%eyebrow-wide` dedup outweighed the token
+  substitutions' textual cost here), still over the 8 kB warning and reported honestly rather than
+  gutted to close the remaining 1.45 kB, per this task's own repeated instruction. New
+  `e2e/layout/seating-plan.spec.ts` (3 cases), proven failing first in a disposable `git worktree` at
+  the prior commit (never `git stash`) — two cases fail there on `mainOverflowY: 'auto'`, exactly the
+  defect this slice fixes; the third (the screen's own internal header/tabs-pinning and
+  pane-independence invariant) passes unchanged before and after, because `seating-plan.scss`'s own
+  local shell already provided it, the same shape `config-manager.spec.ts` documents for its own
+  screen. **Finding, not this task's to resolve: `/seating` is absent from both `environment.ts`'s
+  and `environment.prod.ts`'s `enabledRoutes`**, so `routeEnabledGuard` bounces it to `/` and
+  `tab-bar.ts` shows no nav entry for it either — the route is unreachable in every shipped
+  configuration today, consistent with `seating-plan.ts`'s own class doc ("explicitly out of AppShell
+  wiring") but not something this task's scope authorizes changing. The new spec self-skips (rather
+  than self-failing) when the route is unreachable, so `pnpm test:e2e` stays green against the
+  shipped app and starts asserting for real the moment a human decides to enable the route; the
+  fail-first/pass-after proof above was captured with `'seating'` added to `environment.ts` locally
+  for the duration of each verification run and reverted before every commit — see
+  `tasks/28-phase-x-layout-layer/reports/T343-seating-plan.json` `decisions_needed[]` for the
+  question this raises. Full evidence in that same report.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T340, T341, **T352** (landed) and **T358** (the pane-owning model, hub ADR-0043

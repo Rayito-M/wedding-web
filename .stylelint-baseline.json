@@ -42,31 +42,30 @@
   "src/app/screens/privacy-policy/privacy-policy.scss": {
     "declaration-property-value-disallowed-list": 2
   },
+  "src/app/screens/rsvp-create/rsvp-create.scss": {
+    "declaration-property-value-disallowed-list": 26,
+    "media-feature-name-disallowed-list": 1
+  },
   "src/app/screens/rsvp-edit/rsvp-edit.scss": {
     "declaration-property-value-disallowed-list": 13,
     "media-feature-name-disallowed-list": 1
   },
-  "src/app/screens/rsvp-create/rsvp-create.scss": {
-    "declaration-property-value-disallowed-list": 26,
-    "media-feature-name-disallowed-list": 1
+  "src/app/screens/seating-plan/seating-plan.scss": {
+    "declaration-property-value-disallowed-list": 25
   },
   "src/app/screens/schedule/schedule.scss": {
     "declaration-property-value-disallowed-list": 7,
     "media-feature-name-disallowed-list": 1
   },
-  "src/app/screens/travel/travel.scss": {
-    "declaration-property-value-disallowed-list": 23,
-    "media-feature-name-disallowed-list": 1
-  },
-  "src/app/screens/seating-plan/seating-plan.scss": {
-    "declaration-property-value-disallowed-list": 31,
+  "src/app/screens/welcome/welcome.scss": {
+    "declaration-property-value-disallowed-list": 33,
     "media-feature-name-disallowed-list": 1
   },
   "src/app/screens/social-callback/social-callback.scss": {
     "declaration-property-value-disallowed-list": 2
   },
-  "src/app/screens/welcome/welcome.scss": {
-    "declaration-property-value-disallowed-list": 33,
+  "src/app/screens/travel/travel.scss": {
+    "declaration-property-value-disallowed-list": 23,
     "media-feature-name-disallowed-list": 1
   },
   "src/app/shared/auth-heading/auth-heading.scss": {
@@ -78,11 +77,11 @@
   "src/app/shared/choice-card/choice-card.scss": {
     "declaration-property-value-disallowed-list": 1
   },
-  "src/app/shared/country-code-select/country-code-select.scss": {
-    "declaration-property-value-disallowed-list": 8
-  },
   "src/app/shared/consent-banner/consent-banner.scss": {
     "declaration-property-value-disallowed-list": 1
+  },
+  "src/app/shared/country-code-select/country-code-select.scss": {
+    "declaration-property-value-disallowed-list": 8
   },
   "src/app/shared/delegate-chips/delegate-chips.scss": {
     "declaration-property-value-disallowed-list": 1
@@ -90,32 +89,32 @@
   "src/app/shared/guest-seg/guest-seg.scss": {
     "declaration-property-value-disallowed-list": 1
   },
-  "src/app/shared/input/input.scss": {
-    "declaration-property-value-disallowed-list": 1
-  },
   "src/app/shared/language-selector/language-selector.scss": {
     "declaration-property-value-disallowed-list": 7
   },
-  "src/app/shared/modal/modal.scss": {
-    "declaration-property-value-disallowed-list": 8
+  "src/app/shared/input/input.scss": {
+    "declaration-property-value-disallowed-list": 1
   },
   "src/app/shared/notification-bell/notification-bell.scss": {
     "declaration-property-value-disallowed-list": 15
   },
-  "src/app/shared/pill/pill.scss": {
-    "declaration-property-value-disallowed-list": 2
+  "src/app/shared/modal/modal.scss": {
+    "declaration-property-value-disallowed-list": 8
   },
   "src/app/shared/photo-placeholder/photo-placeholder.scss": {
     "declaration-property-value-disallowed-list": 1
   },
-  "src/app/shared/profile-modal/profile-modal.scss": {
-    "declaration-property-value-disallowed-list": 8
+  "src/app/shared/pill/pill.scss": {
+    "declaration-property-value-disallowed-list": 2
   },
   "src/app/shared/relation-fields/relation-fields.scss": {
     "declaration-property-value-disallowed-list": 1
   },
   "src/app/shared/rsvp-editor/rsvp-editor.scss": {
     "declaration-property-value-disallowed-list": 17
+  },
+  "src/app/shared/profile-modal/profile-modal.scss": {
+    "declaration-property-value-disallowed-list": 8
   },
   "src/app/shared/rsvp-status-tick/rsvp-status-tick.scss": {
     "declaration-property-value-disallowed-list": 3
@@ -124,32 +123,32 @@
     "declaration-property-value-disallowed-list": 14,
     "media-feature-name-disallowed-list": 1
   },
+  "src/app/shared/tab-bar/tab-bar.scss": {
+    "declaration-property-value-disallowed-list": 17
+  },
   "src/app/shared/stat-tile/stat-tile.scss": {
     "declaration-property-value-disallowed-list": 2
+  },
+  "src/app/shared/stay-card/stay-card.scss": {
+    "declaration-property-value-disallowed-list": 4
   },
   "src/app/shared/status-pill/status-pill.scss": {
     "declaration-property-value-disallowed-list": 4
   },
-  "src/app/shared/task-row/task-row.scss": {
-    "declaration-property-value-disallowed-list": 3
-  },
-  "src/app/shared/tab-bar/tab-bar.scss": {
-    "declaration-property-value-disallowed-list": 17
-  },
   "src/app/shared/textarea/textarea.scss": {
     "declaration-property-value-disallowed-list": 1
   },
-  "src/app/shared/stay-card/stay-card.scss": {
-    "declaration-property-value-disallowed-list": 4
+  "src/app/shared/task-row/task-row.scss": {
+    "declaration-property-value-disallowed-list": 3
+  },
+  "src/app/shared/timeline-item/timeline-item.scss": {
+    "declaration-property-value-disallowed-list": 21
   },
   "src/app/shared/toast-stack/toast-stack.scss": {
     "media-feature-name-disallowed-list": 1
   },
   "src/app/shared/toast/toast.scss": {
     "declaration-property-value-disallowed-list": 1
-  },
-  "src/app/shared/timeline-item/timeline-item.scss": {
-    "declaration-property-value-disallowed-list": 21
   },
   "src/app/shared/toggle/toggle.scss": {
     "declaration-property-value-disallowed-list": 8

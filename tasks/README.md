@@ -218,7 +218,7 @@ neither sort nor uniquely name them.
 | **T340** | `_layout.scss`: page shells, scroll ownership, named breakpoints | done | `28-phase-x-layout-layer` |
 | **T341** | The layout owns the pinned regions; `main` stays the one scroller | done | `28-phase-x-layout-layer` |
 | **T342** | stylelint, because guidance alone already failed once | done | `28-phase-x-layout-layer` |
-| **T343** | Migrate the four oversized screens onto the layer | in-progress | `28-phase-x-layout-layer` |
+| **T343** | Migrate the four oversized screens onto the layer | done | `28-phase-x-layout-layer` |
 | **T344** | `anyComponentStyle` becomes an error | todo | `28-phase-x-layout-layer` |
 | **T345** | The nav derives from the route tree, and stops failing open | done | `28-phase-x-layout-layer` |
 | **T346** | Split `TASKS.md` into `tasks/<phase>/`, with an index | done | `29-phase-z-task-file-ergonomics` |

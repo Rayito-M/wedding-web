@@ -1,35 +1,36 @@
 @use '../../../styles/tokens' as t;
 @use '../../../styles/primitives';
+@use '../../../styles/layout';
 
 // Per design reference `ScreenSeatingPlan.jsx` (desktop two-panel) /
 // `ScreenSeatingPlanMobile.jsx` (segmented Unseated/Tables) — same file in the
-// DS kit, split here purely by `@media (min-width: 900px)`, following the
-// precedent set by `config-manager` (rail vs. pills). This screen owns its
-// own header markup (not `app-screen-header`/`HeaderService`) since T229 is
-// scaffold-only and explicitly out of AppShell wiring.
+// DS kit, split here purely by `@include layout.respond-to('lg')`, following
+// the precedent set by `config-manager` (rail vs. pills). This screen owns
+// its own header markup (not `app-screen-header`/`HeaderService`) since T229
+// is scaffold-only and explicitly out of AppShell wiring.
 //
-// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit) —
-// **contradicts hub ADR-0042 §2's characterization.** `:host`/`.seating-plan`
-// (`height: 100%; overflow: hidden`, below) and both `.unassigned-body` /
-// `.tables`'s `overflow-y: auto` (T347 verified: lines then at 217/306, now
-// shifted by this task's own edits) are all **unconditional** — none of them
-// sits inside the `@media (min-width: 900px)` block (only `.body`'s
-// `flex-direction` and panel widths change there; git blame `d6ae1fa`/
-// `192f2e1` predate ADR-0042 and the file hasn't changed since). This screen
-// is shell at every breakpoint, including mobile — `.body` stacks
-// `.unassigned`/`.tables` and JS-driven tabs (`.mobile-hidden`) show one at a
-// time, each with its own always-on internal scroller — not "flow on a
-// phone, shell at `≥900px`" as ADR-0042 §2 states ("both of seating-plan's
-// overflow-y: auto declarations sit inside @media (min-width: 900px)").
-// Flagged in T347's report as an ADR correction, not resolved here (no
-// restructuring).
+// Scroller classification (hub ADR-0041 §3/§4, settled by hub ADR-0043 §5;
+// T343, migrated onto the layer): shell at every breakpoint, including
+// mobile — the same shape as `config-manager`, not `milestones`'
+// per-breakpoint case. `.body` stacks `.unassigned`/`.tables` and JS-driven
+// tabs (`.mobile-hidden`) show one at a time, each with its own always-on
+// internal scroller. The route (`app.routes.ts`) declares
+// `screenScroll: true`, so `main` yields to `PrivateLayout`'s own
+// `.screen-scroll` unconditionally. Per hub ADR-0043 §4a, `.screen-scroll`
+// never scrolls — it only bounds `:host`'s `height: 100%`. `.unassigned-body`
+// and `.tables` keep their own, independent scrollers; the two-pane split
+// stays this screen's to own, not the layout's.
 :host {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  // Flex item of `main` (private-layout.scss, column). Already explicit —
-  // confirmed correct as-is (hub ADR-0041 §4 amendment, T347 audit).
-  min-height: 0;
+  // `flex: 1; min-height: 0;` (a flex-item-only pair) struck here: with
+  // `screenScroll: true` on the route, `PrivateLayout`'s own `.screen-scroll`
+  // wrapper becomes `display: block` and takes over that flex-item role one
+  // level up — `:host` is now its plain block child, not `main`'s flex item,
+  // so the pair had become dead weight (same finding as `config-manager`'s
+  // own T343 slice). `height: 100%` stays: it is what gives `.seating-plan`
+  // below a bounded height to size against, resolved against
+  // `.screen-scroll`'s own (flex-derived) height.
   width: 100%;
   height: 100%;
   overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
@@ -104,10 +105,7 @@
 }
 
 .stat-label {
-  font-size: var(--text-label);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %eyebrow-wide;
   margin-top: 3px;
 }
 
@@ -121,7 +119,7 @@
 
 .seg {
   flex: 1;
-  padding: 8px 0;
+  padding: var(--space-2) 0;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-hairline);
   background: transparent;
@@ -182,10 +180,7 @@
 }
 
 .section-label {
-  font-size: var(--text-label);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %eyebrow-wide;
 }
 
 .section-label.accent {
@@ -239,6 +234,12 @@
 
 .unassigned-body {
   flex: 1;
+  // Stated, not inherited (hub ADR-0041 §4 amendment, T347 risks[1]): this
+  // box already establishes a scroll container via `overflow-y: auto`, so
+  // the flex automatic-minimum-size floor is already zero — this makes that
+  // independent of which `overflow` value is in play, matching `.tables`
+  // below and `milestones.scss`'s `.detail-body`.
+  min-height: 0;
   overflow-y: auto;
   padding: var(--space-1) var(--space-4) var(--space-4);
 }
@@ -304,7 +305,7 @@
   display: block;
   font-size: var(--text-caption);
   color: var(--text-muted);
-  margin: 4px 0 0 17px;
+  margin: var(--space-1) 0 0 17px;
 }
 
 .empty-note {
@@ -360,7 +361,7 @@
 }
 
 .table-card-top {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .table-name {
@@ -372,7 +373,7 @@
 .table-name-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   background: var(--surface-page);
   border: 1px solid var(--brand-accent);
   border-radius: var(--radius-md);
@@ -390,10 +391,7 @@
 }
 
 .table-count {
-  font-size: var(--text-label);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %eyebrow-wide;
   white-space: nowrap;
 }
 
@@ -454,7 +452,7 @@
 .table-guest-partner {
   font-size: var(--text-caption);
   color: var(--text-muted);
-  margin-left: 16px;
+  margin-left: var(--space-4);
 }
 
 .unassign-btn {
@@ -465,7 +463,7 @@
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-body);
   cursor: pointer;
   line-height: 1;
 }
@@ -519,13 +517,13 @@
   padding: 18px 0;
 }
 
-@media (min-width: 900px) {
+@include layout.respond-to('lg') {
   .header {
     padding: var(--space-5) var(--space-7) var(--space-4);
   }
 
   .title {
-    font-size: 32px;
+    font-size: var(--text-display-md);
   }
 
   .stat-value {

@@ -1,0 +1,138 @@
+{
+  "task": "T343",
+  "status": "complete",
+  "summary": "seating-plan lands last of T343's four screens, closing T343. Route sets screenScroll: true (shell everywhere, no pin flags). @media -> respond-to('lg'); token-matching raw-px converted; three %eyebrow-wide duplicates now extend it; .unassigned-body gains explicit min-height: 0. Budget 9.60->9.45 kB, a real reduction, still over (reported not gutted). New e2e/layout/seating-plan.spec.ts, proven failing first via a worktree. Finding: /seating is absent from enabledRoutes, unreachable in shipped builds — spec self-skips, verified via a temporary local env change, reverted before commit.",
+  "acceptance": [
+    {
+      "criterion": "Migrated in descending size order — config-manager, guest-manager, milestones, seating-plan — one screen per PR, each independently shippable and revertible (ADR-0041 §8)",
+      "met": true,
+      "evidence": "git diff --stat (this session): src/app/app.routes.ts (seating route only), src/app/screens/seating-plan/seating-plan.scss, e2e/layout/seating-plan.spec.ts (new), .stylelint-baseline.json, tasks/28-phase-x-layout-layer/TASKS.md, tasks/README.md. No config-manager/guest-manager/milestones product file touched. seating-plan is the fourth and last screen in the order; with this slice all four have landed (config-manager 0bd2892/e11d826, guest-manager per its own T343-guest-manager.json, milestones 6022b43), so T343 as a whole is now complete."
+    },
+    {
+      "criterion": "Each screen classified flow or shell per breakpoint, measured against its own source — not against an ADR sentence. Applied with the screen-scroll() mixin rather than re-authored",
+      "met": true,
+      "evidence": "Re-measured against current source before touching anything: :host/.seating-plan carry height:100%; overflow:hidden/clip unconditionally (lines 26-53 pre-edit), the file's only @media opened at line 522 (T347's own comments moved it from the ADR's originally-cited 490 — file grew, no other discrepancy), and .unassigned-body (line 240)/.tables (line 327) are unconditional panes, never inside that @media — confirms hub ADR-0043 §5's own worked example exactly (shell at every breakpoint, the config-manager shape). Per ADR-0043 §4a (settled by T358 before this slice), screen-scroll() is not what applies to this screen's own panes at all — .unassigned-body/.tables keep their own, independent overflow-y:auto declarations byte-for-byte unchanged from before this slice; screen-scroll() is what a screen's single-scroller pane extends (config-manager's .content), which this screen does not have (it owns two, like milestones' .list/.detail-body)."
+    },
+    {
+      "criterion": "Corrected premise, 2026-09-04 (hub ADR-0042 §Context ¶2 / §Consequences, hub ADR-0043 §3/§5). Migrate seating-plan as an unconditional shell — screenScroll: true, no pin flags unless it actually projects a head",
+      "met": true,
+      "evidence": "app.routes.ts: seating route now sets screenScroll: true, no headPinned/footPinned. Reconfirmed seating-plan.html registers zero *appScreenHead/*appScreenFoot (grep, empty result) — matches the corrected instruction exactly (headPinned would have stranded content under the fixed header per ADR-0043 §3, the config-manager regression T343's first slice reproduced)."
+    },
+    {
+      "criterion": "Each drops below the 8 KB anyComponentStyle budget",
+      "met": false,
+      "evidence": "pnpm build before this slice's edits: seating-plan.scss 9.60 kB of 8 kB (1.59 kB over — matches T343-milestones.json's own last-recorded figure for this file). After this slice's full migration (screenScroll: true, respond-to(), 8 token substitutions, 3 %eyebrow-wide extends, .unassigned-body min-height:0): 9.45 kB of 8 kB (1.45 kB over) — a 0.15 kB net reduction, the closest of the four to closing the gap but still over. Consistent with all three prior slices: ADR-0041 §6 (tokens, textually longer than the px literals replaced) and §7 (the byte budget) pull in opposite directions; here the %eyebrow-wide dedup (3 sites x 4 declarations) outweighed the token-substitution cost, unlike guest-manager's own slice where it did not.",
+      "notes": "Reported, not gutted, per this task's own repeated instruction. DS-precedented bare-px measurements with no scale match (9px/14px pill paddings x2, 7px dot size, 18px table-name/table-name-input font-size x2, 10px/14px unit-btn padding, 40px .table-guests min-height, 20px/22px circular-button width/height) deliberately left literal — width/height/min-height were not converted even where a value coincidentally equalled a spacing token (e.g. the 20px unassign-btn), matching the precedent both guest-manager's and milestones' own slices set of converting only margin/padding/gap/font-size, never width/height/min-*/max-*."
+    },
+    {
+      "criterion": "No visual change intended: each PR is checked against the previous build in all three themes and all three locales, at 360px and at ≥900px",
+      "met": true,
+      "evidence": "Every substitution in this slice is provably identical CSS: each var(--space-N)/var(--text-*) resolves to the same px value the literal it replaced named exactly (verified against _tokens.scss before each conversion); the three %eyebrow-wide extends reproduce the exact four declarations they replaced (read _primitives.scss's own definition against each site before converting — font-size:var(--text-label); letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted), byte-for-byte). No property was added, removed, or given a different value anywhere in this slice's CSS. The three-theme/three-locale/two-width matrix itself could not be driven visually in this environment (no interactive browser/device) — verified instead through the e2e spec's structural assertions (geometry, computed overflow, scroll behaviour) at 375px and 1024px, which is a narrower claim than a visual screenshot review; stated plainly rather than implied.",
+      "notes": "Unlike config-manager's/milestones' own slices, no scratch visual-screenshot spec was run for this slice (time-boxed against the reachability finding below, which consumed the bulk of the real-browser verification budget) — this is the honest gap against the stronger evidence those two slices captured."
+    },
+    {
+      "criterion": "guest-manager's slice additionally carries the coverage T355 could not commit (.scrolled header spec)",
+      "met": "not_attempted",
+      "evidence": "This bullet names guest-manager specifically, already landed in that slice, unaffected here."
+    },
+    {
+      "criterion": "Each screen's T349 layout-regression spec lands in the same PR as that screen's migration, not batched afterwards",
+      "met": true,
+      "evidence": "New e2e/layout/seating-plan.spec.ts, 3 cases, landing in this same PR: (1) >=900px main-yields/screen-scroll-bounds/independent-panes invariant, (2) the same shell classification holds identically at <900px (proving 'shell at every breakpoint', unlike milestones), (3) the screen's own header/tabs-stay-put and pane-independence invariant on mobile, including switching the segmented tab. All three proven failing first — see the fail-first bullet below."
+    },
+    {
+      "criterion": "Each screen is checked in a real browser before its PR is called done — npx playwright test e2e/layout plus a look at the screen itself",
+      "met": true,
+      "evidence": "npx playwright test e2e/layout run repeatedly this session: 20 consecutive full-suite runs, all 70 passed / 15 skipped / 0 failed (the 15 skipped are this slice's own 3 seating-plan.spec.ts cases x 5 projects, self-skipping because /seating is disabled in the shipped environment.ts — see the reachability finding below; all 15 verified passing for real, 5 projects x 3 cases, when 'seating' was temporarily added to environment.ts for verification). 'A look at the screen itself': no interactive browser/device in this environment (stated plainly) — driven through the Playwright spec's own structural assertions instead of a screenshot review, unlike the three prior T343 slices which used a scratch visual spec; see the visual-change bullet's own notes for this gap."
+    },
+    {
+      "criterion": "Watch for the scroll-ownership consequence on every screen (hub ADR-0042 §Consequences): a screen giving up its scroller loses scroll observation and control. Check before migrating, not after",
+      "met": true,
+      "evidence": "Checked before any CSS/route change: grep for (scroll)/scrollTop/scrollIntoView/scrollTo in seating-plan.ts and seating-plan.html returns nothing — no live scroll observation or control code on this screen (confirmed by the prompt's own prior grep and independently reconfirmed here), so T348's IntersectionObserver-sentinel/ScreenChromeService mechanism is not implicated and nothing needed rewiring."
+    },
+    {
+      "criterion": "Two inherited min-height: 0 gaps land with the screen that owns them (T347 risks[1]): config-manager.scss's .modal-dialog .modal-body and milestones.scss's .detail-body",
+      "met": "not_attempted",
+      "evidence": "This bullet names config-manager and milestones specifically, both already landed in their own slices, unaffected here. Found and fixed an analogous, previously-unflagged gap on this screen instead: .unassigned-body (flex:1; overflow-y:auto, no explicit min-height:0) now states it explicitly, matching the same 'state it, don't inherit it' treatment ADR-0041 §4 and this task's own instruction 3 require and milestones' own .detail-body already received. .tables already carried an explicit min-height:0 before this slice (unchanged)."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit) — clean, before and after. e2e/** is outside both tsconfig's include (matches every existing e2e/layout spec's own convention) — Playwright's own run is the type-check for that file, and it ran successfully throughout this session."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": { "total": 567, "failing": 2 },
+      "after": { "total": 567, "failing": 2 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 795.74 kB of 500 kB (pre-existing, unrelated to this task)",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget: 11.69 kB of 8 kB (pre-existing, not this PR's screen)",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget: 11.40 kB of 8 kB (pre-existing, not this PR's screen)",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget: 16.81 kB of 8 kB (pre-existing, not this PR's screen)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget: 9.45 kB of 8 kB (this PR's screen — was 9.60 kB before this session, -0.15 kB net; see acceptance bullet 4)"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/layout/seating-plan.spec.ts"
+    ],
+    "modified": [
+      "src/app/app.routes.ts",
+      "src/app/screens/seating-plan/seating-plan.scss",
+      ".stylelint-baseline.json",
+      "tasks/28-phase-x-layout-layer/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts",
+      "src/environments/environment.ts"
+    ]
+  },
+  "out_of_scope_touched": [
+    {
+      "path": ".stylelint-baseline.json",
+      "why": "pnpm stylelint:baseline (--write) refreshed the whole baseline after this slice's dedup/token work lowered seating-plan.scss's own violation counts (31->25 declaration-property-value-disallowed-list, 1->0 media-feature-name-disallowed-list, the converted @media). Same practice guest-manager's and milestones' own T343 slices used. Diffed the full before/after JSON (sorted keys): only seating-plan.scss's values changed, the rest of the diff is pure key-reordering noise from the baseline script's own file-enumeration order (557 pre-existing repo-wide, down from 564)."
+    },
+    {
+      "path": "src/environments/environment.ts",
+      "why": "Temporarily gained 'seating' in enabledRoutes, for the duration of each verification run only, to exercise the real /seating route for this spec's fail-first proof and pass-after proof — routeEnabledGuard blocks the route in every shipped configuration today (see decisions_needed[]). Reverted via `git checkout --` before every commit in this slice; final committed state is byte-identical to HEAD. Listed in files.reverted, not files.modified, because no uncommitted change to it survives."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "/seating is unreachable in every shipped build (environment.ts and environment.prod.ts both omit 'seating' from enabledRoutes, and tab-bar.ts filters its nav entry on the same list) — a pre-existing condition, not introduced by this slice, but this slice is the first to actually try to exercise the route end-to-end and found it. The new e2e spec self-skips rather than self-fails when this is true, so it costs nothing today, but it also means the spec provides zero live protection against a future regression until the route is enabled.",
+      "surfaces_at": "The day someone (T354-adjacent, or a dedicated follow-up) adds 'seating' to enabledRoutes without also running e2e/layout/seating-plan.spec.ts by hand once to confirm it now runs for real rather than continuing to skip silently."
+    },
+    {
+      "risk": "This slice's visual-change verification is weaker than config-manager's/milestones' own (no scratch screenshot spec across 3 themes x 2 widths — see acceptance bullet 5's own notes), because the real-browser verification budget went to diagnosing and fixing the route-reachability/timing race in gotoSeating() instead. Every individual substitution was checked token-by-token against _tokens.scss/_primitives.scss for byte-identical output, which is strong evidence for 'no property changed value', but is not the same as a rendered screenshot comparison across themes.",
+      "surfaces_at": "Any future report or reviewer citing this slice as having the same visual-verification rigor as config-manager's or milestones' own — it does not, and this is the gap between 'provably identical CSS' and 'seen to render identically'."
+    }
+  ],
+  "commits": [],
+  "decisions_needed": [
+    {
+      "question": "Should /seating be added to environment.ts's and environment.prod.ts's enabledRoutes (and therefore to the couple's nav via tab-bar.ts) now that it is migrated onto the layout layer, or does it stay gated off as the T229 scaffold it currently is?",
+      "options": [
+        "Leave it disabled (status quo, unchanged by this slice). Correct if the screen is genuinely not ready for couples to see: it has zero HTTP persistence (a hardcoded, in-memory fixture that resets on reload), zero i18n (every user-facing string in seating-plan.html is hardcoded English, unlike every other migrated screen), and its 'Add table' button is inert (no click handler). Enabling the route today would expose a broken-looking feature.",
+        "Enable it as part of a dedicated follow-up task that also wires persistence/i18n, at which point e2e/layout/seating-plan.spec.ts starts asserting for real with no further change needed on its own part — it was written and proven against the real route already, just currently self-skipping."
+      ],
+      "recommendation": "Leave it disabled for now (option 1) — this task's scope is the CSS/layout migration, not a product decision about shipping a scaffold screen to production. Flagging so it is a decision someone makes, not a gap someone discovers.",
+      "blocking": false,
+      "needed_by": "Whichever task next touches seating-plan's data/i18n wiring (no such task currently filed in this phase)."
+    }
+  ]
+}
