@@ -748,12 +748,14 @@
   measured `:host` (shell, unconditional) and its only `@media` (opens at 964, not the task's
   originally-cited 928 — file grew via T347's own comments, no other discrepancy) against the
   source before migrating, confirming the corrected premise (shell at every breakpoint, the
-  `seating-plan` shape). Route gets `footPinned: true` — deliberately **not** `headPinned`: this
-  screen registers no `*appScreenHead`/`*appScreenFoot`, and `headPinned` alone strands `main`'s
-  content under the fixed header (`[class.after-head]` assumes a registered head supplies its own
-  clearance) — reproduced empirically via the new e2e spec before landing on `footPinned`, which
-  `pinned()` treats identically for scroll ownership with no clearance coupling; not documented
-  anywhere in the ADRs and worth a hub follow-up (see the report's `risks[]`). `.content` now uses
+  `seating-plan` shape). **Route declaration superseded 2026-09-04:** the PR shipped
+  `footPinned: true` as a workaround — this screen registers no `*appScreenHead`/`*appScreenFoot`,
+  and `headPinned` alone strands `main`'s content under the fixed header (`[class.after-head]`
+  assumed a registered head supplies its own clearance), reproduced empirically with 8 of 10 spec
+  cases failing on intercepted clicks. That finding became hub **ADR-0043**, and **T352 corrected
+  the route in place to `screenScroll: true`** with no pin flags; `pinned()` is deleted and
+  `after-head` re-keys on `screenChrome.head()`, so the workaround and the trap that forced it are
+  both gone. The screen's SCSS was correct as shipped and is untouched. `.content` now uses
   `screen-scroll()`; the `.modal-body` `min-height: 0` gap T347 flagged (`risks[1]`) is fixed.
   Still **8.81 kB over budget** (16.81 kB of 16.78 kB before — a small net *increase*, from closing
   two genuine correctness gaps the ADR's own `overflow-x` pairing and `min-height: 0` discipline
