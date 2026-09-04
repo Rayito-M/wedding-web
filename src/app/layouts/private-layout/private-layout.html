@@ -24,7 +24,7 @@
   [class.pinned]="pinned()"
   [class.after-head]="!!chrome().headPinned"
 >
-  <div class="screen-scroll" [class.pinned]="pinned()">
+  <div #screenScroll class="screen-scroll" [class.pinned]="pinned()">
     <router-outlet />
   </div>
 </main>

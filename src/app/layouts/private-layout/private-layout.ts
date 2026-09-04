@@ -114,6 +114,16 @@ type RouteChrome = Partial<RouteChromeData>;
  * change-detection and guarded-clear teardown were proven zoneless-safe by
  * the T341 prototype gate (ADR-0042 §Gate outcome, `screen-chrome-prototype
  * .spec.ts`) before this shipped.
+ *
+ * **Also owns scrolling a screen back to the top on request** (hub
+ * ADR-0042 §Consequences, T348). `ScreenChromeService.scrollResetRequest()`
+ * is a bare counter a screen bumps via `requestScrollReset()`; a
+ * `constructor()` `effect()` here reads it and scrolls whichever element is
+ * the active scroller — `.screen-scroll` while `pinned()`, `main` itself
+ * otherwise — back to `{ top: 0 }`. This is the "control" half of the same
+ * gap the head/foot slots close for "chrome": once a screen hands its
+ * scroller to this layout, it can no longer zero that element's own
+ * `scrollTop` directly.
  */
 @Component({
   selector: 'app-private-layout',
@@ -253,6 +263,7 @@ export class PrivateLayout {
   protected readonly profileSaveError = signal(false);
 
   @ViewChild('mainContent') private mainContent?: ElementRef<HTMLElement>;
+  @ViewChild('screenScroll') private screenScrollContent?: ElementRef<HTMLElement>;
   protected readonly isScrolled = signal(false);
 
   // Seed from the current route: this layout mounts *after* the NavigationEnd
@@ -279,6 +290,21 @@ export class PrivateLayout {
   );
 
   constructor() {
+    // The "control" half of ADR-0042 §Consequences (T348): a screen that no
+    // longer owns its scroller asks this layout to scroll it back to the
+    // top instead (`ScreenChromeService.requestScrollReset()`), the same
+    // shape as handing over a head/foot template. Reads `pinned()` on every
+    // run so it always targets whichever element currently scrolls —
+    // `.screen-scroll` while pinned, `main` itself otherwise — never a
+    // stale reference from before a navigation changed which one that is.
+    effect(() => {
+      this.screenChrome.scrollResetRequest();
+      const target = this.pinned()
+        ? this.screenScrollContent?.nativeElement
+        : this.mainContent?.nativeElement;
+      target?.scrollTo({ top: 0 });
+    });
+
     // Fresh save state on every (re)open — otherwise a stale error/saving
     // flag from a previous session with the modal could leak into a new one
     // (this layout, unlike `app-profile-modal`, is never destroyed/remounted
