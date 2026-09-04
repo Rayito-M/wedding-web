@@ -7,9 +7,14 @@
 >
 > ## Phase X is done when — stated 2026-09-04, because it never was
 >
-> **`T343` finishes `milestones` and `seating-plan`, and `T344` lands the error ratchet.** That is
-> the whole exit condition. `T357` rides along because T343's remaining specs are worthless if the
-> suite flakes.
+> **`T358` settles the pane-owning model, `T343` finishes `milestones` and `seating-plan`, and
+> `T344` lands the error ratchet.** That is the whole exit condition. `T357` rode along because
+> T343's remaining specs are worthless if the suite flakes.
+>
+> *T358 was added on 2026-09-04 and is inside the condition, not an expansion of it: `milestones`
+> surfaced that `screenScroll` conflates "`main` yields" with "the layout scrolls", and
+> `config-manager` had already shipped the consequence. The two remaining screens cannot be migrated
+> onto an undecided model.*
 >
 > **Not gating, and explicitly parked outside that path:** `T353` (do the pin flags still earn their
 > place — a cleanup that turns on a measurement) and `T354` (is the config-manager modal in the
@@ -834,7 +839,8 @@
   lands.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
-- **Depends on:** T340, T341, **T352** (landed) for every screen after `config-manager` —
+- **Depends on:** T340, T341, **T352** (landed) and **T358** (the pane-owning model, hub ADR-0043
+  §4a) for `milestones` and `seating-plan` —
   `milestones` and `seating-plan` have no correct route declaration without `screenScroll` (hub
   ADR-0043). The **`guest-manager` slice additionally depends on T355**, which confirms that
   screen's classification in a browser and restores `e2e/layout`'s clean-run baseline
@@ -1011,6 +1017,44 @@
   and both widths. This is a spec-reliability task until measurement says otherwise
 - **Refs:** T343's `guest-manager` slice; T349, T355 (the two prior flakes and how they were closed);
   hub `.agent/skills/task-management.md` §4
+
+### T358 — `.screen-scroll` becomes a bounded clipping box, and stops being a second scroller
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T352 (landed)
+- **Blocks:** T343's `milestones` and `seating-plan` slices. **Inside Phase X's exit condition** —
+  they cannot be migrated onto an undecided model.
+- **Why:** hub **ADR-0043 §4a** (new, 2026-09-04). `screenScroll` does not mean *"the layout scrolls
+  for me"*; it means *"`main` yields so I can bound myself and own my scrolling"*. The measurement is
+  unanimous: `config-manager` owns 6 scrolling panes, `milestones` 6, `seating-plan` 4 — every screen
+  that yields `main` scrolls something of its own, and `guest-manager`, which owns none, is flow.
+  **The layout-scrolls-in-a-shell model has zero real users.**
+- **This repairs something already live, it is not a refinement.** `config-manager` shipped with
+  `screenScroll: true` (`0bd2892`), which makes `.screen-scroll` a scroll container while `.content`
+  inside it is another — **two nested scrollers, which ADR-0041 §3 puts out of contract in as many
+  words.** It is harmless today only because `:host`'s `height: 100%` bounds the screen exactly, so
+  the outer box has zero scrollable range. That is emergent, not declared: add a banner above
+  `.layout` and it starts scrolling, silently, nothing failing. Fifth time this phase has met that
+  defect class.
+- **Acceptance:**
+  - Every `.screen-scroll.screen-scrolls*` variant in `private-layout.scss` (unconditional plus
+    `md`/`lg`/`xl`) becomes `display: block; flex: 1; min-height: 0;` with the ADR-0041 §4 paired
+    `overflow: hidden` → `overflow: clip`. **It never gets `overflow-y: auto` in any variant.**
+    `min-height: 0` is stated, never inherited — §4's flex-item trap
+  - `screen-scroll()` in `_layout.scss` is unchanged and keeps `overflow-y: auto`: it is what a
+    *screen's own pane* extends, and `config-manager`'s `.content` uses it correctly. If the two
+    now differ enough to confuse, give the layout's box its own named mixin rather than overloading
+    this one
+  - **`config-manager` is verified unchanged** — this must be a no-op on it, in a real browser,
+    three themes, both widths. If anything moves, the emergent-bounding assumption was wrong and
+    that is the finding, not a thing to patch around
+  - A spec asserting `.screen-scroll` is not a scroll container on a shell route, so the invariant
+    is structural rather than a property somebody has to remember
+- **Non-goals:** no route-data change; no new `screenScroll` value (§4a deliberately removes the
+  need for a fourth); no screen CSS touched
+- **Refs:** hub ADR-0043 §4a, §4, §5; hub ADR-0041 §3, §4;
+  `tasks/28-phase-x-layout-layer/reports/T343.json`
 
 ### T344 — `anyComponentStyle` becomes an error
 - **Status:** todo
