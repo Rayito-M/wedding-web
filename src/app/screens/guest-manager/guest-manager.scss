@@ -1,5 +1,6 @@
 @use '../../../styles/tokens' as t;
 @use '../../../styles/primitives';
+@use '../../../styles/layout';
 @use './modal/status-cell' as *;
 
 // Hub ADR-0042 §1/§2, T341: this screen is no longer its own shell. Its
@@ -290,13 +291,19 @@
 
   // The region is still a tab stop of its own (`tabindex="0"`, T332) so it
   // can be reached from the keyboard — kept even though it no longer scrolls
-  // itself, since that ARIA/focus contract is unchanged by this task (see
-  // `onListScroll`'s own doc comment in `guest-manager.ts` for the scroll
-  // trigger this leaves stale).
+  // itself; the auto-load trigger is `IntersectionObserver` on
+  // `.scroll-sentinel` below (hub ADR-0042 §Consequences, T348), not a
+  // scroll handler on this element.
   &:focus-visible {
     outline: 2px solid var(--brand-accent);
     outline-offset: -2px;
   }
+}
+
+// The `IntersectionObserver` target (`guest-manager.ts`) that drives
+// auto-load — a zero-height marker, never itself a visible row.
+.scroll-sentinel {
+  height: 1px;
 }
 
 // Mobile (default): simple flex list row
@@ -537,8 +544,17 @@
   gap: 8px;
 }
 
+// T348: both spans are flex children of `.list-footer` above and can hold
+// text at the same time (`hasMore()` true) — French is the locale that
+// overflows first ("Affichage de … sur …" / "Faites défiler pour voir
+// plus"). `%truncating-flex-child` (`_layout.scss`, T340) is the named fix —
+// this is the guest-manager footer defect that primitive generalised from
+// (ADR-0041 §5), reverted in `e340cff` and left unreapplied when T341 moved
+// this footer into the pinned foot slot; T341's own status note flags it as
+// untested (a fully-loaded list hides `.list-footer-hint` entirely).
 .list-footer-info,
 .list-footer-hint {
+  @extend %truncating-flex-child;
   font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--text-muted);
