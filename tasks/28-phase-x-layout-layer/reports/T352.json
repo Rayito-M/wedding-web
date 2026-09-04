@@ -1,0 +1,113 @@
+{
+  "task": "T352",
+  "status": "complete_with_deviation",
+  "summary": "Split scroll ownership from pinning per ADR-0043: added RouteChromeData.screenScroll, deleted pinned(), re-keyed after-head onto screenChrome.head(), emitted the closed 4-variant class set (unconditional + md/lg/xl via respond-to()), corrected config-manager's route (footPinned -> screenScroll:true, SCSS untouched). Proved all 3 defects gone via Vitest plus a new real-browser Playwright spec for 'lg' (no live route yet). Re-targeted clip-flex-item.spec.ts, whose assertion assumed guest-manager was still pinned for scroll ownership; under ADR-0043 it is correctly flow.",
+  "acceptance": [
+    {
+      "criterion": "RouteChromeData gains screenScroll?: true | 'md' | 'lg' | 'xl' -- absent means flow (main scrolls), true means shell at every breakpoint, a breakpoint name means flow below it and shell from it up. Names match _layout.scss's $bp-* exactly, so a typo is a compile error rather than a silently-flow screen.",
+      "met": true,
+      "evidence": "src/app/core/guard/route-chrome-data.ts:59-73 -- screenScroll?: true | 'md' | 'lg' | 'xl' added to RouteChromeDataBase (the shared base, so the NonNav/Nav discriminated union from T345 keeps working -- confirmed by pnpm typecheck passing with no changes needed to either union member). The type union's string literals ('md'|'lg'|'xl') are the same strings respond-to() in src/styles/_layout.scss switches on (@else if $bp == 'md' / 'lg' / 'xl' @else @error) -- a typo on either side is a TS type error or a Sass @error, never silent."
+    },
+    {
+      "criterion": "pinned() is deleted (private-layout.ts:288). main yields on screenScroll alone. headPinned/footPinned keep exactly the meaning ADR-0042 §1 gives them -- this screen projects a head/foot -- and influence scroll ownership no further.",
+      "met": true,
+      "evidence": "src/app/layouts/private-layout/private-layout.ts: `pinned` computed and its 'protected readonly pinned = computed(...)' block are gone (grep -n 'pinned' private-layout.ts now only matches doc-comment prose, no property). main/.screen-scroll class bindings in private-layout.html:29-32,38-41 read only chrome().screenScroll; headPinned/footPinned are read nowhere in private-layout.ts/.html anymore except inside the AppScreenHead/AppScreenFoot directives' own doc comments (unchanged, out of scope per task's own instruction not to delete the flags)."
+    },
+    {
+      "criterion": "after-head re-keys onto screenChrome.head(), not chrome().headPinned (private-layout.html:25). The 52px clearance drops from main exactly when .screen-head renders, so a flag set without its directive is inert rather than catastrophic.",
+      "met": true,
+      "evidence": "private-layout.html:33 -- [class.after-head]=\"!!screenChrome.head()\". Proven with a new Vitest case: 'headPinned: true with no registered *appScreenHead is inert -- main keeps its fixed-header clearance (hub ADR-0043 §3)' (screen-chrome.spec.ts) mounts StubFlowScreen (no *appScreenHead) with { headPinned: true } and asserts .screen-head is null AND main has no after-head class -- passes. A second case (StubBothScreen, no route flags at all) asserts a registered head still gives main after-head regardless of the flag -- also passes."
+    },
+    {
+      "criterion": "private-layout.scss emits the yield over the closed set of four: unconditional, plus one inside respond-to(md), respond-to(lg), respond-to(xl), with the matching .screen-scroll variant applying screen-scroll() in the same query. The screen still writes no media query of its own.",
+      "met": true,
+      "evidence": "private-layout.scss: main.screen-scrolls / .screen-scroll.screen-scrolls (unconditional, lines ~68-71 and ~90-97), then three @include layout.respond-to('md'|'lg'|'xl') blocks at the end of the file, each pairing main.screen-scrolls-<bp> { overflow-y: clip } with .screen-scroll.screen-scrolls-<bp> { display:block; @include layout.screen-scroll }. Confirmed the set is exactly four by grepping 'screen-scrolls' in the file (4 main selectors, 4 .screen-scroll selectors, no fifth). No screen's own .scss was touched to add a media query (config-manager.scss untouched, verified by git diff showing 0 changes to it)."
+    },
+    {
+      "criterion": "config-manager's route is corrected in place: footPinned: true and the comment admitting it 'exists only to make main yield' are deleted, replaced by screenScroll: true. Its SCSS is untouched.",
+      "met": true,
+      "evidence": "src/app/app.routes.ts: the config route's data now reads `screenScroll: true` with no footPinned/headPinned key and a rewritten comment (no 'exists only to make main yield' text remains -- grep confirms). `git diff --stat` shows src/app/screens/config-manager/config-manager.scss is not in the changed-files list at all."
+    },
+    {
+      "criterion": "A spec proving each of the three defects is gone: a route with headPinned and no registered head keeps its clearance; a shell route that pins nothing still yields; a route with screenScroll: 'lg' yields at >=900px and does not below it.",
+      "met": true,
+      "evidence": "Defect 1 (Vitest, screen-chrome.spec.ts): 'headPinned: true with no registered *appScreenHead is inert -- main keeps its fixed-header clearance'. Defect 2 (Vitest, same file): 'screenScroll: true yields main to .screen-scroll even though nothing is pinned -- the config-manager shape' (StubFlowScreen + { screenScroll: true }, no headPinned/footPinned -- asserts .screen-head/.screen-foot are null and main/.screen-scroll both get exactly ['screen-scrolls']). Defect 3 (Playwright, new e2e/layout/screen-scroll-breakpoint.spec.ts) -- see next criterion's evidence for the real-browser proof, plus a companion Vitest case (it.each ['md','lg','xl']) proving PrivateLayout computes exactly one breakpoint-named class from screenScroll, never another's."
+    },
+    {
+      "criterion": "e2e/layout green, and config-manager re-checked in a real browser -- the route change is behavioural even though its CSS did not move.",
+      "met": true,
+      "evidence": "npx playwright test e2e/layout -> 40 passed (35 pre-existing + 1 re-targeted clip-flex-item case with a rewritten assertion + this task's new screen-scroll-breakpoint.spec.ts across 5 projects), run twice consecutively with identical 40/40 results. config-manager real-browser recheck (ad hoc Playwright script, not committed -- see report body below for what was and was not verified): confirmed at 375px (pills nav) and 1280px (rail nav) the section nav stays fixed while .content scrolls under the corrected screenScroll:true route, across all three data-theme values (terracotta, mauve, verdeagua) applied to <html>. config-manager.spec.ts's own two committed specs (section-nav-stays-put, main-never-outgrows-parent) also passed unchanged, twice."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "The task's acceptance list only asks for a *new* spec proving the three defects gone (bullet 6) and e2e/layout staying green (bullet 7); it does not mention editing any pre-existing e2e spec.",
+      "to": "Re-targeted e2e/layout/clip-flex-item.spec.ts's assertion. It ran against /guests and asserted main.scrollHeight <= its flex parent's clientHeight -- valid only while guest-manager's headPinned/footPinned also clipped main (the pre-ADR-0043 mechanism). Under the corrected model guest-manager is genuinely flow (it pins a head/foot but owns no scroll container of its own, and its route correctly declares no screenScroll), so main is now guest-manager's real, legitimately-scrolling scroller: scrollHeight naturally exceeds the parent's clientHeight because it actually scrolls, not because it grew past its box. The old assertion started failing (4099 > 568/664/720/839 across all 5 projects) for a correct-behaviour reason, not a regression. Rewrote it to assert the invariant that still applies to a flow scroller -- main.clientHeight itself stays bounded by its flex parent -- with a guard clause proving there was real overflow to test against. Also updated config-manager.spec.ts's header comment (prose only, no assertion changed) so it stops describing the withdrawn footPinned workaround as current.",
+      "reason": "Leaving the stale assertion in place would have shipped a known-red e2e test (or forced silently skipping/deleting it without explanation), which is worse than fixing it -- and the task's own bullet 7 requires 'e2e/layout green', which is only honestly true if every spec in that directory reflects the corrected model rather than the withdrawn one.",
+      "authorized_by": "bullet 7 ('e2e/layout green') plus the task's own framing that this ADR is exactly about guest-manager being one of 'all three ways [pinning and scroll ownership] come apart' -- reclassifying guest-manager as flow is the intended, required outcome of this task, not a side effect to route around.",
+      "verified_how": "Reproduced the failure first (ran e2e/layout before editing the spec: 5/5 projects failed with mainScrollHeight far exceeding the parent's clientHeight). Then measured the real geometry by hand (ad hoc Playwright script, not committed): on /guests at Desktop Chrome, mainClientHeight=543 <= parentClientHeight=720, and mainScrollHeight=3058 > mainClientHeight -- confirming main is a well-behaved, correctly-bounded scroll container, not a flex-trap regression. Rewrote the assertion to that shape and confirmed 40/40 across e2e/layout, twice."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit) -- clean, no errors, before and after."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": { "total": 559, "failing": 2 },
+      "after": { "total": 564, "failing": 2 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 795.70 kB vs 500.00 kB (pre-existing, unrelated to this task)",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget: 11.49 kB vs 8.00 kB (pre-existing, T343 territory)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget: 9.60 kB vs 8.00 kB (pre-existing, T343 territory)",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget: 16.81 kB vs 8.00 kB (pre-existing, unchanged by this task -- its SCSS was not touched, per the task's own instruction; T354 territory)",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget: 11.19 kB vs 8.00 kB (pre-existing, T343 territory)"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/layout/screen-scroll-breakpoint.spec.ts"
+    ],
+    "modified": [
+      "src/app/core/guard/route-chrome-data.ts",
+      "src/app/layouts/private-layout/private-layout.ts",
+      "src/app/layouts/private-layout/private-layout.html",
+      "src/app/layouts/private-layout/private-layout.scss",
+      "src/app/layouts/private-layout/screen-chrome.spec.ts",
+      "src/app/app.routes.ts",
+      "e2e/layout/clip-flex-item.spec.ts",
+      "e2e/layout/config-manager.spec.ts"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "guest-manager's route today (headPinned: true, footPinned: true, no screenScroll) is left untouched by this task, and analysis here found it does not need screenScroll at all to stay correct: guest-manager registers *appScreenHead/*appScreenFoot but owns no scroll container of its own (its own guest-manager.scss comment: ':host therefore no longer fills/clips a fixed height ... .table-container and .table-body's own scroll ownership are struck'), so main being the genuine flow scroller (no screenScroll) is the *correct* classification under ADR-0043, not a gap. T343's guest-manager slice should not reflexively add screenScroll:true to this route on the assumption every T343 screen needs one -- milestones and seating-plan do (they carry their own internal shell CSS assuming main is clipped), guest-manager structurally does not.",
+      "surfaces_at": "T343's guest-manager migration slice -- confirm this reasoning (or re-derive it) before touching that route; don't copy config-manager's screenScroll:true onto it without re-checking against the source, the same mistake ADR-0042's original seating-plan classification made."
+    },
+    {
+      "risk": "The screenScroll: 'lg' per-breakpoint CSS path (respond-to('lg') in private-layout.scss) is proven correct here only by applying PrivateLayout's own computed classes by hand onto a real screen (/schedule) that never actually sets that route key -- there is still no live route exercising this path end-to-end (route data -> template class binding -> CSS media query, all three links at once). When T343 migrates milestones with screenScroll: 'lg', re-run e2e/layout/screen-scroll-breakpoint.spec.ts's scenario against the real /milestones route (or add an equivalent spec scoped to it) rather than assuming the by-hand proof already covers it.",
+      "surfaces_at": "T343's milestones migration slice."
+    }
+  ],
+  "commits": [
+    "e11d8265f461f4cd0f153ffc373e8940c344dbe5"
+  ],
+  "decisions_needed": []
+}
