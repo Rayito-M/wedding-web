@@ -571,14 +571,16 @@
 - **Status:** todo
 - **Target release:** 1.2.0
 - **Owner:** unassigned
-- **Depends on:** T344 (which installs the override this task removes)
-- **Why:** hub **ADR-0041 §7 as amended 2026-09-04**. A complete, correct layout migration moved
-  `config-manager.scss` from 16.78 kB to 16.81 kB against an 8 kB budget. **The gap was never shell
-  or scroll CSS**, so no further layout-layer work closes it, and T344 as originally written could
-  never be satisfied. §7 now lets T344 ship the error gate with a per-path ratchet for this one
-  screen; this task removes it.
+- **Depends on:** nothing. **Decoupled from the budget 2026-09-04** (hub ADR-0041 §7, re-amended):
+  there is no per-path override to remove, and this task no longer has a number to hit
+- **Why:** hub **ADR-0041 §7 as re-amended 2026-09-04**. This was filed as a budget task and is no
+  longer one. The budget question is settled without it: the 8 kB warning stays, T344 ratchets the
+  error, and no per-path override exists to retire. What remains is the question that was always
+  underneath — **is the local "add couple member" modal in the right place?** — and it is worth
+  answering on its own terms.
 - **Ruling from the hub on the three options in T343's `decisions_needed[]`:** extraction, as
-  recommended — but it is **not** a budget exercise. Extract the local "add couple member" modal
+  recommended — but it is **not** a budget exercise, and after the §7 re-amendment it is not a
+  budget task at all. Extract the local "add couple member" modal
   (`.modal-overlay` / `.modal-dialog` / `.modal-header` / `.modal-body` / `.modal-footer` and its
   ~15 form-field rules) **only if it is the right component boundary**, which means first answering
   whether it duplicates the shared `app-modal` enough to reuse that instead. If the answer is reuse,
@@ -588,12 +590,11 @@
 - **Acceptance:**
   - The `app-modal` question answered explicitly in the report before any code moves: reuse,
     extract-new, or neither-and-here-is-why
-  - If extracted or reused: `config-manager.scss` under 8 kB, and the per-path override from T344
-    deleted from `angular.json` in the same PR — an override outliving its reason is how the
-    original warning rotted
-  - If the honest answer is that the screen is simply this large: **say so and stop.** Report it as
-    a hub question — a second per-path override is a hub decision under §7 as amended, and a
-    permanent one for this screen may well be the right answer
+  - If extracted or reused: report the resulting size as information, not as a pass/fail. Getting
+    `config-manager.scss` under 8 kB is **not** an acceptance criterion and almost certainly will not
+    happen — a dedup-only compile of `guest-manager` was worth 0.8%
+  - If the honest answer is that the modal belongs where it is: **say so and stop.** That closes the
+    task successfully. The screen being large is not, by itself, a defect to fix here
   - No visual change; three themes, three locales, both widths, real browser
 - **Non-goals:** the other three screens' budgets are T343's, not this task's
 - **Refs:** hub ADR-0041 §7 (as amended), §8; T344;
@@ -915,27 +916,62 @@
 - **Refs:** hub ADR-0042 §Context ¶2, §Consequences, §Implications; hub ADR-0041 §3, §Implications;
   `tasks/28-phase-x-layout-layer/reports/T347.json` `risks[2]`
 
+### T357 — The `.scrolled` guard spec loses a race under parallel load
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T343's `guest-manager` slice (landed, `e13688e`), which added the spec
+- **Why:** `guest-manager-scrolled-header.spec.ts:58` failed once in six full parallel runs on
+  **iPhone 14 (iOS Safari)**, passing deterministically alone and clean in four runs after. Same
+  shape as the two flakes T349 and T355 closed: fine in isolation, loses a race under load.
+- **Why it gets its own task rather than folding into the next migration.** This is the spec added
+  to guard behaviour that T355 verified and could not commit — the `.scrolled` header treatment on
+  `/guests`. **A guard that flakes is T349's failure mode exactly**: believed when green, dismissed
+  when red. Its whole value is being trustworthy, so it is worth interrupting the migration order
+  for.
+- **Acceptance:**
+  - Root-cause it. Same terms as T349 and T355: measure the race, do not retry-mask it, and do not
+    add a `waitForTimeout`. The two prior root causes were *measuring before the thing had settled*
+    in different disguises — check that first, and note this one is on WebKit where the other two
+    were Chromium-only
+  - `.scrolled` toggles on a computed style, so state explicitly what the spec waits for before
+    asserting: the scroll having happened, the class having been applied, and the transition (if
+    any) having completed are three different moments
+  - Prove it under the load that produced it — all five projects in parallel, repeated
+  - **Report the consecutive-clean-run count as a floor, not a verdict** (hub
+    `.agent/skills/task-management.md` §4). Three times in this phase a clean-run claim has not
+    survived the next person's runs; the claims were honest, the runs were short relative to the
+    race window
+- **Non-goals:** no change to `screen-header.scss` or `private-layout.scss` unless the root cause is
+  genuinely there — the behaviour was verified correct in a browser under T355, across three themes
+  and both widths. This is a spec-reliability task until measurement says otherwise
+- **Refs:** T343's `guest-manager` slice; T349, T355 (the two prior flakes and how they were closed);
+  hub `.agent/skills/task-management.md` §4
+
 ### T344 — `anyComponentStyle` becomes an error
 - **Status:** todo
 - **Target release:** 1.2.0
 - **Owner:** unassigned
-- **Depends on:** T343 (the other three screens under budget; `config-manager` ships the ratchet
-  described below rather than blocking the gate)
+- **Depends on:** T343 (all four screens migrated, so the ratchet is set against final numbers)
 - **Why:** hub **ADR-0041 §7**. The budget has been a warning long enough that four screens grew
   through it unnoticed. A warning nobody fails on is documentation, not a budget.
 - **Acceptance:**
-  - `angular.json` production budgets: `anyComponentStyle` gains `maximumError: "8kB"`
-  - **A per-path override for `config-manager` only, pinned at its measured post-migration size**
-    (hub ADR-0041 §7 as amended 2026-09-04). A complete, correct migration moved that file from
-    16.78 kB to 16.81 kB — the gap is a seven-section CRUD editor with a local modal, not shell or
-    scroll CSS, so no layout-layer work closes it and this task's original "all four under budget
-    first" precondition can never be met. The override is a **ratchet**: set it at the measured
-    value so the screen cannot grow, never at a round number above it. T354 removes it.
-    **Measure at the moment this task lands — never reuse the 16.81 kB figure from T343's report.**
-    Whichever of T354 and this task runs first sets the number, and if T354 lands first the right
-    override may be none at all: check whether the file is already under 8 kB before adding one
-  - The other three screens come under the blanket 8 kB with no override
-  - A production build passes clean
+  - **Rewritten 2026-09-04 (hub ADR-0041 §7, re-amended). This task no longer flips the warning; it
+    tightens the error.** The original acceptance — `maximumError: "8kB"`, all four screens under it
+    — is unsatisfiable, and the reason is not that any screen is unusually large. Both migrated
+    screens got *bigger* (`config-manager` 16.78 → 16.81 kB, `guest-manager` 11.19 → 11.69 kB), and
+    a dedup-only compile of `guest-manager` saved **110 bytes, 0.8%**. The layer owns page shells,
+    scroll ownership and breakpoints; these files are large because of screen-specific *visual* CSS
+    the layer was never scoped to absorb. Read §7's amendment before starting
+  - **The 8 kB warning stays exactly as it is.** It is telling the truth about a gap that is still
+    open. Do not re-baseline it, and do not add per-path overrides — four of those is the same
+    repeal reached one screen at a time
+  - **`maximumError` ratchets from 20 kB down to just above the worst measured screen**, so nothing
+    can grow while the gap stays visible. `angular.json` already carries
+    `anyComponentStyle: { maximumWarning: "8kB", maximumError: "20kB" }` — there is an error gate
+    today, at a threshold all four screens clear. **Measure at the moment this task lands**; never
+    reuse a figure from an earlier report
+  - A production build passes clean, warnings included in the output and stated in the report
   - Hub `ARCHITECTURE.md` § Performance budgets updated to drop the "currently a warning" caveat
 - **Refs:** hub ADR-0041 §7; hub `ARCHITECTURE.md` § Performance budgets
 
