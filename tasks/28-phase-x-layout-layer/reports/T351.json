@@ -1,0 +1,93 @@
+{
+  "task": "T351",
+  "status": "complete",
+  "summary": "Rule recognises -webkit-line-clamp as a third tell (sibling declarations only, like the other two). Header comment rewritten: definition is hub-owned, recogniser set is repo-owned and grows here. notification-bell.scss's baseline entry removed (1 to 0); its 15 px-literal entries untouched. Site comment trimmed. Added a small node:test fixture, not wired into pnpm test/lint (both scoped elsewhere). pnpm lint passes, baseline one entry smaller (610 to 609 pre-existing).",
+  "acceptance": [
+    {
+      "criterion": "stylelint-rules/no-unpaired-overflow-hidden.mjs recognises -webkit-line-clamp on the same declaration block as a third tell, alongside text-overflow/white-space:nowrap and clip-path. It is an unusually safe tell: the declaration exists for no other purpose",
+      "met": true,
+      "evidence": "stylelint-rules/no-unpaired-overflow-hidden.mjs:120-123 adds `isLineClamped` reading `siblings.some((sib) => sib.prop.toLowerCase() === '-webkit-line-clamp')`, checked exactly like the existing `isTruncatingText`/`isVisuallyHidden` checks — sibling declarations only, never the selector/file/comment (siblingDecls() unchanged). Proven via the new fixture: `.row-snippet`-shaped CSS (`overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical;`) produces 0 warnings (`node --test stylelint-rules/no-unpaired-overflow-hidden.test.mjs` → 'does not flag the multi-line clamp tell (-webkit-line-clamp) — T351' pass), and `pnpm lint`'s stylelint step against the live notification-bell.scss (which carries exactly that shape) reports 0 violations for this rule at that file (`stylelint: no new violations (609 pre-existing...)`, baseline no longer carries the entry — see next bullet)."
+    },
+    {
+      "criterion": "Its header comment is rewritten. It currently states that a third shape is a hub question and that the rule 'does not grow a third exemption locally'. That instruction is withdrawn — replace it with §4's refined split: the definition is hub-owned and moves only by amending ADR-0041; this tell list is local and grows here. State what still does escalate: a box that genuinely is a scrolling context and wants plain hidden anyway",
+      "met": true,
+      "evidence": "stylelint-rules/no-unpaired-overflow-hidden.mjs:11-57 (new header). Replaces the withdrawn sentence ('this rule does not grow a third exemption locally') with the definition/recogniser-set split verbatim in substance ('The definition above — what the rule is for. Hub-owned. It moves only by amending ADR-0041 §4' / 'The recogniser set below — ... Repo-owned, lives here, and is expected to grow ... adding one is not an ADR amendment and does not go to the hub'), and states the remaining escalation case ('What still comes to the hub: a box that genuinely IS a scrolling context a focus event could shift, and wants plain hidden anyway ... only an ADR-0041 amendment can move it'). Also updated the rule's rejected-message string (messages.rejected) to mention -webkit-line-clamp as a recognised sibling declaration, for consistency with the new tell — not requested verbatim by the acceptance text but a direct, in-scope consequence of teaching the rule a third tell (same message, one more clause)."
+    },
+    {
+      "criterion": "notification-bell.scss's wedding/no-unpaired-overflow-hidden entry comes out of .stylelint-baseline.json — that count drops from 1 to 0 and the key is removed if it is the last rule for that file. It is not: the file keeps its 15 declaration-property-value-disallowed-list entries, which are real debt and stay. Correct code must never sit in the baseline",
+      "met": true,
+      "evidence": "git diff .stylelint-baseline.json: removed line `\"wedding/no-unpaired-overflow-hidden\": 1,` under `src/app/shared/notification-bell/notification-bell.scss`; the file's key is retained because `\"declaration-property-value-disallowed-list\": 15` remains under it, untouched. `pnpm lint`'s stylelint step confirms the drop: total baselined violations went from 610 (measured on the pre-change tree, stashed and re-checked) to 609 (post-change), a difference of exactly 1, and the run is clean either way (no new violations either before or after)."
+    },
+    {
+      "criterion": "A regression check that the rule flags a genuine unpaired layout hidden and does not flag any of the three tells. There is no test file for this rule today — if adding one is more than a small fixture, say so in the report rather than growing the task",
+      "met": true,
+      "evidence": "New stylelint-rules/no-unpaired-overflow-hidden.test.mjs: 5 cases using Node's built-in test runner (node:test/node:assert, no new dependency) and stylelint's own programmatic `stylelint.lint({ code, config })` API against inline CSS fixtures — (1) flags a genuine unpaired `.shell { overflow: hidden; }`, (2) does not flag hidden paired with a following clip, (3) does not flag the text-overflow/white-space:nowrap tell, (4) does not flag the clip-path tell, (5) does not flag the -webkit-line-clamp tell. `node --test stylelint-rules/no-unpaired-overflow-hidden.test.mjs` → 'tests 5', 'pass 5', 'fail 0'. This turned out to be a small fixture (one file, ~90 lines, no new dependency, four inline snippets) so it was built rather than deferred — but it is NOT wired into `pnpm test` (`ng test`/`@angular/build:unit-test` is scoped to `src/**/*.spec.ts` per angular.json's `test.options.include`, and this rule intentionally lives outside `src/` as repo tooling, not application code) or into `pnpm lint` (`scripts/lint-all.mjs` runs `ng lint` and `scripts/stylelint-check.mjs` only, neither of which executes arbitrary test files). It is documented as a standalone command in the file's own header comment. Flagging this explicitly since wiring it into either pnpm script would be a change to files/behavior the task did not ask for."
+    },
+    {
+      "criterion": "pnpm lint passes clean with the baseline one entry smaller",
+      "met": true,
+      "evidence": "`pnpm lint` (after all edits): '▶ stylelint (scripts/stylelint-check.mjs)' → 'stylelint: no new violations (609 pre-existing, baselined ...)' → '✓ stylelint (scripts/stylelint-check.mjs) passed (exit 0)'. Before (measured via `git stash`, running the same command against the unmodified tree, then `git stash pop`): 'stylelint: no new violations (610 pre-existing, baselined ...)' — confirms the baseline dropped by exactly 1 and both states pass clean. `pnpm lint`'s overall exit code is 1 in both before and after because of ESLint's 5 pre-existing errors (unrelated to this task, unchanged in both states — see checks.lint), which the task's own text anticipates ('report them separately; expect 5 pre-existing ESLint errors')."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "`tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit` — no output, exit 0. Unchanged before/after (no .ts files touched)."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 567,
+        "failing": 2
+      },
+      "after": {
+        "total": 567,
+        "failing": 2
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget (295.70 kB over 500 kB) — pre-existing, unrelated to this task",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded 8 kB budget (1.59 kB over) — pre-existing, T343's target",
+        "src/app/screens/milestones/milestones.scss exceeded 8 kB budget (3.49 kB over) — pre-existing, T343's target",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded 8 kB budget (3.19 kB over) — pre-existing, T343's target",
+        "src/app/screens/config-manager/config-manager.scss exceeded 8 kB budget (8.81 kB over) — pre-existing, T354's target"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "stylelint-rules/no-unpaired-overflow-hidden.test.mjs"
+    ],
+    "modified": [
+      "stylelint-rules/no-unpaired-overflow-hidden.mjs",
+      ".stylelint-baseline.json",
+      "src/app/shared/notification-bell/notification-bell.scss",
+      "tasks/28-phase-x-layout-layer/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "tasks/README.md's task index was missing rows for T351, T353 and T354 entirely (not stale — absent), even though T353/T354 both have full entries in TASKS.md with `- **Status:** todo`. This task adds T351's row (per its own instruction) but does not add T353/T354's, since those tasks are out of scope here.",
+      "surfaces_at": "whoever next consults tasks/README.md as the index for T353 or T354 will not find them by scanning the table — only by reading TASKS.md directly, which the index exists to avoid."
+    }
+  ],
+  "commits": [
+    "pending"
+  ]
+}

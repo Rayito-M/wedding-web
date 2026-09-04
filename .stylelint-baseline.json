@@ -33,7 +33,6 @@
     "declaration-property-value-disallowed-list": 7
   },
   "src/app/shared/notification-bell/notification-bell.scss": {
-    "wedding/no-unpaired-overflow-hidden": 1,
     "declaration-property-value-disallowed-list": 15
   },
   "src/app/shared/photo-placeholder/photo-placeholder.scss": {

@@ -412,7 +412,26 @@
 - **Refs:** hub ADR-0041 §7
 
 ### T351 — The overflow rule learns its third tell: `-webkit-line-clamp`
-- **Status:** todo
+- **Status:** done — `no-unpaired-overflow-hidden.mjs` recognises `-webkit-line-clamp` on the same
+  declaration block as a third tell (alongside the two existing ones), read from sibling
+  declarations only, exactly as before. Header comment rewritten to state ADR-0041 §4's refined
+  split verbatim — the definition is hub-owned and moves only by amending the ADR, the recogniser
+  set is repo-owned and grows here — and to name what still escalates: a box that genuinely is a
+  scrolling context and wants plain `hidden` anyway. `notification-bell.scss`'s
+  `wedding/no-unpaired-overflow-hidden: 1` entry removed from `.stylelint-baseline.json` (the file
+  keeps its 15 `declaration-property-value-disallowed-list` entries, untouched). Site comment kept;
+  trimmed only the sentence justifying the site against a rule that could not see it yet ("Outside
+  `%truncating-flex-child`'s single-line shape … but the same rationale applies"), since that
+  justification is now baked into the rule itself. New regression fixture,
+  `stylelint-rules/no-unpaired-overflow-hidden.test.mjs` (Node's built-in `node:test`, no new
+  dependency) — 5 cases: flags a genuine unpaired layout `hidden`, does not flag `hidden` → `clip`,
+  and does not flag any of the three tells including `-webkit-line-clamp`. Not wired into `pnpm
+  test`/`pnpm lint` (`ng test` is scoped to `src/**/*.spec.ts` per `angular.json`, and this rule
+  lives outside `src/` by design) — run directly with `node --test
+  stylelint-rules/no-unpaired-overflow-hidden.test.mjs`; see the report for why this was judged a
+  small fixture rather than out of scope. `pnpm lint` passes with stylelint's baseline one entry
+  smaller (610 → 609 pre-existing violations); the 5 pre-existing ESLint errors are unchanged and
+  unrelated. Full evidence: `tasks/28-phase-x-layout-layer/reports/T351.json`.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T342 (the rule and the baseline exist)

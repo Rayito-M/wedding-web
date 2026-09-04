@@ -193,9 +193,7 @@
   // ADR-0041 §4 (T347 audit). `-webkit-line-clamp` is a browser-implemented
   // truncation that requires `overflow: hidden` specifically — `clip` does
   // not trigger the 2-line clamp at all, so pairing here would silently
-  // un-truncate this snippet. Outside `%truncating-flex-child`'s single-line
-  // shape (this clamps two lines), but the same rationale applies: no
-  // focusable content, no `scrollIntoView()` target.
+  // un-truncate this snippet.
   overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

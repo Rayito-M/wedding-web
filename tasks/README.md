@@ -226,6 +226,7 @@ neither sort nor uniquely name them.
 | **T348** | Give a screen back scroll observation and scroll control | done | `28-phase-x-layout-layer` |
 | **T349** | A layout-regression spec per migrated screen, so a device stops being the only check | todo | `28-phase-x-layout-layer` |
 | **T350** | `people` stops nesting a scroller inside `main` | todo | `28-phase-x-layout-layer` |
+| **T351** | The overflow rule learns its third tell: `-webkit-line-clamp` | done | `28-phase-x-layout-layer` |
 | **T352** | Scroll ownership gets its own key; pinning stops carrying it | done | `28-phase-x-layout-layer` |
 | **T355** | `guest-manager` after T352: confirm the classification, correct the comment, root-cause the flake | done | `28-phase-x-layout-layer` |
 | **T356** | The auto-load sentinel stops firing before the layout settles | done | `28-phase-x-layout-layer` |
