@@ -215,8 +215,17 @@
   `tasks/reports/T341.json`
 
 ### T348 — Give a screen back scroll observation and scroll control
-- **Status:** todo — **T341 must not be released until this lands.** It is the fix for a live,
-  user-visible regression on `/guests`, knowingly shipped by T341 and documented at both call sites.
+- **Status:** done — `IntersectionObserver` sentinel (`.scroll-sentinel`, guest-manager.ts
+  constructor) restores auto-load; `ScreenChromeService.scrollResetRequest()` +
+  `PrivateLayout`'s reset `effect()` restore scroll-to-top on filter/search/sort.
+  `guest-manager.ts`'s `onListScroll`/`resetWindow` rewritten onto both, the T341 gap comments
+  removed. `%truncating-flex-child` applied to `.list-footer-info`/`.list-footer-hint`. New
+  `e2e/layout/guest-list-scroll.spec.ts` (observation + control, proven failing against the
+  pre-fix code and passing after) and `e2e/layout/footer-truncation.spec.ts` (single-line
+  invariant at 320×568 in French — could not reproduce a genuine fail-before/pass-after
+  difference in this environment once `document.fonts.ready` settles; ships as a forward-looking
+  regression guard, not a proof — see the T348 report). Real-device verification not attempted
+  (no browser/device access in this environment); see the report's acceptance list.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T341, and **T263** (the Playwright harness) — see below: without it this task's
