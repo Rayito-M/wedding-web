@@ -1,12 +1,13 @@
 {
   "task": "T342",
   "status": "complete",
-  "summary": "stylelint 17.14.1 + postcss-scss added, wired as `ng lint && node scripts/stylelint-check.mjs` (a second tool, not an ESLint plugin; no CI gate exists, run by hand). Rules: raw-px-for-spacing/font-size and bare @media(min-width) via built-in stylelint rules (_layout.scss/_tokens.scss exempted); unpaired overflow:hidden via a custom plugin reading sibling declarations for ADR-0041 §4's positive definition, not a site list. 610 pre-existing violations baselined, compared per-(file,rule). One genuine third shape found (notification-bell.scss's -webkit-line-clamp); filed in decisions_needed.",
+  "summary": "stylelint 17.14.1 + postcss-scss, wired via scripts/lint-all.mjs (runs ng lint and stylelint-check.mjs unconditionally, fails if either fails; no CI gate exists). First pass used `ng lint && stylelint-check.mjs`, masking stylelint behind 5 accepted ESLint errors; corrected, re-verified through pnpm lint. Rules: raw-px/bare @media(min-width) via built-in rules (_layout/_tokens exempt); unpaired overflow:hidden via a custom plugin reading sibling declarations for ADR-0041 §4's positive definition. 610 violations baselined. One third shape found (-webkit-line-clamp), filed in decisions_needed.",
   "acceptance": [
     {
       "criterion": "stylelint added and wired into `pnpm lint`. There is no CI gate to wire it to — `wedding-web` has no `.github/` workflow, so `pnpm lint` is run by hand before merge, on the same terms T349 already states for the e2e suite. Say so plainly rather than implying a gate that does not run. Note `pnpm lint` is `ng lint`, Angular's ESLint builder — stylelint is a second binary in that script, not a plugin to the existing one",
       "met": true,
-      "evidence": "package.json: `\"lint\": \"ng lint && node scripts/stylelint-check.mjs\"` — two separate tools chained, stylelint never added to eslint.config.js. `find . -maxdepth 1 -name .github` → no such directory (confirmed before and after this task); this commit adds no workflow file. `stylelint.config.mjs` header comment states the no-CI-gate fact explicitly. ESLint side unchanged: `pnpm lint` → same 5 pre-existing errors before and after (4 in src/app/shared/modal/, 1 in guest-profile-modal.ts) — `ng lint` run in isolation still exits 1 on those 5, so the `&&` chain never reaches stylelint in this repo's current state; stylelint side verified independently: `node scripts/stylelint-check.mjs` → \"stylelint: no new violations (610 pre-existing, baselined...)\", exit 0."
+      "evidence": "package.json: `\"lint\": \"node scripts/lint-all.mjs\"`. scripts/lint-all.mjs runs `ng lint` then `node scripts/stylelint-check.mjs` unconditionally (not `&&`) and exits non-zero if either failed — stylelint is a second, separate tool (its own binary invocation), never added to eslint.config.js. `find . -maxdepth 1 -name .github` -> no such directory; this task adds no workflow file; stylelint.config.mjs's header comment and scripts/lint-all.mjs's own header both state the no-CI-gate fact explicitly. Verified through `pnpm lint` itself (not by calling the checker directly, per the coordinator's correction): on the unmodified tree, `pnpm lint` prints both '▶ ESLint (ng lint)' and '▶ stylelint (scripts/stylelint-check.mjs)' sections, the ESLint step reports the same 5 pre-existing errors and 'failed (exit 1)', the stylelint step reports 'no new violations (610 pre-existing, baselined...)' and 'passed (exit 0)', and the overall command exits 1 (from ESLint) with a summary line stating each tool's result. With a temporary `padding: 7px` appended to `src/app/shared/avatar/avatar.scss`, `pnpm lint` exits 1 and the stylelint step reports 'stylelint: 1 new violation(s) not covered by the baseline: src/app/shared/avatar/avatar.scss:28:32 ... Disallowed value \"7px\" for property \"padding\"' — proof the gate is live end to end, not just installed. Reverted via `git checkout -- src/app/shared/avatar/avatar.scss` immediately after (a change made in this same session).",
+      "notes": "First pass wired `\"lint\": \"ng lint && node scripts/stylelint-check.mjs\"` and verified the stylelint step by invoking scripts/stylelint-check.mjs directly, which masked that `&&` short-circuits on this repo's 5 permanently-accepted ESLint errors (CLAUDE.md hard rule 11) — `pnpm lint` therefore never reached stylelint on any real invocation. Coordinator caught it (reproduced: `pnpm lint` on the unmodified tree printed only the ESLint failures). Fixed in aed59eb by replacing the `&&` chain with scripts/lint-all.mjs, which runs both tools unconditionally and aggregates exit codes, and re-verified through `pnpm lint` itself as described above."
     },
     {
       "criterion": "Rules: no raw `px` for spacing/font-size (tokens only), no bare `@media (min-width:` (use `respond-to()`), no unpaired `overflow: hidden`",
@@ -68,7 +69,8 @@
       "stylelint.config.mjs",
       "stylelint-rules/no-unpaired-overflow-hidden.mjs",
       "scripts/stylelint-check.mjs",
-      ".stylelint-baseline.json"
+      ".stylelint-baseline.json",
+      "scripts/lint-all.mjs"
     ],
     "modified": [
       "package.json",
@@ -91,7 +93,9 @@
     }
   ],
   "commits": [
-    "4b375b494106553e5a7b08374491630aab87692f"
+    "4b375b494106553e5a7b08374491630aab87692f",
+    "7b68c7f73dd1f328642504901df039b5f09f7ef5",
+    "aed59ebd90dd444bd6f97e01f375d888e700da02"
   ],
   "decisions_needed": [
     {
