@@ -225,7 +225,7 @@ neither sort nor uniquely name them.
 | **T347** | The `overflow` audit and the per-breakpoint scroller classification | done | `28-phase-x-layout-layer` |
 | **T348** | Give a screen back scroll observation and scroll control | done | `28-phase-x-layout-layer` |
 | **T349** | A layout-regression spec per migrated screen, so a device stops being the only check | todo | `28-phase-x-layout-layer` |
-| **T350** | `people` stops nesting a scroller inside `main` | todo | `28-phase-x-layout-layer` |
+| **T350** | `people` stops nesting a scroller inside `main` | done | `28-phase-x-layout-layer` |
 | **T351** | The overflow rule learns its third tell: `-webkit-line-clamp` | done | `28-phase-x-layout-layer` |
 | **T352** | Scroll ownership gets its own key; pinning stops carrying it | done | `28-phase-x-layout-layer` |
 | **T353** | Do `headPinned` / `footPinned` still earn their place? | todo | `28-phase-x-layout-layer` |

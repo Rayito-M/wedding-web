@@ -853,7 +853,20 @@
 - **Refs:** hub ADR-0041 §2, §Consequences; hub ADR-0042 §Context ¶2, §Consequences
 
 ### T350 — `people` stops nesting a scroller inside `main`
-- **Status:** todo
+- **Status:** done — `.people` and `:host` shed `height`/`overflow-y`; `main` is now `/people`'s only
+  scroller (`people.scss`), route data unchanged (no `headPinned`/`footPinned`/`screenScroll`,
+  per hub ADR-0043's amendment). No `(scroll)`/`scrollTop`/`scrollIntoView`/`scrollTo` found in
+  `people.ts`/`people.html` — no observation/control mechanism needed. New
+  `e2e/layout/people-scroll.spec.ts` (T349 slice), proven failing against the pre-fix CSS (`.people`
+  absorbed the overflow internally, `main` never did) and passing after — 8 consecutive clean
+  `e2e/layout` full-suite runs (50/50 each) with the fix in place, across all 5 Playwright projects.
+  Real-browser verification via scratch Playwright specs (run, then deleted, same precedent as T355):
+  360px and ≥900px, all three themes (`data-theme`), all three locales, fixed-header 52px clearance
+  holds, `main`/`.screen-scroll` invariant holds. Back-navigation scroll position is **not** restored
+  on `/people` either before or after this fix, and is identically unrestored on `guest-manager`
+  (confirmed flow) — consistent with "other flow screens", not a regression this task introduced or
+  could fix (the app sets no `withInMemoryScrolling`/`scrollPositionRestoration`, so this is
+  app-wide, out of this task's scope). See `tasks/28-phase-x-layout-layer/reports/T350.json`.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T341 (the route-data flags and `main`'s yielding must exist). **The T343

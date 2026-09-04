@@ -8,24 +8,24 @@
 // its own header markup (not `app-screen-header`/`HeaderService`) since T237
 // is scaffold-only and explicitly out of AppShell wiring.
 //
-// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
-// shell at every breakpoint, not per-breakpoint flow/shell — `.people`
-// below (`height: 100%; overflow-y: auto`) is unconditional, not gated by
-// the `@media (min-width: 900px)` block. Same actual pattern as
-// `seating-plan.scss` despite this file's own comment above pointing to it
-// as precedent — see that file's header comment for the ADR-0042 §2
-// discrepancy this confirms.
+// Scroller classification (hub ADR-0041 §3, ADR-0042 §Consequences,
+// ADR-0043; T350): flow, at every breakpoint. This screen pins nothing —
+// its own header scrolls away with the content — so it declares no
+// `screenScroll` on its route and takes no height/overflow of its own;
+// `main` (`private-layout`) is the screen's only scroller. It previously
+// took `height: 100%; overflow-y: auto` unconditionally here while its
+// route declared no pinning, nesting a second scroll container inside
+// `main` — the defect this comment used to (incorrectly) describe as
+// intentional shell classification. See ADR-0042 §Context ¶2's corrected
+// table and §Consequences.
 :host {
   display: block;
   width: 100%;
-  height: 100%;
 }
 
 .people {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow-y: auto;
   background: var(--surface-page);
   color: var(--text-body-color);
   font-family: var(--font-sans);
