@@ -66,7 +66,7 @@ neither sort nor uniquely name them.
 | `25-phase-u-shared-profile-fields` | Phase U — Shared profile-editing fields, nickname cap raised to 30, edit-mode jump | 8 |
 | `26-phase-v-partner-profile-editing` | Phase V — Partner-account profile editing from both RSVP surfaces | 16 |
 | `27-phase-w-guest-manager-scroll` | Phase W — Guest manager: infinite scroll + sort re-sync (`wedding-ui-design` `6a76eba`) | 10 |
-| `28-phase-x-layout-layer` | Phase X — The layout layer (hub ADR-0041, amended by ADR-0042, ADR-0043) | 11 |
+| `28-phase-x-layout-layer` | Phase X — The layout layer (hub ADR-0041, amended by ADR-0042, ADR-0043) | 16 |
 | `29-phase-z-task-file-ergonomics` | Phase Z — Task-file ergonomics (no ADR; this is tooling, not a decision) | 1 |
 
 ---
@@ -228,5 +228,7 @@ neither sort nor uniquely name them.
 | **T350** | `people` stops nesting a scroller inside `main` | todo | `28-phase-x-layout-layer` |
 | **T351** | The overflow rule learns its third tell: `-webkit-line-clamp` | done | `28-phase-x-layout-layer` |
 | **T352** | Scroll ownership gets its own key; pinning stops carrying it | done | `28-phase-x-layout-layer` |
+| **T353** | Do `headPinned` / `footPinned` still earn their place? | todo | `28-phase-x-layout-layer` |
+| **T354** | Close `config-manager`'s residual budget gap and retire its override | todo | `28-phase-x-layout-layer` |
 | **T355** | `guest-manager` after T352: confirm the classification, correct the comment, root-cause the flake | done | `28-phase-x-layout-layer` |
 | **T356** | The auto-load sentinel stops firing before the layout settles | done | `28-phase-x-layout-layer` |
