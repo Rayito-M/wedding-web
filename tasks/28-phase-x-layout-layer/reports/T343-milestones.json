@@ -114,7 +114,9 @@
       "surfaces_at": "Any future task quoting T343's framing text verbatim rather than re-measuring the file, the same trap this task's own corrected-premise bullet already warns about."
     }
   ],
-  "commits": [],
+  "commits": [
+    "465fed7"
+  ],
   "remaining": [
     "milestones: resolve the master-detail decision (decisions_needed[0]) and set screenScroll: 'lg' on the route accordingly",
     "milestones: @media (min-width: 900px) -> @include layout.respond-to('lg'); raw px -> matching tokens (blocked on the same decision -- .list's own declarations may or may not survive unchanged depending on the answer)",
