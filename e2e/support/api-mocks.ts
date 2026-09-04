@@ -85,8 +85,12 @@ async function json(route: Route, body: unknown, status = 200): Promise<void> {
  * OTP flow, and render `/guests` — registered before any navigation so
  * nothing races the app's own bootstrap requests.
  */
-export async function installApiMocks(page: Page, opts: { guestCount?: number } = {}): Promise<void> {
+export async function installApiMocks(
+  page: Page,
+  opts: { guestCount?: number; pageSize?: number } = {},
+): Promise<void> {
   const guestCount = opts.guestCount ?? 40;
+  const pageSize = opts.pageSize;
 
   // Pre-seeds a GA consent decision (`ConsentService`, hub ADR-0027) so
   // `<app-consent-banner>` — fixed to the bottom of every page, mounted
@@ -121,8 +125,8 @@ export async function installApiMocks(page: Page, opts: { guestCount?: number } 
 
   await page.route(`**/v1/profile/${COUPLE_ID}`, (route) => json(route, COUPLE_PROFILE));
 
-  await page.route('**/v1/profile?*', (route) => handleProfileList(route, guestCount));
-  await page.route('**/v1/profile', (route) => handleProfileList(route, guestCount));
+  await page.route('**/v1/profile?*', (route) => handleProfileList(route, guestCount, pageSize));
+  await page.route('**/v1/profile', (route) => handleProfileList(route, guestCount, pageSize));
 
   await page.route('**/v1/rsvp?*', (route) => json(route, { items: [], nextCursor: null }));
   await page.route('**/v1/rsvp', (route) => json(route, { items: [], nextCursor: null }));
@@ -130,7 +134,37 @@ export async function installApiMocks(page: Page, opts: { guestCount?: number } 
   await page.route('**/v1/notifications/unread-count', (route) => json(route, { count: 0 }));
 }
 
-async function handleProfileList(route: Route, guestCount: number): Promise<void> {
-  const items = [COUPLE_PROFILE, ...guestProfiles(guestCount)];
-  await json(route, { items, profiles: items, nextCursor: null, count: items.length });
+/**
+ * `GET /v1/profile[?cursor=]`. Without `pageSize` (the default, and every
+ * caller before T348) the whole collection comes back in one response and
+ * `nextCursor` is always `null` — no "Load more", no auto-load, matching
+ * `UserProfileDataService.getAll()`'s own real-API behaviour for an unpaged
+ * read (`user-profile-data.service.ts`). With `pageSize` set, the cursor is
+ * the offset into `guestProfiles(guestCount)` as a decimal string — real
+ * cursors are opaque, but nothing here reads it as anything but "what
+ * `nextCursor` last handed back", which is all `UserProfileDataService`
+ * requires of it.
+ */
+async function handleProfileList(
+  route: Route,
+  guestCount: number,
+  pageSize: number | undefined,
+): Promise<void> {
+  const allGuests = guestProfiles(guestCount);
+
+  if (!pageSize || pageSize >= allGuests.length) {
+    const items = [COUPLE_PROFILE, ...allGuests];
+    await json(route, { items, profiles: items, nextCursor: null, count: items.length });
+    return;
+  }
+
+  const url = new URL(route.request().url());
+  const start = Number(url.searchParams.get('cursor') ?? '0');
+  const page = allGuests.slice(start, start + pageSize);
+  // The couple's own profile only ever arrives on the first page — a real
+  // cursor-paged read has no reason to repeat it.
+  const items = start === 0 ? [COUPLE_PROFILE, ...page] : page;
+  const nextStart = start + pageSize;
+  const nextCursor = nextStart < allGuests.length ? String(nextStart) : null;
+  await json(route, { items, profiles: items, nextCursor, count: items.length });
 }

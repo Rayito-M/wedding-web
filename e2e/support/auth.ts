@@ -13,8 +13,15 @@ import { installApiMocks } from './api-mocks';
  * Leaves the page on `/dashboard` (the couple's landing route,
  * `LoginService.landingUrl`) — callers that need `/guests` navigate there
  * themselves afterwards.
+ *
+ * `opts.pageSize`, when set, turns on real cursor pagination in the
+ * `GET /v1/profile` stub (`installApiMocks`) instead of the single-page
+ * default every other caller relies on — see that function's own doc.
  */
-export async function signInAsCouple(page: Page, opts: { guestCount?: number } = {}): Promise<void> {
+export async function signInAsCouple(
+  page: Page,
+  opts: { guestCount?: number; pageSize?: number } = {},
+): Promise<void> {
   await installApiMocks(page, opts);
 
   await page.goto('/login');
