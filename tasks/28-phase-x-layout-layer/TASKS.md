@@ -5,7 +5,7 @@
 > values are raw `px`; three unnamed breakpoints; 13 files declare their own scroll container. Every
 > screen re-derives its own page shell. This phase adds the missing layer and enforces it.
 > Sequence matters: T340 → T341 → **T263** → **T348** → T345 → T347 → T342 → T343 (+ T349) →
-> **T350** → T344.
+> **T350** → T344. **T351** is parallel to all of it and blocks nothing.
 > **T263 (Playwright) moved ahead of T348 on 2026-09-04**, from "any time before T349 needs it".
 > T348's load-bearing acceptance bullet is a test that fails against current `main`, and its fix is
 > an `IntersectionObserver` sentinel — JSDOM implements neither real layout nor intersection, so
@@ -386,6 +386,53 @@
   - Existing violations are baselined, not auto-fixed — a blanket rewrite of 1,037 literals across a
     live app is exactly the kind of change ADR-0041 §8 says not to make in one cut
 - **Refs:** hub ADR-0041 §7
+
+### T351 — The overflow rule learns its third tell: `-webkit-line-clamp`
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T342 (the rule and the baseline exist)
+- **Blocks:** nothing. Explicitly **parallel with T343** — the recogniser only ever *removes* false
+  positives, so it cannot newly flag anything a migration writes, and `notification-bell` is a
+  shared component, not one of T343's four screens.
+- **Why:** hub **ADR-0041 §4 as refined 2026-09-04**. T342's rule correctly refused to grow a third
+  exemption locally and escalated, because §4 told it to. **§4 was wrong to tell it that**, and has
+  been amended: the *definition* is hub-owned and did not move, but the *recogniser set* — the
+  declaration signatures the rule reads — is repo-owned and is expected to grow. Adding a tell is
+  no longer a hub question.
+- **The site, and why plain `hidden` is correct there:** `notification-bell.scss`'s `.row-snippet`
+  (~193–202) is a two-line clamped notification snippet — no focusable content, no
+  `scrollIntoView()` target, the elided remainder of the text as its entire scrollable overflow.
+  It is already outside §4's positive definition on the same reasoning as the single-line case; the
+  rule simply could not *see* it, because the box carries neither `text-overflow`/`white-space:
+  nowrap` nor `clip-path`. **Pairing it would be actively harmful**: the legacy `-webkit-box` clamp
+  is gated on `overflow: hidden` specifically, so a following `overflow: clip` un-truncates the
+  snippet. The existing comment at that site already says all of this and was right — keep it, trim
+  only the part that now reads as an apology for a baselined violation.
+- **Acceptance:**
+  - `stylelint-rules/no-unpaired-overflow-hidden.mjs` recognises `-webkit-line-clamp` on the same
+    declaration block as a third tell, alongside `text-overflow`/`white-space: nowrap` and
+    `clip-path`. It is an unusually safe tell: the declaration exists for no other purpose
+  - **Its header comment is rewritten.** It currently states that a third shape is a hub question
+    and that the rule "does not grow a third exemption locally". That instruction is withdrawn —
+    replace it with §4's refined split: the definition is hub-owned and moves only by amending
+    ADR-0041; this tell list is local and grows here. State what still *does* escalate: a box that
+    genuinely is a scrolling context and wants plain `hidden` anyway
+  - **`notification-bell.scss`'s `wedding/no-unpaired-overflow-hidden` entry comes out of
+    `.stylelint-baseline.json`** — that count drops from 1 to 0 and the key is removed if it is the
+    last rule for that file. It is not: the file keeps its 15
+    `declaration-property-value-disallowed-list` entries, which are real debt and stay. **Correct
+    code must never sit in the baseline** — a baselined entry is invisible, and the next component
+    that clamps text would be flagged, find this one already baselined, and copy it. That is the
+    `_primitives.scss` failure mode of ADR-0041 §7 exactly
+  - A regression check that the rule flags a genuine unpaired layout `hidden` and does not flag any
+    of the three tells. There is no test file for this rule today — if adding one is more than a
+    small fixture, say so in the report rather than growing the task
+  - `pnpm lint` passes clean with the baseline one entry smaller
+- **Non-goals:** no change to `%truncating-flex-child`, `%sr-only`, or `_layout.scss`; no other
+  baseline entries touched; no new stylelint rules. This task teaches one rule one tell
+- **Refs:** hub ADR-0041 §4 (as refined 2026-09-04); T342; `stylelint-rules/`,
+  `.stylelint-baseline.json`, `src/app/shared/notification-bell/notification-bell.scss`
 
 ### T343 — Migrate the four oversized screens onto the layer
 - **Status:** todo
