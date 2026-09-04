@@ -1151,7 +1151,18 @@
   `tasks/28-phase-x-layout-layer/reports/T343.json`
 
 ### T344 — `anyComponentStyle` becomes an error
-- **Status:** todo
+- **Status:** done — measured fresh (not inherited from T343's report): `config-manager` 16.81 kB
+  (worst of the four), `guest-manager` 11.69 kB, `milestones` 11.40 kB, `seating-plan` 9.45 kB — all
+  four unchanged from T343's own figures, confirming no drift landed between. `angular.json`'s
+  `anyComponentStyle.maximumError` ratchets `20kB` → `17kB` (190 bytes / ~1.1% above the worst
+  screen — tight enough that any further growth fails the build, loose enough that a routine small
+  edit does not trip on rounding). The 8 kB `maximumWarning` is untouched, and no per-path override
+  was added. Gate proven to bite: a scratch rule appended to `config-manager.scss` (55 bytes over
+  17.00 kB) made `pnpm build` fail with `exit 1` and an explicit `✘ [ERROR] ... exceeded maximum
+  budget. Budget 17.00 kB was not met by 55 bytes with a total of 17.05 kB`; reverted immediately
+  after (`git checkout --`), file untouched in the final diff. Hub `ARCHITECTURE.md` § Performance
+  budgets bullet is explicitly left to a hub session — see
+  `tasks/28-phase-x-layout-layer/reports/T344.json` for the exact wording proposed.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T343 (all four screens migrated, so the ratchet is set against final numbers)

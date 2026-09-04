@@ -1,0 +1,90 @@
+{
+  "task": "T344",
+  "status": "complete",
+  "summary": "anyComponentStyle's maximumError ratchets 20kB -> 17kB in angular.json, measured fresh: config-manager 16.81kB (worst), guest-manager 11.69kB, milestones 11.40kB, seating-plan 9.45kB. 17kB is 190 bytes above the worst screen. 8kB maximumWarning untouched, no per-path override. Gate proven to bite: a scratch rule pushed config-manager.scss to 17.05kB and pnpm build failed (exit 1, explicit ERROR line); reverted immediately. Production build passes clean before and after. Hub ARCHITECTURE.md's bullet left to a hub session per repo-boundary instruction -- exact wording proposed in this report.",
+  "acceptance": [
+    {
+      "criterion": "Rewritten 2026-09-04 (hub ADR-0041 §7, re-amended): this task no longer flips the warning to an error across all four screens (unsatisfiable, withdrawn) -- it tightens the maximumError instead. Read §7's amendment before starting.",
+      "met": true,
+      "evidence": "Read docs/decisions/0041-*.md §7's full amendment block (the 're-amended the same day' version) before making any change. Confirmed against angular.json (maximumWarning: 8kB / maximumError: 20kB at start) and T343's own status line (all four screens migrated, done 2026-09-04) that the dependency had landed."
+    },
+    {
+      "criterion": "The 8kB maximumWarning stays exactly as it is -- not re-baselined, and no per-path overrides added (four per-path exceptions is the same repeal reached one screen at a time).",
+      "met": true,
+      "evidence": "git diff angular.json shows a single line changed: `\"maximumError\": \"20kB\"` -> `\"maximumError\": \"17kB\"`. `\"maximumWarning\": \"8kB\"` is byte-identical before and after. No `configurations`/per-path budget entries were added anywhere in angular.json -- grep -c '\"type\": \"anyComponentStyle\"' angular.json = 1, unchanged from before this task."
+    },
+    {
+      "criterion": "maximumError ratchets from 20kB down to just above the worst measured screen, measured at the moment this task lands rather than reusing an earlier report's figure.",
+      "met": true,
+      "evidence": "pnpm build run fresh from a clean tree on 2026-09-05 (this session), output: config-manager.scss 16.81kB (8.81kB over the 8kB warning) -- the worst of the four -- guest-manager.scss 11.69kB, milestones.scss 11.40kB, seating-plan.scss 9.45kB. All four match T343's own closing figures exactly, confirming no drift landed on main between T343's last commit (2e2d364) and this measurement. Set maximumError to 17kB: 190 bytes (~1.1%) above 16.81kB -- tight enough that the next real growth on config-manager fails the build (proven below), loose enough that ~190 bytes of legitimate small-edit headroom exists before a routine change trips the gate on rounding alone. Chose a round kB value consistent with the existing 8kB/20kB style rather than an exact-byte figure like '16.82kB', since angular.json's own budgets are already round numbers and the CLI's own reporting is 2-decimal kB, not bytes."
+    },
+    {
+      "criterion": "A production build passes clean, warnings included in the output and stated in the report.",
+      "met": true,
+      "evidence": "pnpm build (with maximumError: 17kB in place), full output captured to /tmp/final-build.log, exit code 0. Warnings quoted verbatim: 'bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 295.74 kB with a total of 795.74 kB.' (pre-existing, unrelated -- initial-bundle budget, not anyComponentStyle); 'src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.45 kB with a total of 9.45 kB.'; 'src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.69 kB with a total of 11.69 kB.'; 'src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.40 kB with a total of 11.40 kB.'; 'src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.81 kB with a total of 16.81 kB.' No ERROR lines, no non-zero exit. These four warnings are the gap ADR-0041 §7 says stays visible -- reproduced here rather than summarised away."
+    },
+    {
+      "criterion": "Hub ARCHITECTURE.md § Performance budgets updated to drop the 'currently a warning' caveat.",
+      "met": "not_attempted",
+      "evidence": "Not applied -- out of this repo's authority per the launching agent's explicit repo-boundary instruction ('Do not edit anything in ../wedding-architecture/'). ARCHITECTURE.md's current text (lines 158-183) already carries forward-looking language ('ADR-0041 §7 (as amended) ratchets the 20 KB error down to just above the worst measured screen') written before this task ran, so no literal 'currently a warning' string exists to delete -- but the text is still speaking in the future tense about a ratchet that has now happened, and still cites the pre-ratchet 20 KB figure nowhere explicitly (it names no error number at all). Proposed wording for the hub session, replacing angular-architecture ARCHITECTURE.md lines 169-171 and the paragraph at lines 181-183:\n\nLine 169-171, replace:\n'The per-component CSS budget is enforced by the Angular build as a **warning** at 8 KB, alongside a\\nmuch looser **error** at 20 KB. Four screens exceed the warning (config-manager, guest-manager,\\nmilestones, seating-plan) and none exceeds the error.'\nwith:\n'The per-component CSS budget is enforced by the Angular build as a **warning** at 8 KB and an\\n**error** at 17 KB (`wedding-web` T344, 2026-09-05) -- set just above `config-manager` at 16.81 KB,\\nthe worst of the four screens that still exceed the warning, so nothing can grow while the gap stays\\nvisible. Four screens exceed the warning (config-manager 16.81 KB, guest-manager 11.69 KB, milestones\\n11.40 KB, seating-plan 9.45 KB) and none exceeds the error.'\n\nLine 181-183, replace:\n'So the 8 KB warning **stays where it is**, telling the truth about a gap that is still open; ADR-0041\\n§7 (as amended) ratchets the 20 KB *error* down to just above the worst measured screen so nothing\\ncan grow.'\nwith:\n'So the 8 KB warning **stays where it is**, telling the truth about a gap that is still open; the\\n17 KB error (above) is `wedding-web` T344's ratchet, landed 2026-09-05, and is proven to fail the\\nbuild on the next real growth to any of the four screens (T344 report, `wedding-web`).'"
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit) -- clean, no errors, before and after (this task touches no TypeScript)."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": { "total": 567, "failing": 2 },
+      "after": { "total": 567, "failing": 2 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 295.74 kB with a total of 795.74 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.45 kB with a total of 9.45 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.69 kB with a total of 11.69 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.40 kB with a total of 11.40 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.81 kB with a total of 16.81 kB."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "tasks/28-phase-x-layout-layer/reports/T344.json"
+    ],
+    "modified": [
+      "angular.json",
+      "tasks/28-phase-x-layout-layer/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts",
+      "src/app/screens/config-manager/config-manager.scss"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "The ESLint pre-existing-error baseline (5 errors: guest-profile-modal.ts's unused import, three template a11y errors and one output-native error in shared/modal/) and the two pre-existing guest-profile-modal.spec.ts failures (delegateTo PATCH payload assertion, and a delegation.field.error text assertion) are both still present and unrelated to this task. Verified unchanged before and after, not fixed here -- CLAUDE.md hard rule 11 and the task prompt both name these as accepted, out of this task's scope.",
+      "surfaces_at": "Whichever task is scoped to shared/modal/ cleanup or guest-profile-modal.spec.ts's delegation assertions."
+    },
+    {
+      "risk": "17kB leaves config-manager only 190 bytes (~1.1%) of headroom. T354 (closing config-manager's residual gap, parked outside this phase's exit condition per the phase's own 'What this task is NOT' framing) is the next task likely to touch this file's size in either direction -- if it trims the file, the ratchet should tighten again rather than sit stale at a now-loose 17kB; if a future unrelated small edit adds even a single token-substituted declaration, it may trip the gate immediately. Neither is a defect in this task's own work, but the next screen-size-affecting change to config-manager.scss should re-measure and consider re-ratcheting rather than assuming 17kB stays correct indefinitely.",
+      "surfaces_at": "T354, or any future edit to config-manager.scss."
+    }
+  ],
+  "commits": [],
+  "decisions_needed": [],
+  "remaining": []
+}
