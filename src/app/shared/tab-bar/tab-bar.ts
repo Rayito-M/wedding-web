@@ -10,7 +10,7 @@ import {
 import { RouterLink } from '@angular/router';
 
 import { LoginService, RouteConfigService } from '../../core';
-import { NAV_TABS, rolesForLink } from '../nav-tabs';
+import { NAV_TABS } from '../nav-tabs';
 import { TranslatePipe } from '@ngx-translate/core';
 
 /**
@@ -38,12 +38,11 @@ export class TabBar {
   // Filtered once (role + enabled-route) before slicing into primary/rest, so
   // a disabled route can't eat a "primary slot" and desync the overflow math.
   protected readonly visibleTabs = computed(() =>
-    NAV_TABS.filter((tab) => {
-      const roles = rolesForLink(tab.link);
-      return (
-        (!roles || roles.includes(this.login.role())) && this.routeConfig.isRouteEnabled(tab.link)
-      );
-    }),
+    NAV_TABS.filter(
+      (tab) =>
+        (!tab.roles || tab.roles.includes(this.login.role())) &&
+        this.routeConfig.isRouteEnabled(tab.link),
+    ),
   );
 
   protected readonly overflows = computed(() => this.visibleTabs().length > this.maxTabs + 1);

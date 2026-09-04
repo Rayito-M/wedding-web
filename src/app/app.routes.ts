@@ -7,15 +7,19 @@ import { publicOnlyGuard, rbacGuard, routeEnabledGuard, RouteChromeData } from '
 //                   renders the shared screen header / tab-bar around each child screen.
 //
 // Child route `data` (typed `RouteChromeData`) is the single source of truth for
-// both RBAC and nav chrome — `rbacGuard` reads `roles` directly, and NAV_TABS
-// (shared/nav-tabs.ts) derives its own role filtering from the same object by
-// route path, rather than repeating `roles` there:
-//   id     — joins this route to its NavTab entry, for active-tab highlighting
-//            (not unique: `home` deliberately labels both `/dashboard` and `/me`)
-//   roles  — roles allowed to activate the route; absent = any authenticated role
-//   tabBar — bottom tab bar on mobile (<900px)
-//   topNav — desktop nav, shown in the screen header (≥900px)
-//   moto   — decorative motorcycle-rider crossing above the mobile tab bar
+// both RBAC and nav chrome — `rbacGuard` reads `roles` directly, and
+// `shared/nav-tabs.ts` walks this tree once at module load, emitting a
+// `NavTab` per route whose `tabBar`/`topNav` is set and carrying `roles` and
+// `navLabel` straight off it (hub ADR-0042 §6). There is no separate lookup
+// by path — the previous one failed open on a miss (hub ADR-0029 §4.7):
+//   id       — joins this route to its NavTab entry, for active-tab highlighting
+//              (not unique: `home` deliberately labels both `/dashboard` and `/me`)
+//   roles    — roles allowed to activate the route; absent = any authenticated role
+//   tabBar   — bottom tab bar on mobile (<900px)
+//   topNav   — desktop nav, shown in the screen header (≥900px)
+//   navLabel — i18n key for the nav entry; required whenever tabBar or topNav is
+//              true (hub ADR-0042 §7 — a missing label must not compile)
+//   moto     — decorative motorcycle-rider crossing above the mobile tab bar
 export const routes: Routes = [
   {
     path: '',
@@ -68,6 +72,7 @@ export const routes: Routes = [
           roles: ['guest'],
           tabBar: true,
           topNav: true,
+          navLabel: 'nav.rsvp',
         } satisfies RouteChromeData,
       },
       {
@@ -80,6 +85,7 @@ export const routes: Routes = [
           tabBar: true,
           topNav: true,
           moto: true,
+          navLabel: 'nav.schedule',
         } satisfies RouteChromeData,
       },
       {
@@ -92,6 +98,7 @@ export const routes: Routes = [
           tabBar: true,
           topNav: true,
           moto: true,
+          navLabel: 'nav.travel',
         } satisfies RouteChromeData,
       },
       {
@@ -104,6 +111,7 @@ export const routes: Routes = [
           tabBar: true,
           topNav: true,
           moto: true,
+          navLabel: 'nav.album',
         } satisfies RouteChromeData,
       },
       {
@@ -117,6 +125,7 @@ export const routes: Routes = [
           roles: ['groom', 'bride'],
           tabBar: true,
           topNav: true,
+          navLabel: 'nav.home',
         } satisfies RouteChromeData,
       },
       {
@@ -128,6 +137,7 @@ export const routes: Routes = [
           id: 'people',
           tabBar: true,
           topNav: true,
+          navLabel: 'nav.people',
         } satisfies RouteChromeData,
       },
       {
@@ -141,6 +151,7 @@ export const routes: Routes = [
           roles: ['groom', 'bride'],
           tabBar: true,
           topNav: true,
+          navLabel: 'nav.config',
         } satisfies RouteChromeData,
       },
       {
@@ -160,6 +171,7 @@ export const routes: Routes = [
           // to `.screen-scroll` for this route because of these two flags.
           headPinned: true,
           footPinned: true,
+          navLabel: 'nav.guests',
         } satisfies RouteChromeData,
       },
       {
@@ -173,6 +185,7 @@ export const routes: Routes = [
           roles: ['groom', 'bride'],
           tabBar: true,
           topNav: true,
+          navLabel: 'nav.seating',
         } satisfies RouteChromeData,
       },
       {
@@ -188,6 +201,7 @@ export const routes: Routes = [
           roles: ['groom', 'bride'],
           tabBar: true,
           topNav: true,
+          navLabel: 'nav.milestones',
         } satisfies RouteChromeData,
       },
       {
@@ -200,6 +214,7 @@ export const routes: Routes = [
           roles: ['guest'],
           tabBar: true,
           topNav: true,
+          navLabel: 'nav.home',
         } satisfies RouteChromeData,
       },
     ],

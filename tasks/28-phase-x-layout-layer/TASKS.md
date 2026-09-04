@@ -143,7 +143,17 @@
   `src/app/core/guard/route-chrome-data.ts`, `src/app/layouts/private-layout/`
 
 ### T345 — The nav derives from the route tree, and stops failing open
-- **Status:** todo
+- **Status:** done — `RouteChromeData` is now a discriminated union (`NonNavRouteChromeData` /
+  `NavRouteChromeData`) so a `tabBar: true`/`topNav: true` route without `navLabel` fails to
+  `satisfies RouteChromeData` (reproduced: `{ id: 'x', tabBar: true }` → `TS1360`, "Property
+  'navLabel' is missing"). `nav-tabs.ts`'s `collect()` walks `routes` once, emitting a `NavTab`
+  per route whose `data.tabBar`/`data.topNav` is set, with `link`/`roles`/`labelKey` all read off
+  that same `RouteChromeData` object — `NAV_TABS` (hand-written array), `rolesForLink()` and
+  `chromeDataByPath` are gone. `tab-bar.ts` and `screen-header.ts` (the latter out-of-scope but
+  forced — it imported the same two deleted symbols in the same shape) filter on `tab.roles`
+  directly. The fail-open regression (`rolesForLink()` returning `undefined` — "no restriction" —
+  on a path miss) was reproduced against the pre-fix code before the fix landed: see the T345
+  report for the exact repro and its output.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Sequenced with:** T341 (same mechanism, same PR series)

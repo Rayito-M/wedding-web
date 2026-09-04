@@ -28,7 +28,7 @@ import {
 
 import { LangCode } from '../../model';
 import { Monogram } from '../monogram/monogram';
-import { NAV_TABS, rolesForLink } from '../nav-tabs';
+import { NAV_TABS } from '../nav-tabs';
 import { NotificationBell } from '../notification-bell/notification-bell';
 
 /**
@@ -81,10 +81,7 @@ export class ScreenHeader implements OnInit {
 
   protected readonly tabs = computed(() => {
     const role = this.login.role();
-    return NAV_TABS.filter((tab) => {
-      const roles = rolesForLink(tab.link);
-      return !roles || roles.includes(role);
-    });
+    return NAV_TABS.filter((tab) => !tab.roles || tab.roles.includes(role));
   });
 
   /** Account avatar glyph — the signed-in user's initials from firstName and lastName. */

@@ -220,7 +220,7 @@ neither sort nor uniquely name them.
 | **T342** | stylelint, because guidance alone already failed once | todo | `28-phase-x-layout-layer` |
 | **T343** | Migrate the four oversized screens onto the layer | todo | `28-phase-x-layout-layer` |
 | **T344** | `anyComponentStyle` becomes an error | todo | `28-phase-x-layout-layer` |
-| **T345** | The nav derives from the route tree, and stops failing open | todo | `28-phase-x-layout-layer` |
+| **T345** | The nav derives from the route tree, and stops failing open | done | `28-phase-x-layout-layer` |
 | **T346** | Split `TASKS.md` into `tasks/<phase>/`, with an index | done | `29-phase-z-task-file-ergonomics` |
 | **T347** | The `overflow` audit and the per-breakpoint scroller classification | todo | `28-phase-x-layout-layer` |
 | **T348** | Give a screen back scroll observation and scroll control | done | `28-phase-x-layout-layer` |

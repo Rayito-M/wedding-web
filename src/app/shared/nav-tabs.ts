@@ -8,46 +8,55 @@ export interface NavTab {
   id: string;
   labelKey: string;
   link: string;
+  /** Roles allowed to see this tab. Absent = any authenticated role. */
+  roles?: UserRole[];
 }
 
-// Order mirrors the DS AppShell nav model (commit 90246bd):
-//   base (all roles): home · rsvp · schedule · album · travel · people
-//   couple-only:      guests · seating · config
-// `home` is a single destination for both roles — it just resolves to the
-// role-appropriate screen (guest → /me, couple → /dashboard); role filtering
-// guarantees only one `home` entry is ever present in a rendered list.
-export const NAV_TABS: NavTab[] = [
-  { id: 'home', labelKey: 'nav.home', link: '/me' },
-  { id: 'home', labelKey: 'nav.home', link: '/dashboard' },
-  { id: 'rsvp', labelKey: 'nav.rsvp', link: '/rsvp' },
-  { id: 'schedule', labelKey: 'nav.schedule', link: '/schedule' },
-  { id: 'album', labelKey: 'nav.album', link: '/album' },
-  { id: 'travel', labelKey: 'nav.travel', link: '/travel' },
-  { id: 'people', labelKey: 'nav.people', link: '/people' },
-  { id: 'guests', labelKey: 'nav.guests', link: '/guests' },
-  { id: 'seating', labelKey: 'nav.seating', link: '/seating' },
-  // Couple-only preparation timeline (hub ADR-0029, T279). `roles` on the
-  // matching route (app.routes.ts) keeps this entry — and therefore any
-  // knowledge that the timeline exists — out of a guest's nav entirely
-  // (hub ADR-0029 §4.7).
-  { id: 'milestones', labelKey: 'nav.milestones', link: '/milestones' },
-  { id: 'config', labelKey: 'nav.config', link: '/config' },
+// Order mirrors the DS AppShell nav model (commit 90246bd): a route cannot
+// know it is third, so this stays an explicit constant — but as a list of
+// ids, not hand-copied objects (hub ADR-0042 §6). `home` appears once even
+// though two routes carry it (`/dashboard`, `/me`): role filtering
+// guarantees only one is ever rendered.
+const NAV_ORDER: readonly string[] = [
+  'home',
+  'rsvp',
+  'schedule',
+  'album',
+  'travel',
+  'people',
+  'guests',
+  'seating',
+  'milestones',
+  'config',
 ];
 
-// `roles` lives once, on the route (app.routes.ts `data`), keyed by path —
-// not by `id`, since `home` deliberately labels two different routes/roles.
-// Built once at module load by flattening the route tree.
-const chromeDataByPath = new Map<string, RouteChromeData>();
-(function collect(list: Route[]): void {
+/**
+ * Walks the route tree once at module load, emitting one `NavTab` per route
+ * whose `data` sets `tabBar` or `topNav` — `link` and `roles` come straight
+ * off that route, so there is no separate lookup left to drift out of sync
+ * with it (hub ADR-0042 §6). The previous `rolesForLink()` lookup failed
+ * open on a path miss: it returned `undefined`, and `undefined` read as "no
+ * role restriction" — a route rename that wasn't mirrored into a
+ * hand-written `link` could put a couple-only screen in every guest's nav
+ * (hub ADR-0029 §4.7).
+ */
+function collect(list: Route[]): NavTab[] {
+  const tabs: NavTab[] = [];
   for (const route of list) {
-    if (route.path !== undefined && route.data) {
-      chromeDataByPath.set(`/${route.path}`, route.data as RouteChromeData);
+    const data = route.data as RouteChromeData | undefined;
+    if (route.path !== undefined && data?.navLabel !== undefined && (data.tabBar || data.topNav)) {
+      tabs.push({
+        id: data.id,
+        labelKey: data.navLabel,
+        link: `/${route.path}`,
+        roles: data.roles,
+      });
     }
-    if (route.children) collect(route.children);
+    if (route.children) tabs.push(...collect(route.children));
   }
-})(routes);
-
-/** Roles allowed to see the nav tab pointing at `link`, per its route's `data.roles`. */
-export function rolesForLink(link: string): UserRole[] | undefined {
-  return chromeDataByPath.get(link)?.roles;
+  return tabs;
 }
+
+export const NAV_TABS: NavTab[] = collect(routes).sort(
+  (a, b) => NAV_ORDER.indexOf(a.id) - NAV_ORDER.indexOf(b.id),
+);
