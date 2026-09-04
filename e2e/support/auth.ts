@@ -18,11 +18,17 @@ import { installApiMocks } from './api-mocks';
  * `GET /v1/profile` stub (`installApiMocks`) instead of the single-page
  * default every other caller relies on — see that function's own doc.
  * `opts.dietaryPreferencesCount` passes through to the same function's
- * `GET /v1/config` stub — see its own doc.
+ * `GET /v1/config` stub — see its own doc. `opts.milestoneCount` passes
+ * through to its `GET /v1/milestones` stub — see its own doc.
  */
 export async function signInAsCouple(
   page: Page,
-  opts: { guestCount?: number; pageSize?: number; dietaryPreferencesCount?: number } = {},
+  opts: {
+    guestCount?: number;
+    pageSize?: number;
+    dietaryPreferencesCount?: number;
+    milestoneCount?: number;
+  } = {},
 ): Promise<void> {
   await installApiMocks(page, opts);
 

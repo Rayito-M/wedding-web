@@ -1,19 +1,32 @@
 @use '../../../styles/tokens' as t;
 @use '../../../styles/primitives';
+@use '../../../styles/layout';
 
-// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4; T347 audit):
-// genuinely flow on mobile, shell at `≥900px` — the one file in this audit
-// that matches the split ADR-0042 §2 describes. `:host` stays `display:
-// block` (page scrolls via `main`) until the `@media (min-width: 900px)`
-// block below flips it to `display: flex; height: 100%`, at which point
-// `.list` becomes the internal scroller (`overflow-y: auto`, declared
-// inside that same media query) alongside `.detail-overlay`/`.detail`
-// switching from a mobile bottom-sheet overlay to an in-flow side pane.
-// `.detail-body`'s own `overflow-y: auto` (unconditional, both
-// breakpoints) is a separate, independent scroller inside the fixed/static
-// overlay itself — not nested inside `.list`'s scroll region — same shape
-// as the shared `app-modal`'s `.modal-body`, not a second competing
-// scroller on the same axis.
+// T343 (hub ADR-0041 §2/§6/§7): budget migration onto the layout layer.
+//
+// Scroller classification (hub ADR-0041 §3/§4, ADR-0042 §4, settled by hub
+// ADR-0043 §5): genuinely per-breakpoint — flow on mobile, shell from
+// `$bp-lg` (900px) up — the case ADR-0043 was written to make expressible.
+// The route (`app.routes.ts`) declares `screenScroll: 'lg'`, so `main`
+// yields to `PrivateLayout`'s own `.screen-scroll` only at `≥900px`; below
+// that `.screen-scroll` is `display: contents` and `main` is the page
+// scroller exactly as before this migration. **Per hub ADR-0043 §4a,
+// `.screen-scroll` never scrolls — it only bounds `:host`'s `height: 100%`.
+// `.list` and `.detail-body` keep their own, independent scrollers; the
+// master-detail split is this screen's to own**, not the layout's:
+// collapsing it into the layout's own scroller would both break the
+// two-pane UX (the detail pane's actions would scroll off with the list)
+// and regress `centerTodayMarker()`'s desktop behaviour (`.list.scrollTop`)
+// from working to a no-op. `:host` stays `display: block` (page scrolls via
+// `main`) until `@include layout.respond-to('lg')` below flips it to
+// `display: flex; height: 100%`, at which point `.list` becomes the
+// internal scroller (`overflow-y: auto`, declared inside that same query)
+// alongside `.detail-overlay`/`.detail` switching from a mobile bottom-sheet
+// overlay to an in-flow side pane. `.detail-body`'s own `overflow-y: auto`
+// (unconditional, both breakpoints) is a separate, independent scroller
+// inside the fixed/static overlay itself — not nested inside `.list`'s
+// scroll region — same shape as the shared `app-modal`'s `.modal-body`, not
+// a second competing scroller on the same axis.
 :host {
   display: block;
   width: 100%;
@@ -24,7 +37,7 @@
 //    three right-aligned counters) ───────────────────────────────────────
 
 .header {
-  padding: 12px t.$space-4 10px;
+  padding: t.$space-3 t.$space-4 10px;
   display: flex;
   flex-direction: column;
   gap: t.$space-3;
@@ -37,10 +50,7 @@
 }
 
 .header-meta {
-  font-size: t.$text-label;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %eyebrow-wide;
   margin-bottom: 3px;
   display: block;
 }
@@ -48,7 +58,7 @@
 .header-text {
   font-family: t.$font-serif;
   font-weight: 400;
-  font-size: 22px;
+  font-size: t.$text-display-sm;
   line-height: 1;
   margin: 0;
 }
@@ -86,11 +96,8 @@
 }
 
 .counter-label {
+  @extend %eyebrow-wide;
   margin-top: 3px;
-  font-size: t.$text-label;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
 }
 
 // New-milestone button (DS `ScreenMilestones.jsx:170`): the last child of the
@@ -171,7 +178,7 @@
 .list {
   flex: 1;
   min-width: 0;
-  padding: 14px t.$space-4 8px;
+  padding: 14px t.$space-4 t.$space-2;
 }
 
 // ── Timeline rows (DS `ScreenMilestones.jsx` chrome: dot-rail + card) ────
@@ -184,7 +191,7 @@
 
 .row-date {
   text-align: right;
-  padding: 16px 0 0;
+  padding: t.$space-4 0 0;
   font-size: t.$text-label;
   letter-spacing: 0.12em;
   color: var(--text-muted);
@@ -237,7 +244,7 @@
   // already used for `rsvp-edit.scss`/`rsvp-create.scss`'s own card caps.
   // Without this the card stretches full-bleed on a wide desktop viewport.
   max-width: 560px;
-  padding: 12px 14px;
+  padding: t.$space-3 14px;
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
   border-radius: t.$radius-card;
@@ -260,15 +267,12 @@
 }
 
 .card-title {
+  @extend %truncating-flex-child;
   flex: 1;
-  min-width: 0;
   font-size: 14px;
   font-weight: 500;
   line-height: 1.3;
   color: var(--text-body-color);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 
   &.done {
     color: var(--text-muted);
@@ -470,10 +474,7 @@
 }
 
 .eyebrow {
-  font-size: t.$text-label;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %eyebrow-wide;
 }
 
 .detail-heading h2 {
@@ -531,10 +532,7 @@
 }
 
 .field-label {
-  font-size: t.$text-label;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %eyebrow-wide;
 }
 
 .field-error {
@@ -565,7 +563,7 @@
   display: inline-flex;
   align-items: center;
   gap: t.$space-1;
-  padding: 6px 12px;
+  padding: 6px t.$space-3;
   border: 1px solid var(--border-hairline);
   border-radius: t.$radius-pill;
   background: transparent;
@@ -609,7 +607,7 @@
 .announcement-send,
 .internal-reached,
 .internal-not-reached {
-  padding: 12px 14px;
+  padding: t.$space-3 14px;
   border: 1px solid var(--border-hairline);
   border-radius: t.$radius-md;
   background: var(--surface-page);
@@ -661,7 +659,7 @@
 // Mirrors app-btn's box (12px/18px padding on body type) — the real button is
 // conditional, so this holds the header's height either way.
 .btn-placeholder {
-  padding: 12px 18px;
+  padding: t.$space-3 18px;
   font-size: t.$text-body;
   width: 9rem;
 }
@@ -690,7 +688,7 @@
   @extend %sr-only;
 }
 
-@media (min-width: 900px) {
+@include layout.respond-to('lg') {
   :host {
     display: flex;
     flex-direction: column;

@@ -837,6 +837,36 @@
   a regression this slice introduced or could fix by itself. `seating-plan` (the same
   `.unassigned-body`/`.tables` shape) remains, and inherits the same blocker once the hub decision
   lands.
+  **`milestones` slice landed 2026-09-04, unblocked by hub ADR-0043 §4a / T358.** T358 answered the
+  blocking question directly: `.screen-scroll` never scrolls, in any variant — `screenScroll` means
+  "`main` yields, so the screen can bound itself and own its scrolling", never "the layout supplies
+  the scroller". `.list` and `.detail-body` therefore keep their own declarations exactly as they
+  were — nothing to choose between anymore. Route now sets `screenScroll: 'lg'`; `@media (min-width:
+  900px)` → `@include layout.respond-to('lg')`; raw `px` padding/margin/gap/font-size that matched a
+  token now uses it (12 sites); `.card-title` now `@extend`s `%truncating-flex-child` and
+  `.header-meta`/`.counter-label`/`.eyebrow`/`.field-label` now `@extend %eyebrow-wide` instead of
+  hand-copying its four declarations each — all four already existed in `_primitives.scss`, none
+  re-authored. stylelint's own count for this file dropped 39 → 37 (`declaration-property-value-
+  disallowed-list`) and 1 → 0 (`media-feature-name-disallowed-list`, the converted `@media`),
+  baseline refreshed (`pnpm stylelint:baseline`, 567 → 564 pre-existing repo-wide — verified the
+  other 563 entries are pure key-reordering, not value drift). **Still over budget, and slightly
+  less so: 11.50 kB → 11.40 kB (3.50 kB over → 3.40 kB over)** — reported, not gutted, same shape as
+  config-manager/guest-manager's slices. The measurement this slice owed T352 `risks[1]` — whether
+  `:host`'s `height: 100%` resolves correctly with `.screen-scroll`'s `flex`/`min-height: 0` sitting
+  between `main` and `:host` for a **breakpoint variant** of `screenScroll` (not just `true`) — is
+  closed on the real route: at ≥900px, `app-milestones`'s own `clientHeight` (728px) equals
+  `.screen-scroll`'s `clientHeight` exactly, `main.overflowY` reads `clip` with a no-op `scrollTop`
+  write, and below 900px `.screen-scroll` is `display: contents` while `main` is the real, single
+  scroller — all four proven in a real browser on `/milestones` itself, not simulated on `/schedule`.
+  `centerTodayMarker()` re-verified on desktop after the migration (not merely assumed unaffected):
+  `.list.scrollTop` lands within the middle 70% of its scrollable range on load, against a ±420-day
+  fixture. New `e2e/layout/milestones.spec.ts` (3 cases), proven failing first against the pre-slice
+  route/CSS in a disposable `git worktree` at the prior commit (never `git stash`) — the height-chain
+  case fails there with `mainOverflowY: 'auto'` instead of `'clip'`, exactly the defect this slice
+  fixes; the other two cases pass unchanged before and after, because they assert invariants that
+  already held. `seating-plan` (the same `.unassigned-body`/`.tables` shape, and hub ADR-0043 §5's
+  own worked example of the identical answer) remains and is a separate, later PR — full evidence in
+  `tasks/28-phase-x-layout-layer/reports/T343-milestones.json`.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T340, T341, **T352** (landed) and **T358** (the pane-owning model, hub ADR-0043

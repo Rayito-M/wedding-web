@@ -135,6 +135,33 @@ const COUPLE_USERS = {
   count: 2,
 };
 
+/** `MilestoneListResponseDto.items` (`GET /v1/milestones`, the `/milestones`
+ *  screen's own `EntityCollectionService.getAll()` read) — spread across two
+ *  years so the timeline overflows `.list` at every target viewport (mobile
+ *  flow via `main`, and `.list`'s own `overflow-y: auto` at `≥900px`,
+ *  T343's `milestones` slice, hub ADR-0043 §5). Alternates internal/
+ *  guest-facing and reached/not so both dot styles and both status pills
+ *  render at least once. */
+function milestoneItems(count: number): unknown[] {
+  return Array.from({ length: count }, (_, i) => {
+    const internal = i % 3 === 0;
+    const plannedDate = new Date(Date.UTC(2025, 0, 1) + i * 21 * 24 * 60 * 60 * 1000).toISOString();
+    return {
+      id: `e2e-milestone-${i}`,
+      title: {
+        es: `Hito ${i}`,
+        en: `Milestone ${i}`,
+        fr: `Étape ${i}`,
+      },
+      plannedDate,
+      kind: internal ? 'internal' : 'guest-facing',
+      reached: i % 4 === 0,
+      version: 1,
+      atRisk: false,
+    };
+  });
+}
+
 async function json(route: Route, body: unknown, status = 200): Promise<void> {
   await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 }
@@ -146,11 +173,17 @@ async function json(route: Route, body: unknown, status = 200): Promise<void> {
  */
 export async function installApiMocks(
   page: Page,
-  opts: { guestCount?: number; pageSize?: number; dietaryPreferencesCount?: number } = {},
+  opts: {
+    guestCount?: number;
+    pageSize?: number;
+    dietaryPreferencesCount?: number;
+    milestoneCount?: number;
+  } = {},
 ): Promise<void> {
   const guestCount = opts.guestCount ?? 40;
   const pageSize = opts.pageSize;
   const dietaryPreferencesCount = opts.dietaryPreferencesCount ?? 3;
+  const milestoneCount = opts.milestoneCount ?? 3;
 
   // Pre-seeds a GA consent decision (`ConsentService`, hub ADR-0027) so
   // `<app-consent-banner>` — fixed to the bottom of every page, mounted
@@ -199,6 +232,14 @@ export async function installApiMocks(
   await page.route('**/v1/rsvp', (route) => json(route, { items: [], nextCursor: null }));
 
   await page.route('**/v1/notifications/unread-count', (route) => json(route, { count: 0 }));
+
+  // `/milestones` screen's own reads (T343). `audiences` is fed empty and
+  // non-fatal (`fetchAudiences()`'s own comment, `milestones.ts`) — nothing
+  // in this suite exercises the guest-facing send flow.
+  await page.route('**/v1/milestones', (route) =>
+    json(route, { items: milestoneItems(milestoneCount) }),
+  );
+  await page.route('**/v1/audiences', (route) => json(route, { items: [] }));
 }
 
 /**

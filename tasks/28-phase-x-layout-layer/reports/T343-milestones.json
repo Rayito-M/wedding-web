@@ -1,71 +1,70 @@
 {
   "task": "T343",
   "status": "partial",
-  "summary": "milestones slice only. Re-measured shape vs source (matches corrected premise). Landed the uncontested piece: .detail-body gains explicit min-height:0 (T347 risks[1]), verified with long content -- belt-and-braces, no visual change. Did NOT set screenScroll:'lg' or touch scroll CSS/token migration -- blocked on a master-detail question ADR-0043 doesn't answer, escalated (blocking:true). Also measured: centerTodayMarker()'s list.scrollTop already no-ops on mobile today, pre-existing, not introduced here.",
+  "summary": "milestones slice landed after hub ADR-0043 §4a (T358) settled the pane-owning question this slice was previously blocked on. Route now sets screenScroll: 'lg'; @media -> respond-to('lg'); raw px matching a token substituted; five sites now extend existing primitives instead of re-authoring them. .list/.detail-body left untouched per T358's ruling. Real-route 'lg' height chain measured (closes T352 risks[1]); centerTodayMarker() re-verified on desktop. New e2e/layout/milestones.spec.ts, proven failing first via a git worktree. seating-plan out of scope (separate PR).",
   "acceptance": [
     {
-      "criterion": "Migrated in descending size order -- config-manager, guest-manager, milestones, seating-plan -- one screen per PR, each independently shippable and revertible (ADR-0041 §8)",
+      "criterion": "Migrated in descending size order — config-manager, guest-manager, milestones, seating-plan — one screen per PR, each independently shippable and revertible (ADR-0041 §8)",
       "met": "partial",
-      "evidence": "This PR touches only src/app/screens/milestones/milestones.scss (git diff --stat) plus report/task-doc files -- no config-manager/guest-manager/seating-plan file touched, no app.routes.ts change. It is milestones' PR slot in the order, but the migration itself is incomplete within that slot -- see the classification/budget bullets below.",
-      "notes": "seating-plan deliberately not attempted -- explicit prompt scope (\"only the third screen: milestones\"), listed in remaining[]."
+      "evidence": "git diff --stat: only src/app/screens/milestones/milestones.scss, src/app/app.routes.ts (milestones route only), e2e/support/api-mocks.ts, e2e/support/auth.ts, e2e/layout/milestones.spec.ts (new), e2e/layout/screen-scroll-breakpoint.spec.ts (comment only), .stylelint-baseline.json and task-doc/report files. No config-manager/guest-manager/seating-plan product file touched. This is milestones' turn in the order and it is now complete within that slice; seating-plan remains, deliberately, a separate PR.",
+      "notes": "seating-plan not attempted this session — explicit prompt scope ('seating-plan is a separate later PR and is not yours') — see remaining[]."
     },
     {
-      "criterion": "Each screen classified flow or shell per breakpoint, measured against its own source -- not against an ADR sentence. Applied with the screen-scroll() mixin (%app-screen and %screen-footer were struck ...) rather than re-authored",
-      "met": "not_attempted",
-      "evidence": "The classification itself was re-confirmed against source (see next bullet's evidence) but the route-level declaration that would realize it (`screenScroll: 'lg'` in app.routes.ts) was deliberately not written. `git diff src/app/app.routes.ts` is empty.",
-      "notes": "Blocked on the master-detail question in decisions_needed[] -- whether PrivateLayout's own `.screen-scroll` wrapper (the thing `screen-scroll()` would apply to via the route flag) is meant to take over `.list`/`.detail-body`'s own independent scrolling, or apply to a wrapper the two panes never overflow. Per this task's own explicit instruction (\"You may need to stop before completing the migration to get this answered. That is the expected and correct outcome\"), this was not decided unilaterally."
-    },
-    {
-      "criterion": "Corrected premise, 2026-09-04 -- milestones is the real per-breakpoint screen: :host is display: block at base and takes height: 100% only at 663 [now 683, file grew], with .list scrolling at 681 [now 715] inside the @media at 659 [now 683]; its unconditional overflow-y: auto at 486 [now 520] is .detail-body, a pane. Re-measure each screen before migrating it -- this task's list was wrong once already",
+      "criterion": "Each screen classified flow or shell per breakpoint, measured against its own source — not against an ADR sentence. Applied with the screen-scroll() mixin (%app-screen and %screen-footer were struck) rather than re-authored",
       "met": true,
-      "evidence": "Re-measured against the current source rather than trusting the task's cited line numbers, which had drifted (T347's own comments grew the file): `:host { display: block; ... }` at milestones.scss:17-21 (no height/overflow at base); `@media (min-width: 900px)` opens at line 683, flips `:host` to `display: flex; flex-direction: column; height: 100%` (lines 684-688); `.list { overflow-y: auto; ... }` is declared only inside that same media query at line 715 (base `.list`, lines 171-175, sets no overflow); `.detail-body { flex: 1; overflow-y: auto; ... }` at line 508-520 is unconditional, both breakpoints, and is a pane (`.detail-overlay`/`.detail`), not `:host`'s own scroller -- confirmed by the file's own T347-authored header comment (lines 4-16), which independently reaches the same conclusion. This exactly matches this task's corrected citation; the only drift was line numbers, not the shape."
+      "evidence": "Classification re-confirmed against current source in the file's own rewritten header comment (milestones.scss:1-32): :host is display:block (flow) until @include layout.respond-to('lg') flips it to display:flex; height:100% — matches ADR-0043 §5's own naming of milestones as the per-breakpoint case. Per hub ADR-0043 §4a (landed after this slice's prior escalation), the screen-scroll() mixin is not what applies here at all: '.screen-scroll' (private-layout.scss's own wrapper) is a layout-owned bounding box the screen never touches; a screen's own pane extends screen-scroll() only if it hands its single scroller to the layout, which milestones deliberately does not (it keeps two independent panes, .list and .detail-body, per the prompt's explicit instruction and ADR-0043 §5's own text: 'one whose .list and .detail-body panes keep their own scrollers rather than surrendering them'). Nothing was re-authored: .list/.detail-body's declarations are byte-for-byte unchanged from before this slice (git diff shows zero lines touched in either rule).",
+      "notes": "The mixin clause in this bullet predates ADR-0043 §4a's clarification that milestones' own panes never use screen-scroll() at all — satisfied in spirit (nothing re-authored, existing primitives reused elsewhere in this same slice: %truncating-flex-child, %eyebrow-wide) rather than literally, because the model that bullet was written against changed underneath it."
+    },
+    {
+      "criterion": "Corrected premise, 2026-09-04 — milestones is the real per-breakpoint screen: :host is display: block at base and takes height: 100% only at 663 [now re-measured], with .list scrolling inside that @media; its unconditional overflow-y: auto is .detail-body, a pane. Re-measure each screen before migrating it — this task's list was wrong once already",
+      "met": true,
+      "evidence": "Re-confirmed against current source before touching anything (unchanged from this slice's own prior partial-report measurement, since no line moved in the interim except this slice's own edits): :host display:block at milestones.scss:17-21; @include layout.respond-to('lg') (was @media (min-width:900px)) opens at line 693 in the pre-edit file, flips :host to display:flex;height:100% (694-698); .list's overflow-y:auto is declared only inside that same block (line 725, formerly 715); .detail-body's overflow-y:auto (line 517, formerly 520) is unconditional, both breakpoints, and is a pane per the file's own T347-authored header comment. This slice's route change (screenScroll:'lg') and CSS migration (respond-to, tokens, extends) match this classification exactly — no line of .list/.detail-body moved."
     },
     {
       "criterion": "Each drops below the 8 KB anyComponentStyle budget",
-      "met": "not_attempted",
-      "evidence": "pnpm build before this slice's edit: milestones.scss exceeded budget by 3.49 kB (11.49 kB of 8 kB). After (min-height:0 addition only, no token/respond-to migration): 3.50 kB over (11.50 kB of 8 kB) -- a +0.01 kB change from the one declaration and its comment. No compression work was attempted, consistent with the classification bullet above being blocked.",
-      "notes": "Not attempted, not failed -- the token/respond-to() migration that would move this number is exactly the work blocked on the master-detail decision (changing .list's declarations before knowing whether they survive unchanged, get replaced by screen-scroll(), or move would risk building the wrong model twice)."
+      "met": false,
+      "evidence": "pnpm build, before this slice's edits (measured at session start, matching T358's own report figure): milestones.scss 11.50 kB of 8 kB (3.50 kB over). After this slice's full migration (screenScroll:'lg', respond-to(), 12 token substitutions, 2 primitive extends): 11.40 kB of 8 kB (3.40 kB over) — a 0.10 kB net reduction, not enough to close the gap. Consistent with config-manager's and guest-manager's own slices: ADR-0041 §6 (tokens, textually longer than the px literals they replace) and §7 (the byte budget) pull in opposite directions on a file whose gap was never shell/scroll CSS to begin with.",
+      "notes": "Reported, not gutted, per this task's own repeated instruction. The DS-precedented bare-px card/rail/dot measurements (560px, 56px/24px grid tracks, 10px/7px dot sizes) were deliberately left literal rather than forced onto a token that doesn't name their value — see guest-manager's own slice for the same precedent."
     },
     {
-      "criterion": "No visual change intended: each PR is checked against the previous build in all three themes and all three locales, at 360px and at >=900px",
+      "criterion": "No visual change intended: each PR is checked against the previous build in all three themes and all three locales, at 360px and at ≥900px",
       "met": true,
-      "evidence": "For the one change actually shipped (.detail-body min-height:0): scratch Playwright specs (run, screenshotted, reviewed by hand, then deleted -- same precedent as T355/T343-guest-manager), Desktop Chrome project: 3 themes (terracotta/mauve/verdeagua) x 2 widths (360px/1280px) = 6 combinations, all rendered correctly (screenshots reviewed: master-detail two-pane layout at 1280px, bottom-sheet overlay at 360px, no clipping/overlap, correct theme colors) -- 9/9 scratch specs passed including 3 locale checks (es/en/fr, via localStorage 'language' + fresh navigation, translated text present and non-empty). Cross-engine geometry check (Chromium + WebKit `iPhone 12`) with a long guest-facing milestone (announcement config, the tallest .detail-body content): identical scrollHeight/clientHeight/scrollTop-after-write in both engines before AND after the min-height:0 addition -- .detail-body already scrolled correctly (scrollHeight 691-693 > clientHeight 396, .detail itself never grew past its own clientHeight 527), confirming the addition is belt-and-braces (ADR-0041 §4's \"state it explicitly\" principle) rather than a fix for an observed defect, and produces no visible change.",
-      "notes": "This is Playwright-driven verification against real WebKit/Chromium engines, not a physical device -- stated plainly per CLAUDE.md's own instruction. Scoped to the one change shipped; the blocked classification/budget work has nothing to verify yet."
+      "evidence": "Scratch Playwright spec (e2e/layout/_scratch-milestones-visual.spec.ts, run then deleted — same precedent as prior T343 slices): 9 cases — terracotta/mauve/verdeagua x 360px/1024px (6 cases, screenshotted and reviewed by hand: master-detail two-pane layout at 1024px, bottom-sheet overlay at 360px, correct per-theme accent colors on pills/counters/dots, no clipping or overlap) plus es/en/fr locale checks (3 cases, translated header text present and non-empty, French screenshot reviewed showing 'AUJOURD'HUI' Today marker correctly positioned). All 9/9 passed on Desktop Chrome. Every substitution in this slice is provably identical CSS: t.$text-display-sm resolves to the same 22px var() the literal replaced; the four %eyebrow-wide extends reproduce the exact four declarations they replaced (verified by reading _primitives.scss's own definition against each site before converting); %truncating-flex-child likewise. No property was added, removed, or given a different value anywhere in this slice.",
+      "notes": "Playwright-driven verification, not a physical device — stated plainly per CLAUDE.md's own instruction."
     },
     {
       "criterion": "guest-manager's slice additionally carries the coverage T355 could not commit (.scrolled header spec)",
       "met": "not_attempted",
-      "evidence": "This bullet names guest-manager specifically, not milestones.",
-      "notes": "N/A to this slice -- included only because every T343 acceptance bullet gets an entry per the report schema."
+      "evidence": "This bullet names guest-manager specifically, already landed in that slice, unaffected here.",
+      "notes": "N/A to this slice — included only because every T343 acceptance bullet gets an entry per the report schema."
     },
     {
       "criterion": "Each screen's T349 layout-regression spec lands in the same PR as that screen's migration, not batched afterwards. Include the real-route 'lg' coverage (T352 risks[1]: re-run screen-scroll-breakpoint.spec.ts's scenario against the real /milestones route rather than assuming the by-hand proof already covers it)",
-      "met": "not_attempted",
-      "evidence": "No new committed spec in this PR (`git diff --stat` shows no `e2e/` changes). Scratch, uncommitted Playwright specs were used to gather the evidence above and for the investigation below, run and then deleted -- same precedent as T355/T343-guest-manager for a check that cannot yet be made permanent.",
-      "notes": "Deliberately not written: a spec asserting screenScroll:'lg' behaviour on a real /milestones route would encode one of the two models in decisions_needed[] before either is chosen -- writing it now risks asserting the wrong one and having to rewrite it once the decision lands, which is worse than deferring it. This is exactly T352 risks[1]'s own open item, still open."
+      "met": true,
+      "evidence": "New e2e/layout/milestones.spec.ts, 3 committed cases, landing in this same PR. First case ('≥900px: main yields to .screen-scroll...') is exactly the real-route 'lg' coverage T352 risks[1] asked for: measured on /milestones itself (not simulated on /schedule the way screen-scroll-breakpoint.spec.ts had to before a live route existed) that main.overflowY reads 'clip' with a no-op scrollTop write, .screen-scroll is display:block/overflow-y:clip (also a no-op write), app-milestones's own clientHeight (728px) equals .screen-scroll's clientHeight exactly, and .list/.detail-body scroll independently of each other and of the yielded main (write-then-read round-trips correctly on both, and scrolling one does not move the other). Second case proves flow below 900px unchanged (main auto/sticks, .screen-scroll display:contents). Third case re-verifies centerTodayMarker() on desktop against a ±420-day synthetic fixture (scrollTop lands within the middle 70% of the scrollable range). screen-scroll-breakpoint.spec.ts's own stale comment ('No live route sets screenScroll: \\'lg\\' yet') corrected in place to point at this new coverage rather than left false.",
+      "notes": "Proven failing first — see the fail-first bullet below for the mechanism and captured result."
     },
     {
-      "criterion": "Each screen is checked in a real browser before its PR is called done -- npx playwright test e2e/layout plus a look at the screen itself",
+      "criterion": "Each screen is checked in a real browser before its PR is called done — npx playwright test e2e/layout plus a look at the screen itself",
       "met": true,
-      "evidence": "npx playwright test e2e/layout (all 5 projects, 50 tests) run 6 times consecutively after the edit landed: 50/50 passed every time (this PR touches no route/scroll mechanism e2e/layout already covers, so no count change was expected or observed). Scratch Playwright screenshots (Desktop Chrome, 6 theme/width combinations) reviewed by hand -- no interactive browser/device in this environment, stated plainly."
+      "evidence": "npx playwright test e2e/layout run repeatedly across this session (26 full-suite invocations total, tallied honestly in risks[] below rather than cherry-picked) — see the clean-run-floor discussion there. 'A look at the screen itself': no interactive browser/device in this environment (stated plainly) — driven instead through the same scratch Playwright screenshots as the visual-change bullet above, reviewed by hand."
     },
     {
       "criterion": "Watch for the scroll-ownership consequence on every screen (hub ADR-0042 §Consequences): a screen giving up its scroller loses scroll observation and control. Check before migrating, not after",
       "met": true,
-      "evidence": "grep -n \"(scroll)|scrollTop|scrollIntoView|scrollTo\" milestones.ts/.html: one live site, `centerTodayMarker()` (milestones.ts:366), which writes `list.scrollTop` directly against its own ViewChild -- no ScreenChromeService.requestScrollReset() call anywhere in this screen (grep confirms), so the layout's existing scroll-to-top-only control channel is not implicated. Measured in a real browser rather than reasoned out, per this task's explicit instruction: on mobile (360px) TODAY, before any change in this slice, `.list`'s computed `overflow-y` is `visible` (no overflow declared below 900px) and `scrollHeight === clientHeight` (2792 === 2792, `main` -- not `.list` -- is the real scroller); writing `list.scrollTop = 999` and reading it back gives `0` -- the write is **already a silent no-op on mobile, before this slice touched anything**. This is a pre-existing defect (the \"Today\" marker never centers into view on a phone), not a regression this slice introduced -- this slice makes no change to `.list`, to mobile CSS, or to `centerTodayMarker()` itself. At >=900px (also measured, before any route change): `.list` overflow-y is `auto`, scrollHeight 2812 > clientHeight 627, and the write-then-read round-trips correctly (200 written, 200 read back) -- centering already works on desktop today. This finding is load-bearing for the escalation below: Option A there (letting `.screen-scroll` take over `.list`'s own scrolling) would additionally regress the desktop case from working to no-op, which the current code does not do.",
-      "notes": "Reported as a risk (a pre-existing mobile defect this slice did not cause and was not authorized to fix unilaterally, since fixing it would mean deciding whether centering should even attempt anything on a screen where the whole page scrolls) rather than fixed here."
+      "evidence": "Checked before any CSS/route change (grep milestones.ts/.html for (scroll)/scrollTop/scrollIntoView/scrollTo): one live site, centerTodayMarker() (milestones.ts:366), writing list.scrollTop against its own ViewChild — no ScreenChromeService.requestScrollReset() call, so the layout's scroll-to-top control channel is not implicated. Re-verified in a real browser AFTER the migration landed (milestones.spec.ts's third case): .list.scrollTop lands within the middle 70% of its scrollable range on load at ≥900px — desktop centering still works, unregressed by screenScroll:'lg'. The pre-existing mobile no-op (established in this slice's prior partial report: .list has no overflow below 900px, so the write is already clamped to 0 before this slice touched anything) is unaffected by this slice's changes (main below 900px is unconditionally flow, exactly as before) and is not fixed here — see risks[]."
     },
     {
       "criterion": "Two inherited min-height: 0 gaps land with the screen that owns them (T347 risks[1]): config-manager.scss's .modal-dialog .modal-body (done in T343's first slice) and milestones.scss's .detail-body",
       "met": true,
-      "evidence": "milestones.scss:508-521 -- `.detail-body` now declares `min-height: 0` explicitly, with an inline comment explaining (per ADR-0041 §4's own \"state it rather than inheriting it\" principle) that this was not observed to be a live defect: `overflow-y: auto` already establishes a scroll container in every engine measured, which already zeroes the flex automatic-minimum floor (confirmed empirically in both Chromium and WebKit with real long content before this addition -- see the visual-change bullet's evidence). config-manager's half was already done in the first T343 slice per its own report, unaffected here (`git diff --stat` confirms config-manager.scss is not touched by this PR)."
+      "evidence": "milestones.scss's .detail-body min-height:0 was landed in this slice's prior session (465fed7, before the master-detail question blocked the rest of the migration) and is unchanged by this session — git diff shows zero lines touched in that declaration. config-manager's half landed in T343's own first slice, also unaffected here."
     }
   ],
   "deviations": [],
   "checks": {
     "typecheck": {
       "result": "pass",
-      "detail": "pnpm typecheck (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit) -- clean, before and after, measured in a separate `git worktree` at the pre-edit commit (0030dfc) for 'before' and in the working tree for 'after', never via `git stash`."
+      "detail": "pnpm typecheck (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit) — clean, before and after."
     },
     "lint": {
       "errors_before": 5,
@@ -82,59 +81,69 @@
       "global_stylesheet_bytes_before": 2472,
       "global_stylesheet_bytes_after": 2472,
       "budget_warnings": [
-        "bundle initial exceeded maximum budget: 795.70 kB of 500 kB (pre-existing, unrelated to this task)",
+        "bundle initial exceeded maximum budget: 795.72 kB of 500 kB (pre-existing, unrelated to this task)",
         "src/app/screens/config-manager/config-manager.scss exceeded maximum budget: 16.81 kB of 8 kB (pre-existing, not this PR's screen)",
         "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget: 11.69 kB of 8 kB (pre-existing, not this PR's screen)",
         "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget: 9.60 kB of 8 kB (pre-existing, not this PR's screen)",
-        "src/app/screens/milestones/milestones.scss exceeded maximum budget: 11.50 kB of 8 kB (this PR's screen -- was 11.49 kB before, +0.01 kB from the min-height:0 addition and its comment; see acceptance bullet 4 / decisions_needed)"
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget: 11.40 kB of 8 kB (this PR's screen — was 11.50 kB before this session, -0.10 kB net from the full respond-to()/token/primitive migration; see acceptance bullet 4)"
       ]
     }
   },
   "files": {
     "added": [
-      "tasks/28-phase-x-layout-layer/reports/T343-milestones.json"
+      "e2e/layout/milestones.spec.ts"
     ],
     "modified": [
+      "src/app/app.routes.ts",
       "src/app/screens/milestones/milestones.scss",
-      "tasks/28-phase-x-layout-layer/TASKS.md"
+      "e2e/support/api-mocks.ts",
+      "e2e/support/auth.ts",
+      "e2e/layout/screen-scroll-breakpoint.spec.ts",
+      ".stylelint-baseline.json",
+      "tasks/28-phase-x-layout-layer/TASKS.md",
+      "tasks/28-phase-x-layout-layer/reports/T343-milestones.json"
     ],
     "deleted": [],
     "reverted": [
       "src/environments/release.ts"
     ]
   },
-  "out_of_scope_touched": [],
-  "risks": [
+  "out_of_scope_touched": [
     {
-      "risk": "centerTodayMarker() (milestones.ts:366)'s `list.scrollTop` write is already a silent no-op on mobile (<900px) today, independent of anything in this or any future T343 slice -- `.list` declares no `overflow` below 900px, so it is not a scroll container there and the write is clamped to 0. The \"Today\" marker therefore never centers into view on a phone; on first load a couple opening /milestones on mobile sees whatever position the DOM naturally renders at, not the marker scrolled into view. Not fixed here: fixing it would require deciding what \"center\" even means on a screen where main (not .list) is the real mobile scroller -- e.g. scrolling main to the marker's offsetTop instead -- which is a real, if small, product/UX decision (does the couple want the page to jump on load?) this task was not asked to make, and is entangled with (though not blocked by) the master-detail decision below: whichever option is chosen, .list stays the real desktop scroller either way, but only a deliberate mobile-specific fix would ever make the marker centre on a phone.",
-      "surfaces_at": "Any future work on milestones' mobile experience, or a dedicated UX pass on the \"Today\" marker. Not urgent (silent no-op, not a crash or visible layout break), but worth fixing once seen rather than re-discovering."
+      "path": "e2e/support/api-mocks.ts",
+      "why": "milestones.ts fetches GET /v1/milestones and GET /v1/audiences on load; without a stub either call falls through to the suite's own catch-all (a deliberate 501 'unmocked in e2e' response) and the screen never renders. Added a milestoneItems() fixture and two page.route registrations (installApiMocks opts gained milestoneCount, default 3, additive and backward-compatible with every existing caller) — required for milestones.spec.ts to run at all, not optional scope."
     },
     {
-      "risk": "T343's own text (\"milestones and config-manager each declare three scrollers\") does not match this file: grepping every `overflow-y: auto`/`overflow: hidden|clip` site in milestones.scss finds exactly two live scroll-relevant declarations (`.list` at line 715, `.detail-body` at line 508-520) plus the paired hidden/clip on `.detail` itself (not a scroll container by design). If \"three\" counted `.detail-overlay` or `main` itself, that should be corrected wherever this figure is repeated, so a future reader does not go looking for a third scroller that is not there.",
-      "surfaces_at": "Any future task quoting T343's framing text verbatim rather than re-measuring the file, the same trap this task's own corrected-premise bullet already warns about."
-    }
-  ],
-  "commits": [
-    "465fed7"
-  ],
-  "remaining": [
-    "milestones: resolve the master-detail decision (decisions_needed[0]) and set screenScroll: 'lg' on the route accordingly",
-    "milestones: @media (min-width: 900px) -> @include layout.respond-to('lg'); raw px -> matching tokens (blocked on the same decision -- .list's own declarations may or may not survive unchanged depending on the answer)",
-    "milestones: commit the T349 layout-regression spec with real-route 'lg' coverage (T352 risks[1]) once the model is known",
-    "milestones: close the 8 KB anyComponentStyle budget gap (currently 3.50 kB over) -- not attempted, blocked on the same decision plus the same structural tension config-manager/guest-manager already reported (ADR-0041 §6 tokens vs §7 budget)",
-    "seating-plan: migrate onto the layout layer (T343) as an unconditional shell (screenScroll: true) -- currently 9.60 kB of 8 kB -- inherits the same master-detail question for its .unassigned-body/.tables pair once decided",
-    "milestones (optional, non-blocking): centerTodayMarker()'s mobile no-op -- see risks[0]"
-  ],
-  "decisions_needed": [
+      "path": "e2e/support/auth.ts",
+      "why": "signInAsCouple's opts type passes milestoneCount through to installApiMocks — same reason as above, mechanical plumbing for the new mock, no behavior change for any existing caller that omits it."
+    },
     {
-      "question": "milestones has a genuine, already-working two-pane master-detail layout at >=900px: `.list` and `.detail-body` each scroll independently and are not nested inside one another (confirmed by measurement: `.list` overflow-y auto, scrollHeight 2812 > clientHeight 627; `.detail-body` overflow-y auto, independently scrollable; `main`'s own scrollHeight === clientHeight today, i.e. main never actually overflows because :host's height:100% + flex/min-height:0 discipline already bounds it exactly). ADR-0043 §5 names milestones as `screenScroll: 'lg'` but does not say what happens to these two panes once that flag is set and PrivateLayout's `.screen-scroll` wrapper (around the whole routed component) gets `screen-scroll()`'s own `flex:1; min-height:0; overflow-y:auto`. seating-plan has the identical shape (`.unassigned-body`, `.tables`), so the answer applies to both.",
-      "options": [
-        "A -- screen-scroll() takes over: set screenScroll:'lg' AND strip .list/.detail-body's own overflow-y:auto so PrivateLayout's .screen-scroll wrapper becomes the sole scroller for the whole routed component. Cost: destroys the master-detail UX -- a long list would carry the detail pane's action buttons off-screen while scrolling instead of keeping them visible, the opposite of what a fixed detail pane is for. Measured to also regress centerTodayMarker()'s desktop behaviour, which works correctly today (list.scrollTop round-trips 200->200) -- under this option .list would no longer be a scroll container at all, so the write would go from working to a silent no-op on desktop too, not just remain broken on mobile. No precedent for this in the phase: guest-manager/config-manager never make the layout's wrapper absorb a screen's own internal, non-page-level regions.",
-        "B -- screen-scroll() applies to an inert wrapper, panes keep their own scrollers: set screenScroll:'lg' per ADR-0043 §5, leave .list/.detail-body's declarations exactly as they are today. Since :host's existing height:100% + flex/min-height:0 chain already bounds the component exactly within main's box (measured: main never overflows even today, before this flag exists), .screen-scroll's own screen-scroll() mixin ends up genuinely inert once applied -- a scroll container with zero scrollable range. Its real effect is removing main's own live-but-currently-inert overflow-y:auto (the ADR-0041 §4 hazard class: a box a focus event could shift, even with nothing currently overflowing it) and replacing it with .screen-scroll's equally inert one, purely so main stops being a scroll container the moment this screen is active. Cost: a second, also-inert scroll container is introduced where arguably none is needed (mild code smell, no functional cost); T352 risks[1]'s own open item -- no live route has proven :host's height:100% still resolves correctly with .screen-scroll's own flex/min-height:0 sitting between main and :host, since this was previously only checked by hand-applying classes to /schedule, a screen with no internal shell of its own."
-      ],
-      "recommendation": "Option B. It matches ADR-0043 §5's own naming of the route flag, is consistent with this file's own T347-authored header comment already sanctioning `.detail-body` as \"a separate, independent scroller ... not nested ... not a second competing scroller on the same axis\", and does not regress anything that works today (centerTodayMarker's desktop behaviour, or the master-detail UX itself). Option A actively breaks both. The only real cost of B is unverified plumbing (T352's own open item) rather than a design trade-off, and that is exactly what a real-route Playwright spec (deferred to `remaining[]`) would settle once this is decided.",
-      "blocking": true,
-      "needed_by": "This task's own milestones slice (T343) before any screenScroll route change or .list/.detail-body CSS change lands, and T343's seating-plan slice for the identical .unassigned-body/.tables shape."
+      "path": "e2e/layout/screen-scroll-breakpoint.spec.ts",
+      "why": "Its own header comment asserted 'No live route sets screenScroll: \\'lg\\' yet' — false as of this slice's route change. Corrected the comment in place (no assertion/test-body change) so a future reader is not misled; left the spec itself untouched since it is still the more isolated proof of the CSS mechanism."
+    },
+    {
+      "path": ".stylelint-baseline.json",
+      "why": "pnpm stylelint:baseline (--write) refreshed the whole baseline after this slice's dedup/token work lowered milestones.scss's own violation counts (39->37 declaration-property-value-disallowed-list, 1->0 media-feature-name-disallowed-list) — same practice guest-manager's own T343 slice used. Diffed the full before/after JSON (sorted keys) to confirm every other file's counts are byte-identical; only milestones.scss's values actually changed, the rest of the diff is pure key-reordering noise from the script's own file-enumeration order."
     }
-  ]
+  ],
+  "risks": [
+    {
+      "risk": "e2e/layout showed markedly more flakiness this session than either T358's or T357's own reported baselines (T358: 3 distinct flakes across 12 runs under heavy load, 6/6 clean on an idle machine; T357: roughly 1-in-6 for its own investigated flake). This session: 26 full-suite invocations, 22 clean, 4 with failures. Two of the four failed runs reproduced flakes already named as pre-existing and not-mine-to-fix (guest-manager-scrolled-header, twice). Two showed a NEW co-occurring pattern not previously named in any T343/T349/T357/T358 report: clip-flex-item.spec.ts + config-manager.spec.ts (both cases) failing together on Desktop Chrome in one run, and config-manager.spec.ts alone failing on Pixel 7 in another — neither touches milestones or any file this slice modified, and both are the same class of default-5000ms toBeVisible() timeout under worker contention as the three already-named flakes. Not reproduced in isolation (not attempted for these two, given they are pre-existing files this slice never touched).",
+      "surfaces_at": "Any future e2e/layout run on a loaded machine. Worth a T357-style investigation if it recurs, but is not this slice's defect to fix (it touches no file this session modified) and the machine appeared to be under heavier load today than either prior report's own baseline."
+    },
+    {
+      "risk": "milestones.spec.ts's first case (the height-chain/master-detail test) failed twice during this session's own verification, both alongside an already-known unrelated flake in the same run (guest-manager-scrolled-header) — once at the gotoMilestones() navigation wait (fixed here: raised that wait's timeout from the 5000ms default to 10000ms, since the helper chains a full OTP sign-in, a navigation and a 43-item fetch before anything renders) and once at an unidentified point after navigation succeeded, not reproduced in 3 isolated repeat-each runs on the same project (iPhone 14) immediately afterward. Post-hardening, the longest observed consecutive clean run was 8; overall post-hardening rate was 14/16 runs clean (2 failures, both co-occurring with the pre-existing guest-manager-scrolled-header flake in the same run, on WebKit/Chrome-Android projects under evident load).",
+      "surfaces_at": "Any future e2e/layout run on a loaded machine that happens to schedule milestones.spec.ts's first case against a slow worker. If it recurs with a captured stack trace pointing at a specific assertion (rather than the navigation wait already hardened here), that assertion is the next thing to widen or poll rather than read once."
+    },
+    {
+      "risk": "The DS-precedented bare-px measurements this slice deliberately left literal (560px card cap, 56px/24px and 92px/28px rail grid tracks, 10px/7px dot sizes, 32px close-button box) have no scale match in the token set — same finding guest-manager's own slice already reported. Not a defect, but the gap between ADR-0041 §6 (tokens) and §7 (the 8 KB budget) remains open for this screen exactly as it does for config-manager and guest-manager.",
+      "surfaces_at": "Any future attempt to close milestones.scss's remaining 3.40 kB budget overage purely through further token substitution — it will not get there; the DS-literal values are not further convertible."
+    }
+  ],
+  "commits": [],
+  "remaining": [
+    "seating-plan: migrate onto the layout layer (T343) as an unconditional shell (screenScroll: true, hub ADR-0043 §5's own worked example of the identical .list/.detail-body-shaped answer for .unassigned-body/.tables) — currently 9.60 kB of 8 kB, not attempted this session",
+    "milestones (optional, non-blocking, pre-existing, not introduced by any T343 slice): centerTodayMarker()'s mobile (<900px) no-op — .list has no overflow below 900px so the write is a silent no-op there; fixing it is a real UX decision (does the couple want the page to jump to 'Today' on load on a phone) this task was never asked to make"
+  ],
+  "decisions_needed": []
 }

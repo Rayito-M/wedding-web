@@ -220,6 +220,16 @@ export const routes: Routes = [
           roles: ['groom', 'bride'],
           tabBar: true,
           topNav: true,
+          // Hub ADR-0043 §1/§5 — the per-breakpoint case the ADR was written
+          // to make expressible: flow below `$bp-lg` (900px, `main`
+          // scrolls), shell from it up (`main` yields, `.screen-scroll`
+          // bounds `:host`'s `height: 100%`). No pin flags: this screen
+          // projects neither a head nor a foot. Per hub ADR-0043 §4a,
+          // `.screen-scroll` itself never scrolls — `.list` and
+          // `.detail-body` keep their own independent scrollers, exactly as
+          // before this flag existed; the master-detail split stays this
+          // screen's to own.
+          screenScroll: 'lg',
           navLabel: 'nav.milestones',
         } satisfies RouteChromeData,
       },

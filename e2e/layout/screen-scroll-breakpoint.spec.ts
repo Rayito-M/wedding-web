@@ -25,11 +25,14 @@ import { signInAsCouple } from '../support/auth';
  * than scrolls". Same shape T352 used to re-target `clip-flex-item.spec.ts`
  * (`tasks/28-phase-x-layout-layer/reports/T352.json`).
  *
- * **No live route sets `screenScroll: 'lg'` yet.** `milestones` is the
- * screen ADR-0043 §5 names for it, and T343 has not migrated it — that is a
- * separate, later task. Proving this class of defect honestly without a
- * live consumer therefore has two halves, deliberately split across two
- * test tiers rather than faked into one:
+ * **Updated 2026-09-04: `milestones` now sets `screenScroll: 'lg'` for
+ * real** (T343's `milestones` slice, `e2e/layout/milestones.spec.ts`'s own
+ * first test) — the real-route proof T352 `risks[1]` asked for exists now,
+ * closed there rather than here. This spec is kept rather than deleted: it
+ * is still the more direct proof of the CSS mechanism itself (the media
+ * query, on both sides of the boundary, isolated from any one screen's own
+ * layout), and predates a live consumer, so the two halves below stay
+ * split across two test tiers rather than collapsed into one:
  *
  * 1. **`screen-chrome.spec.ts` (Vitest)** proves `PrivateLayout` computes
  *    exactly `screen-scrolls-lg` on `main`/`.screen-scroll` from
