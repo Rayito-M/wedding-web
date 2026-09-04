@@ -339,7 +339,11 @@
 
 ### T342 — stylelint, because guidance alone already failed once
 - **Status:** done — stylelint 17.14.1 + postcss-scss, wired as a second binary in `pnpm lint`
-  (`ng lint && node scripts/stylelint-check.mjs`), no CI gate (none exists in this repo). The
+  (`node scripts/lint-all.mjs`, which runs `ng lint` and `scripts/stylelint-check.mjs`
+  **unconditionally** and fails if either does), no CI gate (none exists in this repo). The first
+  wiring was `ng lint && node …`, where ESLint's 5 accepted pre-existing errors short-circuited the
+  `&&` and the stylelint step never ran at all — caught in review, fixed in `aed59eb`, and proven
+  live through `pnpm lint` itself with a deliberate SCSS violation. The
   unpaired-`hidden` rule (`stylelint-rules/no-unpaired-overflow-hidden.mjs`) reads a declaration
   block's own sibling declarations for ADR-0041 §4's positive definition — proven to pass
   `%truncating-flex-child` and `%sr-only`/`.partner-account-note` with no per-site ignore comment.
