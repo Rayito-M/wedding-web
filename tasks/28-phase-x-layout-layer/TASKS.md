@@ -345,7 +345,11 @@
 - **Why:** hub **ADR-0041 §7**. `_primitives.scss` has existed since T247 and 54 of 71 files ignore
   it. There is no stylelint in this repo today; `pnpm lint` checks TS and templates only.
 - **Acceptance:**
-  - stylelint added and wired into `pnpm lint` so CI fails on violation
+  - stylelint added and wired into `pnpm lint`. **There is no CI gate to wire it to** —
+    `wedding-web` has no `.github/` workflow, so `pnpm lint` is run by hand before merge, on
+    the same terms T349 already states for the e2e suite. Say so plainly rather than implying a
+    gate that does not run. Note `pnpm lint` is `ng lint`, Angular's ESLint builder — stylelint
+    is a **second binary in that script**, not a plugin to the existing one
   - Rules: no raw `px` for spacing/font-size (tokens only), no bare `@media (min-width:` (use
     `respond-to()`), no unpaired `overflow: hidden`
   - **The unpaired-`hidden` rule encodes hub ADR-0041 §4's *positive* definition, not an exemption
