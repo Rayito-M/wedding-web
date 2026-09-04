@@ -5,7 +5,11 @@
 > values are raw `px`; three unnamed breakpoints; 13 files declare their own scroll container. Every
 > screen re-derives its own page shell. This phase adds the missing layer and enforces it.
 > Sequence matters: T340 → T341 → **T263** → **T348** → T345 → T347 → T342 → T343 (+ T349) →
-> **T350** → T344. **T351** is parallel to all of it and blocks nothing.
+> **T350** → T344 → **T354**. **T351** is parallel to all of it and blocks nothing.
+> **T352 (hub ADR-0043) is inserted before T343's remaining three screens** — `config-manager`
+> shipped on 2026-09-04 (`0bd2892`), and `guest-manager`/`milestones`/`seating-plan` each need
+> `screenScroll` first; two of the three have no correct declaration without it. **T353** is a
+> cleanup that follows T352 and blocks nothing.
 > **T263 (Playwright) moved ahead of T348 on 2026-09-04**, from "any time before T349 needs it".
 > T348's load-bearing acceptance bullet is a test that fails against current `main`, and its fix is
 > an `IntersectionObserver` sentinel — JSDOM implements neither real layout nor intersection, so
@@ -452,6 +456,110 @@
 - **Refs:** hub ADR-0041 §4 (as refined 2026-09-04); T342; `stylelint-rules/`,
   `.stylelint-baseline.json`, `src/app/shared/notification-bell/notification-bell.scss`
 
+### T352 — Scroll ownership gets its own key; pinning stops carrying it
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T341 (the mechanism this corrects)
+- **Blocks:** **T343's remaining three screens.** `guest-manager`, `milestones` and `seating-plan`
+  all need `screenScroll`; two of the three have no correct declaration without it.
+- **Why:** hub **ADR-0043** (new, 2026-09-04), which amends ADR-0042 §1/§2/§Consequences. ADR-0042
+  §2 was designed against `guest-manager`, where "pins a region" and "owns the scroller" coincide.
+  They are independent, and T343 found all three ways they come apart — see that task's report,
+  `risks[0]`, plus the `config-manager` route comment and the `milestones` case below.
+- **Acceptance:**
+  - `RouteChromeData` gains `screenScroll?: true | 'md' | 'lg' | 'xl'` — absent means flow (`main`
+    scrolls, the default and most screens); `true` means shell at every breakpoint; a breakpoint
+    name means flow below it and shell from it up. Names match `_layout.scss`'s `$bp-*` exactly, so
+    a typo is a compile error rather than a silently-flow screen
+  - **`pinned()` is deleted** (`private-layout.ts:288`). `main` yields on `screenScroll` alone.
+    `headPinned`/`footPinned` keep exactly the meaning ADR-0042 §1 gives them — *this screen
+    projects a head/foot* — and influence scroll ownership no further
+  - **`after-head` re-keys onto `screenChrome.head()`**, not `chrome().headPinned`
+    (`private-layout.html:25`). The 52px fixed-header clearance is dropped from `main` exactly when
+    `.screen-head` renders to supply it. A flag set without its directive becomes inert instead of
+    stranding every interactive element under the fixed header — the regression T343 reproduced,
+    8 of 10 spec cases failing with clicks intercepted
+  - `private-layout.scss` emits the yield over the closed set of four: unconditional, plus one
+    inside `respond-to(md/lg/xl)` each, with the matching `.screen-scroll` variant applying
+    `screen-scroll()` in the same query. Three breakpoints exist and ADR-0041 §6 fixed that number —
+    this list is closed. The screen still writes no media query of its own
+  - **`config-manager`'s route is corrected in place**: `footPinned: true` and the comment admitting
+    it *"exists only to make `main` yield"* are deleted, replaced by `screenScroll: true`. Its SCSS
+    is untouched — the migration in `0bd2892` was correct, only the route declaration was a
+    workaround
+  - A spec proving each of the three defects is gone: a route with `headPinned` and no registered
+    head keeps its clearance; a shell route that pins nothing still yields; a route with
+    `screenScroll: 'lg'` yields at ≥900px and does **not** below it. The third has no home in the
+    old mechanism at all, which is the point
+  - `e2e/layout` green, and `config-manager` re-checked in a real browser — the route change is
+    behavioural even though its CSS did not move
+- **Non-goals:** the pin flags are not deleted here even though they now drive nothing — that is
+  T353, and it turns on a measurement, not on an argument
+- **Refs:** hub ADR-0043 §1–§5; hub ADR-0042 §1, §2, §Consequences (all three amended);
+  `tasks/28-phase-x-layout-layer/reports/T343.json` `risks[0]`
+
+### T353 — Do `headPinned` / `footPinned` still earn their place?
+- **Status:** todo
+- **Target release:** 1.2.0 (or later — this is a cleanup, not a fix)
+- **Owner:** unassigned
+- **Depends on:** T352
+- **Why:** hub **ADR-0043 §Alternatives**, deliberately left open there rather than decided. After
+  T352 the layout renders both slots from `screenChrome.head()` / `foot()` and yields on
+  `screenScroll`, so the two pin flags drive **nothing**. That makes them the very thing ADR-0042
+  §Context ¶3 rejected `data-shell` for: a second declaration site for a fact already declared
+  elsewhere — here, by the directive itself.
+- **The one argument left for them is timing, and it has never been measured.** ADR-0042 §1 chose
+  route `data` over a store because route data resolves *before* activation, so the layout would not
+  render one frame without the pinned region. The directive registers during the screen's lifecycle.
+  Whether that costs a visible first-frame flash in this zoneless app is unknown — the T341 gate
+  proved change detection propagates, not that there is no flash.
+- **Acceptance:**
+  - **Measure first.** Navigate to a screen that projects a head, and determine whether any frame
+    paints with `main` at its unpinned geometry before `.screen-head` exists. A Playwright trace or
+    a paint-timing capture, not reasoning
+  - If there is no flash: delete both keys and every route's use of them; the directive becomes the
+    single declaration, and ADR-0042 §Context ¶3's own argument is satisfied rather than violated
+  - If there is a flash: **keep them and write down what they are for** — a pre-activation reservation
+    of the slot's geometry — because that is a real job and nothing currently states it. Then make
+    the layout actually reserve on the flag, which is what would justify the key
+  - Either way the outcome is reported to the hub; deleting a public route key is an ADR-0043
+    amendment, not a repo decision
+- **Non-goals:** no change to `screenScroll`, no change to either directive's implementation
+- **Refs:** hub ADR-0043 §Alternatives (the open question), §1–§3; hub ADR-0042 §1, §Context ¶3
+
+### T354 — Close `config-manager`'s residual budget gap and retire its override
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T344 (which installs the override this task removes)
+- **Why:** hub **ADR-0041 §7 as amended 2026-09-04**. A complete, correct layout migration moved
+  `config-manager.scss` from 16.78 kB to 16.81 kB against an 8 kB budget. **The gap was never shell
+  or scroll CSS**, so no further layout-layer work closes it, and T344 as originally written could
+  never be satisfied. §7 now lets T344 ship the error gate with a per-path ratchet for this one
+  screen; this task removes it.
+- **Ruling from the hub on the three options in T343's `decisions_needed[]`:** extraction, as
+  recommended — but it is **not** a budget exercise. Extract the local "add couple member" modal
+  (`.modal-overlay` / `.modal-dialog` / `.modal-header` / `.modal-body` / `.modal-footer` and its
+  ~15 form-field rules) **only if it is the right component boundary**, which means first answering
+  whether it duplicates the shared `app-modal` enough to reuse that instead. If the answer is reuse,
+  reuse; the budget improves either way. **Do not shave rules to hit a number** — a screen gutted to
+  satisfy a budget is worse than an honest override, and ADR-0041 §8 forbids that class of change on
+  a live app regardless.
+- **Acceptance:**
+  - The `app-modal` question answered explicitly in the report before any code moves: reuse,
+    extract-new, or neither-and-here-is-why
+  - If extracted or reused: `config-manager.scss` under 8 kB, and the per-path override from T344
+    deleted from `angular.json` in the same PR — an override outliving its reason is how the
+    original warning rotted
+  - If the honest answer is that the screen is simply this large: **say so and stop.** Report it as
+    a hub question — a second per-path override is a hub decision under §7 as amended, and a
+    permanent one for this screen may well be the right answer
+  - No visual change; three themes, three locales, both widths, real browser
+- **Non-goals:** the other three screens' budgets are T343's, not this task's
+- **Refs:** hub ADR-0041 §7 (as amended), §8; T344;
+  `tasks/28-phase-x-layout-layer/reports/T343.json` `decisions_needed[0]`
+
 ### T343 — Migrate the four oversized screens onto the layer
 - **Status:** in-progress — `config-manager` landed 2026-09-04 (one screen per PR, ADR-0041 §8):
   measured `:host` (shell, unconditional) and its only `@media` (opens at 964, not the task's
@@ -471,7 +579,8 @@
   `tasks/28-phase-x-layout-layer/reports/T343.json` for full evidence.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
-- **Depends on:** T340, T341
+- **Depends on:** T340, T341, **T352** for every screen after `config-manager` — `milestones` and
+  `seating-plan` have no correct route declaration without `screenScroll` (hub ADR-0043)
 - **Why:** hub **ADR-0041 §Consequences**. config-manager (1,049 lines), guest-manager (777),
   milestones (753) and seating-plan (545) are 31% of all CSS in the repo and are exactly the four
   screens that breach the 8 KB `anyComponentStyle` budget.
@@ -487,8 +596,14 @@
     `seating-plan` is `height: 100%; overflow: hidden` on `:host` and `.seating-plan`
     unconditionally, its only `@media` opens at line 490, and its 217/306 scrollers are panes
     (`.unassigned-body`, `.tables`) inside an already-shell screen. **Migrate it as an
-    unconditional shell** — `headPinned: true` on its route, `screen-scroll()` outside any
-    `respond-to()`. `config-manager` is the same shape (`:host` at 14–15, `@media` at 928).
+    unconditional shell** — `screenScroll: true` on its route (hub ADR-0043 §1), `screen-scroll()`
+    outside any `respond-to()`. `config-manager` is the same shape (`:host` at 14–15, `@media` at
+    928).
+    **`headPinned: true` withdrawn 2026-09-04 (hub ADR-0043 §3).** This bullet said `headPinned`
+    until T343's own `config-manager` PR reproduced what that does to a screen registering no
+    `*appScreenHead`: `main` loses its 52px fixed-header clearance and nothing restores it — 8 of
+    10 spec cases failed with every click intercepted. `seating-plan.html` registers no head either.
+    It takes `screenScroll: true`, and `headPinned` only if it actually projects one
     **`milestones` is the real per-breakpoint screen**: `:host` is `display: block` at base and
     takes `height: 100%` only at 663, with `.list` scrolling at 681 inside the `@media` at 659; its
     unconditional `overflow-y: auto` at 486 is `.detail-body`, a pane. Re-measure each screen before
@@ -568,11 +683,19 @@
 - **Status:** todo
 - **Target release:** 1.2.0
 - **Owner:** unassigned
-- **Depends on:** T343 (all four screens under budget first)
+- **Depends on:** T343 (the other three screens under budget; `config-manager` ships the ratchet
+  described below rather than blocking the gate)
 - **Why:** hub **ADR-0041 §7**. The budget has been a warning long enough that four screens grew
   through it unnoticed. A warning nobody fails on is documentation, not a budget.
 - **Acceptance:**
   - `angular.json` production budgets: `anyComponentStyle` gains `maximumError: "8kB"`
+  - **A per-path override for `config-manager` only, pinned at its measured post-migration size**
+    (hub ADR-0041 §7 as amended 2026-09-04). A complete, correct migration moved that file from
+    16.78 kB to 16.81 kB — the gap is a seven-section CRUD editor with a local modal, not shell or
+    scroll CSS, so no layout-layer work closes it and this task's original "all four under budget
+    first" precondition can never be met. The override is a **ratchet**: set it at the measured
+    value so the screen cannot grow, never at a round number above it. T354 removes it
+  - The other three screens come under the blanket 8 kB with no override
   - A production build passes clean
   - Hub `ARCHITECTURE.md` § Performance budgets updated to drop the "currently a warning" caveat
 - **Refs:** hub ADR-0041 §7; hub `ARCHITECTURE.md` § Performance budgets
