@@ -140,7 +140,7 @@
       "surfaces_at": "Any future attempt to close milestones.scss's remaining 3.40 kB budget overage purely through further token substitution — it will not get there; the DS-literal values are not further convertible."
     }
   ],
-  "commits": [],
+  "commits": ["6022b43"],
   "remaining": [
     "seating-plan: migrate onto the layout layer (T343) as an unconditional shell (screenScroll: true, hub ADR-0043 §5's own worked example of the identical .list/.detail-body-shaped answer for .unassigned-body/.tables) — currently 9.60 kB of 8 kB, not attempted this session",
     "milestones (optional, non-blocking, pre-existing, not introduced by any T343 slice): centerTodayMarker()'s mobile (<900px) no-op — .list has no overflow below 900px so the write is a silent no-op there; fixing it is a real UX decision (does the couple want the page to jump to 'Today' on load on a phone) this task was never asked to make"
