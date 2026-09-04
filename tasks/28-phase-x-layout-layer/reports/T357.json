@@ -1,0 +1,102 @@
+{
+  "task": "T357",
+  "status": "complete_with_deviation",
+  "summary": "Checked 'measuring before settled' first (T349/T355's pattern), via instrumentation: font-loading settle, a stall-induced scroll/.scrolled oscillation. Neither reproduced the failure or its mechanism across 15 instrumented + 32 full-suite parallel + 1 full-suite run. No natural repro forced. Hardened spec anyway: document.fonts.ready + a 'main overflowing' poll gate the first measurement (unproven trigger), a redundant unpolled re-read removed. No app code touched. Mechanism unpinned; see decisions_needed[0].",
+  "acceptance": [
+    {
+      "criterion": "Root-cause it. Same terms as T349 and T355: measure the race, do not retry-mask it, and do not add a waitForTimeout. The two prior root causes were measuring before the thing had settled in different disguises — check that first, and note this one is on WebKit where the other two were Chromium-only.",
+      "met": "partial",
+      "evidence": "Checked the 'measuring before settled' class first, with instrumentation not reasoning. (1) Font-loading settle, mirroring footer-truncation.spec.ts's own T349 precedent: scratch spec logged document.fonts.status and main.scrollHeight immediately after the first .table-row became visible, then again after `await page.evaluate(() => document.fonts.ready)` — five runs (solo + under three concurrent full-suite invocations): document.fonts.status was already 'loaded' every time, and scrollHeight never changed (e.g. 4099 before/after in 4 of 5 runs, 3058 in the fifth). Rules this out as an observed cause here. (2) A main.scrollTop/.scrolled oscillation from a second, corrective native scroll event: scratch spec instrumented a MutationObserver (class attribute) + a scroll listener on main with high-res timestamps, then injected an ~400ms synchronous main-thread stall (three interleaved busy-loop bursts via setTimeout(0) chains) overlapping `main.scrollTop = main.scrollHeight` — 15 runs (5 solo across all 5 projects + 3x3 under three concurrent full-suite invocations). Every run recorded exactly one scroll event and exactly one class mutation (scrolled:true); never a second event, never a reversal. No waitForTimeout, retry or suite-serialization was added anywhere; no product code was touched. Neither hypothesis reproduced the failure or its mechanism, and no natural reproduction of the original spec.ts:58 failure occurred despite 32 additional full-suite e2e/layout parallel runs (see the third acceptance bullet's evidence) — the root cause is not established, only two candidate mechanisms ruled out. Both scratch instrumentation specs were run and then deleted (git status shows no trace), same convention as T355's own scratch specs (its risks[1])."
+    },
+    {
+      "criterion": "`.scrolled` toggles on a computed style, so state explicitly what the spec waits for before asserting: the scroll having happened, the class having been applied, and the transition (if any) having completed are three different moments.",
+      "met": true,
+      "evidence": "e2e/layout/guest-manager-scrolled-header.spec.ts's header comment gained a 'T357 — the three moments this spec must not conflate' paragraph naming all three explicitly and stating which check in the file addresses each: moment (1, the scroll — and now, ahead of it, main genuinely being overflowing) is a new `expect.poll(() => main.evaluate((el) => el.scrollHeight > el.clientHeight))` plus the pre-existing `scrollMainToBottom()` before/after comparison; moment (2, the class) is the pre-existing `expect.poll(() => headerHost.evaluate(...).classList.contains('scrolled'))`; moment (3, the transition) is the pre-existing box-shadow/background `expect.poll`s, already documented in the file's own prior 'Polled, not read once' paragraph. The one genuinely unpolled read that conflated moment (2) with a later, unjustified re-read (`after.scrolled`) was removed."
+    },
+    {
+      "criterion": "Prove it under the load that produced it — all five projects in parallel, repeated.",
+      "met": true,
+      "evidence": "`npx playwright test e2e/layout --reporter=list` (fullyParallel: true, all 5 projects, 50 cases) run as 3-4 concurrent OS-level invocations sharing one webServer (a heavier load than the 5-worker default alone, matching 'all five projects in parallel, repeated'), both before and after the spec change: pre-change 15 clean full runs (3+4+4+4, one 4-concurrent batch timed out incomplete at 2 minutes under an even heavier --workers=10 setting and is not counted either way) with 0 failures across those 15; post-change 17 clean full runs (1 solo + 4+4+4+4) with 0 failures. A final full `npx playwright test --reporter=list` (all 65 -> 60 tests after scratch removal, e2e/layout + smoke.spec.ts) also passed 60/60. Logs under the session scratchpad's t357runs/ directory (not part of the repo)."
+    },
+    {
+      "criterion": "Report the consecutive-clean-run count as a floor, not a verdict (hub .agent/skills/task-management.md §4). Three times in this phase a clean-run claim has not survived the next person's runs; the claims were honest, the runs were short relative to the race window.",
+      "met": true,
+      "evidence": "Stated plainly, not as 'stable' or 'fixed': 32 clean full-suite e2e/layout parallel runs total (15 pre-change + 17 post-change), plus 1 clean full 60/60 pnpm test:e2e run, plus 15 clean instrumented runs targeting the two specific hypotheses above — none reproduced the original failure. Given the original rate was roughly 1 in 6 (and 0 in 11 by the time this task started), this floor does not establish the fix works; it establishes only that this session's runs did not catch the failure. What would falsify it: more runs, most likely — see decisions_needed[0] for whether that should happen before T343's remaining screens proceed."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "Root-cause the flake — identify the actual mechanism behind guest-manager-scrolled-header.spec.ts:58 failing on iPhone 14 (iOS Safari) under parallel load, then fix it.",
+      "to": "Ruled out two specific, instrumented 'measuring before settled' hypotheses (font-loading settle; a main-thread-stall-induced second scroll event reversing .scrolled) without reproducing the original failure or either hypothesis's own mechanism, then hardened the spec's first measurement (document.fonts.ready + an explicit main-overflowing poll) and removed one redundant unpolled read, as a forward-looking, unproven guard rather than a proven fix.",
+      "reason": "The failure is extremely rare (observed once in six full parallel runs, zero in eleven since, per the task's own framing) and did not recur across 32 additional full-suite parallel runs plus 15 targeted instrumented runs under injected main-thread contention in this session. This mirrors T348's own precedent in this exact phase (footer-truncation.spec.ts: 'could not reproduce a genuine fail-before/pass-after difference in this environment... ships as a forward-looking regression guard, not a proof') for a spec that could not be forced to fail on demand.",
+      "authorized_by": "none — needs a decision (see decisions_needed[0]; T348's own precedent is persuasive but is not itself a T357 acceptance bullet or an ADR section, so treat this deviation as unconfirmed until a human says the T348 precedent applies here too)",
+      "verified_how": "Two hypotheses were tested with real browser instrumentation (a MutationObserver + scroll listener with an injected main-thread stall; document.fonts.status/scrollHeight logging around document.fonts.ready) across 15 runs total under genuine parallel load, and the change was proven not to regress via 17 additional clean full-suite runs post-change plus one full 60/60 pnpm test:e2e run — but none of this proves the change fixes the original failure, since the original failure was never reproduced to fix."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit) — no output, before and after. e2e/**/*.ts is outside both tsconfig projects' scope (same note as T355's report); the changed spec was instead validated by running it via Playwright directly, repeatedly, with no compile errors."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": { "total": 567, "failing": 2 },
+      "after": { "total": 567, "failing": 2 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget by 295.70 kB (pre-existing)",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded budget by 3.69 kB (pre-existing)",
+        "src/app/screens/milestones/milestones.scss exceeded budget by 3.49 kB (pre-existing)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded budget by 1.59 kB (pre-existing)",
+        "src/app/screens/config-manager/config-manager.scss exceeded budget by 8.81 kB (pre-existing)"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "tasks/28-phase-x-layout-layer/reports/T357.json"
+    ],
+    "modified": [
+      "e2e/layout/guest-manager-scrolled-header.spec.ts",
+      "tasks/28-phase-x-layout-layer/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "The actual mechanism behind the original spec.ts:58 failure remains unproven. Two specific, plausible 'measuring before settled' hypotheses were tested with real instrumentation and ruled out under this session's load (a font-loading reflow between the row-visible check and the scroll; a second, corrective native scroll event reversing main.scrollTop under CPU contention) — but the failure was never reproduced at all, so it is also possible the true trigger is a genuine expect.poll/test-timeout exhaustion under heavier real-world contention than this session could generate (the original report's 'six full parallel runs' may have run alongside other processes on that machine; this session's heaviest attempt, 4 concurrent full-suite invocations at --workers=10, itself became too slow to complete within a 2-minute window without ever failing an assertion). If the flake recurs, the two hypotheses tested here should not be re-tested; look instead at whether the failure is a plain timeout under real system load rather than a value-mismatch race.",
+      "surfaces_at": "The next natural WebKit failure of this spec (iPhone SE/12/14, all three untested for the original failure specifically — only iPhone 14 was named), or any future spec in this suite that shares the same unpolled-before-settled shape without document.fonts.ready."
+    },
+    {
+      "risk": "The two scratch instrumentation specs used to test the ruled-out hypotheses (a MutationObserver/scroll-listener timeline under an injected stall; a document.fonts.ready timing probe) were written, run, and deleted this session — never committed, so neither the technique nor the negative result is preserved as reusable tooling for the next person who catches this flake in the wild. The exact repro attempts are described in this report and the task's own status line but are not runnable code.",
+      "surfaces_at": "The next occurrence of this specific flake, if it recurs — the next investigator starts from this report's prose rather than from working instrumentation."
+    }
+  ],
+  "commits": ["0520fc31fc7dd25bc8f05693a6444735493cb708"],
+  "decisions_needed": [
+    {
+      "question": "Is a hardened-but-unproven spec, backed by a 32-run floor and two ruled-out hypotheses, an acceptable closure for T357 — given the phase header's own framing that T357 exists specifically so T343's remaining `milestones`/`seating-plan` slices aren't built on a suite nobody has just watched flake?",
+      "options": [
+        "Accept this closure and let T343's remaining screens proceed now. Consequence: if the real mechanism differs from the two ruled out here (most likely, per risks[0], a plain timeout under heavier real-world contention than this session could generate), the flake can recur unfixed, and the next occurrence starts the investigation over rather than building on working instrumentation (risks[1]).",
+        "Hold T343's remaining screens until this spec is caught failing again with the (currently uncommitted) instrumentation attached, so the actual mechanism — not just two ruled-out candidates — is known before more specs are added to a suite this phase already leans on heavily. Consequence: an indefinite hold on a ~1-in-6-then-0-in-11 event, with real schedule cost to a phase that already has an explicit exit condition naming T343 as the finish line."
+      ],
+      "recommendation": "Option 1 (accept and proceed). The added waits are correct, low-cost, defensible practice regardless of whether they were the actual trigger (document.fonts.ready is this codebase's own established pattern for exactly this class of read), the redundant unpolled read removed was a genuine latent gap, and 32 additional clean runs plus 15 targeted instrumented runs found nothing — holding an already-late phase on an event this rare, with no better lead than 'probably a timeout under heavier load than this session could generate,' trades a large, certain cost for a small, uncertain benefit.",
+      "blocking": false,
+      "needed_by": "before T343's `milestones`/`seating-plan` slices land, per the phase header's own sequencing note"
+    }
+  ]
+}

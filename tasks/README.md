@@ -232,3 +232,4 @@ neither sort nor uniquely name them.
 | **T354** | Close `config-manager`'s residual budget gap and retire its override | todo | `28-phase-x-layout-layer` |
 | **T355** | `guest-manager` after T352: confirm the classification, correct the comment, root-cause the flake | done | `28-phase-x-layout-layer` |
 | **T356** | The auto-load sentinel stops firing before the layout settles | done | `28-phase-x-layout-layer` |
+| **T357** | The `.scrolled` guard spec loses a race under parallel load | done | `28-phase-x-layout-layer` |

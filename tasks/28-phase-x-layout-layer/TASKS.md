@@ -939,7 +939,27 @@
   `tasks/28-phase-x-layout-layer/reports/T347.json` `risks[2]`
 
 ### T357 — The `.scrolled` guard spec loses a race under parallel load
-- **Status:** todo
+- **Status:** done — investigated, not conclusively root-caused; a floor was established instead of
+  proof. Checked "measuring before settled" first, per T349/T355's own pattern, with real
+  instrumentation rather than reasoning: (1) font-loading settle — `document.fonts.status` was
+  already `'loaded'` and `main.scrollHeight` never changed across a `document.fonts.ready` wait, five
+  runs under three concurrent full-suite invocations; (2) a `main.scrollTop`/`.scrolled` oscillation
+  from a second, corrective native `scroll` event — instrumented with a `MutationObserver` + `scroll`
+  listener under an injected ~400ms main-thread stall overlapping the scroll, fifteen runs across all
+  five projects under genuine parallel load. Neither reproduced the failure or its mechanism: every
+  instrumented run recorded exactly one `scroll` event followed by exactly one class mutation, never
+  two. 32 additional full-suite `e2e/layout` parallel runs (15 before the spec change, 17 after,
+  each 5 projects x 10 files = 50 cases) plus one full `pnpm test:e2e` run (60/60): 0 failures — a
+  **floor, not a verdict** (hub `.agent/skills/task-management.md` §4), given the original rate was
+  roughly 1 in 6. Since the mechanism was never pinned down, the spec was hardened anyway rather than
+  left untouched: `document.fonts.ready` (this codebase's own house style for exactly this class of
+  read, `footer-truncation.spec.ts`/T349) and an explicit "`main` is genuinely overflowing" poll now
+  gate the first measurement, and the one genuinely unpolled read after the transition polls (a
+  redundant re-check of `.scrolled`, already confirmed by an earlier `expect.poll`) was removed. Not
+  claimed as the fix — see `tasks/28-phase-x-layout-layer/reports/T357.json`'s
+  `decisions_needed[0]` for whether this closure is sufficient before T343's remaining `milestones`/
+  `seating-plan` slices proceed. No app code touched (`screen-header.scss`/`private-layout.scss`):
+  no evidence root cause lives there.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T343's `guest-manager` slice (landed, `e13688e`), which added the spec
