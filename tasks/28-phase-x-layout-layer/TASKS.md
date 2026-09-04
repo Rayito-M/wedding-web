@@ -202,6 +202,11 @@
   - At least one spec runs at a **narrow viewport in French** — the locale-plus-width combination
     that produced the original footer overflow, and the one no English-only check reaches
   - Specs live beside the harness from T263, not inside `src/`
+  - **Fix the parallel-load flake first.** Verified 2026-09-04: running `e2e/layout` across all four
+    projects at once, one case passed against deliberately-broken CSS that it fails correctly when
+    run alone. A layout suite that is 7/8 reliable is worse than none — it will be believed. Find
+    the race (most likely measuring before the list has settled, or four projects sharing one
+    `webServer`) before adding four more specs to the same runner
 - **Non-goals:** no full user-journey coverage — this is a geometry tier, deliberately narrow.
   **And no CI:** `wedding-web` has no `.github/` workflow today, so this suite is local-only and
   the task must say so plainly rather than implying a gate that does not run. Wiring CI is a
