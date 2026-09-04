@@ -1,0 +1,92 @@
+{
+  "task": "T356",
+  "status": "complete",
+  "summary": "guest-manager's IntersectionObserver callback now filters entries through isSettledIntersection(): isIntersecting && boundingClientRect.top > 0, rejecting observe()'s initial-callback artifact before layout settles. Chose this over skip-first-callback (not an entry fact) and a scrollHeight gate (needs the ancestor scroller, which the sentinel exists to avoid). Documented beside the observer. Proven with 3 synthetic-entry unit tests, no forced race. Real scroll still loads the next page. e2e/layout: 6 consecutive clean full runs (40/40) after.",
+  "acceptance": [
+    {
+      "criterion": "The observer callback rejects an intersection that is an artifact of unsettled layout. The implementation is yours — skipping the first callback per observer instance, requiring the sentinel's boundingClientRect.top to be below the viewport top, or gating on the scroller having non-zero scrollHeight are all plausible. State which you chose and why the others were not",
+      "met": true,
+      "evidence": "src/app/screens/guest-manager/guest-manager.ts: new exported isSettledIntersection(entry) = entry.isIntersecting && entry.boundingClientRect.top > 0, used as entries.some(isSettledIntersection) in the constructor's IntersectionObserver callback (was entries.some(entry => entry.isIntersecting)). Chose boundingClientRect.top > 0 (the second listed option). Rejected skip-the-first-callback: it is state about the observer's call count, not a fact about one IntersectionObserverEntry, so it cannot be 'a pure predicate over an IntersectionObserverEntry' as the acceptance bullet itself requires two lines later, and it re-arms every time the constructor's effect() rebuilds the observer for a fresh ElementRef (viewChild swap), which happens on every re-entry to /guests — exactly when the race is live. Rejected the scrollHeight gate: it requires a reference to whichever ancestor actually scrolls, which is precisely the coupling the sentinel's own pre-existing doc comment (guest-manager.ts, scrollSentinel field) says this mechanism exists to avoid ('this screen never needs a reference to that element'); adding it back just to guard a callback reintroduces the fragility ADR-0043 already had to fix once (which ancestor scrolls changed between ADR-0042 and ADR-0043, and the sentinel design's whole point was not caring)."
+    },
+    {
+      "criterion": "Do not try to force the race to prove the fix. Instead make the guard a pure predicate over an IntersectionObserverEntry and unit-test it directly with synthetic entries — settled-and-intersecting, unsettled-and-intersecting, settled-and-not-intersecting",
+      "met": true,
+      "evidence": "isSettledIntersection() takes only Pick<IntersectionObserverEntry, 'isIntersecting' | 'boundingClientRect'> and touches no class/instance state — pure. guest-manager.spec.ts, new describe 'GuestManager — sentinel guard rejects an unsettled-layout intersection (T356)': 3 tests with synthetic entries — entry(true, 480) => true (settled-and-intersecting), entry(true, 0) => false (unsettled-and-intersecting, the initial-callback artifact), entry(false, 2400) => false (settled-and-not-intersecting). `npx ng test --watch=false --include='src/app/screens/guest-manager/guest-manager.spec.ts'` -> 'Test Files 1 passed (1)', 'Tests 49 passed (49)' (46 pre-existing + these 3). No forced-race attempt made in this session."
+    },
+    {
+      "criterion": "A real scroll still loads the next page",
+      "met": true,
+      "evidence": "e2e/layout/guest-list-scroll.spec.ts unmodified. 'scrolling near the bottom of the list loads the next page' passed in every one of the runs below (e.g. run: '✓ 37 ... scrolling near the bottom of the list loads the next page — IntersectionObserver, not .table-body (1.2s)')."
+    },
+    {
+      "criterion": "e2e/layout keeps its clean-run baseline — state the consecutive number, as T349 and T355 both did",
+      "met": true,
+      "evidence": "`npx playwright test e2e/layout --reporter=list` run 6 times in a row after the fix, each: '40 passed' (0 failures) — 6/6 clean, on top of T355's own 3 (this session's runs 1–4 completed inside one shell call before it hit the harness's own 2-minute foreground timeout mid-run-5, not a test failure; runs were then continued individually to reach 6 total). `npx playwright test e2e/layout --list` confirms the suite is still 'Total: 40 tests in 6 files', unchanged."
+    },
+    {
+      "criterion": "The guard is documented where the next screen will look for it, i.e. beside the observer in guest-manager.ts, naming the initial-callback behaviour explicitly. milestones and seating-plan are the likely next adopters of this pattern",
+      "met": true,
+      "evidence": "guest-manager.ts: isSettledIntersection's doc comment (immediately above its definition, above the @Component decorator) states 'observe() ALWAYS delivers one callback synchronously, carrying the target's current intersection state, the moment it is called' and explains the origin-stacked-box mechanism, plus a 'Why this shape, not the other two plausible guards' section and an explicit 'milestones and seating-plan ... are the likely next adopters' pointer. The constructor's own effect() comment (immediately above the IntersectionObserver construction) cross-references it: 'Every entry is filtered through {@link isSettledIntersection} (T356, hub ADR-0042 §Consequences) before it is allowed to trigger loadMore() ... See that function's doc comment for why this fires spuriously, what the guard checks, and why the two other plausible guards were not used instead.'"
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit — no output, both before (measured via a detached worktree at 93c4f33, this task's actual starting commit) and after."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 564,
+        "failing": 2
+      },
+      "after": {
+        "total": 567,
+        "failing": 2
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget by 295.70 kB (pre-existing)",
+        "src/app/screens/milestones/milestones.scss exceeded budget by 3.49 kB (pre-existing)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded budget by 1.59 kB (pre-existing)",
+        "src/app/screens/config-manager/config-manager.scss exceeded budget by 8.81 kB (pre-existing)",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded budget by 3.19 kB (pre-existing, unchanged by this task — no .scss touched)"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "tasks/28-phase-x-layout-layer/reports/T356.json"
+    ],
+    "modified": [
+      "src/app/screens/guest-manager/guest-manager.ts",
+      "src/app/screens/guest-manager/guest-manager.spec.ts",
+      "tasks/28-phase-x-layout-layer/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "isSettledIntersection() rejects an entry whose boundingClientRect.top is exactly <= 0, which includes the (very rare, self-correcting) case of a real scroll gesture landing the sentinel precisely at the viewport's top edge mid-scroll — that single frame's callback is dropped, but the sentinel is pinned after the last row, so it moves further down as soon as loadMore() actually succeeds and is re-observed on the very next intersection change regardless. Not observed in any of this session's test runs; noted because it is a real, if negligible, edge the predicate does not special-case.",
+      "surfaces_at": "milestones or seating-plan, if either adopts this exact predicate against a sentinel whose layout puts it near the viewport top rather than the bottom (this predicate's top > 0 reasoning assumes a bottom sentinel, per its own doc comment; a top-anchored 'load more at the top' pattern would need the inverse check)."
+    }
+  ],
+  "commits": [
+    "c3c123d fix(guest-manager): reject unsettled-layout sentinel intersections"
+  ]
+}

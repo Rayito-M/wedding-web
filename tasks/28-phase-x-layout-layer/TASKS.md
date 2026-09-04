@@ -669,7 +669,18 @@
   `tasks/28-phase-x-layout-layer/reports/T352.json`, `T349.json`, `T348.json`
 
 ### T356 — The auto-load sentinel stops firing before the layout settles
-- **Status:** todo
+- **Status:** done — `isSettledIntersection()` (`guest-manager.ts`, beside the observer) rejects an
+  entry unless `isIntersecting && boundingClientRect.top > 0`, filtering out exactly the
+  origin-stacked initial-callback artifact ADR-0042 §Consequences describes. Chose this over
+  skip-the-first-callback (not an entry-level fact, and re-arms on every route re-entry since the
+  observer is rebuilt per `effect()`) and over gating on the scroller's `scrollHeight` (reintroduces
+  the ancestor-scroller coupling the sentinel exists to avoid). Unit-tested directly with three
+  synthetic entries (settled-and-intersecting, unsettled-and-intersecting,
+  settled-and-not-intersecting) per the task's own instruction not to force the race —
+  `guest-manager.spec.ts` "sentinel guard rejects an unsettled-layout intersection (T356)". A real
+  scroll still loads the next page and a filter change still resets scroll
+  (`e2e/layout/guest-list-scroll.spec.ts`, unchanged). `e2e/layout` measured 6 consecutive clean
+  full runs (40/40) after the change, on top of T355's 3.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T355 (landed, `3a7b9b2`) — which measured this

@@ -228,3 +228,4 @@ neither sort nor uniquely name them.
 | **T350** | `people` stops nesting a scroller inside `main` | todo | `28-phase-x-layout-layer` |
 | **T352** | Scroll ownership gets its own key; pinning stops carrying it | done | `28-phase-x-layout-layer` |
 | **T355** | `guest-manager` after T352: confirm the classification, correct the comment, root-cause the flake | done | `28-phase-x-layout-layer` |
+| **T356** | The auto-load sentinel stops firing before the layout settles | done | `28-phase-x-layout-layer` |
