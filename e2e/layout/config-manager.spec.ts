@@ -61,6 +61,15 @@ import { signInAsCouple } from '../support/auth';
  * by `after-head` following `screenChrome.head()` rather than any route
  * flag (ADR-0043 §3), so it can no longer recur here regardless of which
  * scroll-ownership key is set.
+ *
+ * **Third spec added 2026-09-04 (hub ADR-0043 §4a, `wedding-web` T358).**
+ * `/config` is the one live route that has run under `screenScroll: true`
+ * since `0bd2892` — the exact screen §4a's own header comment names as
+ * "verified unchanged" — so it is the spec that makes the invariant
+ * `.screen-scroll` is not a scroll container structural rather than
+ * remembered, on the route where it matters most: `.content` inside it
+ * (`config-manager.scss`, `screen-scroll()`) is the screen's own real
+ * scroller, and `.screen-scroll` around it must never become a second one.
  */
 
 function navSelectors(viewportWidth: number): { nav: string; item: string } {
@@ -144,4 +153,52 @@ test("a pinned route's main never outgrows the space its flex parent gives it", 
   });
 
   expect(mainScrollHeight).toBeLessThanOrEqual(parentClientHeight);
+});
+
+test('.screen-scroll is not a scroll container on this shell route — it clips, .content is the real scroller (hub ADR-0043 §4a)', async ({
+  page,
+}) => {
+  await signInAsCouple(page, { dietaryPreferencesCount: 25 });
+  await page.goto('/config');
+
+  const { item: itemSelector } = navSelectors(page.viewportSize()?.width ?? 0);
+  await page.locator(itemSelector).nth(5).click();
+  await expect(page.locator('.content input[app-input]:visible').first()).toBeVisible();
+
+  const result = await page.evaluate(() => {
+    const screenScroll = document.querySelector('.screen-scroll') as HTMLElement | null;
+    const content = document.querySelector('.content') as HTMLElement | null;
+    if (!screenScroll || !content) {
+      throw new Error('.screen-scroll / .content did not render');
+    }
+    const screenScrollStyle = getComputedStyle(screenScroll);
+    const contentStyle = getComputedStyle(content);
+    screenScroll.scrollTop = 0;
+    screenScroll.scrollTop = 400;
+    content.scrollTop = 0;
+    content.scrollTop = 400;
+    return {
+      screenScrollOverflowY: screenScrollStyle.overflowY,
+      screenScrollScrollTopAfterWrite: screenScroll.scrollTop,
+      screenScrollScrollHeight: screenScroll.scrollHeight,
+      screenScrollClientHeight: screenScroll.clientHeight,
+      contentOverflowY: contentStyle.overflowY,
+      contentScrollTopAfterWrite: content.scrollTop,
+    };
+  });
+
+  // `overflow: clip` creates no scroll container at all — stronger than
+  // asserting `scrollHeight === clientHeight`, which a box can satisfy by
+  // accident (e.g. having nothing to overflow). Asserted both ways here:
+  // the computed style, and that a `scrollTop` write is a structural no-op
+  // rather than merely resolving to zero because there was nothing to move.
+  expect(result.screenScrollOverflowY).toBe('clip');
+  expect(result.screenScrollScrollTopAfterWrite).toBe(0);
+
+  // `.content` (`config-manager.scss`, `screen-scroll()`) is the screen's
+  // own real scroller and is unaffected by `.screen-scroll` becoming a
+  // clipping box around it — the fix this spec guards is `.screen-scroll`
+  // no longer being a *second* scroller nested around this one.
+  expect(result.contentOverflowY).toBe('auto');
+  expect(result.contentScrollTopAfterWrite).toBeGreaterThan(0);
 });

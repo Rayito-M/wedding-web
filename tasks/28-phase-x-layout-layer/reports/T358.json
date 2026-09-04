@@ -1,0 +1,87 @@
+{
+  "task": "T358",
+  "status": "complete_with_deviation",
+  "summary": "private-layout.scss's four .screen-scroll.screen-scrolls* variants now @include a new screen-scroll-bounds() mixin (flex:1; min-height:0; overflow:clip) instead of screen-scroll() -- .screen-scroll never gets overflow-y:auto again. screen-scroll() itself is untouched (config-manager's .content still extends it). Verified config-manager is a no-op across 3 themes x 2 widths via a scratch Playwright spec (run, then deleted). Added a config-manager.spec.ts case asserting .screen-scroll is not a scroll container. Re-targeted screen-scroll-breakpoint.spec.ts, which asserted the removed model.",
+  "acceptance": [
+    {
+      "criterion": "Every `.screen-scroll.screen-scrolls*` variant in private-layout.scss (unconditional plus md/lg/xl) becomes `display: block; flex: 1; min-height: 0;` with the paired `overflow: hidden` -> `overflow: clip`. It never gets `overflow-y: auto` in any variant. `min-height: 0` is stated, never inherited.",
+      "met": true,
+      "evidence": "src/app/layouts/private-layout/private-layout.scss: all four `.screen-scroll.screen-scrolls*` blocks (unconditional at line ~90, and inside the three `respond-to('md'|'lg'|'xl')` blocks) now read `display: block; @include layout.screen-scroll-bounds;`. `screen-scroll-bounds()` (src/styles/_layout.scss) is `flex: 1; min-height: 0; overflow: hidden; overflow: clip;` -- no `overflow-y: auto` anywhere in it. `grep -n 'overflow-y: auto' src/app/layouts/private-layout/private-layout.scss` returns only `main`'s own unconditional flow-scroller declaration (line 49), never inside a `.screen-scroll` block. `grep -c 'screen-scroll-bounds' private-layout.scss` = 4, matching the closed set of four."
+    },
+    {
+      "criterion": "screen-scroll() in _layout.scss is unchanged and keeps overflow-y: auto -- it is what a screen's own pane extends, and config-manager's .content uses it correctly. If the two now differ enough to confuse, give the layout's box its own named mixin rather than overloading this one.",
+      "met": true,
+      "evidence": "src/styles/_layout.scss: `git diff` shows the existing `@mixin screen-scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overflow-x: clip; }` block (lines 78-87) has zero lines changed -- only new lines were added after it. `config-manager.scss:217` still reads `@include layout.screen-scroll;` unchanged (not in this task's diff at all -- `git diff --stat` does not list config-manager.scss). A new, separate `@mixin screen-scroll-bounds` was added instead of editing `screen-scroll()`, exactly as instructed."
+    },
+    {
+      "criterion": "config-manager is verified unchanged -- this must be a no-op on it, in a real browser, three themes, both widths. If anything moves, the emergent-bounding assumption was wrong and that is the finding, not a thing to patch around.",
+      "met": true,
+      "evidence": "No interactive browser available, so driven through a scratch Playwright spec (e2e/layout/_scratch-config-manager-noop.spec.ts, run then deleted -- same precedent as T350/T355): 6 cases (terracotta/mauve/verdeagua x 375px/1024px), each setting `localStorage['sc-theme']` via `page.addInitScript` before navigation and asserting `<html data-theme>` matches, then checking (a) the section nav (`.pills`/`.rail`) stays at the same bounding-box position while `.content` scrolls, (b) `.screen-scroll`'s computed `overflow-y` is `clip`, and (c) `.screen-scroll.scrollHeight === .screen-scroll.clientHeight` (zero scrollable range, the emergent-bounding claim). All 6/6 passed on Desktop Chrome. Measured heights: 375px width -> screenScroll=570, main=590, host=570 (all 3 themes identical); 1024px width -> screenScroll=728, main=748, host=728 (all 3 themes identical). `:host`'s `height: 100%` still resolves to exactly `.screen-scroll`'s own height (570===570, 728===728) in every theme/width combination -- the assumption ADR-0043 names holds, unmoved by the theme axis (which only swaps CSS custom-property color values, never touches layout). Nothing moved in any of the 6 combinations. Also confirmed nothing else in the app currently sets `screenScroll` on a route besides config-manager: `grep -n screenScroll src/app/app.routes.ts` shows exactly one route (config-manager, `screenScroll: true`) -- so config-manager is the only screen this change can affect in production today."
+    },
+    {
+      "criterion": "A spec asserting .screen-scroll is not a scroll container on a shell route, so the invariant is structural rather than a property somebody has to remember.",
+      "met": true,
+      "evidence": "New test in e2e/layout/config-manager.spec.ts (\".screen-scroll is not a scroll container on this shell route -- it clips, .content is the real scroller (hub ADR-0043 §4a)\"): asserts `getComputedStyle(.screen-scroll).overflowY === 'clip'` (not merely `scrollHeight === clientHeight`, which a box could satisfy by accident) AND that writing `.screen-scroll.scrollTop = 400` is a structural no-op (`scrollTop` reads back `0`), while confirming `.content` inside it (the screen's own real pane) both has `overflow-y: auto` and legitimately moves on the same write. Runs on the one live `screenScroll: true` route. Passed 5/5 Playwright projects, in every full-suite run (see checks below)."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "e2e/layout/screen-scroll-breakpoint.spec.ts's original assertions: at >=900px, setting `.screen-scroll.scrollTop = 500` should stick (i.e. `.screen-scroll` scrolls).",
+      "to": "Re-targeted, per the task's own \"thing that will break, and how to handle it\" section, to assert the opposite outcome that hub ADR-0043 §4a now requires: at >=900px, `main`'s computed `overflow-y` is `clip` (not a scroll container) AND `.screen-scroll`'s computed `display` is `block` with `overflow-y: clip`, and writing `scrollTop` on either is a no-op (stays `0`) despite the sentinel's real 3000px of overflow. Below 900px, `main`'s `overflow-y` stays `auto` and its `scrollTop` write sticks, while `.screen-scroll`'s `display` reads `contents` (no box at all). The synthetic sentinel and the two-viewport structure (800px / 1024px) are unchanged -- only what \"yielded\" is asserted to mean changed. Header comment rewritten to document the re-target inline, same shape as T352's re-target of clip-flex-item.spec.ts.",
+      "reason": "Under ADR-0043 §4a, `.screen-scroll` structurally cannot scroll (`overflow: clip` creates no scroll container) -- the original assertion (`screenScrollScrollTop` reaching 500) is now false by design, not a regression to chase. The task explicitly directs re-targeting rather than deleting or weakening this spec, because it is still the only real-browser proof that the per-breakpoint `respond-to('lg')` media-query gating actually holds on both sides of the 900px boundary in a real UA -- `screen-chrome.spec.ts` (Vitest/JSDOM) proves only the class-binding half.",
+      "authorized_by": "T358's own \"The thing that will break, and how to handle it\" section: \"Re-target it; do not delete it and do not weaken it into vacuity ... at ≥900px main has yielded (is not a scroll container) and .screen-scroll is a real box that clips rather than scrolls; below 900px main scrolls and .screen-scroll is display: contents. That is a better test of the per-breakpoint mechanism than measuring scrollTop on a box that should never move.\"",
+      "verified_how": "Ran the re-targeted spec against the new CSS: passes on all 5 Playwright projects, in every one of 12 consecutive full-suite runs of e2e/layout it participated in (never itself flaky). Confirmed by inspection that the pre-change CSS (screen-scroll(), overflow-y:auto) would have made the new assertions fail at >=900px (mainOverflowY would read 'auto', screenScrollOverflowY would read 'auto', and the scrollTop writes would stick rather than read back 0) -- i.e. the spec still discriminates the two models, it just names the correct one as passing."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit) -- clean, no errors, before and after."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": { "total": 567, "failing": 2 },
+      "after": { "total": 567, "failing": 2 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 795.70 kB vs 500.00 kB (pre-existing, unrelated to this task)",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget: 11.50 kB vs 8.00 kB (pre-existing, T343 territory, unchanged by this task)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget: 9.60 kB vs 8.00 kB (pre-existing, T343 territory, unchanged by this task)",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget: 16.81 kB vs 8.00 kB (pre-existing, its SCSS was not touched by this task -- T354 territory)",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget: 11.69 kB vs 8.00 kB (pre-existing, T343 territory, unchanged by this task)"
+      ]
+    }
+  },
+  "files": {
+    "added": [],
+    "modified": [
+      "src/styles/_layout.scss",
+      "src/app/layouts/private-layout/private-layout.scss",
+      "e2e/layout/screen-scroll-breakpoint.spec.ts",
+      "e2e/layout/config-manager.spec.ts"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts",
+      "e2e/layout/_scratch-config-manager-noop.spec.ts"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "Three unrelated flakes were observed across 12 consecutive full e2e/layout runs (55 cases each, after this task's new case): guest-list-scroll.spec.ts's IntersectionObserver case once, pinned-regions.spec.ts's signInAsCouple timeout once, and guest-manager-scrolled-header.spec.ts once (the T357-hardened flake the task prompt flagged in advance). None touch .screen-scroll, config-manager, or any file this task modified -- all three are pre-existing, worker-contention-class flakes already named in T349/T357's own reports.",
+      "surfaces_at": "Any future e2e/layout run in this repo; not introduced or worsened by T358."
+    }
+  ],
+  "commits": [],
+  "decisions_needed": []
+}

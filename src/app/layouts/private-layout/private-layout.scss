@@ -79,21 +79,26 @@ main {
 
 // Wraps `<router-outlet />`. Transparent to layout (`display: contents`) for
 // a flow screen, so `main` above is the single scroller exactly as before
-// this task (ADR-0041 §3). Becomes the one scrolling region itself only when
-// the active route's `screenScroll` says so (hub ADR-0043 §1) — see
-// `screen-scroll()` (`src/styles/_layout.scss`, T340) for what each variant
-// below adds. Same closed set of four as `main` above, so the two always
-// agree about which breakpoint the yield applies at.
+// this task (ADR-0041 §3). Becomes a bounded clipping box, never a second
+// scroller, when the active route's `screenScroll` says so (hub ADR-0043
+// §4a) — see `screen-scroll-bounds()` (`src/styles/_layout.scss`, T358) for
+// what each variant below adds. `screenScroll` does not mean "the layout
+// scrolls for me"; it means "`main` yields, so I can bound myself and own my
+// scrolling" — the screen's own pane (e.g. `config-manager`'s `.content`)
+// extends `screen-scroll()` instead, and is the only real scroller. Same
+// closed set of four as `main` above, so the two always agree about which
+// breakpoint the yield applies at.
 .screen-scroll {
   display: contents;
 
   &.screen-scrolls {
     // `display: contents` above generates no box at all, so without this the
-    // mixin's `flex`, `min-height` and `overflow-y` have nothing to apply to
-    // and the region silently never scrolls. The wrapper must become a real
-    // box exactly when it takes scroll ownership.
+    // mixin's `flex`/`min-height`/`overflow` have nothing to apply to and
+    // the screen underneath never gets a resolved height. The wrapper must
+    // become a real box exactly when `main` yields to it — it never becomes
+    // a scroll container itself (ADR-0043 §4a).
     display: block;
-    @include layout.screen-scroll;
+    @include layout.screen-scroll-bounds;
   }
 }
 
@@ -159,7 +164,7 @@ main {
 
   .screen-scroll.screen-scrolls-md {
     display: block;
-    @include layout.screen-scroll;
+    @include layout.screen-scroll-bounds;
   }
 }
 
@@ -171,7 +176,7 @@ main {
 
   .screen-scroll.screen-scrolls-lg {
     display: block;
-    @include layout.screen-scroll;
+    @include layout.screen-scroll-bounds;
   }
 }
 
@@ -183,6 +188,6 @@ main {
 
   .screen-scroll.screen-scrolls-xl {
     display: block;
-    @include layout.screen-scroll;
+    @include layout.screen-scroll-bounds;
   }
 }

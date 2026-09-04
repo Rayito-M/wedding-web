@@ -1019,7 +1019,28 @@
   hub `.agent/skills/task-management.md` §4
 
 ### T358 — `.screen-scroll` becomes a bounded clipping box, and stops being a second scroller
-- **Status:** todo
+- **Status:** done — every `.screen-scroll.screen-scrolls*` variant in `private-layout.scss`
+  (unconditional plus `md`/`lg`/`xl`) now `@include`s a new `screen-scroll-bounds()` mixin
+  (`_layout.scss`: `flex: 1; min-height: 0; overflow: hidden; overflow: clip;`) instead of
+  `screen-scroll()` — `.screen-scroll` never gets `overflow-y: auto` again. `screen-scroll()`
+  itself is byte-for-byte unchanged; `config-manager`'s `.content` still extends it correctly.
+  `config-manager` verified a no-op with a scratch Playwright spec (run, then deleted, T350/T355
+  precedent) across 3 themes × 2 widths: `.screen-scroll`'s `clientHeight === scrollHeight` in
+  every one of the 6 combinations, matching the pre-existing zero-scrollable-range invariant — the
+  global stylesheet is byte-identical (2,472 bytes) before and after. Committed a new
+  `config-manager.spec.ts` case asserting `.screen-scroll` is not a scroll container (computed
+  `overflow-y: clip`, and a `scrollTop` write is a structural no-op) on the one live shell route.
+  `screen-scroll-breakpoint.spec.ts` re-targeted per this task's own instruction — it asserted
+  `.screen-scroll` scrolling, which `.screen-scroll` structurally cannot do under `clip`; re-targeted
+  to assert `main` yields (not a scroll container) and `.screen-scroll` clips a real 3000px sentinel
+  rather than scrolling it, on both sides of the `$bp-lg` boundary. `e2e/layout` full suite (55
+  cases post-change): 4 consecutive clean runs achieved twice (runs 3–6 and 9–12) across 12 total
+  runs; 3 unrelated pre-existing flakes observed (`guest-list-scroll.spec.ts`,
+  `pinned-regions.spec.ts`, and the T357-hardened `guest-manager-scrolled-header.spec.ts`), none
+  touching `.screen-scroll` or `config-manager`. `pnpm typecheck`/`lint`/`test`/`build` unchanged
+  before/after (5 pre-existing ESLint errors, 567 unit tests with the same 2 pre-existing
+  failures, clean production build). See
+  `tasks/28-phase-x-layout-layer/reports/T358.json`.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T352 (landed)

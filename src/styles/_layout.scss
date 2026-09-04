@@ -86,6 +86,34 @@ $bp-xl: 1024px;
   overflow-x: clip; // creates no scroll container, so focus cannot shift the box sideways
 }
 
+// ── The layout's own bounding box (hub ADR-0043 §4a) ──
+
+/// `private-layout.scss`'s `.screen-scroll` wrapper — **not** a screen's own
+/// pane, and deliberately not `screen-scroll` above. `screenScroll` on a
+/// route does not mean "the layout scrolls for me"; it means "`main`
+/// yields, so I can bound myself and own my scrolling" (ADR-0043 §4a). No
+/// screen in the app wants the layout to supply the scroller — `config-manager`
+/// owns 6 scrolling panes, `milestones` 6, `seating-plan` 4 — so this box
+/// only ever gives the screen underneath it a resolved height to size
+/// `height: 100%` against, and clips rather than scrolls:
+///
+///   .screen-scroll.screen-scrolls {
+///     display: block;
+///     @include layout.screen-scroll-bounds;
+///   }
+///
+/// It never gets `overflow-y: auto` in any variant — that is `screen-scroll`
+/// above, which a screen's own pane extends, not this one.
+@mixin screen-scroll-bounds {
+  flex: 1;
+  // Stated, never inherited — ADR-0041 §4's flex-item trap: without this the
+  // box refuses to shrink below its content and grows past the viewport,
+  // exactly as `main` did before it gained the same declaration.
+  min-height: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
+}
+
 // ── Flex truncation discipline (ADR-0041 §5) ──
 
 /// Any flex item that contains text and may need to truncate rather than
