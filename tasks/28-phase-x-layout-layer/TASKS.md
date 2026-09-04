@@ -286,7 +286,17 @@
   `src/app/screens/guest-manager/guest-manager.ts` (`onListScroll`, `resetWindow`)
 
 ### T347 — The `overflow` audit and the per-breakpoint scroller classification
-- **Status:** todo
+- **Status:** done — own recount: 51 `overflow: hidden` declarations/29 files (47 real,
+  4 comment mentions), 14 auto/scroll files (not 13). 25 sites paired `hidden` → `clip`
+  directly plus `%card-shell` (`_primitives.scss`, propagates to 4 consumers via
+  `@extend`); every converted flex item got an explicit `min-height`/`min-width: 0`.
+  3 sites kept plain `hidden` with a comment (`%sr-only` + its guest-manager duplicate,
+  `notification-bell`'s `-webkit-line-clamp` snippet — a third category beyond the ADR's
+  two amendments, flagged in the report). All 12 non-excluded auto/scroll files got a
+  header comment classifying flow/shell per breakpoint. **Finding:** `seating-plan.scss`
+  and `people.scss` are shell at every breakpoint in the current source, contradicting
+  ADR-0042 §2's own worked example for seating-plan — flagged in `reports/T347.json`
+  `risks[]`, not resolved here. See `reports/T347.json` for full acceptance evidence.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T341 (the mechanism must exist before a file can be classified against it)

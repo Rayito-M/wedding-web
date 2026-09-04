@@ -1,0 +1,111 @@
+{
+  "task": "T347",
+  "status": "complete",
+  "summary": "Audited every overflow: hidden site (own count: 51/29 files, 47 real; task's 47 had drifted) and every overflow: auto|scroll file (own count: 14, not 13) against ADR-0041 §4 and ADR-0042 §4. Paired hidden->clip on clip sites with explicit min-height/min-width:0 on flex items; left text-truncation and two third-category sites (%sr-only, -webkit-line-clamp) unchanged with comments; wrote per-breakpoint flow/shell header comments. No visual change. Found seating-plan/people are shell at every breakpoint, contradicting ADR-0042 §2's own example.",
+  "acceptance": [
+    {
+      "criterion": "Every overflow: hidden intended as a clip becomes the paired hidden -> clip declaration. The 47 current sites are audited, not blanket-replaced — a site that genuinely wants a scrollable-but-scrollbar-less box keeps hidden and gains a comment saying why",
+      "met": true,
+      "evidence": "Own recount: `grep -rn \"overflow[a-z-]*:\\s*hidden\" src/ --include=\"*.scss\"` = 51 matches / 29 files (matches the task prompt's own recount exactly); of those, 4 are comment mentions (guest-manager.scss:13/197, config-manager.scss:967 pre-edit, _layout.scss:93), leaving 47 real declarations. 25 were converted to the paired hidden -> clip form across 21 files (`git diff --stat` for the commit) plus %card-shell in _primitives.scss (1 declaration, propagates via @extend to 4 more call sites without per-file edits — rsvp-editor.scss, invitee.scss, config-manager.scss, people.scss). 3 sites deliberately kept plain hidden with an explaining comment: %sr-only (_primitives.scss), guest-manager.scss .partner-account-note (its hand-duplicate), notification-bell.scss .row-snippet (-webkit-line-clamp requires overflow:hidden, clip breaks the clamp). All other sites are the %truncating-flex-child shape (single-line, nowrap, ellipsizing text) and left unchanged per amendment (b) — see next bullet. `grep -rn \"overflow[a-z-]*: clip;\" src/ --include=\"*.scss\" | wc -l` = 33 (30 new + private-layout.scss's 1 + _layout.scss's 1, both pre-existing from T340/T341)."
+    },
+    {
+      "criterion": "Every converted site that is a flex item gains an explicit min-height: 0 (or min-width: 0 on the inline axis)",
+      "met": true,
+      "evidence": "Per-site flex-item determination recorded inline as a comment at every converted site (checked the immediate parent's display in the same file, or the consuming template's known ancestor for shared leaf components). Explicit min-height:0/min-width:0 added where the site is a flex item along the axis its overflow governs and lacked one: progress-bar.scss :host, rsvp-edit.scss :host, invitee.scss .countdown, config-manager.scss .rail-decor/.segmented.agenda-filter/.modal-dialog, dashboard.scss .stats-card/.manage-list, milestones.scss .detail, delegate-edit.scss :host, seating-plan.scss .progress-track, modal.scss .modal-card.lg, %card-shell (_primitives.scss, covers 4 consumers centrally). Sites already carrying an explicit min-height/min-width (config-manager.scss :host, rsvp-create.scss :host, seating-plan.scss :host/.seating-plan/.body) were confirmed correct as-is, not re-added. Sites confirmed NOT to need one, with the reason stated inline: not a flex item at all (position:absolute/fixed — language-selector, theme-selector, screen-header .menu, notification-bell .dropdown, toast-stack :host, motorcycle-rider .overlay, travel .map; or parent is a plain block — relation-fields/profile-fields/_shared-modal-form .seg-row); or a flex item whose own flex-shrink:0 plus content-sized flex-basis means the automatic-minimum-size floor has nothing to conflict with (avatar :host, photo-placeholder :host in its stay-card usage, config-manager .segmented.schedule-status-toggle)."
+    },
+    {
+      "criterion": "ADR-0041 §4 was scoped on 2026-09-03 and the audit must honour it: the rule governs layout containers, boxes establishing a scrolling context a focus event could shift. A single-line, nowrap, ellipsizing text child is not one and keeps plain hidden — see %truncating-flex-child in _layout.scss for the canonical case",
+      "met": true,
+      "evidence": "Left unchanged, confirmed against %truncating-flex-child's exact 3-declaration shape (overflow:hidden + text-overflow:ellipsis + white-space:nowrap, usually with min-width:0 on the same or an ancestor flex-item box): rsvp-editor.scss .name/.summary, profile-modal.scss .name, people.scss .name/.nickname/.contact-line, guest-manager.scss .partner-name, milestones.scss .card-title, notification-bell.scss .row-title, travel.scss .map-label. All match; none were re-declared or restructured, per the task's non-goal."
+    },
+    {
+      "criterion": "Each of the 13 [own count: 14] scroller-declaring files is classified flow or shell per breakpoint in its header comment — seating-plan is flow on mobile and shell at ≥900px, with both its scrollers already inside that media query",
+      "met": true,
+      "evidence": "Own recount: `grep -rln \"overflow[a-z-]*:\\s*\\(auto\\|scroll\\)\" src/ --include=\"*.scss\"` = 14 files. Header comments added to the 12 that are not the 2 excluded (private-layout.scss already correct from T341; _layout.scss is the mixin/placeholder source, not a screen): modal.scss, rsvp-edit.scss, config-manager.scss, guest-create-modal.scss, guest-profile-modal.scss, milestones.scss, people.scss, delegate-edit.scss, rsvp-hub.scss, seating-plan.scss, album.scss, country-code-select.scss. Each comment states flow/shell per breakpoint verified against the file's actual @media blocks, not assumed — see the seating-plan.scss/people.scss finding below, which directly contradicts the ADR's own seating-plan example and is documented both in the file and in risks[]."
+    },
+    {
+      "criterion": "No visual change: this task writes comments and pairs declarations, it does not restructure",
+      "met": true,
+      "evidence": "No selector renamed, no element moved, no display/flex-direction/positioning value changed, no media query added or removed. `pnpm build` after == before: global styles.css byte-identical (2472 bytes); per-screen component-style budget warnings identical in kind (milestones/guest-manager/config-manager/seating-plan, pre-existing) with only trivial byte growth from the added comments/properties inside each component's own scoped CSS (e.g. config-manager.scss 16.64 kB -> 16.78 kB). `npx playwright test e2e/layout` 25/25 passed (5 specs x 5 projects), same as an unaffected baseline would be expected to produce."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": { "result": "pass" },
+    "lint": { "errors_before": 5, "errors_after": 5, "new_errors": [] },
+    "test": {
+      "before": { "total": 559, "failing": 2 },
+      "after": { "total": 559, "failing": 2 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2472,
+      "global_stylesheet_bytes_after": 2472,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget (295.61 kB over 500 kB) — pre-existing",
+        "src/app/screens/milestones/milestones.scss exceeded 8 kB budget (3.49 kB over, up from 3.46 kB) — pre-existing, widened by this task's own comments/min-* additions",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded 8 kB budget (3.19 kB over) — pre-existing, unchanged by this task (only comments added, no conversions in this file)",
+        "src/app/screens/config-manager/config-manager.scss exceeded 8 kB budget (8.78 kB over, up from 8.64 kB) — pre-existing, widened by this task's own comments/min-* additions",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded 8 kB budget (1.59 kB over, up from 1.53 kB) — pre-existing, widened by this task's own comments/min-* additions"
+      ]
+    }
+  },
+  "files": {
+    "added": [],
+    "modified": [
+      "src/app/screens/album/album.scss",
+      "src/app/screens/config-manager/config-manager.scss",
+      "src/app/screens/dashboard/dashboard.scss",
+      "src/app/screens/guest-manager/guest-manager.scss",
+      "src/app/screens/guest-manager/modal/_shared-modal-form.scss",
+      "src/app/screens/guest-manager/modal/guest-create-modal.scss",
+      "src/app/screens/guest-manager/modal/guest-profile-modal.scss",
+      "src/app/screens/invitee/invitee.scss",
+      "src/app/screens/milestones/milestones.scss",
+      "src/app/screens/people/people.scss",
+      "src/app/screens/rsvp-create/rsvp-create.scss",
+      "src/app/screens/rsvp-edit/rsvp-edit.scss",
+      "src/app/screens/rsvp/delegate-edit/delegate-edit.scss",
+      "src/app/screens/rsvp/rsvp-hub/rsvp-hub.scss",
+      "src/app/screens/seating-plan/seating-plan.scss",
+      "src/app/screens/travel/travel.scss",
+      "src/app/shared/avatar/avatar.scss",
+      "src/app/shared/country-code-select/country-code-select.scss",
+      "src/app/shared/decor/motorcycle-rider/motorcycle-rider.scss",
+      "src/app/shared/language-selector/language-selector.scss",
+      "src/app/shared/modal/modal.scss",
+      "src/app/shared/notification-bell/notification-bell.scss",
+      "src/app/shared/photo-placeholder/photo-placeholder.scss",
+      "src/app/shared/profile-fields/profile-fields.scss",
+      "src/app/shared/progress-bar/progress-bar.scss",
+      "src/app/shared/relation-fields/relation-fields.scss",
+      "src/app/shared/screen-header/screen-header.scss",
+      "src/app/shared/theme-selector/theme-selector.scss",
+      "src/app/shared/toast-stack/toast-stack.scss",
+      "src/styles/_primitives.scss"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "hub ADR-0042 §2's worked example is factually wrong about the current source, and this task's own acceptance bullet repeats it verbatim. ADR-0042 §2 states 'both of seating-plan's overflow-y: auto declarations sit inside @media (min-width: 900px): it is genuinely a flow screen on a phone and a shell screen on desktop.' Verified against the actual file: `:host`/`.seating-plan`'s `height: 100%; overflow: hidden` and both `.unassigned-body`/`.tables`'s `overflow-y: auto` are all unconditional — none sits inside the `@media (min-width: 900px)` block (only `.body { flex-direction }` and panel widths change there). `git log --oneline -- src/app/screens/seating-plan/seating-plan.scss` shows only two commits, `d6ae1fa` and `192f2e1`, both predating ADR-0042 (2026-09-03) — the file has not changed since, so this was wrong when the ADR was written, not drift. seating-plan is shell at every breakpoint including mobile (JS-driven tabs show one panel at a time via .mobile-hidden, each with its own always-on internal scroller); people.scss follows the identical unconditional-shell pattern and its own doc comment explicitly cites seating-plan as the precedent it is following, which independently corroborates the finding. milestones.scss is the one file in this audit that genuinely matches the flow-mobile/shell-desktop split ADR-0042 §2 describes. Documented in both files' new header comments; not restructured (out of this task's scope).",
+      "surfaces_at": "T343 (migrates seating-plan and other screens onto the layout layer's screen-scroll()/respond-to() mechanism) — building the migration on ADR-0042 §2's stated premise for seating-plan would target the wrong breakpoint behaviour for that screen."
+    },
+    {
+      "risk": "Two pre-existing scroll regions (not touched by this task, since they already use overflow: auto rather than hidden) are missing the min-height: 0 their own flex:1 column context needs: config-manager.scss's local .modal-dialog .modal-body (flex:1; overflow-y:auto, no min-height:0) and milestones.scss's .detail-body (same shape). Both are the same class of defect ADR-0041 §5/§4 amendment targets, but on the auto/scroll side rather than the hidden->clip side this task audits — flagged in an inline comment at each site (on the sibling .modal-dialog/.detail box this task did convert) rather than fixed, since fixing an already-auto scroller's missing min-height is restructuring behaviour (however latent), not pairing a declaration, and this task's acceptance is explicitly comments-and-pairs-only.",
+      "surfaces_at": "Any future session touching config-manager.scss's tag-entry modal or milestones.scss's detail pane with unusually long content — a T343 migration of either screen, or a dedicated ADR-0041 §5 sweep, would be the natural place to add the missing min-height: 0."
+    },
+    {
+      "risk": "%sr-only (_primitives.scss) and its hand-duplicate guest-manager.scss .partner-account-note are a third overflow:hidden shape hub ADR-0041 §4's two amendments don't name: the visually-hidden-but-announced accessibility technique, where overflow:hidden is load-bearing for the technique itself (not a layout clip, not text truncation). Left as plain hidden with an explaining comment at both sites — correct under this task's no-visual-change mandate, since pairing to clip on this specific technique has no established cross-browser compatibility record and this task cannot safely prove one. The two sites' duplication (rather than the guest-manager one reusing %sr-only) is itself a pre-existing, unrelated consolidation opportunity, noted but not fixed (no restructuring).",
+      "surfaces_at": "T342 (stylelint's unpaired-hidden rule) — the rule's exemption logic must recognise this third shape (1x1px + clip-path + hidden) as well as %truncating-flex-child's, or it will flag both of these sites incorrectly."
+    }
+  ],
+  "commits": [
+    "730c1ba style(layout): T347 - overflow audit and per-breakpoint scroller classification"
+  ]
+}

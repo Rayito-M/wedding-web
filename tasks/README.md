@@ -222,6 +222,6 @@ neither sort nor uniquely name them.
 | **T344** | `anyComponentStyle` becomes an error | todo | `28-phase-x-layout-layer` |
 | **T345** | The nav derives from the route tree, and stops failing open | done | `28-phase-x-layout-layer` |
 | **T346** | Split `TASKS.md` into `tasks/<phase>/`, with an index | done | `29-phase-z-task-file-ergonomics` |
-| **T347** | The `overflow` audit and the per-breakpoint scroller classification | todo | `28-phase-x-layout-layer` |
+| **T347** | The `overflow` audit and the per-breakpoint scroller classification | done | `28-phase-x-layout-layer` |
 | **T348** | Give a screen back scroll observation and scroll control | done | `28-phase-x-layout-layer` |
 | **T349** | A layout-regression spec per migrated screen, so a device stops being the only check | todo | `28-phase-x-layout-layer` |
