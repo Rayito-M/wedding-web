@@ -668,6 +668,51 @@
 - **Refs:** hub ADR-0043 §1, §5 (as amended); hub ADR-0042 §Context ¶1; hub ADR-0041 §3;
   `tasks/28-phase-x-layout-layer/reports/T352.json`, `T349.json`, `T348.json`
 
+### T356 — The auto-load sentinel stops firing before the layout settles
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** T355 (landed, `3a7b9b2`) — which measured this
+- **Why:** hub **ADR-0042 §Consequences as amended 2026-09-04**. T355 root-caused the
+  `guest-list-scroll` flake to `guest-manager.ts`'s `IntersectionObserver` calling `loadMore()`
+  before the route's layout had settled — measured twice under real parallel load, the row count
+  going straight from 0 to 40 without ever showing the first page of 20.
+- **This is product behaviour, not a test concern, which is why it is its own task.** T355's non-goal
+  correctly kept it out of that task, and its test-level fix is right and stays. But the mechanism is
+  live: `observe()` always delivers an initial callback with the element's current state, and before
+  layout settles every box is stacked at the origin with no height, so a zero-height sentinel after
+  the last row sits well inside `rootMargin: '120px'` of the viewport and reports
+  `isIntersecting: true`. **A real couple opening `/guests` can therefore fetch page 2 with no
+  gesture.** Harmless to data — the read is idempotent and the count only grows in page-aligned
+  steps — but an unrequested fetch on the app's most-used screen, at a rate nobody has bounded, and
+  it defeats what cursor paging (ADR W-0009) exists to do.
+- **Not a T352 regression.** The sentinel resolves against the viewport, so which ancestor scrolls
+  never mattered to it. ADR-0043 changed *when* `/guests` settles, which changed how often the race
+  is lost. It has been latent since T348. Do not "fix" it by touching anything in ADR-0043.
+- **Acceptance:**
+  - The observer callback rejects an intersection that is an artifact of unsettled layout. The
+    implementation is yours — skipping the first callback per observer instance, requiring the
+    sentinel's `boundingClientRect.top` to be below the viewport top, or gating on the scroller
+    having non-zero `scrollHeight` are all plausible. State which you chose and why the others were
+    not
+  - **Do not try to force the race to prove the fix.** T355 failed to reproduce it deliberately in
+    27 attempts (16 CPU-throttle, 11 network-jitter) and both natural reproductions came from real
+    5-project load. Instead make the guard a **pure predicate over an `IntersectionObserverEntry`**
+    and unit-test it directly with synthetic entries — settled-and-intersecting, unsettled-and-
+    intersecting, settled-and-not. That sidesteps the un-reproducibility entirely and is stronger
+    evidence than a race you got lucky with twice
+  - A real scroll still loads the next page. `e2e/layout` keeps its clean-run baseline — state the
+    consecutive number, as T349 and T355 both did
+  - **The guard is documented where the next screen will look for it**, i.e. beside the observer in
+    `guest-manager.ts`, naming the initial-callback behaviour explicitly. `milestones` and
+    `seating-plan` are the likely next adopters of this pattern
+- **Non-goals:** no change to `rootMargin`'s 120px threshold or to the paging behaviour itself; no
+  change to `ScreenChromeService`; no revisiting T355's test fix, which is correct independently —
+  `waitForStableRowCount()` makes the suite robust to a legitimately-advanced page, which it should
+  be regardless
+- **Refs:** hub ADR-0042 §Consequences (as amended); `wedding-web` ADR W-0009 (cursor paging);
+  `tasks/28-phase-x-layout-layer/reports/T355.json` `risks[0]`, `T348.json`
+
 ### T343 — Migrate the four oversized screens onto the layer
 - **Status:** in-progress — `config-manager` landed 2026-09-04 (one screen per PR, ADR-0041 §8):
   measured `:host` (shell, unconditional) and its only `@media` (opens at 964, not the task's
@@ -721,6 +766,13 @@
   - Each drops below the 8 KB budget
   - No visual change intended: each PR is checked against the previous build in all three themes and
     all three locales, at 360px and at ≥900px
+  - **`guest-manager`'s slice additionally carries the coverage T355 could not commit.** That task
+    verified the now-live `.scrolled` header treatment and re-verified T341's pinned head/foot with
+    scratch specs that were run and then deleted — so the behaviour is confirmed but unguarded, on a
+    phase whose founding premise (T349) is that a check only a human performs gets skipped exactly
+    once. Commit a spec asserting `.scrolled`'s background/box-shadow appears on `/guests` once the
+    list has scrolled, and that head and foot hold position. `pinned-regions.spec.ts` covers pinning
+    generically but nothing asserts `.scrolled` at all
   - **Each screen's T349 layout-regression spec lands in the same PR as that screen's migration**,
     not batched afterwards. Written alongside, a spec asserts what the screen is supposed to do;
     written after, it asserts whatever the code ended up doing
@@ -747,8 +799,12 @@
 - **Status:** todo
 - **Target release:** 1.2.0
 - **Owner:** unassigned
-- **Depends on:** T341 (the route-data flags and `main`'s yielding must exist), T343 (migrate the
-  four over-budget screens first, so the pattern is settled before it is applied to a fifth)
+- **Depends on:** T341 (the route-data flags and `main`'s yielding must exist). **The T343
+  dependency is waived, 2026-09-04.** It was written on the assumption that `people` would *adopt*
+  the shell pattern and should therefore wait for it to settle on four screens first. It does not:
+  the ruling in hub ADR-0042 §Consequences is that `people` is a flow screen and the fix **deletes**
+  its scroll ownership. There is no pattern to settle first, so nothing is learned by waiting. Run
+  it whenever there is capacity
 - **Why:** hub **ADR-0042 §Consequences** (added 2026-09-04), hub **ADR-0041 §Context/§3**. This is
   the defect ADR-0041 was written to eliminate, sitting on a screen no task in any phase owned.
   `.people` declares `height: 100%; overflow-y: auto` (`people.scss:19–20`) at **every** breakpoint —
