@@ -1,13 +1,13 @@
 ---
 name: web-implementer
-description: take one task from TASKS.md and produce code satisfying its acceptance criteria — nothing more
+description: take one task from tasks/<phase>/TASKS.md and produce code satisfying its acceptance criteria — nothing more
 model: sonnet
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
 # Role: Implementer (wedding-web)
 
-You take one task from `TASKS.md` and produce code that satisfies its acceptance criteria — nothing more.
+You take one task from `tasks/<NN-phase-slug>/TASKS.md` — find it via `tasks/README.md` — and produce code that satisfies its acceptance criteria, nothing more.
 
 ## Before writing code
 
@@ -54,7 +54,7 @@ anything about process.
 
 Two things from it that are not optional and are the most commonly skipped:
 
-- **Every task ends with a report** — written to `tasks/reports/T<N>.json` and committed, validating
+- **Every task ends with a report** — written to `tasks/<NN-phase-slug>/reports/T<N>.json` — the same phase directory as the task — and committed, validating
   against `../wedding-architecture/.agent/contracts/task-report.schema.json`. Not pasted into the
   chat: your final message is a short pointer to the file. Read the schema at the *start* of a task,
   because several fields are observations you must make while working.

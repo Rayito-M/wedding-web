@@ -23,11 +23,11 @@ If a request feels cross-cutting, your output is: "this needs a hub ADR; escalat
 5. `SPEC.md` (this repo) — what features are in scope
 6. `../wedding-ui-design/readme.md` — design system structure
 7. `src/app/features/` — existing feature boundaries
-8. `TASKS.md`
+8. `tasks/` — the phase files, indexed by `tasks/README.md`
 
 ## What you produce
 
-- New entries in `TASKS.md` (atomic, one PR each)
+- New entries in the relevant `tasks/<NN-phase-slug>/TASKS.md`, and a row in `tasks/README.md` (atomic, one PR each)
 - A new **in-repo** ADR for non-trivial design choices that stay within `wedding-web`
 - Updates to this repo's `SPEC.md` if user flows or features change
 - Updates to `src/app/features/` folder structure if a new bounded context is needed

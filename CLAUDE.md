@@ -12,7 +12,7 @@
 - **`../wedding-api`** — NestJS backend; exposes the API this SPA consumes.
 - **`.` (this repo)** — Angular 22 SPA implementation.
 
-The architecture hub may edit this file, `TASKS.md`, `.agents/skills/`, and cross-refs as part of a coordinated change. See `../wedding-architecture/.agent/authority.md`. **Never** application code.
+The architecture hub may edit this file, `tasks/` (indexed by `tasks/README.md`), `.agents/skills/`, and cross-refs as part of a coordinated change. See `../wedding-architecture/.agent/authority.md`. **Never** application code.
 
 ## Project
 
@@ -109,7 +109,7 @@ Angular 22 single-page app. Standalone components, signals-first, zoneless (no c
 - **Design guidance** → `../wedding-ui-design/readme.md` and component `*.prompt.md` files
 - **Domain vocabulary** → `../wedding-architecture/GLOSSARY.md`
 - **What the app does** → `SPEC.md` (this repo)
-- **Current task** → `TASKS.md`
+- **Current task** → `tasks/` (indexed by `tasks/README.md`)
 - **Generated API client** → `src/app/core/api/` (read-only)
 - **Feature map** → `src/app/features/` folder structure
 - **How to build a component from the design system** → `.agents/skills/design-component-author.md`
