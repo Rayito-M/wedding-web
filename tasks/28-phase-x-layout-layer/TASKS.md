@@ -318,6 +318,16 @@
   - stylelint added and wired into `pnpm lint` so CI fails on violation
   - Rules: no raw `px` for spacing/font-size (tokens only), no bare `@media (min-width:` (use
     `respond-to()`), no unpaired `overflow: hidden`
+  - **The unpaired-`hidden` rule must exempt text truncation, or it flags the primitive this phase
+    built.** hub ADR-0041 §4 was scoped on 2026-09-03 to *layout containers* — boxes establishing a
+    scrolling context a focus event could shift. A single-line, `nowrap`, ellipsizing text child is
+    not one, and `%truncating-flex-child` in `_layout.scss` deliberately ships plain
+    `overflow: hidden`. A lint rule that cannot express the difference should not ship: prefer
+    scoping by context (paired with `text-overflow`/`white-space`) over a blanket ignore comment,
+    which would have to be repeated at every call site
+  - **`_layout.scss` and `_tokens.scss` are exempt from the raw-`px` rule.** They are where the
+    literals are *defined* — `$bp-md: 640px`, the type scale, the spacing scale. A rule that flags
+    its own token source is misconfigured
   - Existing violations are baselined, not auto-fixed — a blanket rewrite of 1,037 literals across a
     live app is exactly the kind of change ADR-0041 §8 says not to make in one cut
 - **Refs:** hub ADR-0041 §7
@@ -339,6 +349,18 @@
   - Each drops below the 8 KB budget
   - No visual change intended: each PR is checked against the previous build in all three themes and
     all three locales, at 360px and at ≥900px
+  - **Each screen's T349 layout-regression spec lands in the same PR as that screen's migration**,
+    not batched afterwards. Written alongside, a spec asserts what the screen is supposed to do;
+    written after, it asserts whatever the code ended up doing
+  - **Each screen is checked in a real browser before its PR is called done.** Two production
+    defects escaped T341 with 556 unit tests green — pinning that never worked, and a dead scroll
+    handler — because JSDOM computes no layout. This phase moves layout; that is exactly the blind
+    spot. `npx playwright test e2e/layout` plus a look at the screen itself
+  - **Watch for the scroll-ownership consequence on every screen, not just guest-manager**
+    (hub ADR-0042 §Consequences): a screen giving up its scroller loses scroll *observation* and
+    scroll *control*. `milestones` and `config-manager` each declare three scrollers and
+    `seating-plan` two, so any of them binding a `(scroll)` handler or writing `scrollTop` will hit
+    what T348 had to repair. Check before migrating, not after
 - **Non-goals:** the other 67 files are not in scope — they migrate opportunistically when next
   touched, and get no task of their own
 - **Refs:** hub ADR-0041 §2, §Consequences
