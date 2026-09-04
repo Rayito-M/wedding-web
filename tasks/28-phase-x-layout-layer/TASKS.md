@@ -810,6 +810,28 @@
   for full evidence, including the new `.scrolled`-header regression spec (proven failing against
   `58935c7`, the commit before hub ADR-0043) and the layout-regression coverage already in place from
   T341/T348/T355 for this screen. `milestones`, `seating-plan` remain.
+  **`milestones` slice landed partial 2026-09-04, blocked on a hub decision.** Re-measured against
+  source, confirming the task's own corrected premise exactly: `:host` is `display: block` (flow)
+  until `@media (min-width: 900px)` at line 683 flips it to `display: flex; height: 100%`; `.list`
+  scrolls only inside that same query (line 715); `.detail-body`'s `overflow-y: auto` (line 520) is
+  unconditional and independent, a pane, not the page scroller. Landed the one uncontested piece:
+  `.detail-body` gains an explicit `min-height: 0` (T347 `risks[1]`) — measured with real long
+  content in Chromium and WebKit that this was not an observed defect (the box already scrolled
+  correctly; `overflow-y: auto` already establishes a scroll container, which already zeroes the
+  flex automatic-minimum floor), so this is the ADR's "state it, don't inherit it" principle, not a
+  bug fix, and carries no visual change (verified 3 themes × 2 widths × 3 locales, screenshots
+  reviewed). **Did not** set `screenScroll: 'lg'` on the route, and did not touch `.list`/
+  `.detail-body`'s own scroll CSS or the `@media`→`respond-to()`/token migration — blocked on a
+  master-detail question ADR-0043 does not answer (does `PrivateLayout`'s own `.screen-scroll`
+  wrapper take over the two independently-scrolling panes, or does it apply to a wrapper the panes
+  never overflow, leaving them untouched) — see `decisions_needed[]` in
+  `tasks/28-phase-x-layout-layer/reports/T343-milestones.json` (`blocking: true`). Also established,
+  by measurement rather than inference: `centerTodayMarker()`'s `list.scrollTop` write is **already**
+  a silent no-op on mobile today (`.list` has no `overflow` below 900px — `overflowY: visible`,
+  write-then-read confirmed `0`), independent of anything in this slice — a pre-existing defect, not
+  a regression this slice introduced or could fix by itself. `seating-plan` (the same
+  `.unassigned-body`/`.tables` shape) remains, and inherits the same blocker once the hub decision
+  lands.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T340, T341, **T352** (landed) for every screen after `config-manager` —

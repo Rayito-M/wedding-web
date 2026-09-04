@@ -443,10 +443,9 @@
   // axis is width, so `min-width: 0` guards against `width: 100%` being
   // overridden upward by a revived `min-width: auto` (hub ADR-0041 §4
   // amendment). Height is cross-axis, bounded by `max-height` (mobile) /
-  // `height: 100%` (desktop) — `.detail-body` below (`flex: 1;
-  // overflow-y: auto`, no explicit `min-height: 0`) is a **pre-existing**
-  // gap on that axis, unrelated to this conversion — flagged in T347's
-  // report, not fixed here (no restructuring; T347 audit).
+  // `height: 100%` (desktop) — `.detail-body` below carries the matching
+  // `min-height: 0` explicitly now (T347 `risks[1]`, landed by T343's
+  // `milestones` slice — see that declaration's own comment).
   min-width: 0;
   overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
   overflow: clip; // creates no scroll container, so focus cannot shift it
@@ -507,6 +506,17 @@
 
 .detail-body {
   flex: 1;
+  // Explicit rather than inherited (hub ADR-0041 §4 amendment: "state it
+  // rather than inheriting it, so the declaration does not depend on which
+  // `overflow` value is in play") — `overflow-y: auto` already establishes
+  // a scroll container in every engine this app targets, which by itself
+  // zeroes the flex automatic-minimum-size floor, so this was not observed
+  // to be broken (measured: a long guest-facing detail form scrolls
+  // correctly today, and `.detail` itself never grows past its own
+  // `height: 100%`). T347 flagged the missing declaration as a gap on
+  // principle, not from an observed defect (`risks[1]`); this makes the
+  // behaviour independent of which `overflow` value this box ends up with.
+  min-height: 0;
   overflow-y: auto;
   padding: t.$space-4 t.$space-5;
   display: flex;
