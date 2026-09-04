@@ -93,9 +93,19 @@ $bp-xl: 1024px;
 /// `overflow: hidden` sites against only 33 `min-width: 0` sites says the
 /// missing half recurs elsewhere. Naming it is what lets T342 lint for it.
 %truncating-flex-child {
-  // Flex items default to `min-width: auto`, so text refuses to shrink
-  // below its own min-content width and pushes the row wider instead of
-  // eliding — the exact failure the guest-manager footer hit in French.
+  // Two rules, and the order matters — corrected 2026-09-04 after T348
+  // measured what actually happened.
+  //
+  // `white-space: nowrap` is the choice: a status bar reads better elided on
+  // one line than reflowed onto two. Without it, a text flex item's
+  // min-content width is its **longest word**, so it wraps rather than
+  // overflowing — which is what the guest-manager footer really did in
+  // French, and why it reproduced at 320px but not at 360–375px.
+  //
+  // `min-width: 0` is then required *because* of `nowrap`, not instead of it:
+  // once the text cannot wrap, min-content becomes the whole string, the item
+  // refuses to shrink below it, and the row does overflow horizontally. The
+  // two declarations are a pair; neither is correct alone.
   min-width: 0;
   // Plain `hidden`, deliberately NOT the paired `hidden` → `clip` of
   // ADR-0041 §4. That rule was scoped on 2026-09-03 to *layout containers* —

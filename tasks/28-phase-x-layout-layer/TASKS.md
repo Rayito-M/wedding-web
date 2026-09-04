@@ -199,8 +199,13 @@
         cannot silently return
   - **Each spec is proven by failing first.** Check it out against the commit before its fix and
     watch it fail; a layout spec that has never failed is asserting the DOM it was written from
-  - At least one spec runs at a **narrow viewport in French** — the locale-plus-width combination
-    that produced the original footer overflow, and the one no English-only check reaches
+  - At least one spec runs at a **narrow viewport in French** — the locale-plus-width combination no
+    English-only check reaches. **Use 320px, not 360–375px**, and do not expect to write a
+    fail-first spec for the footer: T348 established (deviations + `risks[0]` in its report) that the
+    historical defect was *wrapping*, not horizontal overflow, and does not reproduce at 360–375px
+    with settled fonts at any realistic guest count. Gate any font-sensitive measurement on
+    `document.fonts.ready`; an unsettled measurement looked like it reproduced at 360px and did not
+    hold up. The truncation fix is correct and shipped regardless — see hub ADR-0041 §5 as corrected
   - Specs live beside the harness from T263, not inside `src/`
   - **Fix the parallel-load flake first.** Verified 2026-09-04: running `e2e/layout` across all four
     projects at once, one case passed against deliberately-broken CSS that it fails correctly when
