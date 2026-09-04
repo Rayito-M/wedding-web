@@ -457,7 +457,25 @@
   `.stylelint-baseline.json`, `src/app/shared/notification-bell/notification-bell.scss`
 
 ### T352 — Scroll ownership gets its own key; pinning stops carrying it
-- **Status:** todo
+- **Status:** done — `screenScroll` added to `RouteChromeData`'s shared base (the T345 discriminated
+  union keeps compiling unchanged); `pinned()` deleted, `main`/`.screen-scroll` now read
+  `chrome().screenScroll` alone via a closed set of four classes (`screen-scrolls` +
+  `-md`/`-lg`/`-xl`), each pair emitted unconditionally / inside `respond-to('md'|'lg'|'xl')` in
+  `private-layout.scss`. `after-head` re-keyed onto `screenChrome.head()`. `config-manager`'s route
+  now reads `screenScroll: true` with no pin flags and no workaround comment; its SCSS untouched.
+  All three named defects proven gone in `screen-chrome.spec.ts`; the `screenScroll: 'lg'` case
+  additionally proven in a real browser (`e2e/layout/screen-scroll-breakpoint.spec.ts`) by applying
+  `PrivateLayout`'s own computed classes onto `/schedule` (a clean flow screen, `screenScroll` never
+  set on its real route) and measuring real scroll ownership either side of 900px — no live route
+  sets `'lg'` yet, so this is the honest proof available until `milestones` migrates (T343).
+  `e2e/layout` 40/40 (35 pre-existing + this task's 5 new/changed cases), run twice. One pre-existing
+  spec, `clip-flex-item.spec.ts`, had to be re-targeted: it asserted an invariant that was only true
+  while `guest-manager`'s `headPinned`/`footPinned` also clipped `main`; under this ADR
+  `guest-manager` is correctly flow (it pins a head/foot but owns no scroll container of its own), so
+  the old assertion started failing for a correct-behaviour reason, not a regression — see the
+  report's `deviations[0]`. `guest-manager`'s own route is intentionally untouched by this task
+  (analysis in the report's `risks[0]`: it needs no `screenScroll` at all, unlike `milestones`/
+  `seating-plan`). Full evidence: `tasks/28-phase-x-layout-layer/reports/T352.json`.
 - **Target release:** 1.2.0
 - **Owner:** unassigned
 - **Depends on:** T341 (the mechanism this corrects)

@@ -263,13 +263,39 @@ describe('PrivateLayout — foot slot end-to-end teardown ordering through real 
   });
 });
 
-describe('PrivateLayout — pinning follows the active route\'s headPinned/footPinned (hub ADR-0042 §1/§2/§4, T341)', () => {
-  async function mount(data: Record<string, unknown>) {
+/**
+ * Hub ADR-0043 (T352) — supersedes the pre-existing `pinned()` describe block
+ * this replaces. Scroll ownership (`screenScroll`) and pinning
+ * (`headPinned`/`footPinned`) are now independent route keys, proven here as
+ * three separate defects rather than one flag with two effects:
+ *
+ * 1. A route can pin (register a head/foot) without owning the scroller —
+ *    `main`/`.screen-scroll` never gain a `screen-scrolls*` class from
+ *    `headPinned`/`footPinned` alone (the `guest-manager` shape: it pins a
+ *    head/foot but owns no scroll container of its own).
+ * 2. A route can own the scroller without pinning anything — `screenScroll`
+ *    alone yields `main`, no `.screen-head`/`.screen-foot` ever renders (the
+ *    `config-manager` shape).
+ * 3. `headPinned: true` with **no** registered `*appScreenHead` is inert,
+ *    not catastrophic — `main`'s 52px clearance follows
+ *    `ScreenChromeService.head()`, not the route flag, so it survives a flag
+ *    set without its directive. This is the exact regression T343
+ *    reproduced against `config-manager` before ADR-0043 (8 of 10 spec cases
+ *    failing, every click intercepted by the fixed header).
+ *
+ * `'md' | 'lg' | 'xl'` are only asserted at the class-computation level here
+ * — proof that the CSS behind each class actually gates by breakpoint in a
+ * real browser is `e2e/layout/screen-scroll-breakpoint.spec.ts` (JSDOM lays
+ * nothing out, so a unit test can only prove the class string, never that
+ * the media query applies).
+ */
+describe('PrivateLayout — scroll ownership follows screenScroll, independently of pinning (hub ADR-0043, T352)', () => {
+  async function mount(data: Record<string, unknown>, component = StubBothScreen) {
     const routes: Routes = [
       {
         path: '',
         component: PrivateLayout,
-        children: [{ path: 'x', component: StubBothScreen, data }],
+        children: [{ path: 'x', component, data }],
       },
     ];
 
@@ -285,27 +311,61 @@ describe('PrivateLayout — pinning follows the active route\'s headPinned/footP
     return harness.routeNativeElement as HTMLElement;
   }
 
-  it('a route with neither flag leaves main/.screen-scroll unpinned — main stays the scroller', async () => {
+  function scrollClasses(root: HTMLElement, selector: string): string[] {
+    const el = root.querySelector(selector);
+    return ['screen-scrolls', 'screen-scrolls-md', 'screen-scrolls-lg', 'screen-scrolls-xl'].filter(
+      (c) => el?.classList.contains(c),
+    );
+  }
+
+  it('a route with no screenScroll leaves main/.screen-scroll unyielded — main stays the scroller', async () => {
     const root = await mount({ id: 'x' });
 
-    expect(root.querySelector('main')?.classList.contains('pinned')).toBe(false);
-    expect(root.querySelector('.screen-scroll')?.classList.contains('pinned')).toBe(false);
+    expect(scrollClasses(root, 'main')).toEqual([]);
+    expect(scrollClasses(root, '.screen-scroll')).toEqual([]);
   });
 
-  it('headPinned: true yields main to .screen-scroll and gives the head slot main\'s clearance', async () => {
-    const root = await mount({ id: 'x', headPinned: true });
+  it('headPinned/footPinned alone (pinning, no screenScroll) never yield main — the guest-manager shape', async () => {
+    const root = await mount({ id: 'x', headPinned: true, footPinned: true });
 
-    expect(root.querySelector('main')?.classList.contains('pinned')).toBe(true);
-    expect(root.querySelector('main')?.classList.contains('after-head')).toBe(true);
-    expect(root.querySelector('.screen-scroll')?.classList.contains('pinned')).toBe(true);
+    // The head/foot still render — pinning is unaffected by this ADR.
+    expect(root.querySelector('.stub-head-both')).not.toBeNull();
+    expect(root.querySelector('.stub-foot-both')).not.toBeNull();
+    // But neither flag makes main/.screen-scroll yield.
+    expect(scrollClasses(root, 'main')).toEqual([]);
+    expect(scrollClasses(root, '.screen-scroll')).toEqual([]);
   });
 
-  it('footPinned: true alone also yields main to .screen-scroll, without the head clearance change', async () => {
-    const root = await mount({ id: 'x', footPinned: true });
+  it('screenScroll: true yields main to .screen-scroll even though nothing is pinned — the config-manager shape', async () => {
+    const root = await mount({ id: 'x', screenScroll: true }, StubFlowScreen);
 
-    expect(root.querySelector('main')?.classList.contains('pinned')).toBe(true);
+    expect(root.querySelector('.screen-head')).toBeNull();
+    expect(root.querySelector('.screen-foot')).toBeNull();
+    expect(scrollClasses(root, 'main')).toEqual(['screen-scrolls']);
+    expect(scrollClasses(root, '.screen-scroll')).toEqual(['screen-scrolls']);
+  });
+
+  it.each(['md', 'lg', 'xl'] as const)(
+    "screenScroll: '%s' computes its own single class, never another breakpoint's",
+    async (bp) => {
+      const root = await mount({ id: 'x', screenScroll: bp }, StubFlowScreen);
+      expect(scrollClasses(root, 'main')).toEqual([`screen-scrolls-${bp}`]);
+      expect(scrollClasses(root, '.screen-scroll')).toEqual([`screen-scrolls-${bp}`]);
+    },
+  );
+
+  it('headPinned: true with no registered *appScreenHead is inert — main keeps its fixed-header clearance (hub ADR-0043 §3)', async () => {
+    const root = await mount({ id: 'x', headPinned: true }, StubFlowScreen);
+
+    expect(root.querySelector('.screen-head')).toBeNull();
     expect(root.querySelector('main')?.classList.contains('after-head')).toBe(false);
-    expect(root.querySelector('.screen-scroll')?.classList.contains('pinned')).toBe(true);
+  });
+
+  it('a registered head gives main after-head regardless of the headPinned flag', async () => {
+    const root = await mount({ id: 'x' }, StubBothScreen);
+
+    expect(root.querySelector('.screen-head')).not.toBeNull();
+    expect(root.querySelector('main')?.classList.contains('after-head')).toBe(true);
   });
 });
 

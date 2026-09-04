@@ -103,13 +103,22 @@ type RouteChrome = Partial<RouteChromeData>;
  * screen registers one via `*appScreenHead` / `*appScreenFoot` on an element
  * in its own template (e.g. `guest-manager`'s `<header class="header">` and
  * `.list-footer`), and this layout projects them via `NgTemplateOutlet`.
- * `main` stays the scroller for a "flow" screen (`.screen-scroll` is
- * `display: contents`, so it is transparent to layout); the moment the
- * active route's `data` sets `headPinned` or `footPinned` (`pinned()`
- * below), `main` yields (`overflow-y: hidden` → `clip`, the ADR-0041 §4
- * paired declaration — it is a layout container a focus event could shift)
- * and `.screen-scroll` becomes the one region that actually scrolls. See
- * `private-layout.scss` for the CSS side of the contract and
+ *
+ * **Pinning and scroll ownership are separate facts (hub ADR-0043).**
+ * Whether a head/foot renders is driven by `ScreenChromeService.head()`/
+ * `foot()` (the directive registration) alone. Whether `main` yields
+ * scrolling to `.screen-scroll` is driven by the active route's
+ * `screenScroll` alone — absent (flow, `main` scrolls), `true` (shell at
+ * every breakpoint) or a breakpoint name (flow below it, shell from it up).
+ * The two used to be conflated in one `pinned()` flag; ADR-0043 §1–§3
+ * withdraws that — a route can pin a head with no `screenScroll`
+ * (`guest-manager`, which owns no scroll container of its own and is
+ * correctly flow), or declare `screenScroll` while pinning nothing
+ * (`config-manager`). `main`'s `after-head` class (52px fixed-header
+ * clearance) follows `screenChrome.head()` for the same reason: the
+ * clearance belongs to whichever element actually renders it, not to a
+ * route flag that could be set without a registered head. See
+ * `private-layout.scss` for the CSS side (the closed four-variant set) and
  * `screen-chrome.spec.ts` for the coverage — registration/placement,
  * change-detection and guarded-clear teardown were proven zoneless-safe by
  * the T341 prototype gate (ADR-0042 §Gate outcome, `screen-chrome-prototype
@@ -118,10 +127,16 @@ type RouteChrome = Partial<RouteChromeData>;
  * **Also owns scrolling a screen back to the top on request** (hub
  * ADR-0042 §Consequences, T348). `ScreenChromeService.scrollResetRequest()`
  * is a bare counter a screen bumps via `requestScrollReset()`; a
- * `constructor()` `effect()` here reads it and scrolls whichever element is
- * the active scroller — `.screen-scroll` while `pinned()`, `main` itself
- * otherwise — back to `{ top: 0 }`. This is the "control" half of the same
- * gap the head/foot slots close for "chrome": once a screen hands its
+ * `constructor()` `effect()` here reads it and resets both `main` and
+ * `.screen-scroll` to `{ top: 0 }`. Deliberately unconditional rather than
+ * picking one by a flag: which element actually owns scrolling is now a
+ * per-breakpoint CSS fact (`screenScroll: 'lg'` and friends, hub ADR-0043
+ * §1/§4), not a route-static boolean this layout could evaluate correctly in
+ * TypeScript without re-implementing `respond-to()`'s media queries.
+ * Resetting the element that is not the active scroller is a harmless
+ * no-op — it is either `overflow: clip` (nothing to scroll) or
+ * `display: contents` (no box at all). This is the "control" half of the
+ * same gap the head/foot slots close for "chrome": once a screen hands its
  * scroller to this layout, it can no longer zero that element's own
  * `scrollTop` directly.
  */
@@ -276,33 +291,18 @@ export class PrivateLayout {
     { initialValue: this.deepestChrome() },
   );
 
-  /**
-   * `true` exactly when the active route's `data` pins a head, a foot, or
-   * both (hub ADR-0042 §1/§2, T341). Drives `main`'s yield to
-   * `.screen-scroll` in the template/`private-layout.scss` — the two flags
-   * are read together because the single-scroller rule (ADR-0041 §3) has
-   * only one "who owns scrolling" answer per route, not one per slot: a
-   * route pinning only a foot still needs `.screen-scroll` to be the
-   * scroller, exactly like one pinning only a head.
-   */
-  protected readonly pinned = computed(
-    () => !!(this.chrome().headPinned || this.chrome().footPinned),
-  );
-
   constructor() {
     // The "control" half of ADR-0042 §Consequences (T348): a screen that no
     // longer owns its scroller asks this layout to scroll it back to the
     // top instead (`ScreenChromeService.requestScrollReset()`), the same
-    // shape as handing over a head/foot template. Reads `pinned()` on every
-    // run so it always targets whichever element currently scrolls —
-    // `.screen-scroll` while pinned, `main` itself otherwise — never a
-    // stale reference from before a navigation changed which one that is.
+    // shape as handing over a head/foot template. Resets both `main` and
+    // `.screen-scroll` unconditionally (hub ADR-0043) — see this class's own
+    // doc for why picking one by a route-static flag is no longer correct
+    // now that scroll ownership can be per breakpoint.
     effect(() => {
       this.screenChrome.scrollResetRequest();
-      const target = this.pinned()
-        ? this.screenScrollContent?.nativeElement
-        : this.mainContent?.nativeElement;
-      target?.scrollTo({ top: 0 });
+      this.mainContent?.nativeElement.scrollTo({ top: 0 });
+      this.screenScrollContent?.nativeElement.scrollTo({ top: 0 });
     });
 
     // Fresh save state on every (re)open — otherwise a stale error/saving

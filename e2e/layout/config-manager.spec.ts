@@ -43,15 +43,24 @@ import { signInAsCouple } from '../support/auth';
  *
  * **The first spec did earn its keep once, mid-development**, which is
  * worth keeping: an initial migration attempt set `headPinned: true`
- * instead of `footPinned` (both make `pinned()` true and hand `.content`'s
- * scroller role to `PrivateLayout`'s `.screen-scroll`, but only `headPinned`
- * also drops `main`'s `[class.after-head]` 52px fixed-header clearance,
- * on the assumption a registered `*appScreenHead` supplies it instead).
+ * instead of `footPinned` (both made `pinned()` true and handed `.content`'s
+ * scroller role to `PrivateLayout`'s `.screen-scroll` under the mechanism as
+ * it existed before hub ADR-0043, but only `headPinned` also dropped
+ * `main`'s `[class.after-head]` 52px fixed-header clearance, on the
+ * assumption a registered `*appScreenHead` supplied it instead).
  * `config-manager` registers no head template, so that attempt stranded
  * `.pill`/`.rail-item` under the fixed header — every click in the first
  * spec below failed, intercepted by `app-screen-header`. Caught here before
- * commit, not shipped; the route now uses `footPinned` (`app.routes.ts`
- * carries the full reasoning).
+ * commit, not shipped.
+ *
+ * **Corrected again 2026-09-04 (hub ADR-0043, `wedding-web` T352).**
+ * `footPinned: true` was itself a workaround — a route admitting it "exists
+ * only to make `main` yield" for a screen that pins nothing (ADR-0043 §2's
+ * own example). The route now declares `screenScroll: true` and no pin
+ * flags at all; the fixed-header regression above is independently closed
+ * by `after-head` following `screenChrome.head()` rather than any route
+ * flag (ADR-0043 §3), so it can no longer recur here regardless of which
+ * scroll-ownership key is set.
  */
 
 function navSelectors(viewportWidth: number): { nav: string; item: string } {

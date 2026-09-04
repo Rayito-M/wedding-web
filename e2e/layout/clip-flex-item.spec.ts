@@ -22,12 +22,27 @@ import { signInAsCouple } from '../support/auth';
  * clipping. The actual defect (T341's commit message: main "grew past the
  * viewport, and the whole layout scrolled as one") shows up one level up: the
  * flex *parent* (`app-private-layout`, fixed to the viewport height) does not
- * grow, so `main` overflows past it into `document`/`body`, which do. This
- * spec instead compares `main.scrollHeight` against its flex parent's
- * `clientHeight` — the space `main` was actually given — which is what "does
- * not outgrow its parent" (the bullet's own title) means literally. Confirmed
- * against `9474809^`: fails (`4097 > 568`); against `9474809`: passes
- * (`329 <= 568`).
+ * grow, so `main` overflows past it into `document`/`body`, which do.
+ *
+ * **Re-targeted 2026-09-04 (hub ADR-0043, `wedding-web` T352).** This spec
+ * originally ran against `/guests` while `headPinned`/`footPinned` still
+ * doubled as guest-manager's scroll-ownership flag, making `main` clip
+ * there (`overflow-y: clip`, not a scroll container) the same way
+ * `/config` does today. ADR-0043 separates the two facts: guest-manager
+ * pins a head/foot but owns no scroll container of its own, so its correct
+ * route declaration is flow (no `screenScroll`) — `main` is the real
+ * scroller there now, `overflow-y: auto`, and its `scrollHeight` (3058px,
+ * measured) legitimately exceeds its flex parent's `clientHeight` (720px)
+ * because it is actually scrolling, not because it grew past its box. That
+ * comparison is therefore the wrong one for `/guests` post-ADR-0043; this
+ * spec asserts the invariant that still matters for a **flow** scroller
+ * instead — `main.clientHeight` itself never outgrows the space its flex
+ * parent gives it, whether or not its *content* (`scrollHeight`) is larger.
+ * The `overflow-y: clip` / min-height:0 trap this file exists to guard is
+ * unaffected by this re-target and stays covered on a genuinely shell route
+ * — `config-manager.spec.ts`'s own second test, `/config`, which still
+ * compares `main.scrollHeight` against its flex parent exactly as this file
+ * used to, because `main` is still clipped (not scrolling) there.
  *
  * `.table-row` is scoped to `.table-container[role="table"]` (T349,
  * `tasks/28-phase-x-layout-layer/reports/T349.json`): `guest-manager.html`'s
@@ -38,7 +53,7 @@ import { signInAsCouple } from '../support/auth';
  * contention, measuring 8 placeholder rows instead of the 60 real ones this
  * spec's own `guestCount` exists to guarantee.
  */
-test("a pinned route's main never outgrows the space its flex parent gives it", async ({
+test("a flow route's main never outgrows the space its flex parent gives it, even though its content legitimately scrolls past it", async ({
   page,
 }) => {
   await signInAsCouple(page, { guestCount: 60 });
@@ -46,17 +61,23 @@ test("a pinned route's main never outgrows the space its flex parent gives it", 
 
   await expect(page.locator('.table-container[role="table"] .table-row').first()).toBeVisible();
 
-  const { mainScrollHeight, parentClientHeight } = await page.evaluate(() => {
+  const { mainClientHeight, mainScrollHeight, parentClientHeight } = await page.evaluate(() => {
     const main = document.querySelector('main');
     const parent = document.querySelector('app-private-layout');
     if (!main || !parent) {
       throw new Error('main or its app-private-layout parent did not render');
     }
     return {
+      mainClientHeight: main.clientHeight,
       mainScrollHeight: main.scrollHeight,
       parentClientHeight: (parent as HTMLElement).clientHeight,
     };
   });
 
-  expect(mainScrollHeight).toBeLessThanOrEqual(parentClientHeight);
+  // `main`'s own box stays bounded by its flex parent — the actual "does not
+  // outgrow its parent" claim.
+  expect(mainClientHeight).toBeLessThanOrEqual(parentClientHeight);
+  // The guard clause: without it this spec would pass on a `main` that
+  // never had anything to scroll in the first place, proving nothing.
+  expect(mainScrollHeight).toBeGreaterThan(mainClientHeight);
 });

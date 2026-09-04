@@ -15,16 +15,31 @@
 }
 
 <!-- `main` stays the single scroller (ADR-0041 §3) for a flow screen; it
-     yields only when the active route pins something (`pinned()`), in which
-     case `.screen-scroll` below becomes the one region that scrolls — see
-     private-layout.scss for both halves of the contract. -->
+     yields only when the active route's `screenScroll` says so (hub
+     ADR-0043 §1) — never `headPinned`/`footPinned`, which pin a region but
+     no longer decide who scrolls. The closed set of four classes below
+     mirrors private-layout.scss's own closed set: unconditional plus one
+     per named breakpoint. `after-head` follows the registered head
+     (`screenChrome.head()`), not the route flag, so a flag set without a
+     registered head is inert rather than stranding content under the fixed
+     header (hub ADR-0043 §3). -->
 <main
   #mainContent
   (scroll)="onMainScroll()"
-  [class.pinned]="pinned()"
-  [class.after-head]="!!chrome().headPinned"
+  [class.screen-scrolls]="chrome().screenScroll === true"
+  [class.screen-scrolls-md]="chrome().screenScroll === 'md'"
+  [class.screen-scrolls-lg]="chrome().screenScroll === 'lg'"
+  [class.screen-scrolls-xl]="chrome().screenScroll === 'xl'"
+  [class.after-head]="!!screenChrome.head()"
 >
-  <div #screenScroll class="screen-scroll" [class.pinned]="pinned()">
+  <div
+    #screenScroll
+    class="screen-scroll"
+    [class.screen-scrolls]="chrome().screenScroll === true"
+    [class.screen-scrolls-md]="chrome().screenScroll === 'md'"
+    [class.screen-scrolls-lg]="chrome().screenScroll === 'lg'"
+    [class.screen-scrolls-xl]="chrome().screenScroll === 'xl'"
+  >
     <router-outlet />
   </div>
 </main>

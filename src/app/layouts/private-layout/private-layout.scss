@@ -38,8 +38,8 @@ main {
   flex: 1;
   // Required, and easy to lose: a flex item's automatic minimum size is only
   // zero when the item is a **scroll container** (CSS Sizing §5.1). `main` was
-  // one for free while it was `overflow-y: auto`. Under `&.pinned` below it
-  // becomes `overflow-y: clip`, which is deliberately *not* a scroll container
+  // one for free while it was `overflow-y: auto`. Under `&.screen-scrolls`
+  // below it becomes `overflow-y: clip`, which is deliberately *not* a scroll container
   // (that is the whole point of ADR-0041 §4) — so `min-height: auto` comes back
   // to life, `main` refuses to shrink below its content, grows past the
   // viewport, and the entire layout scrolls as one with the pinned head and
@@ -52,14 +52,20 @@ main {
   margin-top: 52px;
   padding-bottom: 20px;
 
-  // The active route's `headPinned`/`footPinned` route data is `true`
-  // (`pinned()`, hub ADR-0042 §1/§2): scroll ownership moves to
-  // `.screen-scroll` below, so `main` must stop being a scroll container of
-  // its own. `hidden` alone is not enough — it is still a scroll container
-  // with the scrollbar suppressed, and focus/`scrollIntoView()` could shift
-  // it (ADR-0041 §4), which is the exact guest-manager defect this ADR
-  // exists to fix.
-  &.pinned {
+  // The active route's `screenScroll` is set (hub ADR-0043 §1, amending
+  // ADR-0042 §1/§2 — `headPinned`/`footPinned` no longer decide this):
+  // scroll ownership moves to `.screen-scroll` below, so `main` must stop
+  // being a scroll container of its own. `hidden` alone is not enough — it
+  // is still a scroll container with the scrollbar suppressed, and
+  // focus/`scrollIntoView()` could shift it (ADR-0041 §4), which is the
+  // exact guest-manager defect this ADR exists to fix.
+  //
+  // Closed set of four (hub ADR-0043 §4, ADR-0041 §6 fixes the breakpoint
+  // count): unconditional (`screenScroll: true`, shell at every breakpoint),
+  // plus one per named breakpoint (`screenScroll: 'md' | 'lg' | 'xl'`, flow
+  // below it, shell from it up). The screen itself still writes no media
+  // query — only this file and `_layout.scss`'s `respond-to()` do.
+  &.screen-scrolls {
     overflow-y: hidden; // fallback: pre-Safari-16 UAs drop the next line
     overflow-y: clip; // creates no scroll container, so focus cannot shift it
   }
@@ -74,12 +80,14 @@ main {
 // Wraps `<router-outlet />`. Transparent to layout (`display: contents`) for
 // a flow screen, so `main` above is the single scroller exactly as before
 // this task (ADR-0041 §3). Becomes the one scrolling region itself only when
-// the active route pins something — see `screen-scroll()`
-// (`src/styles/_layout.scss`, T340) for what `.pinned` adds.
+// the active route's `screenScroll` says so (hub ADR-0043 §1) — see
+// `screen-scroll()` (`src/styles/_layout.scss`, T340) for what each variant
+// below adds. Same closed set of four as `main` above, so the two always
+// agree about which breakpoint the yield applies at.
 .screen-scroll {
   display: contents;
 
-  &.pinned {
+  &.screen-scrolls {
     // `display: contents` above generates no box at all, so without this the
     // mixin's `flex`, `min-height` and `overflow-y` have nothing to apply to
     // and the region silently never scrolls. The wrapper must become a real
@@ -133,5 +141,48 @@ main {
 
   .mobile-moto {
     display: none;
+  }
+}
+
+// The remaining three-quarters of the closed set (hub ADR-0043 §4): a
+// `screenScroll: 'md' | 'lg' | 'xl'` route yields only from that breakpoint
+// up — flow below it, shell from it up (`milestones` is the worked case,
+// `screenScroll: 'lg'`). Deliberately three separate `respond-to()` blocks,
+// not one, so a screen's declared breakpoint is the only one whose CSS ever
+// applies to it; ADR-0041 §6 fixed the breakpoint count at three, so this
+// list is closed, not open-ended, same as the class list in the template.
+@include layout.respond-to('md') {
+  main.screen-scrolls-md {
+    overflow-y: hidden; // fallback: pre-Safari-16 UAs drop the next line
+    overflow-y: clip;
+  }
+
+  .screen-scroll.screen-scrolls-md {
+    display: block;
+    @include layout.screen-scroll;
+  }
+}
+
+@include layout.respond-to('lg') {
+  main.screen-scrolls-lg {
+    overflow-y: hidden; // fallback: pre-Safari-16 UAs drop the next line
+    overflow-y: clip;
+  }
+
+  .screen-scroll.screen-scrolls-lg {
+    display: block;
+    @include layout.screen-scroll;
+  }
+}
+
+@include layout.respond-to('xl') {
+  main.screen-scrolls-xl {
+    overflow-y: hidden; // fallback: pre-Safari-16 UAs drop the next line
+    overflow-y: clip;
+  }
+
+  .screen-scroll.screen-scrolls-xl {
+    display: block;
+    @include layout.screen-scroll;
   }
 }

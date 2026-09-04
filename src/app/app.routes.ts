@@ -151,26 +151,19 @@ export const routes: Routes = [
           roles: ['groom', 'bride'],
           tabBar: true,
           topNav: true,
-          // Hub ADR-0042 §1/§2, T343 — shell at every breakpoint (ADR-0042
+          // Hub ADR-0043 §1/§5, T352 — shell at every breakpoint (ADR-0042
           // §Context ¶2, corrected 2026-09-04), the same shape as
           // `seating-plan`. This screen registers no `*appScreenHead` /
           // `*appScreenFoot` of its own — nothing leaves its template to be
-          // pinned by `PrivateLayout` — so `footPinned` here exists only to
-          // make `main` yield (`pinned()`, `overflow-y: clip`) to
-          // `PrivateLayout`'s own `.screen-scroll`, matching what `:host`'s
-          // local shell (`config-manager.scss`) already assumes.
-          // **Deliberately `footPinned`, not `headPinned`:** `main`'s own
-          // `[class.after-head]` (`private-layout.html`) drops its 52px
-          // fixed-header clearance whenever `headPinned` is true, on the
-          // assumption a registered `*appScreenHead` template supplies that
-          // clearance itself (`.screen-head`'s own `margin-top: 52px`).
-          // Setting `headPinned` here without registering a head strands
-          // `main`'s content under the fixed header — reproduced empirically
-          // (every `.pill`/`.rail-item` click failed, intercepted by
-          // `app-screen-header`) before landing on `footPinned`, which
-          // `pinned()` treats identically for scroll ownership and carries
-          // no matching clearance coupling.
-          footPinned: true,
+          // pinned by `PrivateLayout` — so it declares neither pin flag,
+          // matching what `:host`'s local shell (`config-manager.scss`)
+          // already assumes. `screenScroll: true` is the only key that makes
+          // `main` yield (`overflow-y: clip`) to `PrivateLayout`'s own
+          // `.screen-scroll`; scroll ownership and pinning are independent
+          // route keys (hub ADR-0043 §1/§2), so a screen that pins nothing
+          // never has to declare a pin flag "to make main yield" the way
+          // `footPinned: true` did here before this task corrected it.
+          screenScroll: true,
           navLabel: 'nav.config',
         } satisfies RouteChromeData,
       },

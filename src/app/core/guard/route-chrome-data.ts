@@ -22,18 +22,44 @@ interface RouteChromeDataBase {
   /**
    * The screen's title/stat head stays pinned while its content scrolls
    * (hub ADR-0042 §1). A screen declares the pinned head with
-   * `*appScreenHead` on the element that should render there;
-   * `PrivateLayout` renders it via `ScreenChromeService` and yields scroll
-   * ownership from `main` to `.screen-scroll` whenever this — or
-   * {@link footPinned} — is `true`. Default: the screen's head scrolls with
-   * the rest of its content (a "flow" screen, ADR-0041 §3).
+   * `*appScreenHead` on the element that should render there; `PrivateLayout`
+   * renders it via `ScreenChromeService`. Default: no pinned head — nothing
+   * registers, `.screen-head` never renders.
+   *
+   * **Does not decide scroll ownership** (hub ADR-0043 §1/§2, amending
+   * ADR-0042 §2). Set this only when the screen actually registers
+   * `*appScreenHead` — a route that sets it without registering a head is
+   * inert (`PrivateLayout`'s `after-head` class follows
+   * `ScreenChromeService.head()`, not this flag), not broken, but it is
+   * still a lie about what the screen does. See {@link screenScroll} for who
+   * scrolls.
    */
   headPinned?: boolean;
   /**
    * The screen has a bar below the scroll region that stays pinned (hub
    * ADR-0042 §1). Same mechanism as {@link headPinned}, via `*appScreenFoot`.
+   *
+   * **Does not decide scroll ownership** — same amendment as
+   * {@link headPinned}. A screen that pins nothing never declares this key
+   * (hub ADR-0043 §2): it does not exist to "make `main` yield".
    */
   footPinned?: boolean;
+  /**
+   * Who owns vertical scrolling on this screen (hub ADR-0043 §1, amending
+   * ADR-0042 §2/§4; ADR-0041 §3 for the single-scroller rule itself).
+   * Independent of {@link headPinned}/{@link footPinned} — pinning a region
+   * and owning the scroller are two different facts that happen to coincide
+   * on some screens (e.g. `guest-manager`) and not on others (`milestones`).
+   *
+   * - Absent — **flow**: `main` scrolls. The default, and most screens.
+   * - `true` — **shell at every breakpoint**: `.screen-scroll` scrolls,
+   *   `main` yields (`overflow-y: clip`).
+   * - `'md' | 'lg' | 'xl'` — flow below that breakpoint, shell from it up.
+   *   Must match one of `_layout.scss`'s `$bp-md`/`$bp-lg`/`$bp-xl` names
+   *   exactly — a typo is a compile error, not a screen that silently stays
+   *   flow.
+   */
+  screenScroll?: true | 'md' | 'lg' | 'xl';
 }
 
 /** Not a nav entry — `tabBar` and `topNav` are absent or `false`. */
