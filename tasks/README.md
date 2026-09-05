@@ -234,3 +234,4 @@ neither sort nor uniquely name them.
 | **T356** | The auto-load sentinel stops firing before the layout settles | done | `28-phase-x-layout-layer` |
 | **T357** | The `.scrolled` guard spec loses a race under parallel load | done | `28-phase-x-layout-layer` |
 | **T358** | `.screen-scroll` becomes a bounded clipping box, and stops being a second scroller | done | `28-phase-x-layout-layer` |
+| **T360** | Two RSVP-delegation tests have been red since the feature shipped | done | `28-phase-x-layout-layer` |

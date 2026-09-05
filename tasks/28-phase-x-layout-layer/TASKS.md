@@ -581,7 +581,35 @@
   `tasks/28-phase-x-layout-layer/reports/T343.json` `risks[0]`
 
 ### T360 — Two RSVP-delegation tests have been red since the feature shipped
-- **Status:** todo
+- **Status:** done — neither test described a broken feature. Both traced to the **same** commit,
+  `c3d8eb8` ("enhance loading states across various components", 2026-09-02, the commit *after*
+  delegation shipped in `289bd39`), which silently rewired `saveDelegationIfChanged()`/
+  `fetchDelegationDoc()` from direct `WeddingGuestsService` calls onto the newly-added
+  `EntityCollectionService<GuestDto>` — commenting out the old injection rather than removing it
+  (the orphaned import this task was told not to touch). **Failure 1** ("the PATCH spy was never
+  called"): it *was* called (proven by running the suite) — with the whole fetched `GuestDto`
+  spread in, not the documented `{id, version, delegateTo}` partial patch; `guest-profile-modal.ts`'s
+  own doc comment never changed and still describes the narrower shape. Fixed in code: dropped the
+  now-pointless pre-write `getByKey()` and write `{ id: doc.id, version: doc.version, delegateTo:
+  draft }` directly off the already-loaded `delegationDoc()`, restoring the original 289bd39 shape.
+  **Failure 2** ("the fetch never resolves"): it does resolve — `@ngrx/data`'s `EntityEffects` delays
+  every query/save *error* by a real 10ms `asyncScheduler` timer that `fixture.whenStable()` does not
+  track (proven with a scratch spec waiting 500ms real time, deleted after), and this spec had no
+  `settle()`-style wait for it — `milestones.spec.ts` already carries this exact documented pattern.
+  Fixed the spec by adopting it. **A third, more serious defect surfaced investigating failure 1**,
+  masked by a *false-passing* test: the 409-conflict-retry spec asserted `getSpy` called twice and
+  passed, but only because neither the pre-write `getByKey()` nor the 409 retry were completing
+  within the test's window — with the timing fixed, it dropped to one call, exposing that
+  `saveDelegationIfChanged()`'s `httpStatus(err) === 409` check reads `.status` off a raw
+  `HttpErrorResponse`, but `@ngrx/data` wraps write errors in `DataServiceError` (`.error.status`) —
+  `milestones.ts` already has the correct split (`isConflict()`/`httpStatus()`) for exactly this
+  reason. The 409 branch was silently dead code: a couple hitting a real optimistic-lock conflict on
+  a delegation grant got the generic save-error message and had to re-open the modal by hand instead
+  of the documented "re-read, redo against the fresh copy" recovery. Fixed by adopting
+  `milestones.ts`'s `isConflict()` pattern. No stored-data shape changed (ADR-0037/ADR-0039 do not
+  apply) — every fix is client-side request/error-handling composition. `pnpm test`: 567/567 passing
+  (measured 5 consecutive runs), up from 565/567 on `main`. Full evidence, the fail-first proof for
+  each finding, and the diagnostic scratch-spec method: `reports/T360.json`.
 - **Target release:** 1.2.0 — **release gate.** Nothing deploys until this is at least *understood*.
 - **Owner:** unassigned
 - **Depends on:** nothing

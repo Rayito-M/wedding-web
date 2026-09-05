@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { EntityCollectionService, EntityServices } from '@ngrx/data';
+import { DataServiceError, EntityCollectionService, EntityServices } from '@ngrx/data';
 
 import {
   EntityNamesEnum,
@@ -588,9 +588,17 @@ export class GuestProfileModal {
    * The second write Save performs (see `saveProfile()`'s doc): a no-op,
    * closing the editor immediately, when nothing in `delegationDraft`
    * differs from what was loaded. Otherwise `PATCH /v1/guests/:id` with
-   * only `delegateTo` — a partial patch, `UpdateGuestDto`'s other fields all
-   * being optional (never re-sends `firstName`/`relation`/…, which the
-   * profile write above just saved through its own endpoint).
+   * only `id`/`version`/`delegateTo` — a partial patch, `UpdateGuestDto`'s
+   * other fields all being optional (never re-sends `firstName`/`relation`/…,
+   * which the profile write above just saved through its own endpoint).
+   *
+   * Writes directly off the already-loaded `delegationDoc()` rather than
+   * re-fetching the guest first — `doc.id`/`doc.version` are exactly what
+   * `startEdit()` seeded the draft from, and nothing in this modal re-reads
+   * the guest in between (T360: an interim `getByKey()`-then-spread here was
+   * a c3d8eb8-era regression that both widened the PATCH body to the whole
+   * entity and, coincidentally, was never the reason the 409 path below
+   * worked or didn't).
    */
   private saveDelegationIfChanged(): void {
     const doc = this.delegationDoc();
@@ -603,32 +611,27 @@ export class GuestProfileModal {
 
     this.delegationSaving.set(true);
     this.delegationSaveError.set(false);
-    this.guestCollection.getByKey(doc.id).subscribe({
-      next: (guest) => {
-        this.guestCollection.update({ ...guest, delegateTo: draft }).subscribe({
-          next: (updated) => {
-            this.delegationDoc.set(updated);
-            this.delegationDraft.set(null);
-            this.delegationSaving.set(false);
-            this.viewMode.set('profile');
-          },
-          error: (err: unknown) => {
-            this.delegationSaving.set(false);
-            this.delegationSaveError.set(true);
-            // Someone else changed this guest first — re-read rather than
-            // retrying blind against a `version` that no longer exists
-            // (matches `milestones.ts`'s 409 handling). The editor stays
-            // open so the couple can redo the grant against the fresh copy;
-            // their in-progress draft is discarded along with it, same as a
-            // stale form anywhere else in this modal.
-            if (this.httpStatus(err) === 409) {
-              this.delegationDraft.set(null);
-              this.fetchDelegationDoc(doc.id);
-            }
-          },
-        }); // Handle the fetched guest if needed
+    this.guestCollection.update({ id: doc.id, version: doc.version, delegateTo: draft }).subscribe({
+      next: (updated) => {
+        this.delegationDoc.set(updated);
+        this.delegationDraft.set(null);
+        this.delegationSaving.set(false);
+        this.viewMode.set('profile');
       },
-      error: (err: unknown) => console.error('Failed to fetch guest', err),
+      error: (err: unknown) => {
+        this.delegationSaving.set(false);
+        this.delegationSaveError.set(true);
+        // Someone else changed this guest first — re-read rather than
+        // retrying blind against a `version` that no longer exists
+        // (matches `milestones.ts`'s 409 handling). The editor stays
+        // open so the couple can redo the grant against the fresh copy;
+        // their in-progress draft is discarded along with it, same as a
+        // stale form anywhere else in this modal.
+        if (this.isConflict(err)) {
+          this.delegationDraft.set(null);
+          this.fetchDelegationDoc(doc.id);
+        }
+      },
     });
   }
 
@@ -642,10 +645,18 @@ export class GuestProfileModal {
     return after.some((d) => !beforeKeys.has(key(d)));
   }
 
-  /** For errors coming straight off the generated API client
-   *  (`guestsControllerUpdateV1`) — a plain `HttpErrorResponse`, same helper
-   *  shape as `milestones.ts`'s own (this call never goes through
-   *  `@ngrx/data`, so there is no `DataServiceError` wrapper to unwrap). */
+  /** For errors coming through @ngrx/data (`guestCollection.update()`),
+   *  which wrap the underlying HTTP error as `DataServiceError.error` — same
+   *  split as `milestones.ts`'s `isConflict()`/`httpStatus()` pair. (T360:
+   *  this modal used to call the generated API client directly here, where
+   *  the raw `HttpErrorResponse` needed no unwrapping; c3d8eb8 rewired the
+   *  write onto `guestCollection` without updating this check, so the 409
+   *  branch above was silently unreachable — `httpStatus(err)` was reading
+   *  `.status` off a `DataServiceError`, which has none.) */
+  private isConflict(error: unknown): boolean {
+    return this.httpStatus((error as DataServiceError | undefined)?.error) === 409;
+  }
+
   private httpStatus(error: unknown): number | undefined {
     return (error as HttpErrorResponse | undefined)?.status;
   }

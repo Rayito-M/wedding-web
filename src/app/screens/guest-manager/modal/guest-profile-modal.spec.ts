@@ -396,8 +396,33 @@ describe('GuestProfileModal — RSVP delegation (hub ADR-0039, T335)', () => {
     fixture = TestBed.createComponent(GuestProfileModal);
     fixture.componentInstance.open(doc.id);
     fixture.detectChanges();
-    await fixture.whenStable();
+    await settle();
+  }
+
+  /**
+   * `@ngrx/data`'s `EntityEffects` delays every save/query *error* action by
+   * `responseDelay` (10ms, a real `asyncScheduler`, not tied to Angular's
+   * zone or to `fixture.whenStable()`) to simulate network latency — a
+   * mocked synchronous `throwError(...)` still goes through it. Settling the
+   * fixture after any get/update error therefore needs a real (or
+   * fake-timer-advanced) wait alongside the usual microtask/CD flush, or a
+   * `.subscribe({ error })` callback never fires within the test (T360: this
+   * is exactly why "the fetch never resolves"/"the PATCH spy was never
+   * called" looked like the feature itself was broken — mirrors
+   * `milestones.spec.ts`'s own `settle()`, same root cause).
+   */
+  async function settle(): Promise<void> {
     fixture.detectChanges();
+    await fixture.whenStable();
+    await Promise.resolve();
+    await Promise.resolve();
+    if (vi.isFakeTimers()) {
+      await vi.advanceTimersByTimeAsync(20);
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    fixture.detectChanges();
+    await fixture.whenStable();
   }
 
   function startEdit(): void {
@@ -593,8 +618,7 @@ describe('GuestProfileModal — RSVP delegation (hub ADR-0039, T335)', () => {
     getSpy.mockImplementation(() => of(guestDoc()));
     const retryBtn = fixture.nativeElement.querySelector('.delegation-retry') as HTMLButtonElement;
     retryBtn.click();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await settle();
 
     expect(getSpy).toHaveBeenCalledTimes(2);
     expect(fixture.nativeElement.textContent).not.toContain('delegation.field.error');
@@ -614,8 +638,7 @@ describe('GuestProfileModal — RSVP delegation (hub ADR-0039, T335)', () => {
     chooseKind('sister');
 
     saveProfile();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await settle();
 
     // Re-read, not a blind retry (mirrors `milestones.ts`'s 409 handling).
     expect(getSpy).toHaveBeenCalledTimes(2);
