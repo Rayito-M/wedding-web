@@ -11,6 +11,7 @@
 // ─────────────────────────────────────────────────────────────
 
 @use './tokens' as t;
+@use './recipes' as r;
 
 // ── Typography Primitives ──
 
@@ -19,16 +20,16 @@
 /// Variation: letter-spacing (0.12em typical, 0.14em in newer screens);
 /// margin-bottom context-dependent. Screens extend and override as needed.
 %eyebrow {
-  font-size: t.$text-label;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  // Composes the generated recipe (ds-contract): one definition site.
+  // The 0.12em/0.14em split is settled — 0.14em is the single value
+  // (DS decision 2026-09-05), so %eyebrow-wide below is now an alias.
+  @include r.eyebrow;
 }
 
-/// Eyebrow variant: extra letter-spacing (0.14em) for certain contexts.
+/// Alias kept for existing @extend sites; identical to %eyebrow since the
+/// letter-spacing settlement. New code uses %eyebrow.
 %eyebrow-wide {
   @extend %eyebrow;
-  letter-spacing: 0.14em;
 }
 
 /// Muted subtext: secondary/tertiary info below titles.
@@ -85,12 +86,9 @@
 /// four call sites — harmless for any future non-flex-item consumer (hub
 /// ADR-0041 §4 amendment).
 %card-shell {
-  background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: t.$radius-card;
-  min-height: 0;
-  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
-  overflow: clip; // creates no scroll container, so focus cannot shift it
+  // Composes the generated card-surface recipe (ds-contract) — same five
+  // declarations, one definition site.
+  @include r.card-surface;
 }
 
 /// Card with padding: standard inner spacing. Use when card is a
@@ -206,22 +204,9 @@
 // bare `@keyframes` in this file would be emitted into every component that
 // `@use`s it.
 @mixin skeleton-bar {
-  color: transparent;
-  background: var(--border-hairline);
-  border-radius: t.$radius-pill;
-  animation: skeleton-pulse 1.4s ease-in-out infinite;
-
-  // The `role="status"` line already announces the wait, so drop the pulse
-  // rather than leave it running for anyone who asked for less motion.
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
-
-  @keyframes skeleton-pulse {
-    50% {
-      opacity: 0.45;
-    }
-  }
+  // Composes the generated skeleton recipe (ds-contract) — the DS adopted
+  // this repo's semantics upstream, so the definition now lives there.
+  @include r.skeleton;
 }
 
 /// Text carried for screen readers only — a `role="status"` line naming a wait

@@ -26,6 +26,8 @@
 // are the deliberate exception: they are what this file exists to name.
 // ─────────────────────────────────────────────────────────────
 
+@use './recipes' as r;
+
 // ── Named breakpoints (ADR-0041 §6) ──
 // Collapses 34 hand-spelled literals across the repo (900px ×16, 640px
 // ×10, 1024px ×2) into one declaration site.
@@ -121,30 +123,10 @@ $bp-xl: 1024px;
 /// `overflow: hidden` sites against only 33 `min-width: 0` sites says the
 /// missing half recurs elsewhere. Naming it is what lets T342 lint for it.
 %truncating-flex-child {
-  // Two rules, and the order matters — corrected 2026-09-04 after T348
-  // measured what actually happened.
-  //
-  // `white-space: nowrap` is the choice: a status bar reads better elided on
-  // one line than reflowed onto two. Without it, a text flex item's
-  // min-content width is its **longest word**, so it wraps rather than
-  // overflowing — which is what the guest-manager footer really did in
-  // French, and why it reproduced at 320px but not at 360–375px.
-  //
-  // `min-width: 0` is then required *because* of `nowrap`, not instead of it:
-  // once the text cannot wrap, min-content becomes the whole string, the item
-  // refuses to shrink below it, and the row does overflow horizontally. The
-  // two declarations are a pair; neither is correct alone.
-  min-width: 0;
-  // Plain `hidden`, deliberately NOT the paired `hidden` → `clip` of
-  // ADR-0041 §4. That rule was scoped on 2026-09-03 to *layout containers* —
-  // boxes establishing a scrolling context a focus event could shift. A
-  // single-line, `nowrap`, ellipsizing text child is not one: nothing
-  // focusable inside it, no `scrollIntoView()` target, and a few pixels of
-  // elided text as its entire scrollable overflow. `clip` buys nothing here
-  // and costs the less-travelled `text-overflow: ellipsis` under
-  // `overflow: clip` path, in a file every migrated screen inherits.
-  // T342's lint rule must carry this exemption or it flags this primitive.
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  // Composes the generated truncating-flex-child recipe (ds-contract). The
+  // full rationale — why nowrap forces min-width: 0, why plain `hidden` is
+  // deliberate here — lives with the recipe (tokens/recipes.json upstream)
+  // and in hub ADR-0041 §5 as corrected by T348. T342's lint exemption for
+  // this primitive stands unchanged.
+  @include r.truncating-flex-child;
 }

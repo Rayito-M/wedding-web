@@ -1,0 +1,53 @@
+{
+  "contractVersion": "2026-09-05-3331e00",
+  "exitCondition": "Every rule-duplication site of the eyebrow family and the four primitives composes its recipe; pill-interactive adopted on the four in-scope reinventions; stylelint/build/tests green and verify-fidelity clean. Hairline sites are declared conformant (already token-referencing — adopting the mixin there adds nothing); anything else found en route is filed outside this changeset.",
+  "changeset": [
+    {
+      "id": "CS-001-1",
+      "kind": "recipe-adopt",
+      "recipe": "eyebrow|card-surface|skeleton|truncating-flex-child",
+      "webFiles": ["src/styles/_primitives.scss"],
+      "change": { "summary": "%eyebrow/%eyebrow-wide, %card-shell, %skeleton-bar (mixin), %truncating-flex-child stop re-typing values and compose the generated recipes; %eyebrow-wide collapses into %eyebrow (0.14em is the settled single value). Every consumer of these primitives updates transitively." },
+      "acceptance": ["stylelint pass", "build pass", "tests pass"]
+    },
+    {
+      "id": "CS-001-2",
+      "kind": "recipe-adopt",
+      "recipe": "eyebrow",
+      "webFiles": [
+        "src/styles/main.scss",
+        "src/app/shared/rsvp-editor/rsvp-editor.scss",
+        "src/app/shared/auth-heading/auth-heading.scss",
+        "src/app/shared/stat-tile/stat-tile.scss",
+        "src/app/screens/rsvp-edit/rsvp-edit.scss",
+        "src/app/screens/rsvp-create/rsvp-create.scss",
+        "src/app/screens/config-manager/config-manager.scss",
+        "src/app/screens/people/people.scss",
+        "src/app/screens/milestones/milestones.scss",
+        "src/app/screens/rsvp/delegate-edit/delegate-edit.scss",
+        "src/app/screens/rsvp/rsvp-hub/rsvp-hub.scss",
+        "src/app/screens/travel/travel.scss",
+        "src/app/screens/login/login.scss"
+      ],
+      "change": { "summary": "Hand-typed .eyebrow/.label/.section-label property blocks become @include eyebrow (via %eyebrow where the file already uses primitives). Letter-spacing overrides at 0.12em are REMOVED (the settlement is one value, 0.14em); layout-only properties (margin, display) stay local." },
+      "acceptance": ["stylelint pass", "build pass", "tests pass", "no remaining hand-typed 'letter-spacing: 0.12em' on an eyebrow-family class"]
+    },
+    {
+      "id": "CS-001-3",
+      "kind": "recipe-adopt",
+      "recipe": "pill-interactive",
+      "webFiles": [
+        "src/app/screens/config-manager/config-manager.scss",
+        "src/app/screens/people/people.scss",
+        "src/app/screens/milestones/milestones.scss",
+        "src/app/screens/guest-manager/guest-manager.scss"
+      ],
+      "change": { "summary": ".pill (config-manager), .filter-chip (people), .chip (milestones), .filter-btn (guest-manager) compose pill-interactive / pill-interactive-selected; screen-specific deltas (counts, sizing exceptions) stay as explicit overrides after the include." },
+      "acceptance": ["stylelint pass", "build pass", "tests pass", "visual spot-check of the four controls"]
+    }
+  ],
+  "refused": [
+    { "screen": "ScreenSeatingPlan", "reason": "out-of-scope (SPEC: seating never scoped; route dark in prod) — its .seg/.eyebrow stay untouched", "routeTo": "behavioral-lane" },
+    { "component": "hairline-sites", "reason": "115 border sites already reference var(--border-hairline) — the value is tokenized, only the declaration repeats; adopting a mixin there is churn without consolidation", "routeTo": "none" }
+  ]
+}

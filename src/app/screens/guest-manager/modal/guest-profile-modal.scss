@@ -1,4 +1,5 @@
 @use '../../../../styles/tokens' as t;
+@use '../../../../styles/primitives';
 @use 'status-cell' as *;
 
 // Dialog chrome (overlay, card, header, footer, buttons) is owned by the
@@ -142,10 +143,8 @@
 }
 
 .mini-stat-label {
+  @extend %eyebrow; // eyebrow family (0.12em settled to 0.14em, DS 2026-09-05)
   display: block;
-  font-size: t.$text-label;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--text-muted);
   margin-top: t.$space-1;
 }

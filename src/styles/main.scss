@@ -1,5 +1,6 @@
 // Sara & Christophe · Wedding App — global styles
 @use 'tokens' as t;
+@use 'primitives';
 
 *,
 *::before,
@@ -36,10 +37,7 @@ button {
 
 // Uppercase micro label — section headers, field labels
 .label {
-  font-size: t.$text-label;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--sub);
+  @extend %eyebrow; // the recipe; was a hand-typed copy (and referenced --sub raw)
 }
 
 // Header meta right of the monogram row ("RSVP · STEP 1/3", "SAT · 5 JUN"…)

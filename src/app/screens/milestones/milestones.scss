@@ -1,4 +1,5 @@
 @use '../../../styles/tokens' as t;
+@use '../../../styles/recipes' as r;
 @use '../../../styles/primitives';
 @use '../../../styles/layout';
 
@@ -560,26 +561,18 @@
 }
 
 .chip {
+  @include r.pill-interactive;
+  // Deliberate deviations, kept: chips carry an icon (flex+gap), read at ink
+  // strength in the detail form, micro type in the dense chip rows.
   display: inline-flex;
   align-items: center;
   gap: t.$space-1;
   padding: 6px t.$space-3;
-  border: 1px solid var(--border-hairline);
-  border-radius: t.$radius-pill;
-  background: transparent;
   color: var(--text-body-color);
   font-size: t.$text-micro;
-  font-family: t.$font-sans;
-  cursor: pointer;
-  transition:
-    background var(--transition-fast),
-    color var(--transition-fast),
-    border-color var(--transition-fast);
 
   &.selected {
-    border-color: transparent;
-    background: var(--brand-accent);
-    color: var(--on-accent);
+    @include r.pill-interactive-selected;
   }
 }
 

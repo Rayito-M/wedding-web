@@ -1,4 +1,5 @@
 @use '../../../styles/tokens' as t;
+@use '../../../styles/recipes' as r;
 @use '../../../styles/primitives';
 @use '../../../styles/layout';
 
@@ -185,17 +186,10 @@
 }
 
 .pill {
+  // The pill-interactive recipe (ds-contract) — was a hand-typed copy with an
+  // off-grid 7px 15px padding; the recipe's 6px 14px is the settled value.
+  @include r.pill-interactive;
   flex: 0 0 auto;
-  padding: 7px 15px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-hairline);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: var(--text-caption);
-  font-family: var(--font-sans);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: opacity var(--transition-fast);
 }
 
 .pill:hover {
@@ -203,9 +197,7 @@
 }
 
 .pill.on {
-  background: var(--brand-accent);
-  color: var(--on-accent);
-  border-color: transparent;
+  @include r.pill-interactive-selected;
 }
 
 .content {

@@ -1,4 +1,5 @@
 @use '../../../styles/tokens' as t;
+@use '../../../styles/recipes' as r;
 @use '../../../styles/primitives';
 @use '../../../styles/layout';
 @use './modal/status-cell' as *;
@@ -139,15 +140,10 @@ $table-grid-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
 }
 
 .filter-btn {
-  padding: 5px 10px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-hairline);
-  background: transparent;
+  @include r.pill-interactive;
+  // Deviations, kept: equal-width toolbar buttons at ink strength; the
+  // recipe's 6px 14px replaces the old off-grid 5px 10px.
   color: var(--text-body-color);
-  font-family: t.$font-sans;
-  font-size: t.$text-caption;
-  cursor: pointer;
-  transition: all var(--transition-fast);
   flex: 1;
   min-width: 0;
 
@@ -156,9 +152,7 @@ $table-grid-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
   }
 
   &.active {
-    border-color: transparent;
-    background: var(--brand-accent);
-    color: var(--on-accent);
+    @include r.pill-interactive-selected;
   }
 
   &:hover:not(.active) {

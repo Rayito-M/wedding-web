@@ -65,10 +65,7 @@ h2 {
 }
 
 .label {
-  font-size: t.$text-label;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %eyebrow;
   margin-bottom: 8px;
 }
 

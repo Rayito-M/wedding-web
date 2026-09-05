@@ -39,10 +39,7 @@ h2 {
 }
 
 .section-label {
-  font-size: t.$text-label;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %eyebrow; // 0.12em removed — the settlement is one value, 0.14em
   margin: t.$space-6 0 t.$space-3;
 
   &:first-of-type {
@@ -94,10 +91,7 @@ h2 {
 // badge, a different visual for a different pattern (agenda/milestone
 // status), grepped before adding this.
 .state {
-  font-size: t.$text-label;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  @extend %eyebrow; // eyebrow family (0.12em settled to 0.14em, DS 2026-09-05)
 
   &.attending {
     color: var(--brand-accent);
