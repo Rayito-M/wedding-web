@@ -580,6 +580,43 @@
 - **Refs:** hub ADR-0043 §1–§5; hub ADR-0042 §1, §2, §Consequences (all three amended);
   `tasks/28-phase-x-layout-layer/reports/T343.json` `risks[0]`
 
+### T360 — Two RSVP-delegation tests have been red since the feature shipped
+- **Status:** todo
+- **Target release:** 1.2.0 — **release gate.** Nothing deploys until this is at least *understood*.
+- **Owner:** unassigned
+- **Depends on:** nothing
+- **Not a Phase X task.** Found on 2026-09-05 while checking deploy readiness.
+- **Why:** `pnpm test` is **red on `main`**: 2 failed, 565 passed (567). Both are in
+  `guest-profile-modal.spec.ts`, suite *"GuestProfileModal — RSVP delegation (hub ADR-0039, T335)"*:
+  - *"choosing a kind adds the chip; Save writes delegateTo through PATCH /v1/guests/:id"* —
+    the PATCH spy was never called.
+  - *"shows an error state with a retry when the fetch fails, and retry re-fetches"* — the DOM
+    contains `delegation.field.loading` where `delegation.field.error` was expected, i.e. the
+    component never leaves its loading state.
+- **This is not Phase X's doing, and that is exactly the problem.** Every Phase X report from T341
+  onward records `test: { before: { failing: 2 }, after: { failing: 2 } }` and
+  `lint: { errors_before: 5, errors_after: 5, new_errors: [] }`. The phase correctly introduced
+  nothing and correctly refused to fix out-of-scope failures — but the effect is that **two red
+  tests in a live guest-facing feature were carried as background noise for two days by eleven
+  consecutive tasks.** They first appear between `289bd39` (2026-09-02, *"enhance RSVP functionality
+  with delegation support"*) and T341's baseline (2026-09-03). Phase X never touched
+  `src/app/screens/guest-manager/modal/`.
+- **The question this task answers is not "make them green".** It is: **are the specs stale, or is
+  RSVP delegation broken in production?** Delegation shipped around v1.1.0 (2026-09-02). Both
+  failures describe the feature not completing — a PATCH that never fires and a fetch that never
+  resolves — which is what a real defect would also look like.
+- **Acceptance:**
+  - Determine which it is, with evidence, **before changing any code**. Exercise delegation against
+    the running app if the specs are ambiguous — the couple's own delegation flow, end to end
+  - If the specs are stale: fix them, and say what changed underneath them and when
+  - If the feature is broken: **stop and report it as a production defect**, not as a test fix. It
+    would be live to guests, and the remedy and its urgency are a hub decision. Note ADR-0039 is
+    guest-facing and `delegateTo` is stored data (ADR-0037 applies to any remedy that touches it)
+  - `pnpm test` green afterwards, or a written statement of what is left red and why
+- **Non-goals:** the 5 pre-existing ESLint errors are T359's and this task's business only insofar
+  as it must not add a sixth
+- **Refs:** hub ADR-0039 (RSVP delegation); `289bd39`; every Phase X report's `checks.test` block
+
 ### T359 — `app-modal` claims `aria-modal` and traps nothing: audit the seven surfaces
 - **Status:** todo
 - **Target release:** 1.2.0
