@@ -82,7 +82,9 @@
       "surfaces_at": "Any future EntityCollectionService-based error/conflict-handling spec that doesn't use the settle()-style wait; the flake would show as a false pass, not a false fail, so it will not be caught by re-running a currently-green suite."
     }
   ],
-  "commits": [],
+  "commits": [
+    "1406d85"
+  ],
   "decisions_needed": [
     {
       "question": "The 409-conflict-retry branch on delegation saves (`saveDelegationIfChanged()`) was silently dead code between c3d8eb8 (2026-09-02) and this fix (2026-09-05): a couple hitting a genuine optimistic-lock conflict while granting/removing a delegation got the generic save-error state instead of the documented 're-read, redo against the fresh copy' recovery. Does this window need any user-facing follow-up (e.g. checking whether any couple actually hit a 409 in that window), or is 'the client code now matches its documented behavior, ship it' sufficient?",
