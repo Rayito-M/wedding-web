@@ -7,6 +7,23 @@
 >
 > ## Phase X is done when — stated 2026-09-04, because it never was
 >
+> ## ✅ PHASE X IS CLOSED — 2026-09-05
+>
+> The exit condition below is **met**: T358 (`c0220a6`), T343's `milestones` (`6022b43`) and
+> `seating-plan` (`419ba5f`) slices, and T344 (`2e71278`, the 20 kB → 17 kB error ratchet). All four
+> oversized screens are on the layer, the single-scroller rule holds structurally rather than by
+> convention, and nothing in the phase is outstanding.
+>
+> **T353 and T354 stay parked and are not unfinished business** — they were filed outside the exit
+> condition on 2026-09-04 and closing the phase does not conscript them. Pick either up when there
+> is capacity, or never; neither blocks anything.
+>
+> Two findings *from* T353/T354 outlived the phase and are filed elsewhere: the stale directive
+> comments (in T353, trivial, independent of its ruling) and **T359**, `app-modal`'s accessibility
+> state, which is a live production concern and not a layout one.
+>
+> ---
+>
 > **`T358` settles the pane-owning model, `T343` finishes `milestones` and `seating-plan`, and
 > `T344` lands the error ratchet.** That is the whole exit condition. `T357` rode along because
 > T343's remaining specs are worthless if the suite flakes.
@@ -563,6 +580,46 @@
 - **Refs:** hub ADR-0043 §1–§5; hub ADR-0042 §1, §2, §Consequences (all three amended);
   `tasks/28-phase-x-layout-layer/reports/T343.json` `risks[0]`
 
+### T359 — `app-modal` claims `aria-modal` and traps nothing: audit the seven surfaces
+- **Status:** todo
+- **Target release:** 1.2.0
+- **Owner:** unassigned
+- **Depends on:** nothing
+- **Not a Phase X task.** Filed here only because T354 surfaced it. It is a production
+  accessibility concern on a live app, not a layout one, and it does not belong to the layout phase.
+- **Why:** `src/app/shared/modal/` carries **four ESLint errors** (verified 2026-09-05: two
+  `click-events-have-key-events`, one `interactive-supports-focus`, one `no-output-native`) against
+  CLAUDE.md hard rule 14. But the lint errors are the *symptom pointer*, not the finding. The
+  finding is underneath them:
+  - `modal.html:7-8` declares `role="dialog"` and **`aria-modal="true"`**, which tells assistive
+    technology that everything outside the dialog is inert.
+  - The component implements **no focus trap, no focus management on open, and no Escape handler**.
+    `modal.ts:31`'s own comment says "Escape and its own cancel button stay the only ways out", and
+    `confirm-dialog.ts:39` states plainly that **"`app-modal` itself is not taught Escape"**.
+  - So `aria-modal="true"` is, for this component alone, **a claim it does not honour**. That is
+    worse than a missing feature: a missing focus trap is a gap, a false `aria-modal` actively
+    misleads a screen reader about what is reachable.
+- **It is shared, and this is why it needs an audit rather than a guess.** Seven consumers:
+  `confirm-dialog`, `notification-dialog`, `profile-modal`, `guest-profile-modal`,
+  `guest-create-modal`, `manage-rsvp-modal`, and **`login`** — the screen every guest passes
+  through. **At least one compensates**: `confirm-dialog` implements Escape and focus-trapping
+  itself, with specs proving both (`confirm-dialog.spec.ts:74, 100`). Whether the other six do is
+  **unaudited**, and the answer is very likely "some do, some don't".
+- **Acceptance:**
+  - Audit all seven consumers: for each, does it supply Escape, focus-on-open, and a focus trap, or
+    does it inherit `app-modal`'s silence? A table in the report. `login` first — it is the highest
+    traffic and the only one an unauthenticated guest meets
+  - **Then decide where the fix belongs**, and say why: in `app-modal` once (so every consumer
+    inherits it and `confirm-dialog`'s hand-rolled version can go), or per-consumer. Do not assume
+    the shared component is the right home just because it is shared — `confirm-dialog` may have
+    had a reason
+  - The four ESLint errors are cleared as part of whatever fix lands, not baselined
+  - **Do not widen this into a general a11y sweep.** Seven modal surfaces, three questions each.
+    Anything else found gets reported, not fixed
+- **Non-goals:** no visual change; no change to `config-manager`'s local modal (that is T354's
+  question and it can wait for this); no new modal component
+- **Refs:** CLAUDE.md hard rule 14; `src/app/shared/modal/`, `confirm-dialog.ts:23,38-39`; T354
+
 ### T353 — Do `headPinned` / `footPinned` still earn their place?
 - **Gating:** none. Parked outside Phase X's exit condition (see the phase header). Run it when there is capacity.
 - **Status:** todo
@@ -579,17 +636,30 @@
   render one frame without the pinned region. The directive registers during the screen's lifecycle.
   Whether that costs a visible first-frame flash in this zoneless app is unknown — the T341 gate
   proved change detection propagates, not that there is no flash.
+- **Simplified 2026-09-05 by the hub: the measurement does not gate the deletion, and was never
+  going to.** The flags are provably inert — the only non-comment occurrences in `src/` are the two
+  declarations in `route-chrome-data.ts` and the two uses on `/guests`, with no functional read
+  anywhere, and `screen-chrome.spec.ts:357` already asserts a `headPinned` route with no registered
+  head is inert. **So the flags have never prevented a flash**: the layout renders its slots from
+  `screenChrome.head()`/`foot()` and has never once used route data's pre-activation timing.
+  ADR-0042 §1's timing argument was sound in principle and was never cashed in. Deleting an inert
+  key cannot introduce a flash that is not already there.
 - **Acceptance:**
-  - **Measure first.** Navigate to a screen that projects a head, and determine whether any frame
-    paints with `main` at its unpinned geometry before `.screen-head` exists. A Playwright trace or
-    a paint-timing capture, not reasoning
-  - If there is no flash: delete both keys and every route's use of them; the directive becomes the
-    single declaration, and ADR-0042 §Context ¶3's own argument is satisfied rather than violated
-  - If there is a flash: **keep them and write down what they are for** — a pre-activation reservation
-    of the slot's geometry — because that is a real job and nothing currently states it. Then make
-    the layout actually reserve on the flag, which is what would justify the key
-  - Either way the outcome is reported to the hub; deleting a public route key is an ADR-0043
-    amendment, not a repo decision
+  - Delete `headPinned` and `footPinned` from `RouteChromeData`, their two uses on `/guests`, and
+    the stale references. Keep `RouteChromeData`'s discriminated union compiling (ADR-0042 §7)
+  - `screen-chrome.spec.ts:357`'s inertness assertion goes with them — it asserts a property of keys
+    that no longer exist
+  - **Independent of all the above, and true today regardless of whether this task ever runs:**
+    `screen-head.directive.ts:10` and `screen-foot.directive.ts:10` both still say the slot is
+    "gated on that route's `headPinned: true`". Since T352 it is gated on registration. That is the
+    fifth comment in this phase to outlive its mechanism. Fix it now, in its own commit, whatever
+    happens to the keys
+  - Report to the hub — deleting a public route key is an ADR-0043 amendment, not a repo decision
+- **The flash question is real and is now separate.** Whether `/guests` paints a frame at unpinned
+  geometry before `.screen-head` exists is worth knowing, but it is a **defect in its own right**, not
+  a reason to keep two dead keys. If it turns out to exist, the fix is to build a reservation the
+  layout actually reads — which would earn a key a real name and a real job, rather than resurrecting
+  one that never had either. File it separately if you measure it.
 - **Non-goals:** no change to `screenScroll`, no change to either directive's implementation
 - **Refs:** hub ADR-0043 §Alternatives (the open question), §1–§3; hub ADR-0042 §1, §Context ¶3
 
@@ -617,6 +687,11 @@
 - **Acceptance:**
   - The `app-modal` question answered explicitly in the report before any code moves: reuse,
     extract-new, or neither-and-here-is-why
+  - **Read T359 first.** The a11y state of `app-modal` is now its own task, because it is a live
+    production concern rather than a `config-manager` one. It also changes what "reuse" can honestly
+    mean here: if `app-modal` needs work before a second screen adopts it, then the answer to this
+    task is *"reuse, after T359"* — which is a legitimate outcome and not this task's problem to
+    solve
   - If extracted or reused: report the resulting size as information, not as a pass/fail. Getting
     `config-manager.scss` under 8 kB is **not** an acceptance criterion and almost certainly will not
     happen — a dedup-only compile of `guest-manager` was worth 0.8%
