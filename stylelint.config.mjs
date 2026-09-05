@@ -41,7 +41,11 @@ export default {
       // `@media (min-width: …)` definition site (`respond-to()` itself).
       // A rule that flags its own token/breakpoint source is misconfigured
       // (T342's own words).
-      files: ['src/styles/_layout.scss', 'src/styles/_tokens.scss'],
+      // _recipes.scss joins for the same reason: it is GENERATED from the
+      // design system's recipe definitions (ds-contract) and gate-checked
+      // upstream (wedding-ui-design tools/lint-adherence.mjs) — its literals
+      // ARE the definition site, e.g. the pill's 6px 14px on the 2px sub-grid.
+      files: ['src/styles/_layout.scss', 'src/styles/_tokens.scss', 'src/styles/_recipes.scss'],
       rules: {
         'declaration-property-value-disallowed-list': null,
       },

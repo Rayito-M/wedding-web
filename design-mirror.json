@@ -1,0 +1,260 @@
+{
+  "contractVersion": "2026-09-05-11440b4",
+  "updated": "2026-09-05",
+  "mirrors": {
+    "Avatar": {
+      "dsHash": "fc000fffaff2387383f65301c35064c94ac1b0df6b1621827fe2e58cf105eb01",
+      "files": [
+        "src/app/shared/avatar/avatar.ts",
+        "src/app/shared/avatar/avatar.html",
+        "src/app/shared/avatar/avatar.scss"
+      ]
+    },
+    "Button": {
+      "dsHash": "268a4cfa7743a20368509cde8faf085a3e264ea63cbee841b8342f4411b81359",
+      "files": [
+        "src/app/shared/button/button.ts",
+        "src/app/shared/button/button.html",
+        "src/app/shared/button/button.scss"
+      ]
+    },
+    "ChoiceCard": {
+      "dsHash": "338589401f027832352f6798659113169c5d46458ca4debd18de6dc4abe07081",
+      "files": [
+        "src/app/shared/choice-card/choice-card.ts",
+        "src/app/shared/choice-card/choice-card.html",
+        "src/app/shared/choice-card/choice-card.scss"
+      ]
+    },
+    "ConsentBanner": {
+      "dsHash": "88873e7434dc116f342d37b22efbc76efded8945434cecbe4e7ea4f2ac1f13df",
+      "files": [
+        "src/app/shared/consent-banner/consent-banner.ts",
+        "src/app/shared/consent-banner/consent-banner.html",
+        "src/app/shared/consent-banner/consent-banner.scss"
+      ]
+    },
+    "DelegationField": {
+      "dsHash": "21d7c21f9e07fa3c25c5e22864e34d6f72be6ae0ec7880ea92c40a3e1d553e84",
+      "files": [
+        "src/app/shared/delegate-chips/delegate-chips.ts",
+        "src/app/shared/delegate-chips/delegate-chips.html",
+        "src/app/shared/delegate-chips/delegate-chips.scss"
+      ]
+    },
+    "Input": {
+      "dsHash": "950921c5942d37b5ed00d487ef54943155825a9220948b45458d9008ceb2ac33",
+      "files": [
+        "src/app/shared/input/input.ts",
+        "src/app/shared/input/input.html",
+        "src/app/shared/input/input.scss"
+      ]
+    },
+    "Monogram": {
+      "dsHash": "6030177d0b37dbcbe4733c1f3b3cd3a6e0db6e6f5ecaf550490d0dba3ba03527",
+      "files": [
+        "src/app/shared/monogram/monogram.ts",
+        "src/app/shared/monogram/monogram.html",
+        "src/app/shared/monogram/monogram.scss"
+      ]
+    },
+    "Pill": {
+      "dsHash": "47d7f9f508e788d64d4b1d8948269eb50b305116fea036ac06f8fe69fc3457dd",
+      "files": [
+        "src/app/shared/pill/pill.ts",
+        "src/app/shared/pill/pill.html",
+        "src/app/shared/pill/pill.scss"
+      ]
+    },
+    "ProfileFields": {
+      "dsHash": "e8ec83d123697ff436fe75db706d403a74341b8358b196e11be543184877b615",
+      "files": [
+        "src/app/shared/profile-fields/profile-fields.ts",
+        "src/app/shared/profile-fields/profile-fields.html",
+        "src/app/shared/profile-fields/profile-fields.scss"
+      ]
+    },
+    "RelationFields": {
+      "dsHash": "dfa0c90eb7bf3dbdb6ec2b6ba5cf49a0a6e8f8ad53e16d718172dc4b4d6e0b4e",
+      "files": [
+        "src/app/shared/relation-fields/relation-fields.ts",
+        "src/app/shared/relation-fields/relation-fields.html",
+        "src/app/shared/relation-fields/relation-fields.scss"
+      ]
+    },
+    "Textarea": {
+      "dsHash": "09f0812952d5fce8fe70de51cc9edbb82f660106de9126e8a50bbc1b144cea35",
+      "files": [
+        "src/app/shared/textarea/textarea.ts",
+        "src/app/shared/textarea/textarea.html",
+        "src/app/shared/textarea/textarea.scss"
+      ]
+    },
+    "Toggle": {
+      "dsHash": "8814713f21cfddf34586dceb12ca6c12bf88114efd2ab697fb092d4add41a7df",
+      "files": [
+        "src/app/shared/toggle/toggle.ts",
+        "src/app/shared/toggle/toggle.html",
+        "src/app/shared/toggle/toggle.scss"
+      ]
+    },
+    "PhotoPlaceholder": {
+      "dsHash": "9c3cb28287228fbbb983644ff965ba078d806cbc2e39f833104e8925bce20e3c",
+      "files": [
+        "src/app/shared/photo-placeholder/photo-placeholder.ts",
+        "src/app/shared/photo-placeholder/photo-placeholder.html",
+        "src/app/shared/photo-placeholder/photo-placeholder.scss"
+      ]
+    },
+    "ProgressBar": {
+      "dsHash": "d6cf0579a4aa5363ac8572ea3d7526c205f9cbf0111e5677913638ff9e80e935",
+      "files": [
+        "src/app/shared/progress-bar/progress-bar.ts",
+        "src/app/shared/progress-bar/progress-bar.html",
+        "src/app/shared/progress-bar/progress-bar.scss"
+      ]
+    },
+    "StatTile": {
+      "dsHash": "13ebe14383c8d36a39bb85db7a23bc5cd284f363f0923d8f1e694c9ce898da8a",
+      "files": [
+        "src/app/shared/stat-tile/stat-tile.ts",
+        "src/app/shared/stat-tile/stat-tile.html",
+        "src/app/shared/stat-tile/stat-tile.scss"
+      ]
+    },
+    "StayCard": {
+      "dsHash": "ace2adac15d78871be2dfc5dc4c5009fd0c6918686784900ce266065cfa85703",
+      "files": [
+        "src/app/shared/stay-card/stay-card.ts",
+        "src/app/shared/stay-card/stay-card.html",
+        "src/app/shared/stay-card/stay-card.scss"
+      ]
+    },
+    "TimelineItem": {
+      "dsHash": "4128bf9b0e6615e88869783cbb139558ce87509612697c499d4b03681c238504",
+      "files": [
+        "src/app/shared/timeline-item/timeline-item.ts",
+        "src/app/shared/timeline-item/timeline-item.html",
+        "src/app/shared/timeline-item/timeline-item.scss"
+      ]
+    },
+    "AlhambraIllustration": {
+      "dsHash": "00fcaa36f8766ce57eab2cbc611f95c50dcabcecb17dc01081b8f4188e006fbe",
+      "files": [
+        "src/app/shared/decor/decor.scss"
+      ]
+    },
+    "FishIllustration": {
+      "dsHash": "03f889f74ab49dde51ddc181209594a2334c7768d8948a04ddb1e84d1a5972d9",
+      "files": [
+        "src/app/shared/decor/decor.scss"
+      ]
+    },
+    "FishPairIllustration": {
+      "dsHash": "e4ad0f17acb612cac1ba93c2e01f4011fe8892bb36f0f4b625dc3b0d86d5b863",
+      "files": [
+        "src/app/shared/decor/decor.scss"
+      ]
+    },
+    "SunIllustration": {
+      "dsHash": "eae9b7e2834ed0f6dc69744f609f3eb912bd3965f5d2ae0b41a4a0f31ee036cf",
+      "files": [
+        "src/app/shared/decor/decor.scss"
+      ]
+    },
+    "WaveIllustration": {
+      "dsHash": "83047a6d963c92a0c1eba7e7369f127c30527e5d204ec1a2917d209dd9934035",
+      "files": [
+        "src/app/shared/decor/decor.scss"
+      ]
+    },
+    "AlhambraScene": {
+      "dsHash": "65cb0d8a0f7fa325899709ae05ac957192b3646fdf89e898461917ba64be59e6",
+      "files": [
+        "src/app/shared/decor/alhambra-scene/alhambra-scene.ts",
+        "src/app/shared/decor/alhambra-scene/alhambra-scene.html",
+        "src/app/shared/decor/alhambra-scene/alhambra-scene.scss"
+      ]
+    },
+    "BrideAtTower": {
+      "dsHash": "5765e652d82760afd0eb0bf24c7a43bffd31e94c8fab7ac0a97fd9fa9c617253",
+      "files": [
+        "src/app/shared/bride-animation/bride-animation.ts",
+        "src/app/shared/bride-animation/bride-animation.html",
+        "src/app/shared/bride-animation/bride-animation.scss"
+      ]
+    },
+    "MotorcycleRider": {
+      "dsHash": "26699378958ed8ede5085377251cba012e66233189bed96ff5dd5665bb9fdcef",
+      "files": [
+        "src/app/shared/decor/motorcycle-rider/motorcycle-rider.ts",
+        "src/app/shared/decor/motorcycle-rider/motorcycle-rider.html",
+        "src/app/shared/decor/motorcycle-rider/motorcycle-rider.scss"
+      ]
+    },
+    "AppHeader": {
+      "dsHash": "58fa5c0b6ea2539dfd3b593ac1b57872b1329f449a69f7117dcb80e195e164e5",
+      "files": [
+        "src/app/shared/screen-header/screen-header.ts",
+        "src/app/shared/screen-header/screen-header.html",
+        "src/app/shared/screen-header/screen-header.scss"
+      ]
+    },
+    "LanguageDropdown": {
+      "dsHash": "67d3c6d9a058d505684ac2b1e89330660c2d65848297d736bd1aae29f141d371",
+      "files": [
+        "src/app/shared/language-selector/language-selector.ts",
+        "src/app/shared/language-selector/language-selector.html",
+        "src/app/shared/language-selector/language-selector.scss"
+      ]
+    },
+    "NotificationBell": {
+      "dsHash": "3c5916265086f1bf02320ed113ecd1c13f768102d29bf2ee04184908d7931795",
+      "files": [
+        "src/app/shared/notification-bell/notification-bell.ts",
+        "src/app/shared/notification-bell/notification-bell.html",
+        "src/app/shared/notification-bell/notification-bell.scss"
+      ]
+    },
+    "TabBar": {
+      "dsHash": "9c124db80c50160e2bbb855c5f6acfd94d9a71cc2858dd040cd909acf679f86b",
+      "files": [
+        "src/app/shared/tab-bar/tab-bar.ts",
+        "src/app/shared/tab-bar/tab-bar.html",
+        "src/app/shared/tab-bar/tab-bar.scss"
+      ]
+    },
+    "ConfirmDialog": {
+      "dsHash": "e98ff9102d8f6191709697334e2241cc672fb86f1bd2495dfe27934d0a2e73e7",
+      "files": [
+        "src/app/shared/confirm-dialog/confirm-dialog.ts",
+        "src/app/shared/confirm-dialog/confirm-dialog.html",
+        "src/app/shared/confirm-dialog/confirm-dialog.scss"
+      ]
+    },
+    "NotificationDialog": {
+      "dsHash": "796241b966dfb67a2018885eed183471d3430f759fb91bac741ef2bb2783592c",
+      "files": [
+        "src/app/shared/notification-dialog/notification-dialog.ts",
+        "src/app/shared/notification-dialog/notification-dialog.html",
+        "src/app/shared/notification-dialog/notification-dialog.scss"
+      ]
+    },
+    "Toast": {
+      "dsHash": "35adf202a8282bef1fb564f0875686f3f96b629de7e3324f3b74ba931172a3a8",
+      "files": [
+        "src/app/shared/toast/toast.ts",
+        "src/app/shared/toast/toast.html",
+        "src/app/shared/toast/toast.scss"
+      ]
+    },
+    "ToastStack": {
+      "dsHash": "615aae2221c62dbc95e2bcedecd7024f80b7410a5f0bb6d9f2e9f8b327961d1b",
+      "files": [
+        "src/app/shared/toast-stack/toast-stack.ts",
+        "src/app/shared/toast-stack/toast-stack.html",
+        "src/app/shared/toast-stack/toast-stack.scss"
+      ]
+    }
+  }
+}

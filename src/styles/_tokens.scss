@@ -1,26 +1,19 @@
 // ─────────────────────────────────────────────────────────────
-// Sara & Christophe · Wedding App — Design Tokens
-// Mirrors ../wedding-ui-design/tokens/{colors,typography,spacing}.css
-// (the design system is the source of truth — update there first).
-// Themes: Mauve, Terracotta, Verde Agua
-// Apply a theme by setting [data-theme="mauve|terracotta|verdeagua"] on <html>.
+// GENERATED from ds-contract 2026-09-05-11440b4 — do not edit.
+// Source of truth: wedding-ui-design (tokens/*.css).
+// Regenerate: node tools/gen-scss.mjs  (in wedding-ui-design)
 // ─────────────────────────────────────────────────────────────
+// Themes: Mauve, Terracotta, Verde Agua — [data-theme] on <html>.
 
-// ── Color themes (tokens/colors.css) ──
-// Order and default-theme selector mirror the DS file exactly (DS update
-// 2026-07-27, commit b816c12): terracotta is now the fallback theme applied
-// via the bare :root selector when no [data-theme] attribute is set; mauve
-// and verdeagua are override-only blocks, reached explicitly.
-:root,
-[data-theme='terracotta'] {
+:root, [data-theme='terracotta'] {
   --bg: #f8f6f2;
   --surface: #ffffff;
   --ink: #3a2a1f;
   --sub: #8a6b54;
   --line: rgba(58, 42, 31, 0.12);
-  --accent: #c97155; // terracotta
-  --accent-2: #e6c779; // butter
-  --accent-3: #c2a48a; // warm tan
+  --accent: #c97155;
+  --accent-2: #e6c779;
+  --accent-3: #c2a48a;
   --chip: #f4ead8;
 }
 
@@ -29,10 +22,10 @@
   --surface: #ffffff;
   --ink: #1a1a1a;
   --sub: #7a7670;
-  --line: rgba(26, 26, 26, 0.1);
-  --accent: #b08a92; // dusty mauve
-  --accent-2: #d6c5c8; // pale mauve
-  --accent-3: #c9c4bb; // warm gray
+  --line: rgba(26, 26, 26, 0.10);
+  --accent: #b08a92;
+  --accent-2: #d6c5c8;
+  --accent-3: #c9c4bb;
   --chip: #f0ede7;
 }
 
@@ -42,33 +35,16 @@
   --ink: #1f3a35;
   --sub: #5b7a73;
   --line: rgba(31, 58, 53, 0.12);
-  --accent: #7aaea2; // verde agua
-  --accent-2: #cfe3da; // pale aqua
-  --accent-3: #b9c8b0; // sage green
+  --accent: #7aaea2;
+  --accent-2: #cfe3da;
+  --accent-3: #b9c8b0;
   --chip: #e6efe8;
 }
 
-// Semantic aliases — reference these from components/screens,
-// not the raw roles above (per the design system).
 :root {
   --surface-page: var(--bg);
   --surface-card: var(--surface);
   --surface-chip: var(--chip);
-  // Naming drift vs. the DS file (which uses --text-body for this color
-  // alias): this repo has 24 existing usages of --text-body-color across
-  // shared components/screens (T219). Renaming everywhere is out of scope
-  // for this token-mirror-only pass (touches only this file), so
-  // --text-body-color stays the primary/only color alias. NOT dual-aliasing
-  // to --text-body here: that name is already taken in this file by the
-  // typography scale token below (--text-body: 13px, mirrors
-  // tokens/typography.css, actively used as font-size in ~12 component
-  // .scss files). Declaring a same-named color var(--text-body) here would
-  // either be silently shadowed by that later :root block (dead code) or,
-  // if reordered after it, break font-size everywhere it's used — a real
-  // regression the DS file itself doesn't hit only because it never uses
-  // --text-body for color and font-size together in the same cascade the
-  // way component styles in this repo do. --text-body-color remains the
-  // one functional alias; no visual regression.
   --text-body-color: var(--ink);
   --text-muted: var(--sub);
   --border-hairline: var(--line);
@@ -76,77 +52,63 @@
   --brand-accent-soft: var(--accent-2);
   --brand-accent-tertiary: var(--accent-3);
   --on-accent: var(--surface);
-  // schedule item status
   --status-confirmed: var(--accent);
   --status-planned: var(--accent-3);
   --status-cancelled: var(--sub);
-  /* schedule-level status — deliberately outside the theme palette so "provisional" reads as a flag */
   --status-provisional: #b8862b;
   --status-final: var(--accent);
-  /* destructive actions — theme-invariant, and deliberately NOT a --status-*
-     colour (that group labels a data state on a chip; this one paints an
-     interactive affordance the user is about to trigger). One value clears
-     all three themes on purpose — a danger that harmonised with the palette
-     would read decorative. No --warning/--success sibling — single token
-     by design (DS `ccea99a`, tokens/colors.css:62–72). */
+  --status-badges: inline-block;
+  --scrim: rgba(0, 0, 0, 0.45);
   --danger: #a8443c;
   --on-danger: var(--surface);
 }
 
-// ── Typography (tokens/typography.css) ──
-// Families load via <link> in index.html (same set as the DS @import).
 :root {
-  --font-serif: 'DM Serif Display', 'Cormorant Garamond', serif; // display/headlines only, never below ~28px
-  --font-book: 'Cormorant Garamond', 'DM Serif Display', serif; // pull quotes, italic supporting lines
-  --font-sans: 'DM Sans', system-ui, sans-serif; // all body, UI, forms, labels
-  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace; // metadata/eyebrows only (DS: JetBrains Mono in specs; not loaded in-app)
-
-  // type scale (mobile-first, px)
-  --text-display-xl: 54px; // hero names        · serif · lh .95  · ls -0.02em
-  --text-display-lg: 36px; // page titles       · serif · lh 1.0
-  --text-display-md: 32px; // section titles    · serif · lh 1.05
-  --text-display-sm: 22px; // card values/times · serif · lh 1.1
-  --text-heading: 18px; // list item names   · serif
-  --text-body-lg: 15px; // list titles       · sans 500
-  --text-body: 13px; // body copy, buttons· sans 400/500 · lh 1.5
-  --text-caption: 12px; // secondary text    · sans 400
-  --text-micro: 11px; // metadata          · sans · ls .08em
-  --text-label: 10px; // uppercase labels  · sans 500 · ls .14em
+  --font-serif: 'DM Serif Display', 'Cormorant Garamond', serif;
+  --font-book: 'Cormorant Garamond', 'DM Serif Display', serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --text-display-xl: 54px;
+  --text-display-lg: 36px;
+  --text-display-md: 32px;
+  --text-display-sm: 22px;
+  --text-heading: 18px;
+  --text-body-lg: 15px;
+  --text-body: 13px;
+  --text-caption: 12px;
+  --text-micro: 11px;
+  --text-label: 10px;
 }
 
-// ── Spacing, radii, elevation, motion (tokens/spacing.css) ──
-// 4px base grid. The design is deliberately flat: separation is via 1px
-// hairline borders, not shadows. Only shadow in the system: the toggle knob.
 :root {
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 20px;
-  --space-6: 24px; // standard screen gutter
-  --space-7: 28px; // welcome screen gutter
-
-  --radius-pill: 999px; // buttons, pills, chips, progress bars
-  --radius-card: 14px; // large cards (map, countdown, progress, RSVP choice cards)
-  --radius-md: 12px; // medium cards, toggles
-  --radius-input: 10px; // inputs, textareas, photo tiles
-
+  --space-6: 24px;
+  --space-7: 28px;
+  --radius-pill: 999px;
+  --radius-card: 14px;
+  --radius-md: 12px;
+  --radius-input: 10px;
   --shadow-knob: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --scrim: rgba(0, 0, 0, 0.45); // backdrop dim behind modals/dialogs
-  --shadow-overlay: 0 4px 16px rgba(0, 0, 0, 0.12); // floating elements (dropdowns)
-  --shadow-modal: 0 24px 70px rgba(0, 0, 0, 0.25); // modal panels
-
+  --shadow-overlay: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-modal: 0 24px 70px rgba(0, 0, 0, 0.25);
   --transition-fast: 0.15s ease;
+  --bp-md: 640px;
+  --bp-lg: 900px;
+  --bp-xl: 1024px;
 }
 
 // ── SCSS compatibility layer ──
 // Existing styles reference tokens as t.$…; each maps to the CSS custom
-// property so every usage resolves from the cascade (theme-aware, DS-aligned).
-// New code may use var(--…) directly.
+// property so every usage resolves from the cascade (theme-aware).
+$text-muted: var(--text-muted);
 $font-serif: var(--font-serif);
 $font-book: var(--font-book);
 $font-sans: var(--font-sans);
-
+$font-mono: var(--font-mono);
 $text-display-xl: var(--text-display-xl);
 $text-display-lg: var(--text-display-lg);
 $text-display-md: var(--text-display-md);
@@ -157,12 +119,6 @@ $text-body: var(--text-body);
 $text-caption: var(--text-caption);
 $text-micro: var(--text-micro);
 $text-label: var(--text-label);
-
-$radius-pill: var(--radius-pill);
-$radius-card: var(--radius-card);
-$radius-md: var(--radius-md);
-$radius-input: var(--radius-input);
-
 $space-1: var(--space-1);
 $space-2: var(--space-2);
 $space-3: var(--space-3);
@@ -170,6 +126,17 @@ $space-4: var(--space-4);
 $space-5: var(--space-5);
 $space-6: var(--space-6);
 $space-7: var(--space-7);
-
+$radius-pill: var(--radius-pill);
+$radius-card: var(--radius-card);
+$radius-md: var(--radius-md);
+$radius-input: var(--radius-input);
 $shadow-knob: var(--shadow-knob);
+$shadow-overlay: var(--shadow-overlay);
+$shadow-modal: var(--shadow-modal);
 $transition-fast: var(--transition-fast);
+
+// Named breakpoints (--bp-* tokens): media queries cannot read var(),
+// so the pixel values are materialized here. One declaration site upstream.
+$bp-md: 640px;
+$bp-lg: 900px;
+$bp-xl: 1024px;

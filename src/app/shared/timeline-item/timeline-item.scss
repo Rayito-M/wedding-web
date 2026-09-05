@@ -39,11 +39,13 @@
   flex-shrink: 0;
 
   .dot {
+    // 6×6 at top 5 / left 4 — DS decision recorded 2026-09-05
+    // (TimelineItem.prompt.md); shipped 4×4 by drift until then.
     position: absolute;
-    top: 6px;
-    left: 5px;
-    width: 4px;
-    height: 4px;
+    top: 5px;
+    left: 4px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--row-status-color);
     box-sizing: border-box;

@@ -9,7 +9,7 @@
   padding: t.$space-3;
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
-  border-radius: t.$radius-card;
+  border-radius: t.$radius-md; // the medium tier — DS decision recorded 2026-09-05 (StatTile.prompt.md); was $radius-card by drift
   font-family: t.$font-sans;
 }
 

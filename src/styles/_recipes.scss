@@ -1,0 +1,100 @@
+// ─────────────────────────────────────────────────────────────
+// GENERATED from ds-contract 2026-09-05-11440b4 — do not edit.
+// Source of truth: wedding-ui-design (tokens/recipes.json).
+// Regenerate: node tools/gen-scss.mjs  (in wedding-ui-design)
+// ─────────────────────────────────────────────────────────────
+// One @mixin per recipe — one definition site per rule. Screens and
+// components compose these; hand-re-typing a recipe's values is a lint error.
+
+/// The uppercase micro-label above titles and sections. One name, one letter-spacing — settles the README's former 0.06–0.14em range at 0.14em (the newer screens' value, per wedding-web's own audit note in _primitives.scss).
+/// Replaces: .eyebrow, .label, .section-label, %eyebrow, %eyebrow-wide
+@mixin eyebrow {
+  font-size: var(--text-label);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/// The flat card: surface fill, hairline border, large radius. The paired hidden→clip declaration is the corner-radius clip per hub ADR-0041 §4 (clip creates no scroll container, so focus cannot shift the box); min-height:0 covers column-flex parents.
+/// Replaces: .card, %card-shell, %card-padded, %card-padded-lg
+@mixin card-surface {
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  min-height: 0;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip;
+}
+
+/// The system's only separator: a 1px low-opacity border. Never colored, never multi-px.
+@mixin hairline {
+  border: 1px solid var(--border-hairline);
+}
+
+/// The system-wide desktop hover: opacity 0.85 with the fast transition. Never a darken, shadow, or scale.
+@mixin hover {
+  opacity: 0.85;
+  transition: opacity var(--transition-fast);
+}
+
+/// Disabled interactive element: dimmed, default cursor. No color swap.
+@mixin disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/// The visible keyboard-focus indicator, required on every focusable element that suppresses the UA outline. Adopted from wedding-web's convention; replaces every bare outline:none in the system. WCAG 2.1 AA (SPEC commitment).
+// Apply inside &:focus-visible — never on the resting state.
+@mixin focus-ring {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+}
+
+/// Loading placeholder semantics, adopted from wedding-web's %skeleton-bar: skeleton the settled element itself (transparent text over a hairline-colored pill) so the loading box is the settled box by construction. Pulse is dropped under prefers-reduced-motion; the surrounding region announces the wait via role=status.
+/// Replaces: .skeleton, %skeleton-bar
+@mixin skeleton {
+  color: transparent;
+  background: var(--border-hairline);
+  border-radius: var(--radius-pill);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+  @keyframes skeleton-pulse {
+    50% {
+      opacity: 0.45;
+    }
+  }
+}
+
+/// The selectable pill — tab strips, filter chips, segmented controls. The display-only Pill component keeps its own spec; this recipe is the interactive family five screens each reinvented. Selected state swaps to the accent fill; hover is the standard opacity recipe.
+/// Replaces: .pill, .filter-btn, .filter-chip, .chip, .seg, .segment
+@mixin pill-interactive {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-hairline);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+@mixin pill-interactive-selected {
+  background: var(--brand-accent);
+  color: var(--on-accent);
+  border-color: transparent;
+}
+
+/// Any flex item holding single-line text that must ellipsize rather than grow the row. The three declarations travel together (hub ADR-0041 §5, corrected by T348): nowrap makes elision the failure mode, min-width:0 is then required because of nowrap, plain hidden (not clip) is deliberate — an ellipsizing text child is not a layout container.
+/// Replaces: %truncating-flex-child
+@mixin truncating-flex-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

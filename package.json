@@ -14,7 +14,10 @@
     "gen:api": "node scripts/gen-api.mjs",
     "gen:api:check": "node scripts/gen-api.mjs --check",
     "lint": "node scripts/lint-all.mjs",
-    "stylelint:baseline": "node scripts/stylelint-check.mjs --write"
+    "stylelint:baseline": "node scripts/stylelint-check.mjs --write",
+    "ds:mirror": "node scripts/update-design-mirror.mjs",
+    "ds:verify": "node ../wedding-ui-design/tools/verify-fidelity.mjs --web .",
+    "ds:gen": "node ../wedding-ui-design/tools/gen-scss.mjs --out ."
   },
   "private": true,
   "packageManager": "pnpm@11.3.0",
