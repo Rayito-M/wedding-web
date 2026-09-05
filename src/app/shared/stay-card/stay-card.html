@@ -1,3 +1,16 @@
+@if (loading()) {
+  <!-- Skeleton of the settled row: same 54px thumb slot, name/price/meta
+       lines with their own metrics (skeleton recipe — the loading box is the
+       settled box by construction). -->
+  <div class="thumb thumb-loading" role="status" aria-label="Loading"></div>
+  <div class="info">
+    <div class="row">
+      <div class="name skeleton name-bar" aria-hidden="true">&nbsp;</div>
+      <div class="price skeleton price-bar" aria-hidden="true">&nbsp;</div>
+    </div>
+    <div class="meta skeleton meta-bar" aria-hidden="true">&nbsp;</div>
+  </div>
+} @else {
 <app-photo-placeholder class="thumb" [label]="thumbLabel()" />
 <div class="info">
   <div class="row">
@@ -6,3 +19,4 @@
   </div>
   <div class="meta">{{ meta() }} · <span class="tag">{{ tag() }}</span></div>
 </div>
+}

@@ -1,3 +1,4 @@
+@use '../../../styles/primitives';
 // Per design system components/data-display/StayCard.jsx
 :host {
   display: flex;
@@ -44,3 +45,20 @@
     color: var(--brand-accent);
   }
 }
+
+// DS StayCard.loading (skeleton recipe via the shared mixin). The loading
+// thumb shares .thumb's own 54px box (both classes on the element), so the
+// skeleton inherits the settled metrics instead of restating them; text bars
+// size in em so they track the type scale.
+.thumb-loading {
+  border-radius: var(--radius-input);
+  background: var(--border-hairline);
+}
+
+.skeleton {
+  @include primitives.skeleton-bar;
+}
+
+.name-bar { max-width: 8em; }
+.price-bar { min-width: 3em; }
+.meta-bar { max-width: 14em; }

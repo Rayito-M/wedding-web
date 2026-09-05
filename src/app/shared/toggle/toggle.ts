@@ -8,12 +8,19 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
   templateUrl: './toggle.html',
   styleUrl: './toggle.scss',
   host: {
-    '(click)': 'toggled.emit(!checked())',
+    '(click)': 'onClick()',
     '[attr.role]': "'switch'",
     '[attr.aria-checked]': 'checked()',
+    '[disabled]': 'disabled()',
   },
 })
 export class Toggle {
   readonly checked = input(false);
+  /** DS Toggle.disabled — dimmed (0.45) and inert (disabled recipe). */
+  readonly disabled = input(false);
   readonly toggled = output<boolean>();
+
+  protected onClick() {
+    if (!this.disabled()) this.toggled.emit(!this.checked());
+  }
 }

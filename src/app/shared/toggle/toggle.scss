@@ -45,3 +45,10 @@
     }
   }
 }
+
+// DS disabled recipe: dimmed, default cursor. The [disabled] attribute
+// already makes the button inert; this is the visual half.
+:host:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

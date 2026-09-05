@@ -13,3 +13,9 @@
   outline: none;
   box-sizing: border-box;
 }
+
+// DS Textarea.disabled — the native attribute is the mechanism
+// (`<textarea app-textarea disabled>`); this is the dimmed look.
+:host:disabled {
+  opacity: 0.45;
+}

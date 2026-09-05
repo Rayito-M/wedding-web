@@ -1,0 +1,19 @@
+{
+  "contractVersion": "2026-09-05-bcb7ea5",
+  "exitCondition": "StayCard.loading, Toggle.disabled, Textarea.disabled adopted per the DS API; build/tests/stylelint green; the three items stamped implemented in the status ledger.",
+  "changeset": [
+    { "id": "CS-002-1", "kind": "state", "component": "Toggle",
+      "webFiles": ["src/app/shared/toggle/toggle.ts", "src/app/shared/toggle/toggle.scss"],
+      "change": { "summary": "disabled input: inert click, [disabled] attr, dimmed 0.45 (disabled recipe)" },
+      "acceptance": ["build pass", "tests pass", "stylelint pass"] },
+    { "id": "CS-002-2", "kind": "state", "component": "Textarea",
+      "webFiles": ["src/app/shared/textarea/textarea.scss"],
+      "change": { "summary": "native disabled attribute styled per the disabled recipe (attribute component - no input needed)" },
+      "acceptance": ["build pass", "tests pass", "stylelint pass"] },
+    { "id": "CS-002-3", "kind": "state", "component": "StayCard",
+      "webFiles": ["src/app/shared/stay-card/stay-card.ts", "src/app/shared/stay-card/stay-card.html", "src/app/shared/stay-card/stay-card.scss"],
+      "change": { "summary": "loading input: settled-box skeleton (thumb shares .thumb metrics; em-sized text bars; skeleton recipe via primitives.skeleton-bar)" },
+      "acceptance": ["build pass", "tests pass", "stylelint pass"] }
+  ],
+  "refused": []
+}

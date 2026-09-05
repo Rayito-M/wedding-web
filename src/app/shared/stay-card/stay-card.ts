@@ -16,4 +16,6 @@ export class StayCard {
   readonly tag = input('');
   readonly price = input('');
   readonly thumbLabel = input('');
+  /** DS StayCard.loading — settled-box skeleton (skeleton recipe). */
+  readonly loading = input(false);
 }
