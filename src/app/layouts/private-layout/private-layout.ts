@@ -216,9 +216,7 @@ export class PrivateLayout {
    * no delegation surface at all, not even the "Nobody answers for you"
    * empty state, which would describe an arrangement they can never have.
    */
-  protected readonly isGuest = computed(
-    () => this.login.role() === AppJwtClaimsDto.RoleEnum.GUEST,
-  );
+  protected readonly isGuest = computed(() => this.login.role() === AppJwtClaimsDto.RoleEnum.GUEST);
 
   /** The one gate for the whole "who answers your RSVP" surface: the
    *  signed-in user's own profile (`isOwnProfile`), and only when that user
@@ -377,7 +375,9 @@ export class PrivateLayout {
 
   protected onMainScroll(): void {
     if (this.mainContent) {
-      this.isScrolled.set((this.mainContent.nativeElement.scrollTop ?? 0) > 0);
+      this.isScrolled.set(
+        this.screenChrome.head() ? false : (this.mainContent.nativeElement.scrollTop ?? 0) > 0,
+      );
     }
   }
 
