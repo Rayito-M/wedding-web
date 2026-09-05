@@ -45,13 +45,16 @@ export default {
       // design system's recipe definitions (ds-contract) and gate-checked
       // upstream (wedding-ui-design tools/lint-adherence.mjs) — its literals
       // ARE the definition site, e.g. the pill's 6px 14px on the 2px sub-grid.
-      files: ['src/styles/_layout.scss', 'src/styles/_tokens.scss', 'src/styles/_recipes.scss'],
+      files: ['src/styles/_layout.scss', 'src/styles/_tokens.scss', 'src/styles/_recipes.scss', 'src/styles/_grid.scss'],
       rules: {
         'declaration-property-value-disallowed-list': null,
       },
     },
     {
-      files: ['src/styles/_layout.scss'],
+      // _grid.scss joins _layout.scss here: its @media literals are generated
+      // from the --bp-* tokens (ds-contract) — the other legitimate
+      // definition site, machine-written rather than hand-spelled.
+      files: ['src/styles/_layout.scss', 'src/styles/_grid.scss'],
       rules: {
         'media-feature-name-disallowed-list': null,
       },

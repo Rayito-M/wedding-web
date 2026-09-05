@@ -31,8 +31,21 @@ function run(label, command, args) {
 const eslintExit = run('ESLint (ng lint)', 'ng', ['lint']);
 const stylelintExit = run('stylelint (scripts/stylelint-check.mjs)', 'node', ['scripts/stylelint-check.mjs']);
 
-const overall = eslintExit !== 0 || stylelintExit !== 0 ? 1 : 0;
+// Design-system fidelity (hub ADR-0044 §5): drift between the DS contract and
+// this repo's mirrors fails lint, same unconditional pattern as above. Skipped
+// with a loud warning when the sibling checkout is absent (e.g. a lone CI
+// clone) — a skip is visible, never silent, per ADR-0041 §7's lesson.
+import { existsSync } from 'node:fs';
+const dsRepo = '../wedding-ui-design/tools/verify-fidelity.mjs';
+let fidelityExit = 0;
+if (existsSync(dsRepo)) {
+  fidelityExit = run('ds fidelity (pnpm ds:verify)', 'node', [dsRepo, '--web', '.']);
+} else {
+  console.log('\n▲ ds fidelity SKIPPED — ../wedding-ui-design not present beside this checkout');
+}
+
+const overall = eslintExit !== 0 || stylelintExit !== 0 || fidelityExit !== 0 ? 1 : 0;
 console.log(
-  `\npnpm lint: ESLint ${eslintExit === 0 ? 'passed' : 'FAILED'}, stylelint ${stylelintExit === 0 ? 'passed' : 'FAILED'}.`,
+  `\npnpm lint: ESLint ${eslintExit === 0 ? 'passed' : 'FAILED'}, stylelint ${stylelintExit === 0 ? 'passed' : 'FAILED'}, ds fidelity ${fidelityExit === 0 ? 'passed' : 'FAILED'}.`,
 );
 process.exit(overall);

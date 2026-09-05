@@ -1,0 +1,76 @@
+// ─────────────────────────────────────────────────────────────
+// GENERATED from ds-contract 2026-09-05-cca655a — do not edit.
+// Source of truth: wedding-ui-design (tokens/recipes.json — the grid chapter (hub ADR-0044 §7)).
+// Regenerate: node tools/gen-scss.mjs  (in wedding-ui-design)
+// ─────────────────────────────────────────────────────────────
+// Containers and grids a screen composes instead of inventing its own
+// wrapper. Media literals below come from the --bp-* tokens; this file is
+// their one legitimate generated site (stylelint exempts it like _layout).
+
+/// Named content container. Reading column — schedule, config sections (620px). Standard gutters; centers itself. A screen composes one of these instead of hand-writing its .content/.page wrapper (11 screens used to).
+/// Replaces: .content, .page
+@mixin container-sm {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+  max-width: var(--container-sm);
+}
+
+/// Named content container. Default signed-in content column (720px). Standard gutters; centers itself. A screen composes one of these instead of hand-writing its .content/.page wrapper (11 screens used to).
+/// Replaces: .content, .page
+@mixin container-md {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+  max-width: var(--container-md);
+}
+
+/// Named content container. Wide two-column layouts — home overview (900px). Standard gutters; centers itself. A screen composes one of these instead of hand-writing its .content/.page wrapper (11 screens used to).
+/// Replaces: .content, .page
+@mixin container-lg {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+  max-width: var(--container-lg);
+}
+
+/// Named content container. Directory grids — people (980px). Standard gutters; centers itself. A screen composes one of these instead of hand-writing its .content/.page wrapper (11 screens used to).
+/// Replaces: .content, .page
+@mixin container-xl {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+  max-width: var(--container-xl);
+}
+
+/// The two-column form/content grid — single column at the base breakpoint, 1fr 1fr from --bp-md up, gap on the token scale. Replaces per-screen .grid-2 inventions (5 hand-written).
+/// Replaces: .grid-2, .lang-fields, .fields
+@mixin grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  @media (min-width: 640px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/// The master-detail split — stacked at base, 1.15fr/0.85fr from --bp-lg (the drawn ratio on Home and the Manage editors).
+/// Replaces: .layout
+@mixin grid-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  align-items: start;
+  @media (min-width: 900px) {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+}
+
+/// Two-up metric tiles (StatTile pairs) at every width.
+/// Replaces: .tiles
+@mixin grid-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
