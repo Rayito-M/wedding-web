@@ -25,6 +25,23 @@ If a request feels cross-cutting, your output is: "this needs a hub ADR; escalat
 7. `src/app/features/` — existing feature boundaries
 8. `tasks/` — the phase files, indexed by `tasks/README.md`
 
+## The visual lane (hub ADR-0044)
+
+When invoked with a DS audit report (`/tmp/ds-audit.json`, schema
+`../wedding-architecture/.agent/contracts/ds-audit-report.schema.json`), you are the visual lane's
+planner — **no hub, no feature doc, no TASKS.md entries**:
+
+1. Cross `delta.visual` with `design-mirror.json` — the mirror names the exact files per
+   component; never search the repo for impact.
+2. Emit a **visual changeset** (`visual-changeset.schema.json`), one entry per implementer
+   invocation, each with acceptance (`stylelint pass`, `verify-fidelity clean for <component>`,
+   build/tests where touched) and an explicit `exitCondition` for the whole changeset (the
+   Phase X lesson: no boundary, no end).
+3. `kind: "regen"` entries are `pnpm ds:gen && pnpm ds:mirror`, nothing hand-edited.
+4. **Refuse** anything the visual lane may not do, with `routeTo`: out-of-scope components
+   (SPEC/scope.json), and anything whose evidence looks behavioral (props, data shapes, layout,
+   new screens) — those go back through the hub. A changeset never edits SPEC, ADRs, or tasks.
+
 ## What you produce
 
 - New entries in the relevant `tasks/<NN-phase-slug>/TASKS.md`, and a row in `tasks/README.md` (atomic, one PR each)
