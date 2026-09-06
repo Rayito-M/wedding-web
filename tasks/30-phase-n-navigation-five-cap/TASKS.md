@@ -19,7 +19,10 @@
 > route data, one chrome mechanism, no second scroller.
 
 ### T361 — Port `PlanRail` (the Manage desktop rail)
-- **Status:** todo
+- **Status:** done — pure presentational port (`src/app/shared/plan-rail/`), not wired into any
+  route, screen, or the Manage area (that is T362/T364). `pnpm lint` green (ESLint's 5 documented
+  pre-existing errors unchanged, ds fidelity 31/31 clean, stylelint 0 new). Unit spec covers
+  section nesting, active item/section state, and nav/section emit events.
 - **ADR:** hub ADR-0045 §3; ADR-0044 (mirror discipline)
 - DS source `components/navigation/PlanRail.{jsx,d.ts,prompt.md}`: numbered rail items with
   active dot, per-item meta (e.g. "142 / 172"), Settings pinned to the rail foot with its seven
