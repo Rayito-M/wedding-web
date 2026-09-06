@@ -302,3 +302,20 @@
   deviation; full parity suite (new + T368's) runs, `pnpm lint`/`npx ng test --watch=false`/
   `pnpm build` all green; no screen is fixed by this task — the owner triages the deviation
   list first.
+
+### T370 — Fix the T369 parity deviations (7 real; 1 refused as out-of-scope)
+- **Status:** todo
+- **ADR:** hub ADR-0044 (amended — parity evidence), ADR-0045; T369's table is the spec
+- Fix, flipping each `test.fixme()` to an enforced assertion as you go:
+  1. **Schedule** (×4): header→title gap to kit 26px desktop / 12px mobile; note font-size 11px;
+     status-pill solid fill per the kit (check `status-pill` vs the DS TimelineItem badge spec).
+  2. **RSVP guest** (×1): restore the outer 620px content column (`shell.maxWidth` 620 in the
+     contract; `container-sm` recipe) around the card.
+  3. **Overview** (×1 of 2): add the milestone-progress card (kit `ScreenHome` overview mode —
+     reuse the dashboard's existing milestone data/service; no new API).
+  4. **Guests mobile** (×1): header title 26px (kit) — check the DS type scale token.
+- **Refused, permanent**: Overview's "this week" TaskRow list — out of scope (ADR-0029 §4.7,
+  `TaskRow` in DS `contract/scope.json`). Convert that `fixme` to a documented `test.skip` citing
+  this line; pixel parity never resurrects a cut feature.
+- **Acceptance:** all previously-fixme'd assertions (minus the refused one) enforced and green;
+  full parity suite green; occlusion guard green; unit/lint/build green.
