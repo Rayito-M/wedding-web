@@ -1,0 +1,63 @@
+<!--
+  One `<ng-template>` renders every item (top-level or footer) plus its
+  nested sections when active — the DS's `item()` closure, reused via
+  `NgTemplateOutlet` rather than duplicated per list (config-manager's own
+  screen-local rail duplicates a much smaller version of this by hand; this
+  component only writes it once).
+-->
+<ng-template #itemRow let-item="item">
+  <button
+    type="button"
+    class="rail-item"
+    [class.on]="item.id === active()"
+    [attr.aria-current]="item.id === active() ? 'page' : null"
+    (click)="navSelect.emit(item.id)"
+  >
+    <span class="dot" aria-hidden="true"></span>
+    <span class="rail-item-label">{{ item.labelKey | translate }}</span>
+    @if (item.count) {
+      <span class="count">{{ item.count }}</span>
+    }
+  </button>
+
+  @if (item.id === active() && item.sections?.length) {
+    <div class="sections">
+      @for (section of item.sections; track section.id; let i = $index) {
+        <button
+          type="button"
+          class="section-item"
+          [class.on]="section.id === activeSection()"
+          [attr.aria-current]="section.id === activeSection() ? 'true' : null"
+          (click)="sectionSelect.emit(section.id)"
+        >
+          <span class="number" aria-hidden="true">{{ i + 1 | number: '2.0-0' }}</span>
+          <span class="section-item-label">{{ section.labelKey | translate }}</span>
+        </button>
+      }
+    </div>
+  }
+</ng-template>
+
+<nav class="rail" [style.flexBasis.px]="width()" [attr.aria-label]="label() ? (label() | translate) : null">
+  @if (label()) {
+    <div class="eyebrow">{{ label() | translate }}</div>
+  }
+
+  @for (item of items(); track item.id) {
+    <ng-container [ngTemplateOutlet]="itemRow" [ngTemplateOutletContext]="{ item: item }" />
+  }
+
+  @if (footer().length) {
+    <div class="footer">
+      @for (item of footer(); track item.id) {
+        <ng-container [ngTemplateOutlet]="itemRow" [ngTemplateOutletContext]="{ item: item }" />
+      }
+    </div>
+  }
+
+  @if (showIllustration()) {
+    <div class="illustration" aria-hidden="true">
+      <app-decor-fish [w]="64" color="var(--brand-accent)" />
+    </div>
+  }
+</nav>

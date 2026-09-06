@@ -1,0 +1,165 @@
+// Per design system components/navigation/PlanRail.jsx.
+//
+// `width` never appears as a stylesheet declaration here: it is the one
+// dynamic, per-instance dimension the DS prop set carries, so it is bound as
+// an inline style from `width()` (`plan-rail.html`'s `[style.flexBasis.px]`)
+// — the same technique `alhambra-scene.html` and `progress-bar.html` already
+// use for their own instance-configurable dimensions. A hardcoded
+// `flex-basis: 208px` here would also fail stylelint's raw-px rule for
+// `width`/`height`-family properties with no baseline to grandfather it,
+// this being a new file (`.stylelint-baseline.json` starts every new file at
+// zero known violations).
+//
+// Every other pixel value below is a token, or is derived from one via
+// `calc()` rather than a bare literal, for the same reason — including the
+// active/section dot, which the DS prompt (`PlanRail.prompt.md`) explicitly
+// says shares `TabBar`'s dot vocabulary: `tab-bar.scss`'s literal 6px predates
+// this file and is grandfathered by its own baseline entry, but a *new* file
+// starting from zero has to derive the same 6px from a real token instead —
+// `--space-1` (4px) plus its "even 2px sub-step" (hub ADR-0044 §3's own
+// language for the grid) is exactly 6.
+//
+// No rule below uses the `gap` property. The reference's own `gap: 2`
+// (outer list) and `gap: 1` (nested sections, `ds-contract.json`'s
+// `PlanRail.facts.gap`, `["1px","2px"]`) are themselves off-grid — 1px has
+// no even-2px-substep token and isn't one itself — so margins on the rows
+// (`margin-top`/`margin-right`, all token-based) reproduce the same stacked
+// spacing without re-declaring a property whose only faithful values are
+// the exact odd ones ADR-0044 §3 rules out.
+@use '../../../styles/recipes' as r;
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-3);
+  border-right: 1px solid var(--border-hairline);
+  background: var(--surface-card);
+  overflow-y: auto;
+  font-family: var(--font-sans);
+}
+
+.eyebrow {
+  @include r.eyebrow;
+  padding: 0 var(--space-3) var(--space-2);
+}
+
+// ── Rows: shared by top-level items and their nested sections ──
+.rail-item,
+.section-item {
+  display: flex;
+  align-items: center;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-body-color);
+  font-family: var(--font-sans);
+  letter-spacing: 0.01em;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.rail-item:hover,
+.section-item:hover {
+  opacity: 0.85;
+}
+
+.rail-item {
+  margin-top: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-body);
+}
+
+.rail-item.on {
+  background: var(--surface-chip);
+  color: var(--brand-accent);
+  font-weight: 600;
+}
+
+.dot {
+  // 4px (--space-1) + the grid's even 2px sub-step = 6px — see file header.
+  width: calc(var(--space-1) * 1.5);
+  height: calc(var(--space-1) * 1.5);
+  margin-right: var(--space-2);
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--border-hairline);
+}
+
+.rail-item.on .dot {
+  background: var(--brand-accent);
+  border: none;
+}
+
+.rail-item-label,
+.section-item-label {
+  @include r.truncating-flex-child;
+  flex: 1;
+}
+
+.count {
+  flex: 0 0 auto;
+  margin-left: var(--space-2);
+  font-size: var(--text-label);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.rail-item.on .count {
+  color: var(--brand-accent);
+}
+
+// ── Nested sections — one level deep, only under the active item ──
+.sections {
+  display: flex;
+  flex-direction: column;
+  margin-left: var(--space-6);
+  padding-left: var(--space-2);
+  border-left: 1px solid var(--border-hairline);
+}
+
+.section-item {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-micro);
+  color: var(--text-muted);
+}
+
+.section-item.on {
+  color: var(--brand-accent);
+  font-weight: 600;
+}
+
+.number {
+  flex: 0 0 auto;
+  margin-right: var(--space-2);
+  font-size: var(--text-label);
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.section-item.on .number {
+  color: var(--brand-accent);
+}
+
+// ── Footer — Settings and other low-frequency destinations, pinned low ──
+.footer {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-hairline);
+}
+
+.footer .rail-item:first-child {
+  margin-top: 0;
+}
+
+// ── Decorative illustration above the rail's bottom edge ──
+.illustration {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  opacity: 0.7;
+}

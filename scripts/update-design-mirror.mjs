@@ -29,7 +29,8 @@ const MIRRORS = {
   NotificationBell: 'notification-bell', TabBar: 'tab-bar',
   ConfirmDialog: 'confirm-dialog', NotificationDialog: 'notification-dialog',
   Toast: 'toast', ToastStack: 'toast-stack',
-  // Unported (no mirror yet): AccountMenu, PlanRail, ProfileCard.
+  PlanRail: 'plan-rail',
+  // Unported (no mirror yet): AccountMenu, ProfileCard.
   // Out of scope (never mirrored): TaskRow.
 };
 
