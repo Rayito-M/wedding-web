@@ -1,0 +1,106 @@
+{
+  "task": "T362",
+  "status": "complete_with_deviation",
+  "summary": "RouteChromeData gains group?: 'manage' and standout?: true (hub ADR-0045 §1/§2/§6). nav-tabs.ts now collapses every group:'manage' route out of the primary per-role surface, synthesizing one standout 'manage' NavTab from the group's door route (link/roles read off that real route, not hand-copied), and exports MANAGE_GROUP_TABS for a future Manage area to enumerate its children. config and milestones are tagged group:'manage'; guests is the group's standout door; travel loses tabBar/topNav/navLabel (folds into Home per ADR-0045 §4). Measured result after role+enablement filtering: guest Home/Schedule/RSVP/People (4), couple Home/Schedule/People/Manage (4) — matching ADR-0045 §2 for both roles. nav-tabs.spec covers both roles, the cap, the collapse, and travel's removal.",
+  "acceptance": [
+    {
+      "criterion": "nav-tabs.spec covers both roles and the ≤5 cap",
+      "met": true,
+      "evidence": "src/app/shared/nav-tabs.spec.ts, new describe block 'the five-cap surfaces and the Manage group (hub ADR-0045)': it.each(['guest','bride','groom']) asserts length <= 5 after role+RouteConfigService.isRouteEnabled filtering (mirrors what TabBar/ScreenHeader actually apply); separate tests assert the guest set equals exactly {home,rsvp,schedule,people} and the couple set (bride and groom) equals exactly {home,schedule,people,manage}. `npx ng test --watch=false`: 'Test Files 45 passed (45)', 'Tests 588 passed (588)'."
+    },
+    {
+      "criterion": "no role's set overflows TabBar's More sheet",
+      "met": true,
+      "evidence": "TabBar's overflow threshold is visibleTabs().length > maxTabs+1 = 5 (src/app/shared/tab-bar/tab-bar.ts:36-38, unmodified). Both roles resolve to 4 tabs after filtering (nav-tabs.spec.ts, same tests as above), which is under the threshold with headroom; verified by reading tab-bar.ts's existing computed signals against the new NAV_TABS output rather than asserting the number in isolation."
+    },
+    {
+      "criterion": "a route rename cannot resurrect the old flat list (walk the tree, no hand-copied links — ADR-0042 §6 stands)",
+      "met": true,
+      "evidence": "nav-tabs.ts's collect() is unchanged in mechanism (still walks `routes` once, reading id/navLabel/roles/group/standout straight off each route's `data`); the new collapseGroups() step also derives the synthesized 'manage' tab's link/roles from the standout member's own NavTab object rather than a literal string. nav-tabs.spec.ts's 'the Manage tab is standout and its link/roles are read off its door route, not hand-copied' test walks `routes` independently to find the route flagged `standout: true` and asserts NAV_TABS's 'manage' entry link equals `/${that route's path}` and roles equal that route's roles — proving the value tracks the route object, not a hardcoded string."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "Task text's 'Manage children: Overview(=dashboard) · Guests · Milestones · Settings' — read literally, this groups the /dashboard route (today's couple Home) into Manage.",
+      "to": "dashboard/home is left untouched (still the couple's own top-level Home entry, ungrouped); guests (not dashboard) is flagged the group's standout door.",
+      "reason": "ADR-0045 §2 states the couple's primary surface as 'Home · Schedule · People · Manage' — four distinct destinations. If dashboard (the only route carrying id 'home' for the couple) were folded into the Manage group, the couple would have zero 'Home' entry in the primary surface post-T362, contradicting §2 outright, and no replacement Home screen exists yet (ScreenHome/the umbrella is explicitly T364's build). Keeping dashboard as Home and choosing a different existing couple-only route as the group's visible door is the only reading that produces the literal four-item surface T362's own acceptance text describes, without inventing a new screen (out of scope) or leaving the couple with three items.",
+      "authorized_by": "none — needs a decision",
+      "verified_how": "Traced both readings against ADR-0045 §2's literal role-surface list and against T362's own scope guard ('do NOT build ... the Home umbrella'); the dashboard-into-Manage reading cannot produce a couple Home entry without building a new screen, which is explicitly out of scope, so the deviation is the only path that satisfies both constraints at once. Confirmed by running nav-tabs.spec.ts's role-surface tests, which pass under this reading and would fail (couple set = 3 items, no 'home') under the literal one."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit): no output, exit 0. Run before and after the code change; clean both times."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": { "total": 578, "failing": 0 },
+      "after": { "total": 588, "failing": 0 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2658,
+      "global_stylesheet_bytes_after": 2658,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 296.79 kB with a total of 796.79 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.90 kB with a total of 11.90 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.54 kB with a total of 11.54 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.95 kB with a total of 16.95 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.56 kB with a total of 9.56 kB."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "tasks/30-phase-n-navigation-five-cap/reports/T362.json"
+    ],
+    "modified": [
+      "src/app/app.routes.ts",
+      "src/app/core/guard/route-chrome-data.ts",
+      "src/app/shared/nav-tabs.ts",
+      "src/app/shared/nav-tabs.spec.ts",
+      "tasks/README.md",
+      "tasks/30-phase-n-navigation-five-cap/TASKS.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/environments/release.ts",
+      "why": "Not edited by hand. `pnpm build`, run as this task's own required verification command, invokes scripts/generate-release.mjs, which unconditionally overwrites this file with the current git commit hash — the file's own header comment says exactly this ('any manual edit is overwritten on the next build'). It was already listed as the user's uncommitted work before this task started; running the mandated build command regenerated it again (to a different hash) as an unavoidable side effect. Left as the build produced it, not staged, not committed, not reverted."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "Between this task landing and T363 landing, visiting a Manage-group screen directly (/guests, /milestones, /config) shows no active indicator in ScreenHeader's desktop nav or TabBar, because those routes' own ids ('guests'/'milestones'/'config') no longer match any entry in NAV_TABS — only the synthesized 'manage' tab does, under id 'manage'. The screens remain fully reachable and functional; only the 'you are here' highlight is missing. T363 ('Header and tab bar learn the standout item') must treat active-route membership in a `group` as satisfying the standout tab's active check, not just an exact id match.",
+      "surfaces_at": "T363, and any manual/e2e check of the couple's guest-manager, milestones, or config screens taken between this task's merge and T363's."
+    },
+    {
+      "risk": "The Manage door currently lands on Guest Manager (/guests) rather than a dedicated Overview screen, since no such screen exists yet (building it is out of scope here — see deviations[0]). If product intent is a different landing (e.g. Settings, or a future Overview), only app.routes.ts's `standout: true` flag needs to move to a different group member — no other file changes, since nav-tabs.ts derives the door mechanically from whichever route carries the flag.",
+      "surfaces_at": "T364, when the Manage area's actual routing/rail is built and a canonical landing screen is decided."
+    }
+  ],
+  "decisions_needed": [
+    {
+      "question": "Which existing couple-only screen should the 'Manage' standout pill land on until T364 builds a real Overview/Manage area?",
+      "options": [
+        "Guest Manager (/guests) — chosen here: highest-traffic couple screen (ADR-0043 §5 calls it 'the app's most-used screen'), already the first substantive item after Overview in the DS's MANAGE_RAIL ordering; consequence: clicking 'Manage' opens the guest table, not a dashboard/overview view, until T364 lands.",
+        "Settings (/config) — DS pins Settings to the rail's foot as a distinct, separate destination from the main list; using it as the door as well would be visually first-and-last of the same set at once; consequence: clicking 'Manage' opens Settings, arguably a stranger first impression than Guests.",
+        "Milestones (/milestones) — the smallest/least-trafficked of the three; no textual or DS support for this as the landing; included only for completeness."
+      ],
+      "recommendation": "Keep Guest Manager as the interim door (option 1) — it is what this task shipped. It is the most-used couple screen today, requires no further change, and moving the `standout: true` flag later (if the answer differs) is a one-line edit in app.routes.ts with no other file affected.",
+      "blocking": false,
+      "needed_by": "T364"
+    }
+  ],
+  "commits": [
+    "886242a"
+  ]
+}

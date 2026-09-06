@@ -33,7 +33,15 @@
   `pnpm lint` (incl. ds fidelity) green; unit spec for section nesting + active state.
 
 ### T362 — Route data carries the five-cap surfaces and the Manage group
-- **Status:** todo
+- **Status:** done — with one deviation from the literal text (see report): `dashboard` stays the
+  couple's ungrouped `home` entry (ADR-0045 §2 requires a distinct couple Home in the primary
+  surface, and no replacement Home screen exists yet — building one is T364's). `guests`, not
+  `dashboard`, carries `standout: true` and is the group's door; flagged in
+  `decisions_needed` (non-blocking) for confirmation once T364 designs the real Overview.
+  `config`/`milestones` carry `group: 'manage'`; `travel` drops `tabBar`/`topNav`/`navLabel`
+  (folds into Home, ADR-0045 §4) but keeps its route and `enabledRoutes` entry untouched.
+  Measured result: guest Home · Schedule · RSVP · People; couple Home · Schedule · People ·
+  Manage — matching ADR-0045 §2 for both roles. Report: `reports/T362.json`.
 - **ADR:** hub ADR-0045 §1/§2/§6; ADR-0042 §6 (nav derives from route data)
 - `RouteChromeData` gains `group?: 'manage'` and `standout?: true`; `NAV_ORDER`/`nav-tabs.ts`
   produce per-role surfaces filtered by enablement: guest Home · Schedule · RSVP · People;
