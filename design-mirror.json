@@ -1,5 +1,5 @@
 {
-  "contractVersion": "2026-09-05-bcb7ea5",
+  "contractVersion": "2026-09-06-2b359bd",
   "updated": "2026-09-06",
   "mirrors": {
     "Avatar": {
@@ -131,7 +131,7 @@
       ]
     },
     "TimelineItem": {
-      "dsHash": "4128bf9b0e6615e88869783cbb139558ce87509612697c499d4b03681c238504",
+      "dsHash": "90b8bc675f59eff90fa5c0a98d7f6b7f1c5bd36514f352b642f1bc6b2b2ae5c7",
       "files": [
         "src/app/shared/timeline-item/timeline-item.ts",
         "src/app/shared/timeline-item/timeline-item.html",
@@ -209,7 +209,7 @@
       ]
     },
     "NotificationBell": {
-      "dsHash": "3c5916265086f1bf02320ed113ecd1c13f768102d29bf2ee04184908d7931795",
+      "dsHash": "5cbc57b907861faf6566f20ea03133589a29d307db771a4bf80f85ba464c2d32",
       "files": [
         "src/app/shared/notification-bell/notification-bell.ts",
         "src/app/shared/notification-bell/notification-bell.html",
@@ -257,7 +257,7 @@
       ]
     },
     "PlanRail": {
-      "dsHash": "21f11049497236b09e83cbeca3b0c66f3f45cbccb2d5d9314b2aa97c36ed858f",
+      "dsHash": "ee8b35b560ee8badb5b719c09d7cbbeaaf074760350eef7f11701ef1aa5dd982",
       "files": [
         "src/app/shared/plan-rail/plan-rail.ts",
         "src/app/shared/plan-rail/plan-rail.html",
