@@ -44,3 +44,35 @@ export async function signInAsCouple(
 
   await page.waitForURL('**/dashboard');
 }
+
+/**
+ * Signs a guest in through the same real `/login` OTP flow as
+ * {@link signInAsCouple}, network stubbed with `opts.role: 'guest'`
+ * (`installApiMocks`) so `**\/v1/auth/otp/verify` hands back the guest
+ * identity instead of the couple's. Leaves the page on `/me` (the guest's
+ * landing route, `LoginService.landingUrl`) — hub ADR-0045 §2's guest
+ * primary surface (Home · Schedule · RSVP · People).
+ */
+export async function signInAsGuest(
+  page: Page,
+  opts: {
+    guestCount?: number;
+    pageSize?: number;
+    dietaryPreferencesCount?: number;
+    milestoneCount?: number;
+  } = {},
+): Promise<void> {
+  await installApiMocks(page, { ...opts, role: 'guest' });
+
+  await page.goto('/login');
+
+  await page.locator('input[formcontrolname="phoneNumber"]').fill('612345679');
+  await page.locator('form.form button[type="submit"]').click();
+
+  const codeInput = page.locator('input[formcontrolname="code"]');
+  await expect(codeInput).toBeVisible();
+  await codeInput.fill('123456');
+  await page.locator('form.form button[type="submit"]').click();
+
+  await page.waitForURL('**/me');
+}

@@ -37,6 +37,20 @@ const COUPLE_PROFILE = {
   role: 'bride',
 };
 
+/** A single signed-in guest (hub ADR-0045 §2's guest primary surface —
+ *  Home · Schedule · RSVP · People) — the counterpart to {@link COUPLE_ID}
+ *  above, for specs that need the guest role rather than the couple's. */
+export const GUEST_ID = 'e2e-guest-self-1';
+export const GUEST_TOKEN = fakeJwt(GUEST_ID, 'guest');
+
+const GUEST_PROFILE = {
+  id: GUEST_ID,
+  firstName: 'Gina',
+  lastName: 'Guestson',
+  preferredLang: 'en',
+  role: 'guest',
+};
+
 /** `WeddingConfigPublicResponseDto` — loaded unconditionally by
  *  `ConfigurationService` on app bootstrap, before anything else renders. */
 const CONFIG_PUBLIC = {
@@ -178,12 +192,17 @@ export async function installApiMocks(
     pageSize?: number;
     dietaryPreferencesCount?: number;
     milestoneCount?: number;
+    /** Which identity `**\/v1/auth/otp/verify` hands back — 'bride' (default,
+     *  `signInAsCouple`) or 'guest' (`signInAsGuest`, hub ADR-0045 §2's
+     *  guest primary surface). */
+    role?: 'bride' | 'guest';
   } = {},
 ): Promise<void> {
   const guestCount = opts.guestCount ?? 40;
   const pageSize = opts.pageSize;
   const dietaryPreferencesCount = opts.dietaryPreferencesCount ?? 3;
   const milestoneCount = opts.milestoneCount ?? 3;
+  const role = opts.role ?? 'bride';
 
   // Pre-seeds a GA consent decision (`ConsentService`, hub ADR-0027) so
   // `<app-consent-banner>` — fixed to the bottom of every page, mounted
@@ -220,10 +239,11 @@ export async function installApiMocks(
   await page.route('**/v1/auth/otp/request', (route) => json(route, { ok: true }));
 
   await page.route('**/v1/auth/otp/verify', (route) =>
-    json(route, { accessToken: COUPLE_TOKEN }),
+    json(route, { accessToken: role === 'guest' ? GUEST_TOKEN : COUPLE_TOKEN }),
   );
 
   await page.route(`**/v1/profile/${COUPLE_ID}`, (route) => json(route, COUPLE_PROFILE));
+  await page.route(`**/v1/profile/${GUEST_ID}`, (route) => json(route, GUEST_PROFILE));
 
   await page.route('**/v1/profile?*', (route) => handleProfileList(route, guestCount, pageSize));
   await page.route('**/v1/profile', (route) => handleProfileList(route, guestCount, pageSize));

@@ -14,11 +14,30 @@ import { signInAsCouple } from '../support/auth';
  * registers no `*appScreenHead`/`*appScreenFoot` template — nothing of its
  * own leaves the component to be pinned by `PrivateLayout` — so the
  * "pinned region stays put" invariant here is the screen's **own** internal
- * split: the section nav (`.rail` at `≥900px`, `.pills` below it) is a flex
- * sibling of `.content` inside the same clipped `:host`, and must stay fixed
- * while only `.content` scrolls. `.rail`/`.pills` render the same
- * `sections` list at every width; only one is ever CSS-visible, selected
- * here the same way `_layout.scss`'s own `$bp-lg: 900px` does.
+ * split below `900px`: `.pills` is a flex sibling of `.content` inside the
+ * same clipped `:host`, and must stay fixed while only `.content` scrolls.
+ *
+ * **Retired and re-pointed 2026-09-06 (hub ADR-0045 §3, `wedding-web`
+ * T364/T366).** At `≥900px` this screen no longer draws its own section nav
+ * at all — `.rail` is `display: none` unconditionally now
+ * (`config-manager.scss`'s `@media (min-width: 900px)` block), because that
+ * width is always inside Manage (hub ADR-0045 §3) and Manage's own desktop
+ * rail (`app-plan-rail`, mounted by `private-layout.html` as `.manage-rail`
+ * whenever the active route's `group` is `'manage'`) supplies the section
+ * list instead — Settings' seven sections nest under its rail-foot item
+ * (`private-layout.ts`'s `manageRailFooter()`, sourced from this screen's
+ * own `config-sections.ts`). `/config` itself carries `group: 'manage'`
+ * (`app.routes.ts`), so landing on it directly already renders `.manage-rail`
+ * with Settings active and its sections open — no extra click through
+ * Overview/Guests first is needed. `navSelectors()` below now targets
+ * `.manage-rail .section-item` at `≥900px`; `.pills`/`.pill` below it are
+ * unchanged, since Manage's rail doesn't mount there and this screen still
+ * draws its own mobile nav. This is a re-pointing of existing coverage, not
+ * new coverage or a dropped invariant — the same three behaviours (nav holds
+ * still while content scrolls, `main` never outgrows its flex parent,
+ * `.screen-scroll` stays a non-scrolling clip box) are asserted against the
+ * real desktop nav element post-Manage, per `tasks/30-phase-n-navigation
+ * -five-cap/reports/T364.json`'s `risks[0]`.
  *
  * The "dietary" section (index 5 of 7) is the one long enough to overflow
  * `.content` at every target viewport once seeded with enough tags —
@@ -73,8 +92,14 @@ import { signInAsCouple } from '../support/auth';
  */
 
 function navSelectors(viewportWidth: number): { nav: string; item: string } {
+  // `.manage-rail` (the `app-plan-rail` host, `private-layout.scss`) is
+  // `display: contents` at `≥900px` — it generates no box of its own, only
+  // its children participate in layout (matching DS `AppShell`'s
+  // `{rail}{body}` sibling structure) — so a bounding-box check must target
+  // its inner `nav.rail` (`plan-rail.html`), the element that actually has
+  // geometry, not the host.
   return viewportWidth >= 900
-    ? { nav: '.rail', item: '.rail-item' }
+    ? { nav: '.manage-rail .rail', item: '.manage-rail .section-item' }
     : { nav: '.pills', item: '.pill' };
 }
 
