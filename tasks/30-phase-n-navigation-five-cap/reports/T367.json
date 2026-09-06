@@ -1,0 +1,91 @@
+{
+  "task": "T367",
+  "status": "complete",
+  "summary": "Measured both owner-reported defects (Home pill row and Manage's PlanRail underlapping the fixed header at >=900px), root-caused them precisely: the fixed header's real rendered height (59px couple/57px guest desktop, standout pill + nav row taller than the old avatar-only assumption) outgrew the hardcoded 52px clearance, and .manage-rail never got any clearance at all since it is main's flex sibling inside .body, not its descendant. Consolidated the >=900px clearance onto .body -- the one element every route's content and the Manage rail both descend from -- deleting the per-element main/.screen-head restore rules there entirely; mobile is untouched (its clearance mechanics and the 52px value are unchanged byte-for-byte, verified by measurement, not just code inspection). Added e2e/layout/occlusion-guard.spec.ts: derives its route set from the live tab bar (NAV_TABS/MANAGE_GROUP_TABS via the rendered DOM, not a hand-copied list -- importing nav-tabs.ts directly failed, it pulls in core/api/* which Playwright's transform cannot parse), and asserts no real painted content sits above the header's actual occlusion boundary (0 when the header is transparent, mobile pre-scroll; its real box edge otherwise). Proved the guard fails against the pre-fix code (10/10 desktop cases fail with the exact measured numbers, all 10 mobile cases still pass) and passes against the fix (20/20 across all 5 projects).",
+  "acceptance": [
+    {
+      "criterion": "Both screenshots' scenarios render clear of the header (measured, not eyeballed)",
+      "met": true,
+      "evidence": "Before (couple desktop, /dashboard): .header bottom=59, .pills top=52 (7px underlap). Before (couple desktop, /overview): .manage-rail .rail top=0, fully under a 59px-tall header. After the fix, same routes: .pills top=59 (== header bottom, no underlap), .manage-rail .rail top=59 (== header bottom). Measured via a throwaway Playwright probe (page.evaluate + getBoundingClientRect, document.fonts.ready awaited), run and deleted per this suite's own convention (T363's report)."
+    },
+    {
+      "criterion": "The occlusion guard passes on every route x role x breakpoint",
+      "met": true,
+      "evidence": "npx playwright test e2e/layout/occlusion-guard.spec.ts (all 5 projects): 20 passed, 0 failed. Routes per role are collected from the live .bar .tab[href] anchors (couple: /dashboard,/schedule,/people,/overview,/guests,/milestones,/config; guest: /me,/rsvp,/schedule,/people), never hand-copied."
+    },
+    {
+      "criterion": "... and fails when the fix is reverted (prove it once)",
+      "met": true,
+      "evidence": "Reverted private-layout.scss to its committed (pre-fix) content via a temporary file swap (git show HEAD:... > tmp, cp over, never git checkout/stash), reran the guard: 10 failed / 10 passed across all 5 projects. All 10 failures are the desktop cases, with the exact predicted numbers, e.g. 'couple desktop /dashboard: topmost content (y=52) underlaps ... boundary (y=59)' and 'guest desktop /me: topmost content (y=52) underlaps ... boundary (y=57)'. All 10 mobile cases still passed (mobile clearance is untouched by the fix, so reverting it changes nothing there). Restored the fix immediately after (diffed byte-identical against the pre-revert copy) and reran: 20/20 passing again."
+    },
+    {
+      "criterion": "guests shows no double clearance",
+      "met": true,
+      "evidence": "Measured /guests (couple, group:'manage' + registered head) both breakpoints. Desktop, after fix: .screen-head top=59 (== .body's one clearance, main's/-.screen-head's own >=900px margins are unconditionally zeroed there -- no per-element copy survives to double up). Mobile: unchanged from before this task -- .screen-head.in-manage still yields to .manage-back-row's own 52px (f7684b5's fix, byte-identical base rules), .screen-head top=82.5, back-row top=52 -- single clearance, same numbers as the pre-T367 code."
+    },
+    {
+      "criterion": "layout suite, unit tests, lint, build all green",
+      "met": true,
+      "evidence": "Full local Playwright run (5 projects, 160 cases): 140 passed, 5 failed, 15 skipped -- the 5 are the confirmed pre-existing guest-manager-scrolled-header.spec.ts failures (unrelated ADR-0043 §5 addendum defect, T364/T366 already root-caused it), the 15 are the pre-existing seating skips (route disabled in enabledRoutes). 140 = 120 (T366's baseline) + 20 (this task's new occlusion-guard cases); no other spec's pass/fail status changed. npx ng test --watch=false: 603/603 (T365's baseline, unchanged -- no .ts/.spec.ts touched). pnpm lint: ESLint exits 1 with exactly the 5 documented pre-existing errors (guest-profile-modal.ts, shared/modal/*), unchanged; stylelint 'no new violations (549 pre-existing, baselined)' -- private-layout.scss's own (file,rule) count stayed at 9/1 (one 52px margin-top literal removed from the old >=900px restore block, one new 59px literal added on .body -- net zero, baseline not refreshed since counts didn't grow or shrink). pnpm build: pass, global stylesheet 2658 bytes (unchanged), same 5 pre-existing budget warnings as every prior task in this phase. pnpm typecheck: clean, no output."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit: no output, exit 0."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 603,
+        "failing": 0
+      },
+      "after": {
+        "total": 603,
+        "failing": 0
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2658,
+      "global_stylesheet_bytes_after": 2658,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 302.63 kB with a total of 802.63 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.90 kB with a total of 11.90 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.56 kB with a total of 9.56 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.84 kB with a total of 16.84 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.54 kB with a total of 11.54 kB."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/layout/occlusion-guard.spec.ts"
+    ],
+    "modified": [
+      "src/app/layouts/private-layout/private-layout.scss"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "The guest RSVP mock fixture (installApiMocks's '**/v1/rsvp' stub) always answers { items: [], nextCursor: null } regardless of role or opts, so rsvp.html's rsvp() signal never resolves and the whole screen renders nothing (confirmed while building the occlusion guard: <app-rsvp> mounts with an empty subtree, every @if branch false). The occlusion guard treats 'nothing painted' as vacuously passing rather than failing, which is correct for this guard's own narrow purpose (occlusion, not 'does the screen render'), but it means no e2e spec in this suite currently exercises real RSVP content for the guest role -- only its title. Seeding a reply was out of scope here (that shared fixture's empty-list default is relied on by other specs asserting the 'no RSVP yet' create flow).",
+      "surfaces_at": "Any future layout or RSVP-content spec for the guest role, or a dedicated api-mocks.ts fixture task."
+    },
+    {
+      "risk": "The 59px/57px desktop header clearance is a measured constant (couple vs guest header height, standout pill present or not), not derived at runtime. If a future change grows the header again (a longer nav label wrapping, a taller standout pill, a second row of chrome), this class of defect could recur a fourth time with a different number, and only the occlusion guard -- not visual inspection -- would catch it before the same 'clearance follows an assumption, not the actual element' pattern ships again.",
+      "surfaces_at": "Any task touching screen-header.scss's header padding, the standout pill's own sizing, or adding a new header child (notification badges, a second nav row)."
+    }
+  ],
+  "commits": [
+    "e2719ed"
+  ]
+}

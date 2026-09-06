@@ -17,6 +17,13 @@
 > kit (`../wedding-ui-design/ui_kits/wedding-app/`, AppShell/PlanRail/AppHeader/TabBar) and the
 > contract (`contract/ds-contract.json`); hard rules from hub ADR-0042/0043 apply — nav facts on
 > route data, one chrome mechanism, no second scroller.
+>
+> **T367 (post-close, 2026-09-06) re-satisfies the exit condition.** T366 closed Phase N on
+> e2e-green, but two owner-reported defects (Home's pill row and the Manage rail both underlapping
+> the fixed header at ≥900px) showed the e2e suite had never actually checked for occlusion by the
+> fixed header — `toBeVisible()` cannot see it. T367 fixes the clearance (consolidated onto `.body`,
+> hub ADR-0043 §1) and adds a permanent `e2e/layout/occlusion-guard.spec.ts` closing that gap for
+> every route this app has. Phase N's exit condition is re-satisfied as of T367.
 
 ### T361 — Port `PlanRail` (the Manage desktop rail)
 - **Status:** done — pure presentational port (`src/app/shared/plan-rail/`), not wired into any
@@ -152,7 +159,22 @@
   from this feature.
 
 ### T367 — Fixed-header clearance misses the rail and the Home subnav (post-close defect)
-- **Status:** todo
+- **Status:** done — measured both defects before fixing: the fixed header's real rendered height
+  (59px couple/57px guest at ≥900px — the standout pill and nav row outgrew the old avatar-only
+  52px assumption; 62px on mobile, harmless there because the header stays transparent pre-scroll)
+  outgrew the hardcoded clearance, and `.manage-rail` got none at all (it is `main`'s flex sibling
+  inside `.body`, never its descendant). Consolidated the ≥900px clearance onto `.body` — the one
+  element every route's content and the rail both descend from — deleting the per-element
+  `main`/`.screen-head` restore rules there; mobile is byte-identical (verified by measurement).
+  New `e2e/layout/occlusion-guard.spec.ts` derives its route set from the live tab bar (never a
+  hand-copied list) and asserts no painted content sits above the header's real occlusion
+  boundary; proved it fails on revert (10/10 desktop cases, exact measured numbers) and passes on
+  the fix (20/20, all 5 projects). `pnpm lint` green (5 documented pre-existing ESLint errors
+  unchanged, stylelint 0 net new — one `52px` literal removed, one `59px` added, baseline count
+  unchanged — ds fidelity 31/31 clean); `npx ng test --watch=false` 603/603 (unchanged); `pnpm
+  build` clean (2658 bytes, unchanged). Full local Playwright run: 140 passed (120 baseline + 20
+  new), 5 failed (confirmed pre-existing `guest-manager-scrolled-header`, unrelated), 15 skipped
+  (pre-existing, unrelated). Report: `reports/T367.json`.
 - **ADR:** hub ADR-0043 §1 (the clearance-follows-the-flag defect class — third occurrence),
   ADR-0045 §3/§4
 - **Reopens Phase N's exit condition**: "the IA holds" was met by the e2e assertions but not on

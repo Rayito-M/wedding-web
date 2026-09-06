@@ -71,6 +71,15 @@
 // contents` so `.rail`'s own `flex-shrink: 0` (plan-rail.scss) is what
 // actually participates in this row, matching DS `AppShell`'s
 // `{rail}{body}` sibling structure.
+//
+// **This is the ONE fixed-header clearance at ≥900px (hub ADR-0043 §1,
+// T367).** `main` and `.screen-head` below carry their own copy only for
+// mobile, where the clearance provider genuinely differs per route (the
+// back row, a registered head, or `main` itself). At ≥900px none of that
+// applies — every route's content, and `.manage-rail` beside it, descends
+// from this one box, so this is where the clearance belongs structurally:
+// see the `@media (min-width: 900px)` block below for the value and why it
+// changed from the old per-element `52px`.
 .body {
   display: flex;
   flex: 1;
@@ -94,9 +103,13 @@
 
 // The active route's registered head (hub ADR-0042 §1/§2, T341) — only
 // present in the DOM at all when a screen registers one (`*appScreenHead`).
-// Carries the 52px clearance from the fixed `.header` above that `main`
-// normally carries itself, so a screen with a pinned head gets it exactly
-// once — see `main.after-head` below, which drops main's own copy.
+// **Mobile only** (hub ADR-0043 §1, T367): carries the 52px clearance from
+// the fixed `.header` at mobile widths, where the clearance provider is
+// whichever element renders first in flow — this head, the mobile back row,
+// or `main` — and genuinely varies by route. At ≥900px `.body` above is the
+// one clearance for every route, so this margin is zeroed unconditionally
+// there (see the `@media (min-width: 900px)` block below); `&.in-manage`
+// below stops mattering at that width for the same reason.
 .screen-head {
   margin-top: 52px;
 
@@ -105,8 +118,7 @@
   // back row above (`.manage-back-row`) is what's actually first under the
   // fixed header there, so this box must not add a second 52px on top of
   // it — same "whoever renders first carries the clearance" rule as
-  // `main.in-manage` below, restored at ≥900px where the back row is
-  // CSS-hidden and this head goes back to being first.
+  // `main.in-manage` below.
   &.in-manage {
     margin-top: 0;
   }
@@ -127,6 +139,10 @@ main {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  // **Mobile only** (hub ADR-0043 §1, T367) — see `.screen-head` above for
+  // why the clearance provider varies by route below 900px. Zeroed
+  // unconditionally at ≥900px, where `.body` carries the one clearance for
+  // this row instead (`@media (min-width: 900px)` below).
   margin-top: 52px;
   padding-bottom: 20px;
 
@@ -149,7 +165,7 @@ main {
   }
 
   // See `.screen-head` above: when a head is pinned, it — not `main` —
-  // carries the 52px clearance from the fixed header.
+  // carries the 52px clearance from the fixed header (mobile only).
   &.after-head {
     margin-top: 0;
   }
@@ -160,8 +176,9 @@ main {
   // second copy. `:not(.after-head)` is what keeps this from fighting a
   // Manage route that *also* registers a real head (`guests`): that case
   // never matches this selector at all, so `.after-head` above is the only
-  // rule deciding it, at every breakpoint. Restored at ≥900px, where the
-  // back row is CSS-hidden and contributes no clearance of its own.
+  // rule deciding it. Meaningless at ≥900px, where the back row is
+  // CSS-hidden and `.body` carries the one clearance instead — `main`'s
+  // margin is zeroed unconditionally there regardless of this class.
   &.in-manage:not(.after-head) {
     margin-top: 0;
   }
@@ -225,19 +242,34 @@ main {
     padding-bottom: 0;
   }
 
-  // The second/third selectors restore the clearance `main.in-manage:not(.after-head)`
-  // and `.screen-head.in-manage` drop below (those base rules carry no media
-  // guard, so they would otherwise win here too by specificity): the mobile
-  // back row that provides it there is CSS-hidden at this width, and the
-  // rail beside `main` doesn't supply it either — see the base rules' own
-  // comments for the full reasoning. Shares this declaration rather than
-  // repeating the literal `52px` in separate rulesets (stylelint's
-  // `declaration-property-value-disallowed-list` — this file already
-  // carries its own baselined `52px`/`20px` above).
+  // Hub ADR-0043 §1, corrected here (T367 — the clearance-follows-the-flag
+  // defect's third occurrence). Every per-element copy of the fixed
+  // header's clearance is zeroed unconditionally at this width — `main`'s
+  // own base `margin-top: 52px`, `.after-head`'s and `.in-manage`'s zeroing
+  // of it, and `.screen-head`'s own `52px`/`.in-manage` pair all stop
+  // mattering, because none of them could ever reach `.manage-rail`: it is
+  // a flex *sibling* of `main` inside `.body`, never its descendant, so no
+  // margin on `main` or `.screen-head` was ever capable of clearing it —
+  // measured (`.manage-rail .rail`'s own bounding box) at `top: 0`, fully
+  // under the fixed header, before this fix.
   main,
-  main.in-manage:not(.after-head),
-  .screen-head.in-manage {
-    margin-top: 52px;
+  .screen-head {
+    margin-top: 0;
+  }
+
+  // The ONE clearance for this row (`.body`'s own comment above): every
+  // piece of content at this width — the Manage rail included — descends
+  // from `.body`, so this is where the fixed header's clearance belongs
+  // structurally, applied exactly once. `59px`, not the old `52px`: the
+  // header's own rendered height outgrew that assumption once the Manage
+  // standout pill (T363) and the notification bell became its tallest
+  // child, taller than the `13 + 26 (avatar) + 13` math `screen-header.scss`
+  // still documents — measured (`.header`'s own bounding box, DM Sans and
+  // icons loaded, both roles): 59px with the standout pill (couple), 57px
+  // without (guest). 59px clears both; don't shrink it back to the old
+  // avatar-only figure without re-measuring both roles' headers.
+  .body {
+    margin-top: 59px;
   }
 
   main {
