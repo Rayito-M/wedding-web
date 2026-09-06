@@ -235,3 +235,9 @@ neither sort nor uniquely name them.
 | **T357** | The `.scrolled` guard spec loses a race under parallel load | done | `28-phase-x-layout-layer` |
 | **T358** | `.screen-scroll` becomes a bounded clipping box, and stops being a second scroller | done | `28-phase-x-layout-layer` |
 | **T360** | Two RSVP-delegation tests have been red since the feature shipped | done | `28-phase-x-layout-layer` |
+| **T361** | Port `PlanRail` (the Manage desktop rail) | todo | `30-phase-n-navigation-five-cap` |
+| **T362** | Route data carries the five-cap surfaces and the Manage group | todo | `30-phase-n-navigation-five-cap` |
+| **T363** | Header and tab bar learn the standout item | todo | `30-phase-n-navigation-five-cap` |
+| **T364** | Home becomes the umbrella; Manage becomes an area | todo | `30-phase-n-navigation-five-cap` |
+| **T365** | Labels in three locales | todo | `30-phase-n-navigation-five-cap` |
+| **T366** | E2E: the IA holds and nothing regressed | todo | `30-phase-n-navigation-five-cap` |
