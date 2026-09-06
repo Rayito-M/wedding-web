@@ -100,6 +100,60 @@
       /> -->
     </div>
 
+    <!-- the plan so far (DS `ScreenHome.jsx`'s `overviewContent` branch,
+         T369/T370) — reuses the same `Milestone` entity collection
+         `/milestones` already reads (`dashboard.ts`); no new endpoint. The
+         kit's neighboring "This week" task list is cut here on purpose
+         (hub ADR-0029 §4.7, `TaskRow` out of DS scope, T370) — see the
+         `.tasks` block below, left commented out. -->
+    <div class="plan-card">
+      <div class="plan-head">
+        <div class="label">{{ 'dashboard.plan.title' | translate }}</div>
+        <button type="button" class="plan-all" routerLink="/milestones">
+          {{ 'dashboard.plan.all' | translate }}
+        </button>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="value accent">{{ milestonesReachedCount() }}</div>
+          <div class="label stat-label">{{ 'dashboard.plan.stats.done' | translate }}</div>
+        </div>
+        <div class="stat">
+          <div class="value">{{ milestonesOpenCount() }}</div>
+          <div class="label stat-label">{{ 'dashboard.plan.stats.left' | translate }}</div>
+        </div>
+        <div class="stat">
+          <div class="value" [class.overdue]="milestonesOverdueCount() > 0">
+            {{ milestonesOverdueCount() }}
+          </div>
+          <div class="label stat-label">{{ 'dashboard.plan.stats.overdue' | translate }}</div>
+        </div>
+      </div>
+      <app-progress-bar class="progress" [percent]="milestonesPercent()" />
+      <div class="caption">
+        {{
+          'dashboard.plan.caption'
+            | translate: { reached: milestonesReachedCount(), total: milestones().length }
+        }}
+      </div>
+      @if (upcomingMilestones().length > 0) {
+        <div class="plan-next">
+          @for (m of upcomingMilestones(); track m.id) {
+            <div class="plan-row">
+              <span class="plan-dot" [class.at-risk]="planStatus(m) === 'at-risk'"></span>
+              <span class="plan-row-text">
+                <span class="plan-row-title">{{ milestoneTitle(m) }}</span>
+                <span class="plan-row-date">{{ m.plannedDate | date: 'd MMM' : '' : primaryLang() }}</span>
+              </span>
+              <app-status-pill [variant]="planStatus(m)">
+                {{ milestoneStatusLabelKey(m) | translate }}
+              </app-status-pill>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
     <!-- manage -->
     <div class="manage">
       <div class="label manage-title">{{ 'dashboard.manage.title' | translate }}</div>

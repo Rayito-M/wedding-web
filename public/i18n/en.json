@@ -402,6 +402,16 @@
     "vendors": "Vendors",
     "thisWeek": "This week",
     "seeAll": "See all",
+    "plan": {
+      "title": "The plan so far",
+      "all": "All",
+      "stats": {
+        "done": "Done",
+        "left": "Left",
+        "overdue": "Overdue"
+      },
+      "caption": "{{reached}} of {{total}} milestones reached · next 3 coming up"
+    },
     "manage": {
       "title": "Manage",
       "guests": {

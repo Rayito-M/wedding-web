@@ -1,5 +1,6 @@
 @use '../../../styles/tokens' as t;
 @use '../../../styles/primitives';
+@use '../../../styles/layout';
 
 :host {
   display: block;
@@ -79,6 +80,14 @@
     &.accent {
       color: var(--brand-accent);
     }
+
+    // "Overdue" count, plan card only (T370) — kit `ScreenHome.jsx`'s
+    // `msLate > 0` conditional (`msStats`' third figure turns
+    // `--status-provisional`-colored instead of `--ink` when there is at
+    // least one overdue milestone).
+    &.overdue {
+      color: var(--status-provisional);
+    }
   }
 
   // Takes the shared stat caption, then tightens it: four labels share one row
@@ -133,6 +142,83 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+// "The plan so far" milestone-progress card (kit `ScreenHome.jsx`'s own
+// `overviewContent` branch, T369/T370) — the generated flat-card recipe
+// (`%card-padded`) rather than re-declaring `.stats-card`'s own literal
+// padding/background/border/radius a second time.
+.plan-card {
+  @extend %card-padded;
+}
+
+.plan-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: t.$space-3;
+
+  // Same small accent-link recipe as `.tasks-header .see-all` — reused
+  // rather than re-typed under a differently-scoped selector. A `<button>`
+  // (not `<a>`), matching this file's own `.manage-row` and the kit's own
+  // `<button onClick=…>All</button>` — so it needs its own reset.
+  .plan-all {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    font-family: t.$font-sans;
+    font-size: t.$text-micro;
+    color: var(--brand-accent);
+  }
+}
+
+.plan-next {
+  margin-top: t.$space-3;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.plan-row {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  padding: t.$space-2 0;
+  border-bottom: 1px solid var(--border-hairline);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.plan-dot {
+  width: var(--dot-size);
+  height: var(--dot-size);
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+
+  &.at-risk {
+    background: var(--status-provisional);
+  }
+}
+
+.plan-row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.plan-row-title {
+  @extend %truncating-flex-child;
+  display: block;
+  font-size: t.$text-caption;
+  color: var(--text-body-color);
+}
+
+.plan-row-date {
+  display: block;
+  font-size: t.$text-label;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
 }
 
 .manage-title {
@@ -228,6 +314,7 @@
     grid-template-areas:
       'stats manage'
       'tiles manage'
+      'plan manage'
       'week manage';
   }
 
@@ -237,6 +324,10 @@
 
   .tiles {
     grid-area: tiles;
+  }
+
+  .plan-card {
+    grid-area: plan;
   }
 
   .manage {

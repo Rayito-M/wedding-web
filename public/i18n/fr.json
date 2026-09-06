@@ -399,6 +399,16 @@
     "vendors": "Prestataires",
     "thisWeek": "Cette semaine",
     "seeAll": "Voir tout",
+    "plan": {
+      "title": "Le plan jusqu'ici",
+      "all": "Tout",
+      "stats": {
+        "done": "Faites",
+        "left": "Restantes",
+        "overdue": "En retard"
+      },
+      "caption": "{{reached}} sur {{total}} étapes atteintes · les 3 prochaines"
+    },
     "manage": {
       "title": "Gérer",
       "guests": {

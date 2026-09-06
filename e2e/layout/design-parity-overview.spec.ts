@@ -9,14 +9,21 @@ import { boxOf, expectClose, kitContentColumnBox, openDsKitScreen, startDsKitSer
  * `overviewContent` branch (`overview` prop); app source: `dashboard.html`'s
  * `#plan` template rendered directly (`@if (overview)`, `dashboard.ts`).
  *
- * Structural gap found, NOT fixed here (owner triages): the kit's Overview
- * renders four cards (RSVP stats, quick tiles, "the plan so far" milestone
- * progress + next-3 list, "this week" task list) in a two-column grid; the
- * app's Overview renders only the RSVP stats card, a single stat tile, and
- * a plain "manage" link list — the milestone-progress card and the task
- * list do not exist in the app at all (`dashboard.html`'s own `<!-- tasks
- * -->` block is commented out). Recorded as a `test.fixme()` existence
- * check below with exact counts, not asserted away.
+ * Structural gap found by the T369 rescan: the kit's Overview renders four
+ * cards (RSVP stats, quick tiles, "the plan so far" milestone progress +
+ * next-3 list, "this week" task list) in a two-column grid; the app's
+ * Overview rendered only the RSVP stats card, a single stat tile, and a
+ * plain "manage" link list.
+ *
+ * T370 added "the plan so far" milestone-progress card (`dashboard.ts`/
+ * `.html`, reusing the same `Milestone` entity collection `/milestones`
+ * already reads — no new endpoint) — that half of the gap is now enforced
+ * below. The "this week" task list is REFUSED, permanently, as out of
+ * scope: hub ADR-0029 §4.7 cuts the couple's task list, and `TaskRow` is
+ * listed in the DS `contract/scope.json`'s `outOfScope` array — pixel
+ * parity with a kit screen never resurrects a feature the hub already cut.
+ * `test.skip()` below, not `test.fixme()`: fixme documents a bug awaiting a
+ * fix; this is a decision, not a defect.
  */
 
 const DESKTOP = { width: 1280, height: 900 };
@@ -91,8 +98,34 @@ test.describe('Manage · Overview (couple) — pixel parity with the DS kit (T36
     await kitPage.close();
   });
 
-  test.fixme(
-    'desktop: Overview is missing two whole DS sections — "the plan so far" milestone-progress card (with its next-3-milestones list) and the "this week" task list are commented out / absent in dashboard.html, present in ScreenHome.jsx overviewContent',
+  test('desktop: "the plan so far" milestone-progress card is present (T370 — was absent, dashboard.html\'s task block was commented out)', async ({
+    page,
+    context,
+  }) => {
+    const kitPage = await context.newPage();
+    await openDsKitScreen(kitPage, kit.baseUrl, {
+      device: 'Desktop',
+      role: 'Couple',
+      viewLabel: 'Manage · Overview',
+    });
+    await signInAsCouple(page);
+    await page.goto('/overview');
+    await page.setViewportSize(DESKTOP);
+    await page.waitForLoadState('networkidle');
+    // This text anchor exists in the kit's overviewContent (`milestoneProgress`
+    // block); assert it now also exists in the app.
+    await expect(page.getByText('The plan so far')).toBeVisible();
+    await kitPage.close();
+  });
+
+  // Refused, permanent (T370): the kit's neighboring "this week" task list
+  // (`ScreenHome.jsx overviewContent`'s `week` block, `TaskRow`) is cut —
+  // hub ADR-0029 §4.7, and `TaskRow` is listed in the DS
+  // `contract/scope.json`'s `outOfScope` array ("Ported to wedding-web but
+  // commented out on both sides"). Not a defect to fix later: `test.skip()`,
+  // not `test.fixme()`.
+  test.skip(
+    'desktop: "this week" task list — REFUSED, out of scope (hub ADR-0029 §4.7; TaskRow listed in wedding-ui-design/contract/scope.json\'s outOfScope; T370)',
     async ({ page, context }) => {
       const kitPage = await context.newPage();
       await openDsKitScreen(kitPage, kit.baseUrl, {
@@ -104,9 +137,6 @@ test.describe('Manage · Overview (couple) — pixel parity with the DS kit (T36
       await page.goto('/overview');
       await page.setViewportSize(DESKTOP);
       await page.waitForLoadState('networkidle');
-      // These text anchors exist in the kit's overviewContent; assert they
-      // also exist in the app (they don't, today).
-      await expect(page.getByText('The plan so far')).toBeVisible();
       await expect(page.getByText('This week')).toBeVisible();
       await kitPage.close();
     },
