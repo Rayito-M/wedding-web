@@ -1,0 +1,116 @@
+{
+  "task": "T369",
+  "status": "complete",
+  "summary": "Extended T368's design-parity harness to all 9 implemented screen pairs (guest Home/Schedule/RSVP/People, couple Home/Overview/Guests/Milestones/Settings), both breakpoints. 5 screens conform exactly (Home guest+couple, People, Milestones, Settings); 4 have recorded deviations (Schedule, RSVP, Overview, Guests-mobile), each committed with the failing assertions under test.fixme() and exact kit/app numbers in the spec and reports/T369-parity-table.md. Fixed a real bug in ds-kit.ts's openDsKitScreen along the way: the DS kit's desktop frame (`calc(100vw - 32px)`) silently shrank under the suite's four mobile-emulation projects, which the width metric this task added was the first to expose. Extended two test fixtures (api-mocks.ts, allowed): the guest RSVP own-record mock (opt-in rsvpStatus) and the empty agenda.items array, both known gaps no prior spec depended on. No DS-side (kit-off-grid) findings — every deviation traces to an existing app token the screen hasn't adopted yet.",
+  "acceptance": [
+    {
+      "criterion": "For each of the 9 screen pairs, extend the harness with screen-specific selectors and measure: content-column left alignment, header-bottom→first-content gap, content column width (vs ds-contract.json maxWidth where present), page/section background colors, and 2-4 signature elements' computed color/font-size/weight/padding.",
+      "met": true,
+      "evidence": "9 spec files: e2e/layout/design-parity-{home,dashboard,schedule,rsvp,people,overview,guests,milestones,config}.spec.ts. Full numbers per screen/breakpoint/metric in reports/T369-parity-table.md. Guest RSVP mock extended (api-mocks.ts's opt-in rsvpStatus) and agenda.items mirrored from the kit's schedule.data.js (api-mocks.ts's agendaItems()) — both known fixture gaps no prior spec depended on (grepped e2e/ for both before changing)."
+    },
+    {
+      "criterion": "For screens that conform (every metric within ±1px / exact colors): commit their spec as permanent green — they lock the screen per the evidence rule.",
+      "met": true,
+      "evidence": "Guest/Home (design-parity-home.spec.ts, 2/2 green + new 900px width check), Couple/Home (design-parity-dashboard.spec.ts, 2/2 green), Guest/People (design-parity-people.spec.ts, 2/2 green), Couple/Milestones (design-parity-milestones.spec.ts, 2/2 green), Couple/Settings (design-parity-config.spec.ts, 2/2 green) — 10 hard-asserted tests, 0 fixme, across these 5 screens."
+    },
+    {
+      "criterion": "For screens that deviate: commit the spec too, with deviating assertions wrapped in test.fixme(), and record each deviation precisely (screen, breakpoint, metric, kit value, app value); do not mark deviations where the kit itself violates the DS grid — file those to wedding-ui-design's FINDINGS.md instead; do not fix any screen.",
+      "met": true,
+      "evidence": "7 test.fixme() cases across 3 spec files, each named with the exact kit/app numbers: design-parity-schedule.spec.ts (4: desktop header-gap 26 vs 14, mobile header-gap 12 vs 14, note font-size 11 vs 12, status-pill style solid-vs-dashed), design-parity-rsvp.spec.ts (1: content column 620 vs 560), design-parity-overview.spec.ts (1: missing milestone-progress card + task list), design-parity-guests.spec.ts (1: mobile header title 26px vs 20px). No screen's implementation was changed. All 7 deviations checked against the token scale (src/styles/_tokens.scss) and found composable from EXISTING tokens (--text-micro:11px covers the note case; the --space-* half-step calc() pattern T368 established covers the 26/18/10 family) — none is a kit literal with no token to express it, so nothing was filed to ../wedding-ui-design/contract/FINDINGS.md this task."
+    },
+    {
+      "criterion": "Produce a human-readable summary table (report + reports/T369-parity-table.md): screen × breakpoint × metric → kit vs app vs verdict.",
+      "met": true,
+      "evidence": "tasks/30-phase-n-navigation-five-cap/reports/T369-parity-table.md — full table, all 9 screens, every measured metric, kit/app values and verdict (match/DEVIATES), plus a summary section."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "Task text implies re-running/extending only design-parity-home.spec.ts for Guest/Home.",
+      "to": "Also extracted design-parity-home.spec.ts's measurement logic (measureKitHomeSubnav/measureAppHomeSubnav/assertHomeSubnavParity/expectClose) into e2e/helpers/ds-kit.ts so design-parity-dashboard.spec.ts (Couple/Home) could reuse it byte-for-byte instead of duplicating ~150 lines, since ScreenHome.jsx's non-overview content branch renders identically for both roles.",
+      "reason": "CLAUDE.md's implementer role and the task-management skill both call for reuse over duplication; the two screens are the same DS component under two roles.",
+      "authorized_by": "Task text: 'extend the harness pattern with screen-specific selectors' — the Home logic was already generic per-role, only the sign-in/route differ.",
+      "verified_how": "design-parity-home.spec.ts re-run after the refactor: 2/2 still passing, identical assertions and numbers as before the extraction."
+    },
+    {
+      "from": "Task's stated scope is measurement only ('do not fix anything visual').",
+      "to": "Fixed one real bug found while building the harness itself (not an app screen): e2e/helpers/ds-kit.ts's openDsKitScreen did not force a real desktop viewport on the kit's second page, so under the suite's four mobile-emulation projects (iPhone SE/12/14, Pixel 7) the kit's own `.frame-wrap.wide` (`max-width: calc(100vw - 32px)`) silently shrank the 'Desktop' kit render to ~370px, producing false content-column-width failures unrelated to any app defect.",
+      "reason": "This is a defect in the test harness itself (T368's own infrastructure), not in an app screen — fixing it is required for the new width metric to report real, trustworthy numbers, and leaving it would have produced false 'DEVIATES' verdicts against every screen with a width check on 4 of 5 projects.",
+      "authorized_by": "Task's own framing: 'extend the harness pattern' includes making the harness itself correct; the fix touches no app code.",
+      "verified_how": "Before the fix: e2e/layout/design-parity- run across all 5 projects showed the width assertion failing on iPhone SE/12/14 and Pixel 7 with 'expected 620 ±1, got 372' (and 900/980 equivalents) while Desktop Chrome passed. After the fix: same run, 95 passed / 35 skipped (fixme) / 0 failed, all 5 projects."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit: no output, exit 0."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 603,
+        "failing": 0
+      },
+      "after": {
+        "total": 603,
+        "failing": 0
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2658,
+      "global_stylesheet_bytes_after": 2658,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 302.63 kB with a total of 802.63 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.90 kB with a total of 11.90 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.54 kB with a total of 11.54 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.56 kB with a total of 9.56 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.84 kB with a total of 16.84 kB."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/layout/design-parity-dashboard.spec.ts",
+      "e2e/layout/design-parity-schedule.spec.ts",
+      "e2e/layout/design-parity-rsvp.spec.ts",
+      "e2e/layout/design-parity-people.spec.ts",
+      "e2e/layout/design-parity-overview.spec.ts",
+      "e2e/layout/design-parity-guests.spec.ts",
+      "e2e/layout/design-parity-milestones.spec.ts",
+      "e2e/layout/design-parity-config.spec.ts",
+      "tasks/30-phase-n-navigation-five-cap/reports/T369-parity-table.md",
+      "tasks/30-phase-n-navigation-five-cap/reports/T369.json"
+    ],
+    "modified": [
+      "e2e/helpers/ds-kit.ts",
+      "e2e/layout/design-parity-home.spec.ts",
+      "e2e/support/api-mocks.ts",
+      "tasks/30-phase-n-navigation-five-cap/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "Couple's Manage · Overview (`/overview`, `dashboard.html`'s `@if (overview)` branch) is missing two whole DS sections present in `ScreenHome.jsx`'s `overviewContent`: the milestone-progress card (with its next-3-milestones list, `<!-- tasks -->` in dashboard.html is commented out) and the 'this week' task list. This is a much larger gap than a spacing/color mismatch — a future task rebuilding Overview to parity should treat it as new feature work (wiring the milestones collection + a task list), not a CSS fix.",
+      "surfaces_at": "Any task that stamps ScreenHome/Dashboard's Overview mode 'implemented' per the design-fidelity evidence rule, or a future owner review of Manage · Overview."
+    },
+    {
+      "risk": "The app's `/rsvp` first-time-reply screen (`app-rsvp-create`) has no outer content column matching `ds-contract.json`'s `ScreenRSVPCreate.shell.maxWidth` (620) at all — its `:host` IS the kit's inner reply-card (560px), and there is no separate wrapping element anywhere in `rsvp.html`/`rsvp.scss` at the outer 620 width the kit's `AppShell` provides. Reproducing it would mean adding a new wrapping element/host change to `app-rsvp`, out of this task's measurement-only scope.",
+      "surfaces_at": "A future task asked to close the RSVP content-column-width deviation, or auditing `app-rsvp`'s shell against `ds-contract.json`."
+    },
+    {
+      "risk": "Guest/Schedule has 4 recorded deviations concentrated in one screen (header-to-title vertical rhythm at both breakpoints, note font-size, and the status pill's whole visual recipe — solid-fill in the kit vs. the shared `app-status-pill`'s dashed 'provisional' variant). The status-pill mismatch is a component-recipe divergence, not schedule-specific: `app-status-pill`'s 'provisional' style may need a second look against `ScreenSchedule.jsx`'s/`ScreenHome.jsx`'s own inline pill (solid, `var(--status-provisional)` fill) — fixing it in the shared component would also move Home's `schedulePill`-equivalent, if the app has one, and any other consumer.",
+      "surfaces_at": "A future task closing Schedule's parity deviations, or one auditing `app-status-pill`'s 'provisional'/'not-reached' variants against every DS inline-pill reference."
+    }
+  ],
+  "commits": []
+}

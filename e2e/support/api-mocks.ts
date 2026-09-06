@@ -90,6 +90,45 @@ function guestProfiles(count: number): unknown[] {
   }));
 }
 
+/**
+ * `CreateWeddingConfigDtoAgendaItemsInner[]` (T369) — mirrors the DS kit's
+ * own `schedule.data.js` `WEDDING_SCHEDULE.items` (same times/titles/
+ * statuses) so `/schedule`'s timeline and its "N confirmed · M planned"
+ * note render real, comparable content instead of the prior empty list
+ * (no spec depended on the empty array — grepped `e2e/` for `agenda`
+ * before adding this). Per-locale `title`/`desc` repeat the same English
+ * copy across `es`/`en`/`fr`: this is API *fixture* data standing in for
+ * translated content already returned by the real backend, not
+ * user-facing app copy — CLAUDE.md hard rule 8 governs the latter, not a
+ * network stub.
+ */
+function agendaItems(): unknown[] {
+  const mk = (
+    id: string,
+    time: string,
+    title: string,
+    desc: string,
+    status: 'planned' | 'confirmed' | 'cancelled',
+    highlight = false,
+  ) => ({
+    id,
+    status,
+    highlight,
+    time,
+    title: { es: title, en: title, fr: title },
+    desc: { es: desc, en: desc, fr: desc },
+    venueId: null,
+  });
+  return [
+    mk('a1', '15:30', 'Welcome', 'Drinks under the olive trees', 'confirmed', true),
+    mk('a2', '16:30', 'Ceremony', 'Religious ceremony', 'confirmed', true),
+    mk('a3', '17:30', 'Aperitivo', 'Vermouth & jamón · Patio', 'confirmed'),
+    mk('a4', '19:00', 'Dinner', 'Long table, candlelit · Salón', 'planned', true),
+    mk('a5', '22:00', 'Dancing', 'Until the morning · Jardín', 'planned'),
+    mk('a6', '03:00', 'Late bites', 'Tortilla & coffee · Patio', 'cancelled'),
+  ];
+}
+
 /** `WeddingConfigResponseDto` (admin `GET /v1/config`, `ConfigManager`'s own
  *  read) — a different, larger document than `CONFIG_PUBLIC` above, which is
  *  the read-only public mirror. `dietaryPreferencesCount` seeds the
@@ -111,7 +150,7 @@ function weddingConfigAdmin(dietaryPreferencesCount: number): unknown {
     country: 'ES',
     rsvpDeadline: '2026-09-01T00:00:00.000Z',
     venues: [],
-    agenda: { status: 'provisional', items: [] },
+    agenda: { status: 'provisional', items: agendaItems() },
     hotels: [],
     dietaryPreferences: Array.from({ length: dietaryPreferencesCount }, (_, i) => ({
       id: `e2e-dietary-${i}`,
@@ -176,6 +215,35 @@ function milestoneItems(count: number): unknown[] {
   });
 }
 
+/**
+ * `RsvpDto` for the signed-in guest fixture (T369) — backs
+ * `GET/POST /v1/rsvp/{guestId}`, the own-record read `Rsvp.ngOnInit` awaits
+ * before deciding whether to auto-provision one. Without this route the
+ * request fell through to the `**\/v1/**` catch-all (501), `rsvp()` stayed
+ * `undefined`, and `/rsvp` rendered nothing — a known fixture gap (T367
+ * `risks[]`). Only registered when `opts.rsvpStatus` is set (see
+ * `installApiMocks`) — every existing caller (`signInAsGuest` included)
+ * gets the prior, unchanged 501 behaviour, because `LoginService
+ * .postLoginUrl()` reads this same endpoint right after sign-in and sends
+ * a guest whose RSVP is missing/`pending` to `/rsvp` instead of their
+ * normal `/me` landing page: turning this fixture on unconditionally would
+ * have silently redirected every `signInAsGuest` caller in the suite.
+ */
+function guestRsvp(status: 'pending' | 'attending' | 'declined'): unknown {
+  return {
+    id: GUEST_ID,
+    version: 1,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    status,
+    adults: {
+      partner1: { id: GUEST_ID, firstName: 'Gina', lastName: 'Guestson', attending: true },
+    },
+    children: [],
+    submittedBy: GUEST_ID,
+  };
+}
+
 async function json(route: Route, body: unknown, status = 200): Promise<void> {
   await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 }
@@ -196,6 +264,11 @@ export async function installApiMocks(
      *  `signInAsCouple`) or 'guest' (`signInAsGuest`, hub ADR-0045 §2's
      *  guest primary surface). */
     role?: 'bride' | 'guest';
+    /** T369: when set, registers `GET/POST /v1/rsvp/{guestId}` so the
+     *  signed-in guest's own RSVP resolves to real content instead of the
+     *  unmocked-501 catch-all — see `guestRsvp`'s own doc for why this is
+     *  opt-in rather than always on. */
+    rsvpStatus?: 'pending' | 'attending' | 'declined';
   } = {},
 ): Promise<void> {
   const guestCount = opts.guestCount ?? 40;
@@ -250,6 +323,11 @@ export async function installApiMocks(
 
   await page.route('**/v1/rsvp?*', (route) => json(route, { items: [], nextCursor: null }));
   await page.route('**/v1/rsvp', (route) => json(route, { items: [], nextCursor: null }));
+  // Own-record read/create (T369, opt-in) — see `guestRsvp`'s own doc.
+  if (opts.rsvpStatus) {
+    const rsvp = guestRsvp(opts.rsvpStatus);
+    await page.route(`**/v1/rsvp/${GUEST_ID}`, (route) => json(route, rsvp));
+  }
 
   await page.route('**/v1/notifications/unread-count', (route) => json(route, { count: 0 }));
 

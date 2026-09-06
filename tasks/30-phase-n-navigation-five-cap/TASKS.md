@@ -251,3 +251,54 @@
   the parity spec passes and **fails when the fix is reverted** (prove once); occlusion guard,
   layout suite, unit tests, lint, build all green; es/en/fr countdown strings verified
   single-language.
+
+### T369 — Design-parity rescan: every implemented screen measured against the kit (owner-requested)
+- **Status:** done — 9 screen pairs measured, both breakpoints. 5 conform exactly and ship
+  green (Guest/Home, Couple/Home, Guest/People, Couple/Milestones, Couple/Settings); 4 carry
+  recorded deviations under `test.fixme()` (Guest/Schedule: 4, Guest/RSVP: 1, Couple/Manage ·
+  Overview: 2 structural, Couple/Guests: 1 mobile-only) — exact kit/app numbers in
+  `reports/T369-parity-table.md`. Extended `e2e/helpers/ds-kit.ts` with reusable
+  `boxOf`/`stylesOf`/`kitContentColumnBox`/`expectClose` plus the Home-subnav measurers
+  (moved from `design-parity-home.spec.ts` so `design-parity-dashboard.spec.ts` could reuse
+  them). Found and fixed a real harness bug: `openDsKitScreen` didn't force a real desktop
+  viewport on the kit's own page, so the kit's `calc(100vw - 32px)` frame silently shrank
+  under the suite's four mobile-emulation projects, producing false width-metric failures —
+  fixed by pinning the kit page to 1280×900 when `device: 'Desktop'` is requested. Extended
+  two test fixtures (`api-mocks.ts`, allowed): guest RSVP's own-record mock (opt-in
+  `rsvpStatus`, since making it unconditional would have redirected every `signInAsGuest`
+  caller via `postLoginUrl()`'s pending-RSVP rule) and the previously-empty `agenda.items`
+  (mirrored from the kit's `schedule.data.js`). No DS-side (kit-off-grid) findings filed —
+  every deviation traced to an existing app token not yet adopted by that screen (`--text-micro`,
+  the `--space-*` half-step `calc()` pattern T368 established). `pnpm lint` green (5
+  documented pre-existing ESLint errors unchanged, stylelint/ds fidelity clean); `npx ng test
+  --watch=false` 603/603 (unchanged); `pnpm build` clean (2658 bytes, unchanged). Full local
+  Playwright run, 5 projects: 235 passed, 5 failed (confirmed pre-existing
+  `guest-manager-scrolled-header.spec.ts`, unrelated), 50 skipped (35 new `test.fixme()` cases
+  + 15 pre-existing `seating-plan` skips). No screen was fixed — the owner triages the
+  deviation list. Report: `reports/T369.json`.
+- **ADR:** hub ADR-0044 (the DS is the spec; the implementer's "design-fidelity evidence"
+  amendment, 2026-09-06); ADR-0045 (five-cap IA, the screens this rescan covers)
+- **Context:** T368 fixed Home's own visual defect and built the parity harness
+  (`e2e/helpers/ds-kit.ts` + `e2e/layout/design-parity-home.spec.ts`) — every check had been
+  green while the screen shipped visually wrong. The owner wants the same harness run against
+  every other implemented screen: which ones deviate from the kit the way Home did?
+- Screen pairs measured (kit role/view ↔ app path/role), per breakpoint (kit Desktop ↔ app
+  1280×900; kit Mobile ↔ app 390×844): Guest/Home ↔ `/me` (guest, extends the existing spec);
+  Couple/Home ↔ `/dashboard` (couple); Guest/Schedule ↔ `/schedule` (guest); Guest/RSVP ↔
+  `/rsvp` (guest, extends the `GET/POST /v1/rsvp/{guestId}` mock so real content renders —
+  known fixture gap, T367 risks[]); Guest/People ↔ `/people` (guest); Couple/"Manage ·
+  Overview" ↔ `/overview` (couple); Couple/Guests ↔ `/guests` (couple); Couple/Milestones ↔
+  `/milestones` (couple); Couple/Settings ↔ `/config` (couple).
+- Per screen: content-column left alignment, header-bottom → first-content gap, content column
+  width (vs `../wedding-ui-design/contract/ds-contract.json` `screens[<Screen>].shell.maxWidth`
+  where present), page/section background colors, and 2-4 signature elements' computed
+  color/font-size/weight/padding.
+- **Acceptance:** a `e2e/layout/design-parity-<screen>.spec.ts` per screen pair, committed;
+  conforming screens ship green (no `fixme`); deviating screens ship with the deviating
+  assertions under `test.fixme()` and the deviation recorded precisely (screen, breakpoint,
+  metric, kit value, app value) in the report and `reports/T369-parity-table.md`; DS-side
+  off-grid values (the kit itself violates the token grid) are filed in
+  `../wedding-ui-design/contract/FINDINGS.md` under Open instead, never reported as an app
+  deviation; full parity suite (new + T368's) runs, `pnpm lint`/`npx ng test --watch=false`/
+  `pnpm build` all green; no screen is fixed by this task — the owner triages the deviation
+  list first.
