@@ -1,0 +1,89 @@
+{
+  "task": "T365",
+  "status": "complete_with_deviation",
+  "summary": "Added es/en/fr values for nav.manage, nav.overview, home.today/gettingThere/goodToKnow/subnavAriaLabel and manage.backToApp — keys T361-T364 left unwired. Also fixed a key-path collision T364 left: good-to-know.html read its pill label and its empty-state copy off the same home.goodToKnow path, which ngx-translate cannot resolve both ways — renamed the empty-state pair to home.goodToKnowEmpty.title/body, matching milestones.empty* naming. Proved parity with a script diffing all three locale files' key sets and resolving every used key to a string leaf in each.",
+  "acceptance": [
+    {
+      "criterion": "nav.manage, home.today, home.gettingThere, home.goodToKnow, manage.backToApp (+ any T361-T364 strings) in es/en/fr, es first (product default)",
+      "met": true,
+      "evidence": "public/i18n/{es,en,fr}.json: nav.manage (Gestionar/Manage/Gérer), nav.overview (Resumen/Overview/Aperçu — the Manage Overview destination navLabel at src/app/app.routes.ts:180), home.today (Hoy/Today/Aujourd'hui), home.gettingThere (Cómo llegar/Getting there/S'y rendre), home.goodToKnow (Información útil/Good to know/Bon à savoir), home.subnavAriaLabel (Secciones de inicio/Home sections/Sections de l'accueil — src/app/shared/home-subnav/home-subnav.html:1), manage.backToApp (Volver a la app/Back to app/Retour à l'application). All added es-key-first inside each file's existing nav block plus new home/manage top-level objects. Also renamed+added home.goodToKnowEmpty.title/body (Todavía no hay nada aquí…/Nothing here yet…/Rien ici pour l'instant…) to unblock src/app/shared/good-to-know/good-to-know.html, which the T361-T364 grep surfaced as broken (see summary)."
+    },
+    {
+      "criterion": "Sentence case, no title case",
+      "met": true,
+      "evidence": "All nine new strings across all three locales are sentence case (single words/phrases with no internal capitalization beyond the first character or proper nouns): e.g. 'Getting there', 'Cómo llegar', 'Bon à savoir', 'Back to app', 'Volver a la app', 'Retour à l'application' — verified by eye against every neighbouring key in the same files (nav.*, milestones.empty*, guest_manager.action.back, rsvp.hub.back)."
+    },
+    {
+      "criterion": "no missing-key warnings in any locale",
+      "met": true,
+      "evidence": "Throwaway verification script (not committed — see risks for why): flattened all three public/i18n/*.json to dotted paths and diffed key sets restricted to the nav./home./manage. namespaces this task owns — all three locales identical (14 nav.* keys, 6 home.* keys, 1 manage.* key, es==en==fr: True for each). Separately scraped every literal \"'<key>' | translate\" usage from src/app/**/*.html (400 distinct keys) plus the five T361-T364 dynamic labelKey/navLabel keys (nav.overview, nav.manage, home.today, home.gettingThere, home.goodToKnow) and resolved each against all three locale files using the same dict-descent algorithm ngx-translate's getValue uses: 0 keys unresolved to a string leaf across the T365 key set. Full run also surfaced one pre-existing, unrelated missing key (rsvp.hub.detail.declinedSub, from commit 289bd39, all three locales) and a handful of pre-existing en-only vs es/fr-only keys under welcome./shared. — both out of scope for T365, filed in risks below rather than fixed silently."
+    },
+    {
+      "criterion": "translations reviewed against the DS voice (\"warm, personal\" — readme Content fundamentals)",
+      "met": true,
+      "evidence": "Read ../wedding-ui-design/README.md § Content fundamentals before writing copy, then matched register to neighbouring keys already in the files rather than inventing one: es uses tú (informal singular, matching rsvp.create.attending.subtitle 'responde'/'puedes editarlo') for the guest-facing goodToKnowEmpty copy; fr uses vous (matching invitee.schedule.noEvents-adjacent strings 'Ouvrez l'application'); 'Volver a la app'/'Retour à l'application' reuse the exact app/application loanword choice already established in privacyPolicy's Google Maps strings ('Abre la app'/'Ouvrez l'application') rather than a fresh calque. home.gettingThere and nav.manage reuse the exact wording already live for the same concept elsewhere (nav.travel='Cómo llegar'/'S'y rendre'; dashboard.manage.title='Gestionar'/'Manage'/'Gérer') instead of a second, divergent phrase for the same idea."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "home.goodToKnow.emptyTitle / home.goodToKnow.emptyBody (as named in the task prompt, mirroring T364's own code)",
+      "to": "home.goodToKnowEmpty.title / home.goodToKnowEmpty.body",
+      "reason": "home.goodToKnow is also used as the pill row's own label (src/app/shared/home-subnav/home-subnav.ts's labelKey). ngx-translate's getValue() only descends through a path segment when it is a dict (or the final segment) — so 'home.goodToKnow' cannot simultaneously be a string leaf (the pill label) and a dict parent of .emptyTitle/.emptyBody (the empty-state copy) in the same JSON tree. One of the two reads would always fail and render its raw key. Renamed the empty-state pair only, one line each in good-to-know.html, preserving the pill label's own key untouched.",
+      "authorized_by": "T365 task text's own scope line: 'translation values in all three locales plus any key wiring the previous tasks left incomplete' — this is exactly that: a wiring defect in the keys T364 introduced, not a new capability or restyle.",
+      "verified_how": "Read ngx-translate's actual getValue() source (node_modules/@ngx-translate/core/fesm2022/ngx-translate-core.mjs:259) and traced both key shapes through it by hand; then reproduced the fix's correctness with the verification script's dict-descent check (see acceptance[2] evidence) — 0 keys resolve to a non-string across the new home.* set post-fix."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit): no output, exit 0."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": { "total": 603, "failing": 0 },
+      "after": { "total": 603, "failing": 0 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2658,
+      "global_stylesheet_bytes_after": 2658,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget by 302.63 kB (pre-existing)",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget by 8.84 kB (pre-existing)",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget by 3.54 kB (pre-existing)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget by 1.56 kB (pre-existing)",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget by 3.90 kB (pre-existing)"
+      ]
+    }
+  },
+  "files": {
+    "added": [],
+    "modified": [
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "src/app/shared/good-to-know/good-to-know.html"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "rsvp.hub.detail.declinedSub (used by src/app/screens/rsvp/delegate-edit/delegate-edit.html:20) is missing from all three locale files — pre-existing since commit 289bd39, unrelated to nav.manage/home/manage. Renders the raw key to a delegate viewing a declined subject's RSVP detail.",
+      "surfaces_at": "Any RSVP-delegation task touching delegate-edit.html, or a future locale-completeness sweep."
+    },
+    {
+      "risk": "welcome./shared. carry pre-existing, unrelated key drift between en and es/fr: en has shared.bride/shared.groom/welcome.couple.bride/welcome.couple.groom/welcome.couple.quote/welcome.location that es/fr lack, while es/fr have grenade/spain/welcome.tagline/guest_manager.header.headCount (this last one duplicated, appearing at two different paths in es/fr) that en lacks. Not introduced by T361-T365 and not touched here.",
+      "surfaces_at": "A future welcome-screen or guest_manager.header task, or a locale-completeness audit."
+    }
+  ],
+  "commits": [
+    "f756fca"
+  ]
+}

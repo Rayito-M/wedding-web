@@ -101,7 +101,21 @@
   holds (ADR-0041 §3 — the umbrella adds no second scroller); layout suite green.
 
 ### T365 — Labels in three locales
-- **Status:** todo
+- **Status:** done — with one deviation (see report): also added `nav.overview` and
+  `home.subnavAriaLabel`, which the code already referenced but the task text didn't name.
+  Found and fixed a key-path collision T364 left unwired: `good-to-know.html` read its pill
+  label and its own empty-state copy off the same `home.goodToKnow` path, which ngx-translate's
+  `getValue` cannot resolve both as a string leaf and a dict parent — renamed the empty-state
+  pair to `home.goodToKnowEmpty.title`/`.body`, matching the `emptyXxx.title/body` convention
+  `milestones.empty*` already uses. `pnpm lint` green (5 documented pre-existing ESLint errors
+  unchanged, stylelint 0 new, ds fidelity 31/31 clean); `npx ng test --watch=false` 603/603
+  (unchanged); `pnpm build` clean, global stylesheet unchanged (2658 bytes). Verified "no
+  missing-key warnings" with a throwaway script (not committed) diffing all three locale files'
+  flattened key sets and resolving every literal `| translate` usage plus the T361-T364 dynamic
+  labelKeys against all three locales — full parity, 0 unresolved. Found pre-existing, unrelated
+  drift (not fixed, filed in report `risks`): `rsvp.hub.detail.declinedSub` missing in all three
+  locales (commit `289bd39`), and a handful of `welcome.*`/`shared.*` keys present in `en` but
+  not `es`/`fr` or vice versa. Report: `reports/T365.json`.
 - **ADR:** hub ADR-0045 (constraints)
 - `nav.manage`, `home.today`, `home.gettingThere`, `home.goodToKnow`, `manage.backToApp` (+ any
   T361-T364 strings) in es/en/fr, es first (product default). Sentence case, no title case.
