@@ -72,7 +72,24 @@
   at mobile + `--bp-lg`; keyboard focus ring on the standout pill (focus-ring recipe).
 
 ### T364 — Home becomes the umbrella; Manage becomes an area
-- **Status:** todo
+- **Status:** done — with deviations (see report): Manage's Overview reuses `Dashboard`
+  unchanged, mounted at a new `/overview` route (one component, two modes, matching DS
+  `ScreenHome`'s own `overview` flag), superseding T362's interim `guests` standout per the
+  settled decision. `/travel` redirects via a `canActivate` guard, not `Route.redirectTo`
+  (Angular rejects the two together, `NG04014`). "Good to know" renders as an honest empty
+  state — no such content, screen or DTO field exists anywhere in the product to re-arrange,
+  and the feature's own scope note (hub `docs/features/navigation-five-cap-manage.md` §6)
+  rules out inventing a new capability here; flagged non-blocking in `decisions_needed`.
+  `pnpm lint` green (5 documented pre-existing ESLint errors unchanged, stylelint 0 new,
+  ds fidelity 31/31 clean); `npx ng test --watch=false` 603/603 (up from 602); `pnpm build`
+  clean. e2e (local-only): the unit layout suite is 100% green; of the local e2e layout
+  suite, 2 failures (`guest-manager-scrolled-header.spec.ts`) reproduce identically against
+  this task's own pre-change starting commit in a from-scratch worktree (pre-existing,
+  unrelated) and 3 (`config-manager.spec.ts`, desktop only) are a necessary, ADR-mandated
+  consequence of this task's own "section-controlled mode" bullet making that pre-existing
+  spec's desktop-rail premise stale — both documented precisely in `reports/T364.json` for
+  T366, whose own acceptance bullet already covers reconciling every pre-existing journey.
+  Report: `reports/T364.json`.
 - **ADR:** hub ADR-0045 §3/§4
 - Home (dashboard/invitee): pill row Today · Getting there · Good to know (DS `AppShell.subnav`);
   travel and good-to-know content render as Home sections; `/travel` (and any info URL)

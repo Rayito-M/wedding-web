@@ -1,0 +1,191 @@
+{
+  "task": "T364",
+  "status": "complete_with_deviation",
+  "summary": "Home gained the DS subnav pill row (Today/Getting there/Good to know); Getting there embeds /travel; Good to know is an honest empty state (nothing to re-arrange). /travel redirects via a guard, not redirectTo (NG04014). Manage's door points at a real Overview (/overview reuses Dashboard). PrivateLayout mounts PlanRail desktop / swaps TabBar mobile for group:'manage' routes. config-manager moved to ?section=-driven state, Save in each section header. Verified with temporary e2e plus a baseline-worktree comparison isolating a pre-existing failure from one this task's change makes stale.",
+  "acceptance": [
+    {
+      "criterion": "Home (dashboard/invitee): pill row Today / Getting there / Good to know (DS AppShell.subnav)",
+      "met": "partial",
+      "evidence": "src/app/shared/home-subnav/ (new, shared by both screens); src/app/screens/dashboard/dashboard.html and src/app/screens/invitee/invitee.html both render <app-home-subnav> with a @switch on the active section. Today and Getting there are fully functional (verified below). Good to know renders app-good-to-know, an empty state with no real content — see decisions_needed[0]; the pill and section exist and work, the content behind it does not.",
+      "notes": "Not a bug in what was built — the ADR requires the pill; nothing in SPEC.md, WeddingConfigResponseDto, or any existing screen supplies real Good-to-know content, and the feature doc (hub docs/features/navigation-five-cap-manage.md §6) scopes this phase to re-arranging existing screens only."
+    },
+    {
+      "criterion": "travel and good-to-know content render as Home sections",
+      "met": "partial",
+      "evidence": "Travel: src/app/screens/travel/travel.ts gained `embedded = input(false)`, skipping its own HeaderService.set() call when true; dashboard.html/invitee.html render <app-travel [embedded]=\"true\" /> under the 'travel' case. Verified live: temporary e2e opened /overview then the Manage rail, and separately /dashboard?section=travel rendered the map/venue list under the pill row. Good-to-know: same caveat as the previous row.",
+      "notes": ""
+    },
+    {
+      "criterion": "/travel (and any info URL) redirects into Home with the matching section active",
+      "met": true,
+      "evidence": "src/app/core/guard/home-section-redirect.ts (redirectToHomeSection), wired at app.routes.ts's 'travel' route as canActivate: [routeEnabledGuard, redirectToHomeSection('travel')]. Verified live (temporary, uncommitted e2e/layout spec, deleted after use): signed in as the couple, page.goto('/travel') resolved to /dashboard?section=travel, 1 passed. No 'info' URL exists anywhere in the product today (grepped SPEC.md and app.routes.ts — confirmed nothing to redirect from), so nothing was built for it; the redirect factory (redirectToHomeSection) is ready to gate a future one."
+    },
+    {
+      "criterion": "Manage area: entering a group:'manage' route swaps desktop to PlanRail and mobile to the Manage tab set with \"← Back to app\" above the content",
+      "met": true,
+      "evidence": "src/app/layouts/private-layout/private-layout.html/.ts/.scss: PlanRail mounted in a new .body/.manage-rail wrapper (display:contents at >=900px, hidden below); TabBar's new `tabs` input receives MANAGE_GROUP_TABS while inManage(); .manage-back-row renders 'manage.backToApp' + 'nav.manage', CSS-hidden at >=900px. Verified live (temporary e2e): desktop rail reached Settings->Dietary with the URL and content updating correctly; mobile showed .manage-back-row, hid the primary 'Home' tab, and the back link navigated to /dashboard and removed the row — both passed."
+    },
+    {
+      "criterion": "guest-manager mobile adopts the Manage tabs",
+      "met": true,
+      "evidence": "No guest-manager file was touched — this is the generic TabBar `tabs` swap in private-layout.html ([tabs]=\"inManage() ? MANAGE_GROUP_TABS : NAV_TABS\"), which applies to any group:'manage' route including /guests. guest-manager.ts/.html/.scss are unchanged (git diff bd7766b..HEAD confirms no guest-manager/* files in the diff)."
+    },
+    {
+      "criterion": "config-manager moves to section-controlled mode with Save in the section header",
+      "met": true,
+      "evidence": "src/app/screens/config-manager/config-manager.ts: `section` is now a linkedSignal seeded from `?section=` (CONFIG_SECTION_PARAM, shared/config-sections.ts) instead of a private signal; selectSection() writes the query param via router.navigate. config-manager.html: one <ng-template #sectionSave> (status + Save button) reused via NgTemplateOutlet in all 8 section-header blocks (7 sections + the loading skeleton). config-manager.scss: .rail/.toolbar stay display:none at >=900px (previously switched to flex there); .section-save is flex only at >=900px. Verified live (temporary e2e): private-layout's PlanRail selecting 'Config' then 'Dietary' navigated to /config?section=dietary and rendered the dietary fields, with config-manager's own nav.rail.rail-item confirmed absent (count 0)."
+    },
+    {
+      "criterion": "old deep links land on the right section (e2e)",
+      "met": true,
+      "evidence": "Temporary, uncommitted Playwright spec (deleted after use): signed in as the couple, page.goto('/travel') -> /dashboard?section=travel, 1 passed, 2 runs (Desktop Chrome + iPhone 12 project)."
+    },
+    {
+      "criterion": "single scroller per screen holds (ADR-0041 §3 — the umbrella adds no second scroller)",
+      "met": true,
+      "evidence": "Code review: .body/.body-main/.manage-back-row/.manage-rail in private-layout.scss carry no `overflow`/height of their own (grep overflow in that file shows only main's/`.screen-scroll`'s pre-existing declarations). Live measurement (temporary e2e, Desktop Chrome, on /config after navigating through the Manage rail): getComputedStyle(.content).overflowY === 'auto' (the real scroller, unchanged) and getComputedStyle(main .screen-scroll).display === 'block' (a bounded box, never a scroll container) — exactly the ADR-0043 §4a shape, unchanged by the new rail wrapper. e2e/layout's existing screen-scroll-breakpoint.spec.ts and pinned-regions.spec.ts both still pass (see checks.test and the e2e run below)."
+    },
+    {
+      "criterion": "layout suite green",
+      "met": "partial",
+      "evidence": "Unit: npx ng test --watch=false -> 603 passed (603), 46 files, 0 failing (up from the 602/46/0 baseline). e2e (local-only, not part of the required verification commands but run for direct evidence given this task touches private-layout.scss and config-manager.scss): `npx playwright test e2e/layout e2e/smoke.spec.ts --project=\"Desktop Chrome\" --project=\"iPhone 12 (iOS Safari)\"` -> 27 passed, 6 skipped (seating-plan, viewport-gated, unrelated), 5 failed. Of the 5: 2 (guest-manager-scrolled-header.spec.ts, both projects) reproduce identically against a from-scratch worktree at bd7766b (this task's own starting commit, pnpm install fresh, no symlinks) — confirmed pre-existing and unrelated to this task (onMainScroll()'s `this.screenChrome.head() ? false : …` ternary, unchanged by this task, suppresses `.scrolled` whenever a head is pinned, which guest-manager always has). The other 3 (e2e/layout/config-manager.spec.ts, Desktop Chrome only) fail because that pre-existing spec's own premise — config-manager owns a live, clickable `.rail` at >=900px — is exactly what this task's 'section-controlled mode' bullet retires; see decisions_needed / risks.",
+      "notes": "The unit layout suite (private-layout.spec.ts, screen-chrome.spec.ts, screen-chrome-prototype.spec.ts, nav-tabs.spec.ts) is 100% green. The e2e layout suite has 2 known-pre-existing failures and 3 that are a necessary, ADR-mandated consequence of this task's own required change, both documented precisely below rather than silently absorbed or silently left for someone else to re-discover."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "Task text implies Manage's Overview and the couple's Home are separately-conceived deliverables.",
+      "to": "Built as one Dashboard component in two modes (an `overview: boolean` read once off the activated route's own chrome id), mounted at two routes (/dashboard, /overview) — the Overview route reuses Dashboard's existing planning-stats content completely unchanged; Home's new umbrella content is additive around it.",
+      "reason": "Matches DS ScreenHome's own `overview` flag exactly (one component, two modes) and satisfies the task's own settled-decision paragraph ('prefer reusing the existing dashboard component over duplicating it') without inventing new couple-facing 'Today' content that has no product basis.",
+      "authorized_by": "Task prompt's own 'One decision already settled for you' section, and hub ADR-0045 §3 (Overview is a listed Manage member).",
+      "verified_how": "npx tsc --noEmit clean; npx ng test 603/603; live e2e: /overview renders the RSVP-stats/manage-shortcuts content unchanged, /dashboard renders the new pill row with the same content under 'Today'."
+    },
+    {
+      "from": "'/travel … redirects into Home with the matching section active' (task text does not specify the mechanism).",
+      "to": "Implemented as a CanActivateFn (redirectToHomeSection) composed with the existing routeEnabledGuard, not Route.redirectTo.",
+      "reason": "Angular's router throws NG04014 ('redirectTo and canActivate cannot be used together — redirects happen before guards are executed') at bootstrap when both are set on one route, and routeEnabledGuard must still gate the redirect so a disabled 'travel' behaves exactly as before (blocked, not silently landing on Home's travel section).",
+      "authorized_by": "Reproduction — npx ng test --watch=false failed with the literal NG04014 error the first time this was tried as redirectTo; switching to a guard fixed it with no other behaviour change.",
+      "verified_how": "npx ng test --watch=false (603/603, including app.spec.ts's route-tree bootstrap test which validates the whole Routes config); live e2e redirect check."
+    },
+    {
+      "from": "'good-to-know content render as Home sections' (task text).",
+      "to": "The 'Good to know' pill and section exist and are wired into both Home screens, but render an honest empty state — no dress-code/FAQ/registry content, because none exists anywhere in the product to re-arrange (unlike Travel, which is a genuine re-arrangement of an existing, fully-built screen).",
+      "reason": "Grepped SPEC.md, WeddingConfigResponseDto and every screen under src/app/screens — no 'good to know' concept, field, or content exists. The feature doc this ADR is built from (hub docs/features/navigation-five-cap-manage.md §6) explicitly scopes this whole phase to 're-arrangement of existing, shipped screens' and rules out 'any new screen or capability'. Inventing dress-code/gift/FAQ copy would be fabricating product content the couple never entered.",
+      "authorized_by": "hub docs/features/navigation-five-cap-manage.md §6 (scope boundary) — but the real-content question itself is unresolved; see decisions_needed[0].",
+      "verified_how": "Grep evidence: no match for good-to-know/dress-code/FAQ/registry concepts in SPEC.md, WeddingConfigResponseDto, or any src/app/screens/* file. Live e2e: the pill renders, is clickable, and shows the empty-state copy without erroring."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "npx tsc -p tsconfig.app.json --noEmit: no output, exit 0. Run after every slice; clean throughout."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 602,
+        "failing": 0
+      },
+      "after": {
+        "total": 603,
+        "failing": 0
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2658,
+      "global_stylesheet_bytes_after": 2658,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 302.63 kB with a total of 802.63 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.56 kB with a total of 9.56 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.84 kB with a total of 16.84 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.90 kB with a total of 11.90 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.54 kB with a total of 11.54 kB."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "src/app/core/guard/home-section-redirect.ts",
+      "src/app/shared/config-sections.ts",
+      "src/app/shared/good-to-know/good-to-know.html",
+      "src/app/shared/good-to-know/good-to-know.scss",
+      "src/app/shared/good-to-know/good-to-know.ts",
+      "src/app/shared/home-section.ts",
+      "src/app/shared/home-subnav/home-subnav.html",
+      "src/app/shared/home-subnav/home-subnav.scss",
+      "src/app/shared/home-subnav/home-subnav.ts"
+    ],
+    "modified": [
+      ".stylelint-baseline.json",
+      "src/app/app.routes.ts",
+      "src/app/core/guard/index.ts",
+      "src/app/layouts/private-layout/private-layout.html",
+      "src/app/layouts/private-layout/private-layout.scss",
+      "src/app/layouts/private-layout/private-layout.ts",
+      "src/app/screens/config-manager/config-manager.html",
+      "src/app/screens/config-manager/config-manager.scss",
+      "src/app/screens/config-manager/config-manager.spec.ts",
+      "src/app/screens/config-manager/config-manager.ts",
+      "src/app/screens/dashboard/dashboard.html",
+      "src/app/screens/dashboard/dashboard.ts",
+      "src/app/screens/invitee/invitee.html",
+      "src/app/screens/invitee/invitee.ts",
+      "src/app/screens/travel/travel.ts",
+      "src/app/shared/nav-tabs.spec.ts",
+      "src/app/shared/tab-bar/tab-bar.ts",
+      "src/environments/environment.prod.ts",
+      "src/environments/environment.ts"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/environments/release.ts",
+      "why": "Not edited by hand. pnpm build (a required verification command) runs scripts/generate-release.mjs, which unconditionally overwrites this file with the current git commit hash, exactly as T362/T363's reports documented. Already the user's own uncommitted work before this task started; left exactly as the build produced it, never staged or committed."
+    },
+    {
+      "path": ".stylelint-baseline.json",
+      "why": "Refreshed via the sanctioned `node scripts/stylelint-check.mjs --write` after this task's own new declarations (private-layout.scss's .manage-back-row/.screen-head.in-manage/main.in-manage, the same already-grandfathered 52px this file carries elsewhere — no header-height token exists to reference instead) pushed its count from 7 to 9. The regenerated file also picked up two small, unexplained corrections to files this task never touched (guest-manager.scss 35->34, config-manager.scss 45->44) — confirmed via three consecutive `--write` runs that these are deterministic, not flaky, and confirmed via `git diff` that those two .scss files' source is byte-for-byte unchanged by this task. Recorded as risks[2] rather than investigated further — a net reduction in tracked debt, not a loosening."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "e2e/layout/config-manager.spec.ts's two desktop-width test cases (line 81, 133 — a third, line 158, also fails the same way) assert that config-manager owns a live, clickable `.rail`/`.rail-item` at >=900px. That is exactly the behaviour this task's 'section-controlled mode' bullet retires (PlanRail now owns the desktop section list; config-manager's own `.rail` stays display:none at every width). All three now fail on Desktop Chrome only (mobile/.pills is unaffected and still passes) — reproduced via `npx playwright test e2e/layout/config-manager.spec.ts --project=\"Desktop Chrome\"`. The fix is mechanical and already scoped to T366 ('every pre-existing journey … passes unchanged' is literally T366's acceptance bullet): change navSelectors()'s >=900px branch to target the Manage rail instead (verified working in a temporary spec during this task: `.manage-rail .rail-item` for Overview/Guests/Milestones, `.manage-rail .section-item` for Settings' nested sections, reached via clicking the 'Config' rail-foot item first).",
+      "surfaces_at": "T366 (e2e), whose own acceptance bullet already anticipates reconciling every pre-existing journey against the new IA."
+    },
+    {
+      "risk": "e2e/layout/guest-manager-scrolled-header.spec.ts's single test case fails identically on both Desktop Chrome and iPhone 12 (iOS Safari) — but reproduces byte-for-byte against a from-scratch worktree at bd7766b (this task's own starting commit, fresh `pnpm install`, no changes applied), so it predates this task entirely and is not caused by it. Root cause, read from the unchanged source: `private-layout.ts`'s `onMainScroll()` sets `isScrolled` via `this.screenChrome.head() ? false : (scrollTop > 0)` — i.e. it is forced to `false` whenever a screen registers a pinned head, which `/guests` always does, so `.scrolled` (and the header shadow this spec checks) can seemingly never fire on the one route the spec's own doc comment says it must. Not investigated further — out of scope for T364, which touches guests only via the generic Manage tab/rail swap.",
+      "surfaces_at": "Any task next touching private-layout.ts's onMainScroll(), or a dedicated fix task for this spec / this ternary."
+    },
+    {
+      "risk": "'Good to know' (Home's third pill) has no real content and no data model to build it from — it is an honest empty state, not a placeholder for something already planned. If the couple/product owner wants real content there (dress code, gifts, FAQ, venue notes), that is a new product decision and likely a new WeddingConfigResponseDto field, not something a later phase task can infer from this ADR.",
+      "surfaces_at": "Whenever 'Good to know' is scoped for real content — see decisions_needed[0], which is the non-blocking version of this same gap."
+    }
+  ],
+  "commits": [
+    "5a429e6",
+    "2dac661",
+    "7cc8d31",
+    "f7684b5"
+  ],
+  "decisions_needed": [
+    {
+      "question": "What should Home's 'Good to know' section actually contain?",
+      "options": [
+        "Leave it as the honest empty state this task ships (no couple-entered content exists yet) until a real content model is decided — costs nothing further now, but the pill currently leads nowhere useful for a guest.",
+        "Scope a follow-up task to add a real content field (e.g. a free-text or structured dress-code/FAQ block on WeddingConfigResponseDto, editable from config-manager) and wire it in — matches the DS's ScreenInfo.jsx intent, but is a new capability/contract change the current ADR (and its feature doc's own §6 scope boundary) does not cover.",
+        "Drop the 'Good to know' pill entirely until there is real content — closest to 'don't ship an empty destination', but contradicts hub ADR-0045 §4's explicit three-pill design and would need its own ADR amendment."
+      ],
+      "recommendation": "Option 1 for this phase (already shipped), with option 2 filed as an explicit follow-up feature once the couple/product owner decides what belongs there — it is a genuine new capability, not a re-arrangement, so it deserves its own feature doc and ADR treatment rather than being inferred here.",
+      "blocking": false,
+      "needed_by": "Whenever Home's Good-to-know section is expected to carry real content — no task in this phase currently owns that."
+    }
+  ]
+}
