@@ -45,7 +45,7 @@
          from the screen's own injector into this layout's view. Pinned above the
          scroll region — see `.screen-head` in private-layout.scss. -->
     @if (screenChrome.head(); as headTemplate) {
-      <div class="screen-head">
+      <div class="screen-head" [class.in-manage]="inManage()">
         <ng-container [ngTemplateOutlet]="headTemplate" />
       </div>
     }

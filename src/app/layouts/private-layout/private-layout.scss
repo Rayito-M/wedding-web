@@ -99,6 +99,17 @@
 // once — see `main.after-head` below, which drops main's own copy.
 .screen-head {
   margin-top: 52px;
+
+  // `guests` is the one route that is both `group: 'manage'` and a
+  // registered head (hub ADR-0045 §3 / ADR-0042 §1). At mobile widths the
+  // back row above (`.manage-back-row`) is what's actually first under the
+  // fixed header there, so this box must not add a second 52px on top of
+  // it — same "whoever renders first carries the clearance" rule as
+  // `main.in-manage` below, restored at ≥900px where the back row is
+  // CSS-hidden and this head goes back to being first.
+  &.in-manage {
+    margin-top: 0;
+  }
 }
 
 main {
@@ -214,17 +225,22 @@ main {
     padding-bottom: 0;
   }
 
-  // The second selector restores the clearance `main.in-manage:not(.after-head)`
-  // drops below (that base rule has no media guard, so it would otherwise
-  // win here too by specificity): the mobile back row that provides it there
-  // is CSS-hidden at this width, and the rail beside `main` doesn't supply
-  // it either — see the base rule's own comment for the full reasoning.
-  // Shares this declaration rather than repeating the literal `52px` in a
-  // second ruleset (stylelint's `declaration-property-value-disallowed-list`
-  // — this file already carries its own baselined `52px`/`20px` above).
+  // The second/third selectors restore the clearance `main.in-manage:not(.after-head)`
+  // and `.screen-head.in-manage` drop below (those base rules carry no media
+  // guard, so they would otherwise win here too by specificity): the mobile
+  // back row that provides it there is CSS-hidden at this width, and the
+  // rail beside `main` doesn't supply it either — see the base rules' own
+  // comments for the full reasoning. Shares this declaration rather than
+  // repeating the literal `52px` in separate rulesets (stylelint's
+  // `declaration-property-value-disallowed-list` — this file already
+  // carries its own baselined `52px`/`20px` above).
   main,
-  main.in-manage:not(.after-head) {
+  main.in-manage:not(.after-head),
+  .screen-head.in-manage {
     margin-top: 52px;
+  }
+
+  main {
     padding-bottom: 20px;
   }
 
