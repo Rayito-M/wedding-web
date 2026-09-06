@@ -203,3 +203,36 @@
   eyeballed); the occlusion guard passes on every route × role × breakpoint and **fails when
   the fix is reverted** (prove it once); `guests` shows no double clearance; layout suite,
   unit tests, lint, build all green.
+
+### T368 — Home umbrella: pixel parity with the DS AppShell spec (owner-reported)
+- **Status:** todo
+- **ADR:** hub ADR-0045 §4; ADR-0044 (the DS is the spec); DS `ui_kits/wedding-app/AppShell.jsx`
+  lines 40–82 (the authoritative numbers below)
+- **Owner-reported, side-by-side screenshots (2026-09-06), desktop:** the implemented Home
+  umbrella diverges from the DS in at least three measured ways:
+  1. **Alignment**: the pill row hangs at the viewport/gutter left; the DS renders it INSIDE the
+     centered `maxWidth: 900` content column (`padding: 26px 28px 44px`), so its left edge is
+     flush with the greeting/h1 below it.
+  2. **Vertical rhythm**: DS = header → **26px** → pill row → **18px** (`padding: 0 0 18px`) →
+     greeting. The implementation is tight under the header with different spacing.
+  3. **Backgrounds**: the DS pill row has NO band of its own (page `--bg` shows through);
+     unselected pills are `var(--surface)` (white on cream) with a hairline border, selected is
+     `var(--accent)` with transparent border; font 12px / 500; padding `6px 14px`; gap 6.
+     The implementation's row/pill backgrounds differ.
+- **Also on this screen, same standard (fix here):** the invitee countdown heading renders mixed
+  language in es — "Nos vemos en 272 days !" — and the progress caption reads "272 días falta"
+  (should be "Faltan 272 días"). Untranslated units inside a translated string violate the i18n
+  hard rule and the DS voice; check all three locales for the countdown family.
+- **The parity harness (the process half — a permanent, committed artifact):**
+  `e2e/layout/design-parity-home.spec.ts` that serves the design system's kit
+  (`python3 -m http.server` from `../wedding-ui-design`, page
+  `ui_kits/wedding-app/index.html`, desktop device + guest role + home view) and the app
+  side-by-side, and asserts measured equality (±1px) of: pill-row left edge vs h1 left edge;
+  header-bottom→pill-row gap; pill-row→greeting gap; unselected/selected pill computed
+  background/border colors; pill font-size/weight/padding. Metric-based, not raw-pixel-diff,
+  so it is robust to anti-aliasing. This spec is the template for future screen-parity checks —
+  keep the kit-serving + measuring helpers reusable (e.g. `e2e/helpers/ds-kit.ts`).
+- **Acceptance:** every measured metric matches the DS values above (report the numbers);
+  the parity spec passes and **fails when the fix is reverted** (prove once); occlusion guard,
+  layout suite, unit tests, lint, build all green; es/en/fr countdown strings verified
+  single-language.

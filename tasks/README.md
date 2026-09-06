@@ -242,3 +242,4 @@ neither sort nor uniquely name them.
 | **T365** | Labels in three locales | done | `30-phase-n-navigation-five-cap` |
 | **T366** | E2E: the IA holds and nothing regressed | done — Phase N complete | `30-phase-n-navigation-five-cap` |
 | **T367** | Fixed-header clearance misses the rail and the Home subnav | done | `30-phase-n-navigation-five-cap` |
+| **T368** | Home umbrella: pixel parity with the DS AppShell spec | todo | `30-phase-n-navigation-five-cap` |
