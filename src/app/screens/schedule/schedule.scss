@@ -7,7 +7,10 @@
 }
 
 .title-block {
-  padding: 14px t.$space-6 6px;
+  // 12px top — kit `ScreenSchedule.jsx`'s non-wide branch padding
+  // (`'12px 24px 6px'`) — the mobile figure; desktop overrides to 26px
+  // below (T369/T370 parity fix).
+  padding: t.$space-3 t.$space-6 6px;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -58,7 +61,9 @@
   padding: 10px t.$space-3;
   border-radius: t.$radius-md;
   background: var(--surface-chip);
-  font-size: t.$text-caption;
+  // 11px — kit `ScreenSchedule.jsx`'s note block (T369/T370 parity fix;
+  // was `$text-caption` (12px), one step off the kit's own `$text-micro`).
+  font-size: t.$text-micro;
   color: var(--text-muted);
   line-height: 1.5;
 }
@@ -78,6 +83,15 @@
   :host {
     max-width: 620px;
     margin: 0 auto;
+  }
+
+  .title-block {
+    // 26px — kit `AppShell.jsx`'s wide content-column top padding (the
+    // whole-screen wrapper's own gap, since `ScreenSchedule.jsx`'s wide
+    // branch adds none of its own). Not on the text/space token grid at a
+    // single step; composed the same way T368 did for the Home subnav's
+    // identical 26px figure: --space-6 (24px) + half of --space-1 (2px).
+    padding-top: calc(var(--space-6) + var(--space-1) / 2);
   }
 
   .date-badge {

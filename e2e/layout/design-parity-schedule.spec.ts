@@ -22,8 +22,10 @@ import {
  * previously empty, a fixture gap no spec depended on) so both sides render
  * the same six-row timeline, `provisional` status, first row "Welcome".
  *
- * Two deviations found and NOT fixed here (owner triages, task instruction):
- * see the `test.fixme()` blocks below for the exact kit/app numbers.
+ * Four deviations found by the T369 rescan (header-to-title gap at both
+ * breakpoints, note font-size, status-pill fill/border/padding) were fixed
+ * at T370 — every assertion below is now enforced (no `test.fixme()` left
+ * in this file).
  */
 
 const DESKTOP = { width: 1280, height: 900 };
@@ -221,51 +223,51 @@ test.describe('Schedule (guest) — pixel parity with the DS kit (T369)', () => 
     await kitPage.close();
   });
 
-  // — Deviations (owner triages; not fixed here) —
+  // — T369 deviations, fixed at T370 (now enforced) —
 
-  test.fixme(
-    'desktop: header-to-title gap — kit 26px (AppShell.jsx content-column top padding), app 14px (.title-block, unchanged from mobile)',
-    async ({ page, context }) => {
-      const kitPage = await openBoth(kit, context, page, 'Desktop', DESKTOP);
-      const kitM = await measureKitSchedule(kitPage, true);
-      const appM = await measureAppSchedule(page, true);
-      expectClose(appM.titleTop - appM.contentTop, kitM.titleTop - kitM.contentTop, 1, 'header-to-title gap');
-      await kitPage.close();
-    },
-  );
+  test('desktop: header-to-title gap — kit 26px (AppShell.jsx content-column top padding), app now 26px (schedule.scss .title-block, T370)', async ({
+    page,
+    context,
+  }) => {
+    const kitPage = await openBoth(kit, context, page, 'Desktop', DESKTOP);
+    const kitM = await measureKitSchedule(kitPage, true);
+    const appM = await measureAppSchedule(page, true);
+    expectClose(appM.titleTop - appM.contentTop, kitM.titleTop - kitM.contentTop, 1, 'header-to-title gap');
+    await kitPage.close();
+  });
 
-  test.fixme(
-    'mobile: header-to-title gap — kit 12px (ScreenSchedule.jsx non-wide title padding), app 14px (schedule.scss .title-block)',
-    async ({ page, context }) => {
-      const kitPage = await openBoth(kit, context, page, 'Mobile', MOBILE);
-      const kitM = await measureKitSchedule(kitPage, false);
-      const appM = await measureAppSchedule(page, false);
-      expectClose(appM.titleTop - appM.contentTop, kitM.titleTop - kitM.contentTop, 1, 'header-to-title gap');
-      await kitPage.close();
-    },
-  );
+  test('mobile: header-to-title gap — kit 12px (ScreenSchedule.jsx non-wide title padding), app now 12px (schedule.scss .title-block, T370)', async ({
+    page,
+    context,
+  }) => {
+    const kitPage = await openBoth(kit, context, page, 'Mobile', MOBILE);
+    const kitM = await measureKitSchedule(kitPage, false);
+    const appM = await measureAppSchedule(page, false);
+    expectClose(appM.titleTop - appM.contentTop, kitM.titleTop - kitM.contentTop, 1, 'header-to-title gap');
+    await kitPage.close();
+  });
 
-  test.fixme(
-    'note font-size — kit 11px (ScreenSchedule.jsx note block), app 12px (schedule.scss $text-caption), both breakpoints',
-    async ({ page, context }) => {
-      const kitPage = await openBoth(kit, context, page, 'Desktop', DESKTOP);
-      const kitM = await measureKitSchedule(kitPage, true);
-      const appM = await measureAppSchedule(page, true);
-      expect(appM.note?.fontSize).toBe(kitM.note?.fontSize);
-      await kitPage.close();
-    },
-  );
+  test('note font-size — kit 11px (ScreenSchedule.jsx note block), app now 11px ($text-micro, T370), both breakpoints', async ({
+    page,
+    context,
+  }) => {
+    const kitPage = await openBoth(kit, context, page, 'Desktop', DESKTOP);
+    const kitM = await measureKitSchedule(kitPage, true);
+    const appM = await measureAppSchedule(page, true);
+    expect(appM.note?.fontSize).toBe(kitM.note?.fontSize);
+    await kitPage.close();
+  });
 
-  test.fixme(
-    'status pill style — kit renders a SOLID filled pill (background var(--status-provisional), 1px solid transparent, padding 2px 8px); app\'s app-status-pill "provisional" variant is a DASHED, transparent-fill pill (padding 3px 9px) — a component-recipe divergence, both breakpoints',
-    async ({ page, context }) => {
-      const kitPage = await openBoth(kit, context, page, 'Desktop', DESKTOP);
-      const kitM = await measureKitSchedule(kitPage, true);
-      const appM = await measureAppSchedule(page, true);
-      expect(appM.pill?.background).toBe(kitM.pill?.background);
-      expect(appM.pill?.borderStyle).toBe(kitM.pill?.borderStyle);
-      expect(appM.pill?.padding).toBe(kitM.pill?.padding);
-      await kitPage.close();
-    },
-  );
+  test('status pill style — kit renders a SOLID filled pill (background var(--status-provisional), 1px solid transparent, padding 2px 8px); app\'s app-status-pill "provisional" variant now matches (T370 — status-pill.scss split the agenda final/provisional pair off milestone\'s dashed default), both breakpoints', async ({
+    page,
+    context,
+  }) => {
+    const kitPage = await openBoth(kit, context, page, 'Desktop', DESKTOP);
+    const kitM = await measureKitSchedule(kitPage, true);
+    const appM = await measureAppSchedule(page, true);
+    expect(appM.pill?.background).toBe(kitM.pill?.background);
+    expect(appM.pill?.borderStyle).toBe(kitM.pill?.borderStyle);
+    expect(appM.pill?.padding).toBe(kitM.pill?.padding);
+    await kitPage.close();
+  });
 });

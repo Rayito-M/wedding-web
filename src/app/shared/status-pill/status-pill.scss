@@ -20,22 +20,47 @@
   white-space: nowrap;
 }
 
-// Final / reached variant: solid border, accent background, on-accent text.
-:host(.final),
+// Reached (milestone, T279): solid border, accent background, on-accent
+// text — kit `ScreenMilestones(Mobile).jsx`'s own `StatusPill`, base
+// `:host` padding (3px 9px).
 :host(.reached) {
   background: var(--status-final);
   color: var(--on-accent);
   border: 1px solid var(--status-final);
 }
 
-// Provisional / not-reached variant: keep the default (dashed border, muted
-// text). Explicitly stated for clarity (already default :host, but makes the
-// intent clear).
-:host(.provisional),
+// Not-reached (milestone, T279): the default look (dashed border, muted
+// text). Explicitly stated for clarity (already default :host, but makes
+// the intent clear).
 :host(.not-reached) {
   background: transparent;
   color: var(--text-muted);
   border: 1px dashed var(--border-hairline);
+}
+
+// Final / provisional (agenda pill — schedule + invitee's own itinerary):
+// kit `ScreenSchedule.jsx`/`ScreenHome.jsx`'s own inline `statusPill` —
+// SOLID in both states, never dashed, and a narrower box than the
+// milestone pill's base metrics (T369/T370 parity fix: previously grouped
+// with milestone's `reached`/`not-reached` above and inherited their
+// look/padding, which the kit never draws for this pill).
+:host(.final),
+:host(.provisional) {
+  border: 1px solid transparent;
+  color: var(--on-accent);
+  gap: 0;
+  // 2px 8px — ScreenSchedule.jsx / ScreenHome.jsx literal padding, off the
+  // 4px space grid at the vertical value; composed from tokens rather than
+  // hardcoded (half of --space-1, and --space-2 exact).
+  padding: calc(var(--space-1) / 2) var(--space-2);
+}
+
+:host(.final) {
+  background: var(--status-final);
+}
+
+:host(.provisional) {
+  background: var(--status-provisional);
 }
 
 // At-risk (T279, hub ADR-0029 §4.2): solid, theme-invariant danger fill — an

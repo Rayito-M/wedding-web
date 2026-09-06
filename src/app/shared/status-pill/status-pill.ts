@@ -9,19 +9,25 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
  * rather than a second `.status-pill` declaration (the exact drift the
  * `schedule`/`invitee` consolidation, T242, was fixing).
  *
- * - `final` / `reached` — solid, `--status-final` fill, `--on-accent` text.
- *   Same visual, different call sites: agenda "final" vs. a milestone ticked
- *   off. Kept as separate variant names rather than aliasing one to the
- *   other, so each screen's template reads in its own domain vocabulary.
- * - `provisional` / `not-reached` — the default look: dashed hairline
- *   border, muted text, transparent fill.
- * - `at-risk` — solid `--danger` fill, `--on-danger` text (hub ADR-0029
- *   §4.2's derived state: planned date in the past and not reached).
+ * - `final` / `provisional` — the agenda pill (`schedule` + `invitee`'s own
+ *   itinerary): kit `ScreenSchedule.jsx`/`ScreenHome.jsx`'s own inline
+ *   `statusPill` is SOLID in both states (never dashed) — `2px 8px`,
+ *   `1px solid transparent`, `--status-final`/`--status-provisional` fill,
+ *   `--on-accent` text. T242's consolidation had grouped `provisional` with
+ *   milestone's `not-reached` under one dashed rule, never checked against
+ *   this pill's own kit source until the T369 parity rescan found the
+ *   divergence (`design-parity-schedule.spec.ts`) — split out at T370 so
+ *   fixing it does not touch milestone's own (unrelated) dashed default.
+ * - `reached` / `not-reached` / `at-risk` — the couple's milestone timeline
+ *   (T279, kit `ScreenMilestones(Mobile).jsx`'s own `StatusPill`, a
+ *   different component with its own `3px 9px` padding): `reached` solid
+ *   `--status-final` fill; `not-reached` the dashed hairline default;
+ *   `at-risk` solid `--danger` fill, `--on-danger` text (hub ADR-0029 §4.2's
+ *   derived state: planned date in the past and not reached).
  *
- * Styling: uses schedule's `3px 9px` + `gap: 6px` padding/gap (T241 inventory
- * resolution); these are the newer DS-aligned values. Schedule variant applies
- * `gap: 6px` for icon+label spacing; invitee variant had no gap and slightly
- * smaller padding (`2px 8px`), but unified to schedule's metrics for consistency.
+ * Base `:host` padding/gap (`3px 9px` / `gap: 6px`, T241 inventory
+ * resolution) is the milestone pill's own metrics; `final`/`provisional`
+ * override to the agenda pill's narrower `2px 8px`, no gap.
  */
 @Component({
   selector: 'app-status-pill',
