@@ -150,3 +150,34 @@
 - **Acceptance:** suite green in CI conditions; then stamp the six ledger items `implemented`
   and re-run `node ../wedding-ui-design/tools/audit.mjs` — board shows 0 outdated, 0 queued
   from this feature.
+
+### T367 — Fixed-header clearance misses the rail and the Home subnav (post-close defect)
+- **Status:** todo
+- **ADR:** hub ADR-0043 §1 (the clearance-follows-the-flag defect class — third occurrence),
+  ADR-0045 §3/§4
+- **Reopens Phase N's exit condition**: "the IA holds" was met by the e2e assertions but not on
+  screen. Two owner-reported defects (screenshots, 2026-09-06), both desktop ≥900px:
+  1. Guest/couple **Home**: the umbrella pill row (Today · Getting there · Good to know) renders
+     partially under the fixed header — top halves of the pills clipped.
+  2. **Manage rail**: the rail column starts at viewport top, so its first item (Overview) sits
+     behind the fixed header and is unreadable.
+- **Root cause (verified by reading `private-layout.scss`, confirm by measuring)**: the fixed
+  header's 52px clearance is declared per-element — `main` (restored at ≥900px), `.screen-head` —
+  and T364's two new first-elements never got it: `.manage-rail .rail` is a flex *sibling* of
+  `main` inside `.body` (main's margin-top does not clear it), and the Home subnav's placement
+  relative to the cleared element leaves it underlapping. This is the third strike for
+  per-element clearance (guests double-stack was the second, `f7684b5`).
+- **Fix direction (implementer decides the exact shape, ADR-0043 in hand)**: prefer moving the
+  clearance to the ONE layout element all content descends from (e.g. `.body`), deleting the
+  per-element copies, over adding a third and fourth copy — the class exists *because* the
+  mechanism is per-element. Whatever shape, `guests` (pinned head inside Manage) must not
+  double-stack again, and mobile must stay untouched.
+- **Process fix, same task**: add a reusable e2e **occlusion guard** — for every route in
+  `NAV_TABS`/`MANAGE_GROUP_TABS`, both roles, both breakpoints: the first visible content
+  element's `boundingBox().y` ≥ the fixed header's bottom edge. Playwright's `toBeVisible()`
+  cannot see occlusion by a fixed overlay, which is precisely why T363/T364/T366 all passed
+  over these two defects.
+- **Acceptance:** both screenshots' scenarios render clear of the header (measured, not
+  eyeballed); the occlusion guard passes on every route × role × breakpoint and **fails when
+  the fix is reverted** (prove it once); `guests` shows no double clearance; layout suite,
+  unit tests, lint, build all green.

@@ -241,3 +241,4 @@ neither sort nor uniquely name them.
 | **T364** | Home becomes the umbrella; Manage becomes an area | done | `30-phase-n-navigation-five-cap` |
 | **T365** | Labels in three locales | done | `30-phase-n-navigation-five-cap` |
 | **T366** | E2E: the IA holds and nothing regressed | done — Phase N complete | `30-phase-n-navigation-five-cap` |
+| **T367** | Fixed-header clearance misses the rail and the Home subnav | todo | `30-phase-n-navigation-five-cap` |
