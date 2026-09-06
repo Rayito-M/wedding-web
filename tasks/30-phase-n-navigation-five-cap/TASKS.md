@@ -123,7 +123,26 @@
   voice ("warm, personal" — readme Content fundamentals).
 
 ### T366 — E2E: the IA holds and nothing regressed
-- **Status:** todo
+- **Status:** done — new `e2e/layout/navigation-five-cap.spec.ts` (45 cases × 5 projects, all
+  passing): per-role nav caps at 5 with one active indicator (desktop header + mobile tab bar,
+  couple and guest, the latter needing a new `signInAsGuest` + `installApiMocks` `role` option
+  — no prior spec could reach the guest identity at all); Manage in/out on both breakpoints
+  (`PlanRail` mounts/unmounts on `inManage()`, mobile tab-set swap + "← Back to app"); the
+  `/travel` → `/dashboard?section=travel` redirect landing on "Getting there" with the real
+  embedded Travel screen; RSVP/schedule/guests/milestones/settings all still resolving their own
+  screen (title-based, both roles). `config-manager.spec.ts`'s 3 desktop assertions re-pointed
+  from the screen's own retired `.rail` to Manage's `PlanRail` (`.manage-rail .rail`/
+  `.section-item`) per T364's own handoff — coverage kept, not deleted. T364's "pre-existing,
+  unrelated" claim for `guest-manager-scrolled-header.spec.ts` independently reproduced against
+  a from-scratch worktree at `bd7766b`: confirmed, not fixed here (carried forward as a risk).
+  `pnpm lint` green (5 documented pre-existing ESLint errors unchanged, stylelint/ds fidelity
+  clean); `npx ng test --watch=false` 603/603 (unchanged); `pnpm build` clean (2658 bytes). Full
+  local Playwright run, all 5 projects: 120 passed, 5 failed (the confirmed pre-existing
+  failures above), 15 skipped (`seating`, absent from `enabledRoutes`, unrelated). Ledger
+  stamped (`AppHeader`/`TabBar`/`ScreenHome`/`ScreenTravel`/`ScreenGuestManagerMobile`/
+  `PlanRail` → `implemented`); `node ../wedding-ui-design/tools/audit.mjs`: gate pass, 0
+  violations, board `draft 5 · implemented 51 · out-of-scope 5` — 0 outdated, 0 queued from this
+  feature. **Phase N is complete.** Report: `reports/T366.json`.
 - **ADR:** hub ADR-0045 §Consequences
 - Playwright: per-role nav renders ≤5 with active state; Manage in/out (rail + mobile tabs +
   back exit); `/travel` redirect; every pre-existing journey (RSVP, schedule, guests,

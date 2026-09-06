@@ -240,4 +240,4 @@ neither sort nor uniquely name them.
 | **T363** | Header and tab bar learn the standout item | done | `30-phase-n-navigation-five-cap` |
 | **T364** | Home becomes the umbrella; Manage becomes an area | done | `30-phase-n-navigation-five-cap` |
 | **T365** | Labels in three locales | done | `30-phase-n-navigation-five-cap` |
-| **T366** | E2E: the IA holds and nothing regressed | todo | `30-phase-n-navigation-five-cap` |
+| **T366** | E2E: the IA holds and nothing regressed | done — Phase N complete | `30-phase-n-navigation-five-cap` |

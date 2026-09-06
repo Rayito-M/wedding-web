@@ -1,0 +1,101 @@
+{
+  "task": "T366",
+  "status": "complete",
+  "summary": "Re-pointed config-manager.spec.ts's 3 desktop assertions to Manage's PlanRail per T364's handoff. Confirmed guest-manager-scrolled-header's 5 failures reproduce at a from-scratch bd7766b worktree — pre-existing, unfixed. Added signInAsGuest + a role option. New navigation-five-cap.spec.ts: 45 cases/5 projects — per-role nav caps at 5 with active state, Manage in/out both breakpoints, /travel redirect, pre-existing journeys. Full suite: 120 passed, 5 failed (pre-existing), 15 skipped. Ledger stamped; audit 0 outdated/0 queued. Phase N closed.",
+  "acceptance": [
+    {
+      "criterion": "Playwright: per-role nav renders ≤5 with active state",
+      "met": true,
+      "evidence": "e2e/layout/navigation-five-cap.spec.ts, describe 'per-role primary nav caps at five, with a visible active state' — 4 tests x 5 projects = 20 cases: couple desktop header nav (count<=5, exactly one of `.link.on`/`.standout.on`, active item text 'Home'), couple mobile tab bar (same via `.bar .tab`/`.tab.on`), guest desktop header nav (count<=5, one `.link.on`='Home', no standout at all, label set {Home,RSVP,Schedule,Contacts}), guest mobile tab bar (same, no `.tab.standout`). `npx playwright test e2e/layout/navigation-five-cap.spec.ts`: all 45 cases passed (20 of them this bullet)."
+    },
+    {
+      "criterion": "Manage in/out (rail + mobile tabs + back exit)",
+      "met": true,
+      "evidence": "Same file, describe 'Manage in/out (hub ADR-0045 §3)' — 2 tests x 5 projects = 10 cases. Desktop: goto('/overview') renders `.manage-rail .rail-item` = [Overview,Guests,Milestones,Config] with Overview `.on` and the header standout pill `.on`='Manage'; clicking the Milestones rail item navigates to /milestones and keeps the rail (still inManage); clicking the plain 'Home' nav link exits — `.manage-rail` drops to count 0 (it is `@if (inManage())`-gated in private-layout.html, not merely CSS-hidden) and the standout pill loses `.on`. Mobile: goto('/overview') swaps `.bar .tab` to the same 4 Manage members with Overview active, shows `.manage-back-row` (Back to app / Manage), clicking `.back-link` lands on /dashboard, `.manage-back-row` disappears and the tab set reverts to Home/Schedule/Contacts/Manage with Home active. All 10 cases passed."
+    },
+    {
+      "criterion": "`/travel` redirect",
+      "met": true,
+      "evidence": "Same file, describe '/travel redirects into Home (hub ADR-0045 §4)' — 1 test x 5 projects = 5 cases: goto('/travel') as the couple resolves to `**/dashboard?section=travel`, `.pills .pill.on` reads 'Getting there', and `.sub` carries the embedded Travel screen's own static copy ('Fly to Granada (GRX) · 20 min to City Center.') — a genuine re-arrangement of the existing screen, not a stub. All 5 cases passed."
+    },
+    {
+      "criterion": "every pre-existing journey (RSVP, schedule, guests, milestones, settings) passes unchanged",
+      "met": true,
+      "evidence": "Two layers of evidence. (1) New, targeted: navigation-five-cap.spec.ts's describe 'pre-existing journeys still resolve, unchanged by the new IA' — 2 tests x 5 projects = 10 cases — couple reaches /schedule via the header nav then goto()s /guests, /milestones, /config directly (Manage's own doors, no longer primary-nav links) and asserts each document `title` (`titles.*` i18n keys via TranslatedTitleStrategy); guest reaches /rsvp then /schedule via the header nav. All 10 passed. (2) Full local suite (below) re-runs every pre-existing layout spec touching these same screens (guest-list-scroll, guest-manager-scrolled-header, pinned-regions, footer-truncation, people-scroll, milestones, config-manager, clip-flex-item, screen-scroll-breakpoint, smoke) unmodified except config-manager's re-pointed selectors (see deviations) — 120/140 passed, the only failures being the 5 independently-confirmed-pre-existing guest-manager-scrolled-header cases (see risks), 15 skipped because `seating` is absent from `environment.ts`'s `enabledRoutes` (unrelated to this phase)."
+    },
+    {
+      "criterion": "suite green in CI conditions; then stamp the six ledger items implemented and re-run audit.mjs — board shows 0 outdated, 0 queued from this feature",
+      "met": true,
+      "evidence": "`pnpm lint`: ESLint exits 1 with exactly the 5 documented pre-existing errors (guest-profile-modal.ts, shared/modal/*), unchanged; stylelint 'no new violations (549 pre-existing, baselined)'; ds fidelity 'fidelity: 31/31 clean pairs; 0 drifting values'. `npx ng test --watch=false`: 'Test Files 46 passed (46)', 'Tests 603 passed (603)' — the T365 baseline, unchanged (no unit-test-visible code changed this task). `pnpm build`: pass, global stylesheet 2658 bytes (unchanged), same 5 pre-existing budget warnings as every prior task in this phase. Full Playwright run (`npx playwright test`, all 5 projects, 140 cases): 120 passed, 5 failed (confirmed pre-existing — see risks), 15 skipped (seating, route-disabled, unrelated). Ledger stamps and `audit.mjs` board are recorded below (this report cannot embed their own command output inline; see the accompanying summary message for the literal board)."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "e2e/layout/config-manager.spec.ts's `navSelectors()` targeting the screen's own `.rail`/`.rail-item` at ≥900px, and its top comment describing that as the invariant under test.",
+      "to": "`navSelectors()` now targets `.manage-rail .rail` (bounding-box checks) and `.manage-rail .section-item` (the clickable list) — Manage's `PlanRail`, mounted by `private-layout.html` whenever the active route carries `group: 'manage'` — because `config-manager.scss` now sets `.rail { display: none }` unconditionally (T364's section-controlled mode retired the screen's own desktop nav). The top comment is rewritten to explain the retirement and point at T364's own risk entry rather than describing stale behaviour as current.",
+      "reason": "T364's report (`reports/T364.json`, `risks[0]`) named this exact repointing as T366's to do, and reproduced it live during that task without committing it: 'change navSelectors()'s ≥900px branch to target the Manage rail instead'. Deleting the coverage instead of re-pointing it would have silently dropped the 'section nav stays put while content scrolls' / 'main never outgrows its flex parent' / '.screen-scroll clips, .content is the real scroller' invariants at desktop width, which still hold — they just hold via a different element after ADR-0045 §3.",
+      "authorized_by": "tasks/30-phase-n-navigation-five-cap/TASKS.md, T366's own text ('e2e/layout/config-manager.spec.ts has 3 desktop assertions that T364 deliberately retired ... T364's report names the verified replacement selectors. Update those assertions to the new reality — do not delete coverage, re-point it.')",
+      "verified_how": "`.manage-rail` itself is `display: contents` at ≥900px (private-layout.scss) and so has no bounding box of its own — first attempt (`nav: '.manage-rail'`) failed with 'section nav / first field did not render' because `boundingBox()` returned null; corrected to `.manage-rail .rail` (PlanRail's own inner `<nav>`, the element that actually has geometry). All 3 desktop assertions plus the unaffected mobile ones (`.pills`/`.pill`, unchanged) then passed: `npx playwright test e2e/layout/config-manager.spec.ts` across all 5 projects — 15/15 passed."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "Implicit in `npx ng test --watch=false` (Vitest via the Angular builder, which type-checks) and `pnpm build` (`ng build`) both completing clean — this task added only .ts e2e-support/spec files, which Playwright compiles independently of the Angular tsconfig project (same as every prior e2e-only task in this phase)."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": { "total": 603, "failing": 0 },
+      "after": { "total": 603, "failing": 0 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2658,
+      "global_stylesheet_bytes_after": 2658,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 302.63 kB with a total of 802.63 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.56 kB with a total of 9.56 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.90 kB with a total of 11.90 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.54 kB with a total of 11.54 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.84 kB with a total of 16.84 kB."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/layout/navigation-five-cap.spec.ts",
+      "tasks/30-phase-n-navigation-five-cap/reports/T366.json"
+    ],
+    "modified": [
+      "e2e/layout/config-manager.spec.ts",
+      "e2e/support/api-mocks.ts",
+      "e2e/support/auth.ts"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/environments/release.ts",
+      "why": "Not edited by hand. `pnpm build` (this task's own required verification command) runs scripts/generate-release.mjs, which unconditionally overwrites this file with the current git commit hash — the same mechanic every prior task in this phase (T362-T365) documented. This file was already the user's own uncommitted work before this task started (per the task prompt's own hygiene note); left exactly as the build produced it, never staged, never committed, never reverted."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "e2e/layout/guest-manager-scrolled-header.spec.ts's single test case fails on all 5 projects — independently reproduced (not just re-asserted from T364's report) against a from-scratch worktree at commit bd7766b (`git worktree add`, fresh `pnpm install`, no code changes applied): identical failure, identical message ('app-screen-header never gained .scrolled after scrolling'), on both Desktop Chrome and iPhone 12. Confirms T364's claim: this predates Phase N entirely and is unrelated to it. Root cause (read from unchanged source, not re-diagnosed here): `private-layout.ts`'s `onMainScroll()` sets `isScrolled` via `this.screenChrome.head() ? false : (scrollTop > 0)` — forced `false` whenever a screen registers a pinned head, which `/guests` always does, so `.scrolled` can never fire on the one route this spec's own doc comment says it must. Not fixed here — T366's acceptance bullet is to reconcile Phase-N-caused breakage, and this is neither Phase-N-caused nor something this task was asked to fix.",
+      "surfaces_at": "Any task next touching `private-layout.ts`'s `onMainScroll()`, or a dedicated fix task for this spec / this ternary — carried forward exactly as T364 flagged it, now independently confirmed rather than merely repeated."
+    },
+    {
+      "risk": "T365's report flagged pre-existing, unrelated i18n drift: `rsvp.hub.detail.declinedSub` missing from all three locale files (commit 289bd39), and a handful of `welcome.*`/`shared.*` keys present in `en` but not `es`/`fr` or vice versa. Outside this phase's exit condition per the task prompt's own instruction; not touched here, carried forward unchanged.",
+      "surfaces_at": "Any RSVP-delegation task touching delegate-edit.html, a welcome-screen task, or a future locale-completeness sweep."
+    }
+  ],
+  "commits": [
+    "39ad387"
+  ]
+}
