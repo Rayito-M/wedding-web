@@ -26,6 +26,15 @@ nowhere to go — your `upstreamFindings` are that missing path.
 4. Run `pnpm build` and the stylelint check when you changed any style file; report their real
    output.
 
+## Geometry is not facts (added 2026-09-06)
+
+`pnpm ds:verify` compares *declared* style values; it was 31/31-clean while the Home umbrella
+rendered misaligned. Rendered geometry is covered by the two permanent Playwright suites —
+`e2e/layout/occlusion-guard.spec.ts` and `e2e/layout/design-parity-*.spec.ts` (measured against
+the served DS kit via `e2e/helpers/ds-kit.ts`). When verifying a screen-level change, run the
+relevant parity spec too and treat "no parity spec exists for this screen" as a finding, not a
+pass.
+
 ## Hard rules
 
 - Every reported value is measured from the comparison or command output, never asserted.

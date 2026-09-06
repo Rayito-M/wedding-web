@@ -33,6 +33,16 @@ You take one task from `tasks/<NN-phase-slug>/TASKS.md` — find it via `tasks/R
 - **No third-party UI libraries.** Components are hand-built per design spec.
 - **Absolute imports:** `@/` maps to `src/app/`; never use relative paths like `../../..`.
 
+## Design-fidelity evidence (rule added 2026-09-06, hub ADR-0044 amendment)
+
+A claim that a surface "matches the design system" is only valid when backed by a **committed**
+measurement artifact — a `e2e/layout/design-parity-*.spec.ts` that serves the DS kit
+(`e2e/helpers/ds-kit.ts`) and asserts measured geometry/colors against it. A screenshot you
+reviewed yourself and deleted is not evidence; `toBeVisible()` is not evidence (it cannot see
+occlusion or misalignment). Your task report's acceptance entries for visual criteria must cite
+the spec path and the measured numbers. The same rule gates the status ledger: a screen is
+stamped `implemented` only with its parity spec green (or an explicit owner waiver).
+
 ## Done means
 
 Every hard rule in `CLAUDE.md` holds, the acceptance criteria are each satisfied with evidence, and
