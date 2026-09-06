@@ -14,6 +14,7 @@ export const environment: Environment = {
   enabledRoutes: [
     'rsvp',
     'dashboard',
+    'overview',
     'config',
     'me',
     'schedule',

@@ -1,0 +1,33 @@
+// Same `.empty-state` shape as `milestones.scss`/`guest-manager.scss` (h2 +
+// p, centered, capped width) — reused visually rather than re-invented; see
+// this component's own class doc for why there is copy here at all rather
+// than real content.
+:host {
+  display: block;
+}
+
+.empty-state {
+  padding: var(--space-7) var(--space-6);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  // 420px in rem, same cap `milestones.scss`'s own `.empty-state` uses — `rem`
+  // rather than raw `px` per stylelint's `declaration-property-value-disallowed-list`
+  // (a new file starts its baseline at zero, unlike that pre-existing one).
+  max-width: 26.25rem;
+  margin: 0 auto;
+
+  h2 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: var(--text-display-sm);
+    color: var(--text-body-color);
+  }
+
+  p {
+    color: var(--text-muted);
+    font-size: var(--text-body);
+  }
+}

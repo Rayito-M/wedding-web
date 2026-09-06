@@ -119,10 +119,17 @@ describe('nav-tabs — the five-cap surfaces and the Manage group (hub ADR-0045)
 
   it("Manage's group members are still derivable — Overview/Guests/Milestones/Settings today", () => {
     const ids = MANAGE_GROUP_TABS.map((tab) => tab.id).sort();
-    expect(ids).toEqual(['config', 'guests', 'milestones'].sort());
+    expect(ids).toEqual(['config', 'guests', 'milestones', 'overview'].sort());
     for (const tab of MANAGE_GROUP_TABS) {
       expect(tab.group).toBe('manage');
     }
+  });
+
+  it("Manage's door is Overview, not Guests (hub ADR-0045 §3 — T364 supersedes T362's interim choice)", () => {
+    const manage = NAV_TABS.find((tab) => tab.id === 'manage');
+    expect(manage?.link).toBe('/overview');
+    const guests = MANAGE_GROUP_TABS.find((tab) => tab.id === 'guests');
+    expect(guests?.standout).toBeUndefined();
   });
 
   it('travel is not a primary nav destination (hub ADR-0045 §4 — it folds into Home)', () => {

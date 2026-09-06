@@ -1,0 +1,25 @@
+@use '../../../styles/recipes' as r;
+
+// DS `AppShell.subnav` — Home's pill row (hub ADR-0045 §4). Same
+// `pill-interactive`/`pill-interactive-selected` recipes as
+// `config-manager`'s own mobile section pills (`configManager.scss`'s
+// `.pills`/`.pill`) — reused at the recipe level rather than re-typed.
+.pills {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-4);
+}
+
+.pill {
+  @include r.pill-interactive;
+  flex: 0 0 auto;
+}
+
+.pill:hover {
+  opacity: 0.85;
+}
+
+.pill.on {
+  @include r.pill-interactive-selected;
+}

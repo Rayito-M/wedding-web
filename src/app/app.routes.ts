@@ -1,5 +1,11 @@
 import { Routes } from '@angular/router';
-import { publicOnlyGuard, rbacGuard, routeEnabledGuard, RouteChromeData } from './core';
+import {
+  publicOnlyGuard,
+  rbacGuard,
+  redirectToHomeSection,
+  routeEnabledGuard,
+  RouteChromeData,
+} from './core';
 
 // Two zones:
 //   Public       — welcome + login, reachable only when signed out (publicOnlyGuard).
@@ -94,22 +100,29 @@ export const routes: Routes = [
         } satisfies RouteChromeData,
       },
       {
+        // Hub ADR-0045 §4 — Travel is no longer a top-level destination or
+        // its own route: it is Home's "Getting there" section
+        // (`app-travel[embedded]`, mounted by `dashboard`/`invitee`). A
+        // bookmark or an agenda row's existing `routerLink="/travel"`
+        // (`travel-link.ts`) must still land somewhere real rather than
+        // 404ing, so this path stays in the tree, redirecting into the
+        // signed-in user's own Home (`LoginService.landingUrl()` — `/dashboard`
+        // for the couple, `/me` for a guest) with `?section=travel`, carrying
+        // forward every other query param the old URL had (in particular
+        // `?place=<id>`) so the preselected venue/hotel survives the hop.
+        // The redirect is a `canActivate` guard, not `Route.redirectTo`:
+        // Angular rejects the two together (`NG04014`, "redirects happen
+        // before guards are executed"), and `routeEnabledGuard` must still
+        // run first so a `travel` disabled via `enabledRoutes` blocks the
+        // redirect exactly as it blocked the old screen, rather than
+        // silently landing on Home's travel section anyway
+        // (`home-section-redirect.ts`). `loadComponent` stays only to
+        // satisfy the router's "every route needs one of component /
+        // loadComponent / redirectTo / children" validation — a guard
+        // always resolves first, so `Travel` never actually mounts here.
         path: 'travel',
         loadComponent: () => import('./screens/travel/travel').then((m) => m.Travel),
-        title: 'titles.travel',
-        canActivate: [routeEnabledGuard],
-        // Hub ADR-0045 §4 — Travel stops being a top-level destination: it
-        // folds into Home's "Getting there" section. Not a nav entry as of
-        // this route data (no `tabBar`/`topNav`/`navLabel`), so it drops out
-        // of `NAV_TABS` by construction rather than by a hand-maintained
-        // exclusion list. The route itself, and `enabledRoutes`, are
-        // untouched — the screen still renders at `/travel` for anyone who
-        // already has the link; T364 adds the redirect into Home and the
-        // section that replaces this as the discoverable path.
-        data: {
-          id: 'travel',
-          moto: true,
-        } satisfies RouteChromeData,
+        canActivate: [routeEnabledGuard, redirectToHomeSection('travel')],
       },
       {
         path: 'album',
@@ -125,17 +138,48 @@ export const routes: Routes = [
         } satisfies RouteChromeData,
       },
       {
+        // Unified "Home" nav destination for the couple role (guest home is
+        // /me). Hub ADR-0045 §2/§4 — stays intact as the couple's ungrouped
+        // Home entry; `Dashboard` now renders the umbrella (Today · Getting
+        // there · Good to know) instead of the planning dashboard it used to
+        // — that content moved to `overview` below, same component, reused
+        // rather than duplicated (`id !== 'overview'` is how it tells which
+        // mode it's in — see `dashboard.ts`).
         path: 'dashboard',
         loadComponent: () => import('./screens/dashboard/dashboard').then((m) => m.Dashboard),
         title: 'titles.dashboard',
         canActivate: [rbacGuard, routeEnabledGuard],
-        // Unified "Home" nav destination for the couple role (guest home is /me).
         data: {
           id: 'home',
           roles: ['groom', 'bride'],
           tabBar: true,
           topNav: true,
           navLabel: 'nav.home',
+        } satisfies RouteChromeData,
+      },
+      {
+        // Manage's Overview (hub ADR-0045 §3 — Overview is a listed Manage
+        // member) — the Manage door's real landing page, settled on T364
+        // (superseding T362's interim choice of pointing the door straight
+        // at `guests`, see that route's own comment below). Reuses `Dashboard`
+        // unchanged rather than a second component: it is the exact same
+        // planning-stats content (RSVP replies, head count, manage
+        // shortcuts) this route used to serve at `/dashboard` before Home
+        // became the umbrella, mirrors DS `ScreenHome`'s own `overview` mode
+        // (one component, two modes) — see `dashboard.ts` for how the
+        // component tells the two apart.
+        path: 'overview',
+        loadComponent: () => import('./screens/dashboard/dashboard').then((m) => m.Dashboard),
+        title: 'titles.dashboard',
+        canActivate: [rbacGuard, routeEnabledGuard],
+        data: {
+          id: 'overview',
+          roles: ['groom', 'bride'],
+          tabBar: true,
+          topNav: true,
+          navLabel: 'nav.overview',
+          group: 'manage',
+          standout: true,
         } satisfies RouteChromeData,
       },
       {
@@ -177,9 +221,9 @@ export const routes: Routes = [
           navLabel: 'nav.config',
           // Hub ADR-0045 §2/§3/§6 — one of the couple's Manage tools
           // ("Settings" in Manage's rail/tab set, T364). Grouped routes
-          // never reach the primary nav themselves; `guests` is the
-          // group's `standout` door below, so this route's own `navLabel`
-          // stays `nav.config` for when Manage's own sub-nav renders it.
+          // never reach the primary nav themselves; `overview` above is the
+          // group's `standout` door, so this route's own `navLabel` stays
+          // `nav.config` for Manage's own rail/tab set (T364).
           group: 'manage',
         } satisfies RouteChromeData,
       },
@@ -207,16 +251,15 @@ export const routes: Routes = [
           headPinned: true,
           footPinned: true,
           navLabel: 'nav.guests',
-          // Hub ADR-0045 §2/§3/§6 — the Manage tool group's standout door:
-          // the one member whose own `link`/`roles` `nav-tabs.ts` reads to
-          // synthesize the primary nav's "Manage" pill (labelled
-          // `nav.manage`, not `nav.guests` — this route's own label still
-          // names the screen for Manage's future sub-nav, T364). Guest
-          // Manager is the group's highest-traffic screen (hub ADR-0043
-          // §5), the reasonable default landing until T364 builds a real
-          // Overview; flagged for confirmation in this task's report.
+          // Hub ADR-0045 §2/§3/§6 — a Manage tool member, not the group's
+          // door. T362 had this route carry `standout: true` as an interim
+          // placeholder (no Overview screen existed yet — that was flagged
+          // `decisions_needed` on its report); T364 builds the real
+          // Overview (`overview` route above, reusing `Dashboard`) and moves
+          // `standout` there per ADR-0045 §3, which lists Overview as a
+          // Manage member. This route's own `navLabel` still names the
+          // screen for Manage's rail/tab set.
           group: 'manage',
-          standout: true,
         } satisfies RouteChromeData,
       },
       {

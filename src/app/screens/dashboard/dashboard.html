@@ -1,141 +1,170 @@
-<div class="greeting">
-  <div class="hello">{{ 'dashboard.greeting' | translate: { name: 'Sara' } }}</div>
-  <h1>
-    <span class="accent">{{ dash.daysToGo() }}</span> {{ daysTranslationKey() | translate }}
-  </h1>
-</div>
+<!--
+  Shared between both modes (see dashboard.ts's class doc): Manage's Overview
+  renders this directly; Home renders it as the "Today" pill's content,
+  unchanged. One template, not a duplicated block.
+-->
+<ng-template #plan>
+  <div class="greeting">
+    <div class="hello">{{ 'dashboard.greeting' | translate: { name: 'Sara' } }}</div>
+    <h1>
+      <span class="accent">{{ dash.daysToGo() }}</span> {{ daysTranslationKey() | translate }}
+    </h1>
+  </div>
 
-<div class="content">
-  <!-- RSVP stats — every number in this card comes from the profile
-       collection, so while its first read is in flight they are all zeros
-       meaning "not known yet", not "none". The card waits; the greeting above
-       and the manage links below are static and stay usable. -->
+  <div class="content">
+    <!-- RSVP stats — every number in this card comes from the profile
+         collection, so while its first read is in flight they are all zeros
+         meaning "not known yet", not "none". The card waits; the greeting above
+         and the manage links below are static and stay usable. -->
 
-  <div class="stats-card">
-    <app-decor-fish class="deco-fish" [w]="60" [flip]="true" />
-    @if (statistics.loading()) {
-      <!-- Skeletons on the settled elements: the four labels are static copy and
-           are shown for real, only the counts, the fill and the caption are
-           unknown. The card therefore loads at exactly its settled height. -->
-      <div class="stats">
-        @for (label of pendingRsvpLabels; track label) {
+    <div class="stats-card">
+      <app-decor-fish class="deco-fish" [w]="60" [flip]="true" />
+      @if (statistics.loading()) {
+        <!-- Skeletons on the settled elements: the four labels are static copy and
+             are shown for real, only the counts, the fill and the caption are
+             unknown. The card therefore loads at exactly its settled height. -->
+        <div class="stats">
+          @for (label of pendingRsvpLabels; track label) {
+            <div class="stat">
+              <div class="value skeleton" aria-hidden="true">&nbsp;</div>
+              <div class="label stat-label">{{ label | translate }}</div>
+            </div>
+          }
+        </div>
+        <app-progress-bar class="progress skeleton" [percent]="0" aria-hidden="true" />
+        <div class="caption skeleton" aria-hidden="true">&nbsp;</div>
+        <span class="sr-only" role="status">{{ 'dashboard.loading' | translate }}</span>
+      } @else {
+        <div class="stats">
           <div class="stat">
-            <div class="value skeleton" aria-hidden="true">&nbsp;</div>
-            <div class="label stat-label">{{ label | translate }}</div>
+            <div class="value">{{ statistics.guestStatistics().total }}</div>
+            <div class="label stat-label">{{ 'dashboard.rsvp.total' | translate }}</div>
           </div>
-        }
-      </div>
-      <app-progress-bar class="progress skeleton" [percent]="0" aria-hidden="true" />
-      <div class="caption skeleton" aria-hidden="true">&nbsp;</div>
-      <span class="sr-only" role="status">{{ 'dashboard.loading' | translate }}</span>
-    } @else {
-      <div class="stats">
-        <div class="stat">
-          <div class="value">{{ statistics.guestStatistics().total }}</div>
-          <div class="label stat-label">{{ 'dashboard.rsvp.total' | translate }}</div>
+          <div class="stat">
+            <div class="value accent">{{ statistics.guestStatistics().attending }}</div>
+            <div class="label stat-label">{{ 'dashboard.rsvp.attending' | translate }}</div>
+          </div>
+          <div class="stat">
+            <div class="value">{{ statistics.guestStatistics().pending }}</div>
+            <div class="label stat-label">{{ 'dashboard.rsvp.pending' | translate }}</div>
+          </div>
+          <div class="stat">
+            <div class="value">{{ statistics.guestStatistics().declined }}</div>
+            <div class="label stat-label">{{ 'dashboard.rsvp.declined' | translate }}</div>
+          </div>
         </div>
-        <div class="stat">
-          <div class="value accent">{{ statistics.guestStatistics().attending }}</div>
-          <div class="label stat-label">{{ 'dashboard.rsvp.attending' | translate }}</div>
+        <app-progress-bar class="progress" [percent]="statistics.repliedPercent()" />
+        <div class="caption">
+          {{
+            'dashboard.rsvp.progress'
+              | translate
+                : {
+                    percent: statistics.repliedPercent(),
+                    total: statistics.guestStatistics().total,
+                  }
+          }}
         </div>
-        <div class="stat">
-          <div class="value">{{ statistics.guestStatistics().pending }}</div>
-          <div class="label stat-label">{{ 'dashboard.rsvp.pending' | translate }}</div>
-        </div>
-        <div class="stat">
-          <div class="value">{{ statistics.guestStatistics().declined }}</div>
-          <div class="label stat-label">{{ 'dashboard.rsvp.declined' | translate }}</div>
-        </div>
-      </div>
-      <app-progress-bar class="progress" [percent]="statistics.repliedPercent()" />
-      <div class="caption">
-        {{
-          'dashboard.rsvp.progress'
-            | translate
-              : {
-                  percent: statistics.repliedPercent(),
-                  total: statistics.guestStatistics().total,
-                }
-        }}
-      </div>
-    }
-  </div>
+      }
+    </div>
 
-  <!-- quick tiles -->
+    <!-- quick tiles -->
 
-  <div class="tiles">
-    <app-stat-tile
-      [loading]="statistics.loading()"
-      [label]="'shared.headCount' | translate"
-      [value]="`
-        ${
-          statistics.guestStatistics().headCount.adults +
-          statistics.guestStatistics().headCount.children
+    <div class="tiles">
+      <app-stat-tile
+        [loading]="statistics.loading()"
+        [label]="'shared.headCount' | translate"
+        [value]="`
+          ${
+            statistics.guestStatistics().headCount.adults +
+            statistics.guestStatistics().headCount.children
+          }`"
+        [sub]="`${statistics.guestStatistics().headCount.adults} ${
+          ('shared.adults'
+          | pluralTranslate: statistics.guestStatistics().headCount.adults
+          | translate)
+        }${
+          statistics.guestStatistics().headCount.children > 0
+            ? ' - ' +
+              statistics.guestStatistics().headCount.children +
+              ' ' +
+              ('shared.children'
+                | pluralTranslate: statistics.guestStatistics().headCount.children
+                | translate)
+            : ''
         }`"
-      [sub]="`${statistics.guestStatistics().headCount.adults} ${
-        ('shared.adults'
-        | pluralTranslate: statistics.guestStatistics().headCount.adults
-        | translate)
-      }${
-        statistics.guestStatistics().headCount.children > 0
-          ? ' - ' +
-            statistics.guestStatistics().headCount.children +
-            ' ' +
-            ('shared.children'
-              | pluralTranslate: statistics.guestStatistics().headCount.children
-              | translate)
-          : ''
-      }`"
-    />
-    <!-- <app-stat-tile
-      [label]="'dashboard.vendors' | translate"
-      [value]="dash.vendors().value"
-      [sub]="dash.vendors().sub"
-    /> -->
-  </div>
-
-  <!-- manage -->
-  <div class="manage">
-    <div class="label manage-title">{{ 'dashboard.manage.title' | translate }}</div>
-    <div class="manage-list">
-      <button type="button" class="manage-row" routerLink="/guests">
-        <span class="manage-text">
-          <span class="manage-name">{{ 'dashboard.manage.guests.title' | translate }}</span>
-          <span class="manage-sub">{{ 'dashboard.manage.guests.sub' | translate }}</span>
-        </span>
-        <span class="manage-arrow" aria-hidden="true">→</span>
-      </button>
-      <!-- <button type="button" class="manage-row">
-        <span class="manage-text">
-          <span class="manage-name">{{ 'dashboard.manage.seating.title' | translate }}</span>
-          <span class="manage-sub">{{ 'dashboard.manage.seating.sub' | translate }}</span>
-        </span>
-        <span class="manage-arrow" aria-hidden="true">→</span>
-      </button> -->
-      <button type="button" class="manage-row" routerLink="/config">
-        <span class="manage-text">
-          <span class="manage-name">{{ 'dashboard.manage.config.title' | translate }}</span>
-          <span class="manage-sub">{{ 'dashboard.manage.config.sub' | translate }}</span>
-        </span>
-        <span class="manage-arrow" aria-hidden="true">→</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- tasks -->
-  <!-- <div class="tasks">
-    <div class="tasks-header">
-      <div class="label">{{ 'dashboard.thisWeek' | translate }}</div>
-      <span class="see-all">{{ 'dashboard.seeAll' | translate }}</span>
-    </div>
-    @for (task of dash.tasks(); track task.t; let i = $index; let last = $last) {
-      <app-task-row
-        [label]="task.t"
-        [due]="task.due"
-        [done]="task.done"
-        [last]="last"
-        (toggled)="dash.toggleTask(i)"
       />
+      <!-- <app-stat-tile
+        [label]="'dashboard.vendors' | translate"
+        [value]="dash.vendors().value"
+        [sub]="dash.vendors().sub"
+      /> -->
+    </div>
+
+    <!-- manage -->
+    <div class="manage">
+      <div class="label manage-title">{{ 'dashboard.manage.title' | translate }}</div>
+      <div class="manage-list">
+        <button type="button" class="manage-row" routerLink="/guests">
+          <span class="manage-text">
+            <span class="manage-name">{{ 'dashboard.manage.guests.title' | translate }}</span>
+            <span class="manage-sub">{{ 'dashboard.manage.guests.sub' | translate }}</span>
+          </span>
+          <span class="manage-arrow" aria-hidden="true">→</span>
+        </button>
+        <!-- <button type="button" class="manage-row">
+          <span class="manage-text">
+            <span class="manage-name">{{ 'dashboard.manage.seating.title' | translate }}</span>
+            <span class="manage-sub">{{ 'dashboard.manage.seating.sub' | translate }}</span>
+          </span>
+          <span class="manage-arrow" aria-hidden="true">→</span>
+        </button> -->
+        <button type="button" class="manage-row" routerLink="/config">
+          <span class="manage-text">
+            <span class="manage-name">{{ 'dashboard.manage.config.title' | translate }}</span>
+            <span class="manage-sub">{{ 'dashboard.manage.config.sub' | translate }}</span>
+          </span>
+          <span class="manage-arrow" aria-hidden="true">→</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- tasks -->
+    <!-- <div class="tasks">
+      <div class="tasks-header">
+        <div class="label">{{ 'dashboard.thisWeek' | translate }}</div>
+        <span class="see-all">{{ 'dashboard.seeAll' | translate }}</span>
+      </div>
+      @for (task of dash.tasks(); track task.t; let i = $index; let last = $last) {
+        <app-task-row
+          [label]="task.t"
+          [due]="task.due"
+          [done]="task.done"
+          [last]="last"
+          (toggled)="dash.toggleTask(i)"
+        />
+      }
+    </div> -->
+  </div>
+</ng-template>
+
+@if (overview) {
+  <ng-container [ngTemplateOutlet]="plan" />
+} @else {
+  <app-home-subnav
+    [active]="section()"
+    [hiddenSections]="hiddenSections()"
+    (sectionChange)="selectSection($event)"
+  />
+
+  @switch (section()) {
+    @case ('travel') {
+      <app-travel [embedded]="true" />
     }
-  </div> -->
-</div>
+    @case ('info') {
+      <app-good-to-know />
+    }
+    @default {
+      <ng-container [ngTemplateOutlet]="plan" />
+    }
+  }
+}

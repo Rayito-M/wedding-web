@@ -1,0 +1,14 @@
+<div class="pills" role="tablist" [attr.aria-label]="'home.subnavAriaLabel' | translate">
+  @for (item of items(); track item.id) {
+    <button
+      type="button"
+      role="tab"
+      class="pill"
+      [class.on]="item.id === active()"
+      [attr.aria-selected]="item.id === active()"
+      (click)="sectionChange.emit(item.id)"
+    >
+      {{ item.labelKey | translate }}
+    </button>
+  }
+</div>

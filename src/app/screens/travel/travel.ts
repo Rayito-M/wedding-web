@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   inject,
+  input,
   linkedSignal,
   Signal,
 } from '@angular/core';
@@ -105,6 +106,19 @@ export class Travel {
   private readonly translateService = inject(TranslateService);
   private readonly sanitizer = inject(DomSanitizer);
 
+  /**
+   * `true` when this screen is embedded as Home's "Getting there" section
+   * (hub ADR-0045 §4) rather than mounted at its own route. The header's meta
+   * label (`HeaderService.set()` below) names the *route*, not a section
+   * inside another screen — Home already owns that label, so an embedded
+   * instance must not overwrite it with "Travel" every time the pill is
+   * clicked. Everything else about this screen is unaffected: the map,
+   * venue/hotel lists and `?place=` deep-link behaviour are identical either
+   * way, which is the point of re-arranging the existing screen rather than
+   * building a second one.
+   */
+  readonly embedded = input(false);
+
   private readonly weddingConfigCollection: EntityCollectionService<WeddingConfigResponseDto> =
     inject(EntityServices).getEntityCollectionService<WeddingConfigResponseDto>(
       EntityNamesEnum.WEDDING_CONFIG,
@@ -117,7 +131,9 @@ export class Travel {
   );
 
   constructor() {
-    inject(HeaderService).set(this.translateService.instant('travel.header'));
+    if (!this.embedded()) {
+      inject(HeaderService).set(this.translateService.instant('travel.header'));
+    }
     this.weddingConfigCollection.getByKey(''); // Singleton resource, always fetches the same document
   }
 

@@ -1,7 +1,7 @@
-import { Component, computed, inject, type Signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, type Signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { map } from 'rxjs';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
@@ -12,6 +12,7 @@ import {
   EntityNamesEnum,
   isFirstLoad,
   LoginService,
+  RouteConfigService,
   RsvpDto,
   UserProfileDto,
   WeddingConfigResponseDto,
@@ -20,11 +21,20 @@ import {
   AgendaTimePipe,
 } from '@app/core';
 
+import {
+  DEFAULT_HOME_SECTION,
+  HOME_SECTION_PARAM,
+  isHomeSection,
+  type HomeSection,
+} from '@app/shared/home-section';
+import { GoodToKnow } from '@app/shared/good-to-know/good-to-know';
+import { HomeSubnav } from '@app/shared/home-subnav/home-subnav';
 import { DecorFish } from '../../shared/decor/fish';
 import { ProgressBar } from '../../shared/progress-bar/progress-bar';
 import { RsvpStatusTick } from '../../shared/rsvp-status-tick/rsvp-status-tick';
 import { StatusPill } from '../../shared/status-pill/status-pill';
 import { TimelineItem } from '../../shared/timeline-item/timeline-item';
+import { Travel } from '../travel/travel';
 
 /** `adults.partner2`'s account id, when it has one — the union's second
  *  member (`…OneOf1`) carries no `id` at all, so it is only readable behind
@@ -47,6 +57,9 @@ function partner2Id(rsvp: RsvpDto): string | undefined {
     AgendaTimePipe,
     StatusPill,
     TimelineItem,
+    HomeSubnav,
+    GoodToKnow,
+    Travel,
   ],
   templateUrl: './invitee.html',
   styleUrl: './invitee.scss',
@@ -54,6 +67,32 @@ function partner2Id(rsvp: RsvpDto): string | undefined {
 export class Invitee {
   private readonly login = inject(LoginService);
   private readonly translate = inject(TranslateLanguageService);
+  private readonly routeConfig = inject(RouteConfigService);
+
+  /** Home's "Getting there" pill is the former `/travel` screen — still
+   *  gated by `enabledRoutes` (hub ADR-0045 §6). */
+  protected readonly hiddenSections = computed<HomeSection[]>(() =>
+    this.routeConfig.isRouteEnabled('travel') ? [] : ['travel'],
+  );
+
+  private readonly requestedSection: Signal<string | null> = toSignal(
+    inject(ActivatedRoute).queryParamMap.pipe(map((params) => params.get(HOME_SECTION_PARAM))),
+    { initialValue: null },
+  );
+
+  /** Home's active pill (hub ADR-0045 §4) — seeded from `?section=` so the
+   *  `/travel` redirect (`core/guard/home-section-redirect.ts`) lands on
+   *  "Getting there" directly, then owned locally exactly like this
+   *  screen's own `?place=`-free `rsvp`/`schedule` links: a plain
+   *  `linkedSignal`, never reflected back to the URL on a manual click. */
+  protected readonly section = linkedSignal<string | null, HomeSection>({
+    source: this.requestedSection,
+    computation: (requested) => (isHomeSection(requested) ? requested : DEFAULT_HOME_SECTION),
+  });
+
+  protected selectSection(section: HomeSection): void {
+    this.section.set(section);
+  }
 
   private readonly userProfileCollection: EntityCollectionService<UserProfileDto> = inject(
     EntityServices,

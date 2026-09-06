@@ -1,3 +1,4 @@
+export * from './home-section-redirect';
 export * from './public-only.guard';
 export * from './rbac.guard';
 export * from './route-chrome-data';
