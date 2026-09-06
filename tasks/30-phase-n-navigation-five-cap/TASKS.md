@@ -52,7 +52,18 @@
   hand-copied links — ADR-0042 §6 stands).
 
 ### T363 — Header and tab bar learn the standout item
-- **Status:** todo
+- **Status:** done — `ScreenHeader` splits `NAV_TABS` into plain links + one standout, rendered
+  as an outlined pill pushed to the nav's end (`pill-interactive` base, ink-strength override,
+  accent border/text + `focus-ring` on `:focus-visible`), capped defensively at six total.
+  `TabBar` marks its standout tab ink-strength (not muted) at rest and matches DS `TabBar.jsx`'s
+  overflow threshold (`hasStandout ? maxTabs+2 : maxTabs+1`). Both close the T362 risk: a
+  group-aware `isOn`/`standoutActive` check reads the standout as active on its own door route
+  *or* any `MANAGE_GROUP_TABS` member (`guests`/`milestones`/`config`), never a hand-copied path
+  list. `pnpm lint` green (5 documented pre-existing ESLint errors unchanged, ds fidelity 31/31
+  clean, stylelint 0 new); 16 new unit-test cases (588 → 602 total, 0 failing); verified visually
+  via a temporary, uncommitted Playwright run against mobile and `--bp-lg` viewports (deleted
+  after use). Found live (not fixed here, T365's scope): `nav.manage` has no es/en/fr string yet.
+  Report: `reports/T363.json`.
 - **ADR:** hub ADR-0045 §3; DS `AppHeader.standoutId` / `TabBar` standout
 - `screen-header`: at most six items, active dot, the Manage entry as an outlined pill at the
   end (DS anatomy — outlined, accent on active). `tab-bar`: Manage as the last tab at ink

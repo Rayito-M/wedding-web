@@ -1,0 +1,94 @@
+{
+  "task": "T363",
+  "status": "complete",
+  "summary": "ScreenHeader splits NAV_TABS into plain links plus one standout pill at the nav's end (pill-interactive base, ink-strength override, accent when active, focus-ring), capped at six. TabBar marks its standout ink-strength at rest, matching DS TabBar.jsx's overflow math. Both close the T362 risk: the standout reads active on its own door route OR any MANAGE_GROUP_TABS member (guests/milestones/config), never a hand-copied list. Verified via 16 new unit tests (588->602) plus a temporary Playwright run at mobile/--bp-lg. Found, out of scope: nav.manage has no i18n string yet (T365).",
+  "acceptance": [
+    {
+      "criterion": "ds fidelity clean for AppHeader/TabBar mirrors",
+      "met": true,
+      "evidence": "pnpm lint -> '▶ ds fidelity (pnpm ds:verify)' : 'fidelity: 31/31 clean pairs; 0 drifting values; unported: AccountMenu, AlhambraScene, BrideAtTower, Icon, MotorcycleRider, ProfileCard' — identical before and after this task's changes (AppHeader/TabBar dsHash entries in design-mirror.json untouched; only the mirror .ts/.html/.scss files changed, which the checker diffs against the DS source, not against themselves)."
+    },
+    {
+      "criterion": "the rendering matches the kit at mobile + --bp-lg",
+      "met": true,
+      "evidence": "Temporary, uncommitted Playwright spec (e2e/tmp-t363-visual.spec.ts, deleted after use — never part of this commit) signed in as the couple (signInAsCouple from e2e/support/auth.ts) and screenshotted: desktop 1280x900 (>= --bp-lg=900px) on /dashboard (resting pill, DS AppHeader.jsx outlined-pill-at-end-of-nav anatomy), /guests (pill accent-on, own door route), /milestones and /config (pill still accent-on via group membership, not its own route — confirms the T362 risk is closed); mobile 390x844 on /dashboard (Manage tab last, ink-strength per TabBar.prompt.md, dot with ink-colored ring) and /milestones (Manage tab accent-on via group membership). `npx playwright test e2e/tmp-t363-visual.spec.ts --project=\"Desktop Chrome\"`: '1 passed (7.4s)' — every waitForSelector('.standout'/'.standout.on'/'.tab.standout'/'.tab.standout.on') resolved, i.e. the DOM state the screenshots show was asserted, not just eyeballed."
+    },
+    {
+      "criterion": "keyboard focus ring on the standout pill (focus-ring recipe)",
+      "met": true,
+      "evidence": "src/app/shared/screen-header/screen-header.scss:86-88 — '.standout:focus-visible { @include r.focus-ring; }', the generated mixin (src/styles/_recipes.scss:49-52: outline 2px solid var(--brand-accent), outline-offset 2px) — no hand-typed outline value. Same temporary Playwright run: standout.focus() on /dashboard produced a visible 2px accent outline around the pill in the screenshot (header-desktop-focus.png, reviewed, not committed)."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit): no output, exit 0. Run before and after; clean both times."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 588,
+        "failing": 0
+      },
+      "after": {
+        "total": 602,
+        "failing": 0
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2658,
+      "global_stylesheet_bytes_after": 2658,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 297.92 kB with a total of 797.92 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.90 kB with a total of 11.90 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.56 kB with a total of 9.56 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.54 kB with a total of 11.54 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.95 kB with a total of 16.95 kB."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "src/app/shared/tab-bar/tab-bar.spec.ts",
+      "tasks/30-phase-n-navigation-five-cap/reports/T363.json"
+    ],
+    "modified": [
+      "src/app/shared/screen-header/screen-header.ts",
+      "src/app/shared/screen-header/screen-header.html",
+      "src/app/shared/screen-header/screen-header.scss",
+      "src/app/shared/screen-header/screen-header.spec.ts",
+      "src/app/shared/tab-bar/tab-bar.ts",
+      "src/app/shared/tab-bar/tab-bar.html",
+      "src/app/shared/tab-bar/tab-bar.scss",
+      "tasks/README.md",
+      "tasks/30-phase-n-navigation-five-cap/TASKS.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/environments/release.ts",
+      "why": "Not edited by hand. pnpm build (this task's own required verification command) runs scripts/generate-release.mjs, which unconditionally overwrites this file with the current git commit hash — the same mechanic T362's report already documented. The file was already listed as the user's uncommitted work before this task started; left exactly as the build produced it, not staged, not committed, not reverted."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "`nav.manage` has no es/en/fr translation yet. Confirmed live during this task's visual check: signed in as the couple, both ScreenHeader's pill and TabBar's tab render the literal untranslated key text 'nav.manage' instead of a real word (public/i18n/{en,es,fr}.json's top-level `nav` block has no `manage` entry — grepped directly). This is not a regression from this task and is already T365's explicit scope ('nav.manage ... in es/en/fr'), so it was not fixed here, but it is a real, currently-live gap rather than a hypothetical one.",
+      "surfaces_at": "T365, and any manual/browser check of the couple's nav taken before T365 lands."
+    },
+    {
+      "risk": "ScreenHeader's six-item cap (MAX_HEADER_ITEMS, screen-header.ts) is implemented defensively per DS AppHeader's ceiling but has no dedicated unit test proving the slice, because NAV_TABS is a real module-level singleton derived from the live route tree (today's couple surface is 4 tabs, well under 6) and this repo has no existing precedent for mocking that module in a spec. If a future task grows a role's primary surface past six destinations, add a test that exercises the cap directly rather than trusting the live route count to stay small.",
+      "surfaces_at": "Any future task adding a nav destination to a role that already has 5+ entries."
+    }
+  ],
+  "commits": ["9c1b57a"],
+  "decisions_needed": []
+}
