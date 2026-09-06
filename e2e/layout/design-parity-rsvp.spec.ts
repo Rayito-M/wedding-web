@@ -106,32 +106,14 @@ test.describe('RSVP create (guest) — pixel parity with the DS kit (T369)', () 
     const appCol = await boxOf(page, 'app-rsvp-create');
     expect(kitCol, 'kit: RSVP content column not found').not.toBeNull();
     expect(appCol, 'app: app-rsvp-create host not found').not.toBeNull();
-    // The kit's OUTER AppShell column is 620 (`ScreenRSVPCreate.jsx` L177);
-    // nested one level in, its own reply card is a narrower 560 (L179). The
-    // app's `app-rsvp-create` host IS that inner card (`rsvp-create.scss`
-    // `:host { max-width: 560px }`, desktop) — there is no separate outer
-    // 620 wrapper in the app at all, so the two numbers below are expected
-    // to diverge; recorded as a finding, not asserted equal.
-    test.info().annotations.push({
-      type: 'measured',
-      description: `kit outer column ${kitCol!.width}px (contract 620) vs app card ${appCol!.width}px (rsvp-create.scss 560px, no outer 620 wrapper exists in the app)`,
-    });
+    // T370: `app-rsvp-create` now renders the kit's OUTER 620px AppShell
+    // column (`ScreenRSVPCreate.jsx` L177, `container-sm` recipe) as its own
+    // `:host`, wrapping a new `.card` element that carries the kit's inner
+    // 560px reply card (L179) one level in — restoring the outer column
+    // this app rendered nowhere at all before (T369).
     expectClose(kitCol!.width, 620, 1, 'desktop kit: content column width vs ds-contract.json maxWidth 620');
+    expectClose(appCol!.width, 620, 1, 'desktop app: content column width vs ds-contract.json maxWidth 620');
 
     await kitPage.close();
   });
-
-  test.fixme(
-    'desktop: app has no outer 620px content column — app-rsvp-create host renders directly at 560px (its own inner-card width), never the ds-contract.json ScreenRSVPCreate.shell.maxWidth 620 outer column the kit wraps it in',
-    async ({ page, context }) => {
-      const kitPage = await context.newPage();
-      await openDsKitScreen(kitPage, kit.baseUrl, { device: 'Desktop', role: 'Guest', viewLabel: 'RSVP' });
-      await signInAsGuestPendingRsvp(page);
-      await page.setViewportSize(DESKTOP);
-      await page.waitForLoadState('networkidle');
-      const appCol = await boxOf(page, 'app-rsvp-create');
-      expectClose(appCol!.width, 620, 1, 'app content column width vs ds-contract.json maxWidth 620');
-      await kitPage.close();
-    },
-  );
 });

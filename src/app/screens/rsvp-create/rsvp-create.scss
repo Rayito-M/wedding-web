@@ -1,11 +1,19 @@
 @use '../../../styles/tokens' as t;
 @use '../../../styles/primitives';
+@use '../../../styles/grid';
 
 :host {
   display: flex;
   flex-direction: column;
   min-height: 100%;
   width: 100%;
+}
+
+// Mobile: `.card` disappears from the box tree so `.content`/`footer` stay
+// direct flex items of `:host`, exactly as before this wrapper existed
+// (T370 — the wrapper only matters at desktop, see below).
+.card {
+  display: contents;
 }
 
 .content {
@@ -180,8 +188,13 @@ footer {
 
 @media (min-width: 900px) {
   :host {
-    max-width: 560px;
-    margin: t.$space-6 auto;
+    // The OUTER content column (T369/T370): `ds-contract.json`
+    // `ScreenRSVPCreate.shell.maxWidth` 620, same generated recipe schedule's
+    // own :host reaches for at the same width (`container-sm` — 620px,
+    // `--space-6` gutters) rather than hand-typing the figure. `.card` below
+    // is the kit's own INNER reply card (560px), nested one level in.
+    @include grid.container-sm;
+    display: block;
     // Undo the mobile `min-height: 100%` (needed there to pin the footer at
     // the bottom of a full-height screen) — the desktop card has no such
     // requirement and must size to its content, matching the DS reference
@@ -191,6 +204,13 @@ footer {
     // clause (hub ADR-0041 §4 amendment) has nothing to revive here (T347
     // audit).
     min-height: 0;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    max-width: 560px;
+    margin: t.$space-6 auto;
     background: var(--surface-card);
     border: 1px solid var(--border-hairline);
     border-radius: t.$radius-card;

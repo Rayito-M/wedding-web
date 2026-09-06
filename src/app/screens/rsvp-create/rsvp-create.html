@@ -1,3 +1,11 @@
+<!-- `.card` (T370): the kit's own inner reply card (`ScreenRSVPCreate.jsx`
+     L179, 560px) — wrapped so `:host` can become the OUTER 620px content
+     column the kit's `AppShell` wraps it in (`ds-contract.json`
+     `ScreenRSVPCreate.shell.maxWidth`), which nothing in this app rendered
+     before (T369). `display: contents` at mobile (see rsvp-create.scss)
+     keeps `.content`/`footer` direct flex children of `:host` exactly as
+     before this wrapper existed. -->
+<div class="card">
 <div class="content">
   <div class="eyebrow">
     {{ 'rsvp.header' | translate }} ·
@@ -182,3 +190,4 @@
     {{ continueLabelKey() | translate }}
   </button>
 </footer>
+</div>
