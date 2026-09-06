@@ -201,8 +201,8 @@
 
 .row-dot {
   margin-top: 6px;
-  width: 6px;
-  height: 6px;
+  width: var(--dot-size);
+  height: var(--dot-size);
   flex-shrink: 0;
   border-radius: 50%;
   background: var(--brand-accent);

@@ -80,8 +80,8 @@
 
 .dot {
   // 4px (--space-1) + the grid's even 2px sub-step = 6px — see file header.
-  width: calc(var(--space-1) * 1.5);
-  height: calc(var(--space-1) * 1.5);
+  width: var(--dot-size);
+  height: var(--dot-size);
   margin-right: var(--space-2);
   flex: 0 0 auto;
   border-radius: 50%;

@@ -34,8 +34,8 @@
 }
 
 .dot {
-  width: 6px;
-  height: 6px;
+  width: var(--dot-size);
+  height: var(--dot-size);
   flex: 0 0 auto;
   border-radius: 50%;
   background: transparent;
@@ -54,8 +54,8 @@
 
 // Chevron toggle on the "More" tab, built from two borders (rotates open/closed).
 .chevron {
-  width: 6px;
-  height: 6px;
+  width: var(--dot-size);
+  height: var(--dot-size);
   flex: 0 0 auto;
   border-right: 1.5px solid currentColor;
   border-bottom: 1.5px solid currentColor;

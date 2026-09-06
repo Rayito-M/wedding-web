@@ -44,8 +44,8 @@
     position: absolute;
     top: 5px;
     left: 4px;
-    width: 6px;
-    height: 6px;
+    width: var(--dot-size);
+    height: var(--dot-size);
     border-radius: 50%;
     background: var(--row-status-color);
     box-sizing: border-box;
