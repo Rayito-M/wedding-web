@@ -6,7 +6,10 @@ import type { UserRole } from '@app/model';
  * reads `roles` straight off it, and nav chrome (`shared/nav-tabs.ts`,
  * `TabBar`, `ScreenHeader`) derives its `NavTab`s straight off the route tree
  * (hub ADR-0042 §6), carrying `roles`/`navLabel` on the tab itself rather
- * than looking either back up by path.
+ * than looking either back up by path. `group`/`standout` (hub ADR-0045)
+ * carry the same discipline forward for the couple's Manage tool group —
+ * membership and the group's single nav-visible door are route facts, not a
+ * second hand-written list.
  */
 interface RouteChromeDataBase {
   /**
@@ -60,6 +63,29 @@ interface RouteChromeDataBase {
    *   flow.
    */
   screenScroll?: true | 'md' | 'lg' | 'xl';
+  /**
+   * This route belongs to the couple's **Manage** tool group (hub ADR-0045
+   * §2/§3/§6). Grouped routes keep their own `navLabel` (it names the
+   * screen inside Manage's future rail/tab set — T364) but `nav-tabs.ts`
+   * excludes every grouped route from the primary per-role surface: only
+   * the group's {@link standout} member represents the whole group there,
+   * as the single "Manage" door. This key marks membership, not
+   * visibility — it is what lets a later Manage area enumerate its
+   * children by walking the route tree instead of hand-copying a list
+   * (hub ADR-0042 §6).
+   */
+  group?: 'manage';
+  /**
+   * This route is the single visible face of its {@link group} in the
+   * primary nav — rendered as an outlined "Manage" pill (hub ADR-0045 §3,
+   * DS `AppHeader.standoutId` / `TabBar` standout). Exactly one route per
+   * group should set this. `nav-tabs.ts` takes only this route's
+   * `link`/`roles` to synthesize the group's `NavTab`, under the group's
+   * own id and a `nav.<group>` label — **not** this route's own `id` or
+   * `navLabel`, which keep naming the screen itself for when Manage's own
+   * sub-nav (T364) is built.
+   */
+  standout?: true;
 }
 
 /** Not a nav entry — `tabBar` and `topNav` are absent or `false`. */

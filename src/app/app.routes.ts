@@ -20,6 +20,11 @@ import { publicOnlyGuard, rbacGuard, routeEnabledGuard, RouteChromeData } from '
 //   navLabel — i18n key for the nav entry; required whenever tabBar or topNav is
 //              true (hub ADR-0042 §7 — a missing label must not compile)
 //   moto     — decorative motorcycle-rider crossing above the mobile tab bar
+//   group    — 'manage' marks a couple tool route as a Manage group member (hub
+//              ADR-0045 §2/§3); grouped routes are excluded from the primary nav —
+//              only the group's `standout` member represents it there
+//   standout — this route is the single visible face of its `group` in the primary
+//              nav, synthesized by `nav-tabs.ts` under the group's own id/label
 export const routes: Routes = [
   {
     path: '',
@@ -93,12 +98,17 @@ export const routes: Routes = [
         loadComponent: () => import('./screens/travel/travel').then((m) => m.Travel),
         title: 'titles.travel',
         canActivate: [routeEnabledGuard],
+        // Hub ADR-0045 §4 — Travel stops being a top-level destination: it
+        // folds into Home's "Getting there" section. Not a nav entry as of
+        // this route data (no `tabBar`/`topNav`/`navLabel`), so it drops out
+        // of `NAV_TABS` by construction rather than by a hand-maintained
+        // exclusion list. The route itself, and `enabledRoutes`, are
+        // untouched — the screen still renders at `/travel` for anyone who
+        // already has the link; T364 adds the redirect into Home and the
+        // section that replaces this as the discoverable path.
         data: {
           id: 'travel',
-          tabBar: true,
-          topNav: true,
           moto: true,
-          navLabel: 'nav.travel',
         } satisfies RouteChromeData,
       },
       {
@@ -165,6 +175,12 @@ export const routes: Routes = [
           // `footPinned: true` did here before this task corrected it.
           screenScroll: true,
           navLabel: 'nav.config',
+          // Hub ADR-0045 §2/§3/§6 — one of the couple's Manage tools
+          // ("Settings" in Manage's rail/tab set, T364). Grouped routes
+          // never reach the primary nav themselves; `guests` is the
+          // group's `standout` door below, so this route's own `navLabel`
+          // stays `nav.config` for when Manage's own sub-nav renders it.
+          group: 'manage',
         } satisfies RouteChromeData,
       },
       {
@@ -191,6 +207,16 @@ export const routes: Routes = [
           headPinned: true,
           footPinned: true,
           navLabel: 'nav.guests',
+          // Hub ADR-0045 §2/§3/§6 — the Manage tool group's standout door:
+          // the one member whose own `link`/`roles` `nav-tabs.ts` reads to
+          // synthesize the primary nav's "Manage" pill (labelled
+          // `nav.manage`, not `nav.guests` — this route's own label still
+          // names the screen for Manage's future sub-nav, T364). Guest
+          // Manager is the group's highest-traffic screen (hub ADR-0043
+          // §5), the reasonable default landing until T364 builds a real
+          // Overview; flagged for confirmation in this task's report.
+          group: 'manage',
+          standout: true,
         } satisfies RouteChromeData,
       },
       {
@@ -244,6 +270,10 @@ export const routes: Routes = [
           // screen's to own.
           screenScroll: 'lg',
           navLabel: 'nav.milestones',
+          // Hub ADR-0045 §2/§3/§6 — one of the couple's Manage tools; see
+          // the `config` route's comment above for why this route keeps
+          // its own `navLabel` rather than the group's.
+          group: 'manage',
         } satisfies RouteChromeData,
       },
       {
