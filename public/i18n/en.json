@@ -714,7 +714,22 @@
     "seating": "Seating",
     "people": "Contacts",
     "milestones": "Milestones",
-    "more": "More"
+    "more": "More",
+    "manage": "Manage",
+    "overview": "Overview"
+  },
+  "home": {
+    "today": "Today",
+    "gettingThere": "Getting there",
+    "goodToKnow": "Good to know",
+    "subnavAriaLabel": "Home sections",
+    "goodToKnowEmpty": {
+      "title": "Nothing here yet",
+      "body": "We'll add helpful details here as the day gets closer."
+    }
+  },
+  "manage": {
+    "backToApp": "Back to app"
   },
   "titles": {
     "welcome": "Sara & Christophe · Save the date",

@@ -709,7 +709,22 @@
     "seating": "Tables",
     "people": "Contacts",
     "milestones": "Étapes",
-    "more": "Plus"
+    "more": "Plus",
+    "manage": "Gérer",
+    "overview": "Aperçu"
+  },
+  "home": {
+    "today": "Aujourd'hui",
+    "gettingThere": "S'y rendre",
+    "goodToKnow": "Bon à savoir",
+    "subnavAriaLabel": "Sections de l'accueil",
+    "goodToKnowEmpty": {
+      "title": "Rien ici pour l'instant",
+      "body": "Nous ajouterons ici des informations utiles à mesure que le jour approche."
+    }
+  },
+  "manage": {
+    "backToApp": "Retour à l'application"
   },
   "titles": {
     "welcome": "Sara & Christophe · Réservez la date",
