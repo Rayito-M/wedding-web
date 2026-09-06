@@ -5,50 +5,91 @@
   [class.scrolled]="isScrolled()"
 />
 
-<!-- Hub ADR-0042 §1/§2, T341: the active route's registered head, projected
-     from the screen's own injector into this layout's view. Pinned above the
-     scroll region — see `.screen-head` in private-layout.scss. -->
-@if (screenChrome.head(); as headTemplate) {
-  <div class="screen-head">
-    <ng-container [ngTemplateOutlet]="headTemplate" />
+<!-- Manage's mobile exit (hub ADR-0045 §3): the bottom tab set swaps to
+     Manage's own tabs below with no other visible switch, so this is the
+     only affordance saying you are in a sub-surface. CSS-hidden at ≥900px
+     (private-layout.scss), where the rail below is the equivalent context. -->
+@if (inManage()) {
+  <div class="manage-back-row">
+    <a class="back-link" [routerLink]="manageHomeLink()">
+      ← {{ 'manage.backToApp' | translate }}
+    </a>
+    <span class="manage-eyebrow">{{ 'nav.manage' | translate }}</span>
   </div>
 }
 
-<!-- `main` stays the single scroller (ADR-0041 §3) for a flow screen; it
-     yields only when the active route's `screenScroll` says so (hub
-     ADR-0043 §1) — never `headPinned`/`footPinned`, which pin a region but
-     no longer decide who scrolls. The closed set of four classes below
-     mirrors private-layout.scss's own closed set: unconditional plus one
-     per named breakpoint. `after-head` follows the registered head
-     (`screenChrome.head()`), not the route flag, so a flag set without a
-     registered head is inert rather than stranding content under the fixed
-     header (hub ADR-0043 §3). -->
-<main
-  #mainContent
-  (scroll)="onMainScroll()"
-  [class.screen-scrolls]="chrome().screenScroll === true"
-  [class.screen-scrolls-md]="chrome().screenScroll === 'md'"
-  [class.screen-scrolls-lg]="chrome().screenScroll === 'lg'"
-  [class.screen-scrolls-xl]="chrome().screenScroll === 'xl'"
-  [class.after-head]="!!screenChrome.head()"
->
-  <div
-    #screenScroll
-    class="screen-scroll"
-    [class.screen-scrolls]="chrome().screenScroll === true"
-    [class.screen-scrolls-md]="chrome().screenScroll === 'md'"
-    [class.screen-scrolls-lg]="chrome().screenScroll === 'lg'"
-    [class.screen-scrolls-xl]="chrome().screenScroll === 'xl'"
-  >
-    <router-outlet />
-  </div>
-</main>
+<!-- The body row: Manage's desktop rail (`PlanRail`, hub ADR-0045 §3) sits
+     beside the screen's own head/main/foot column, never above or below it —
+     both are flex children of `.body`, CSS-hidden below 900px
+     (private-layout.scss) where the back row above and the Manage tab set
+     below cover the same "you're in Manage" affordance instead. Adding this
+     wrapper does not touch `main`'s scroll ownership: `.body`/`.body-main`
+     carry no height/overflow of their own (ADR-0041 §3's single-scroller
+     rule holds — see private-layout.scss). -->
+<div class="body">
+  @if (inManage()) {
+    <app-plan-rail
+      class="manage-rail"
+      label="nav.manage"
+      [items]="manageRailItems()"
+      [footer]="manageRailFooter()"
+      [active]="chrome().id ?? ''"
+      [activeSection]="manageActiveSection()"
+      (navSelect)="onManageNav($event)"
+      (sectionSelect)="onManageSection($event)"
+    />
+  }
 
-@if (screenChrome.foot(); as footTemplate) {
-  <div class="screen-foot">
-    <ng-container [ngTemplateOutlet]="footTemplate" />
+  <div class="body-main">
+    <!-- Hub ADR-0042 §1/§2, T341: the active route's registered head, projected
+         from the screen's own injector into this layout's view. Pinned above the
+         scroll region — see `.screen-head` in private-layout.scss. -->
+    @if (screenChrome.head(); as headTemplate) {
+      <div class="screen-head">
+        <ng-container [ngTemplateOutlet]="headTemplate" />
+      </div>
+    }
+
+    <!-- `main` stays the single scroller (ADR-0041 §3) for a flow screen; it
+         yields only when the active route's `screenScroll` says so (hub
+         ADR-0043 §1) — never `headPinned`/`footPinned`, which pin a region but
+         no longer decide who scrolls. The closed set of four classes below
+         mirrors private-layout.scss's own closed set: unconditional plus one
+         per named breakpoint. `after-head` follows the registered head
+         (`screenChrome.head()`), not the route flag, so a flag set without a
+         registered head is inert rather than stranding content under the fixed
+         header (hub ADR-0043 §3). `in-manage` is the same idea for the mobile
+         back row (hub ADR-0045 §3) — see private-layout.scss for why it is a
+         second class, not folded into `after-head`. -->
+    <main
+      #mainContent
+      (scroll)="onMainScroll()"
+      [class.screen-scrolls]="chrome().screenScroll === true"
+      [class.screen-scrolls-md]="chrome().screenScroll === 'md'"
+      [class.screen-scrolls-lg]="chrome().screenScroll === 'lg'"
+      [class.screen-scrolls-xl]="chrome().screenScroll === 'xl'"
+      [class.after-head]="!!screenChrome.head()"
+      [class.in-manage]="inManage()"
+    >
+      <div
+        #screenScroll
+        class="screen-scroll"
+        [class.screen-scrolls]="chrome().screenScroll === true"
+        [class.screen-scrolls-md]="chrome().screenScroll === 'md'"
+        [class.screen-scrolls-lg]="chrome().screenScroll === 'lg'"
+        [class.screen-scrolls-xl]="chrome().screenScroll === 'xl'"
+      >
+        <router-outlet />
+      </div>
+    </main>
+
+    @if (screenChrome.foot(); as footTemplate) {
+      <div class="screen-foot">
+        <ng-container [ngTemplateOutlet]="footTemplate" />
+      </div>
+    }
   </div>
-}
+</div>
 
 @if (chrome().moto) {
   <app-decor-motorcycle-rider
@@ -62,7 +103,11 @@
 }
 
 @if (chrome().tabBar) {
-  <app-tab-bar class="tab-bar" [active]="chrome().id ?? ''" />
+  <app-tab-bar
+    class="tab-bar"
+    [active]="chrome().id ?? ''"
+    [tabs]="inManage() ? MANAGE_GROUP_TABS : NAV_TABS"
+  />
 }
 
 @if (profileModal.isOpen()) {

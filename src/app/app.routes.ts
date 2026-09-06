@@ -195,39 +195,6 @@ export const routes: Routes = [
         } satisfies RouteChromeData,
       },
       {
-        path: 'config',
-        loadComponent: () =>
-          import('./screens/config-manager/config-manager').then((m) => m.ConfigManager),
-        title: 'titles.config',
-        canActivate: [rbacGuard, routeEnabledGuard],
-        data: {
-          id: 'config',
-          roles: ['groom', 'bride'],
-          tabBar: true,
-          topNav: true,
-          // Hub ADR-0043 §1/§5, T352 — shell at every breakpoint (ADR-0042
-          // §Context ¶2, corrected 2026-09-04), the same shape as
-          // `seating-plan`. This screen registers no `*appScreenHead` /
-          // `*appScreenFoot` of its own — nothing leaves its template to be
-          // pinned by `PrivateLayout` — so it declares neither pin flag,
-          // matching what `:host`'s local shell (`config-manager.scss`)
-          // already assumes. `screenScroll: true` is the only key that makes
-          // `main` yield (`overflow-y: clip`) to `PrivateLayout`'s own
-          // `.screen-scroll`; scroll ownership and pinning are independent
-          // route keys (hub ADR-0043 §1/§2), so a screen that pins nothing
-          // never has to declare a pin flag "to make main yield" the way
-          // `footPinned: true` did here before this task corrected it.
-          screenScroll: true,
-          navLabel: 'nav.config',
-          // Hub ADR-0045 §2/§3/§6 — one of the couple's Manage tools
-          // ("Settings" in Manage's rail/tab set, T364). Grouped routes
-          // never reach the primary nav themselves; `overview` above is the
-          // group's `standout` door, so this route's own `navLabel` stays
-          // `nav.config` for Manage's own rail/tab set (T364).
-          group: 'manage',
-        } satisfies RouteChromeData,
-      },
-      {
         path: 'guests',
         loadComponent: () =>
           import('./screens/guest-manager/guest-manager').then((m) => m.GuestManager),
@@ -314,8 +281,48 @@ export const routes: Routes = [
           screenScroll: 'lg',
           navLabel: 'nav.milestones',
           // Hub ADR-0045 §2/§3/§6 — one of the couple's Manage tools; see
-          // the `config` route's comment above for why this route keeps
-          // its own `navLabel` rather than the group's.
+          // the `config` route's own comment below for why this route
+          // keeps its own `navLabel` rather than the group's.
+          group: 'manage',
+        } satisfies RouteChromeData,
+      },
+      {
+        // Declared last among the Manage group's members — not `config`'s
+        // original position — so `MANAGE_GROUP_TABS`' declaration order
+        // (`nav-tabs.ts`'s `collect()` walks routes in file order, hub
+        // ADR-0042 §6) puts Settings last, matching DS `MANAGE_TABS`'s own
+        // order (Overview · Guests · … · Settings) and `PlanRail` pinning
+        // Settings to the rail foot rather than the mid-list item order it
+        // used to keep. Content unchanged from the route this used to be.
+        path: 'config',
+        loadComponent: () =>
+          import('./screens/config-manager/config-manager').then((m) => m.ConfigManager),
+        title: 'titles.config',
+        canActivate: [rbacGuard, routeEnabledGuard],
+        data: {
+          id: 'config',
+          roles: ['groom', 'bride'],
+          tabBar: true,
+          topNav: true,
+          // Hub ADR-0043 §1/§5, T352 — shell at every breakpoint (ADR-0042
+          // §Context ¶2, corrected 2026-09-04), the same shape as
+          // `seating-plan`. This screen registers no `*appScreenHead` /
+          // `*appScreenFoot` of its own — nothing leaves its template to be
+          // pinned by `PrivateLayout` — so it declares neither pin flag,
+          // matching what `:host`'s local shell (`config-manager.scss`)
+          // already assumes. `screenScroll: true` is the only key that makes
+          // `main` yield (`overflow-y: clip`) to `PrivateLayout`'s own
+          // `.screen-scroll`; scroll ownership and pinning are independent
+          // route keys (hub ADR-0043 §1/§2), so a screen that pins nothing
+          // never has to declare a pin flag "to make main yield" the way
+          // `footPinned: true` did here before this task corrected it.
+          screenScroll: true,
+          navLabel: 'nav.config',
+          // Hub ADR-0045 §2/§3/§6 — one of the couple's Manage tools
+          // ("Settings" in Manage's rail/tab set, T364). Grouped routes
+          // never reach the primary nav themselves; `overview` above is the
+          // group's `standout` door, so this route's own `navLabel` stays
+          // `nav.config` for Manage's own rail/tab set (T364).
           group: 'manage',
         } satisfies RouteChromeData,
       },

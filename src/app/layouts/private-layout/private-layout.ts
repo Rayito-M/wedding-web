@@ -11,8 +11,9 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
+import { TranslatePipe } from '@ngx-translate/core';
 import { filter, map } from 'rxjs';
 
 import {
@@ -26,6 +27,9 @@ import {
   UserProfileDto,
   WeddingUserProfileService,
 } from '@app/core';
+import { CONFIG_SECTION_PARAM, SECTIONS as CONFIG_SECTIONS } from '@app/shared/config-sections';
+import { MANAGE_GROUP_TABS, NAV_TABS } from '@app/shared/nav-tabs';
+import { PlanRail, type PlanRailItem } from '@app/shared/plan-rail/plan-rail';
 
 import { DecorMotorcycleRider } from '../../shared/decor/motorcycle-rider/motorcycle-rider';
 import { DelegateChip } from '../../shared/delegate-chips/delegate-chips';
@@ -145,6 +149,7 @@ type RouteChrome = Partial<RouteChromeData>;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterOutlet,
+    RouterLink,
     ScreenHeader,
     TabBar,
     ToastStack,
@@ -152,6 +157,8 @@ type RouteChrome = Partial<RouteChromeData>;
     DecorMotorcycleRider,
     ProfileModal,
     NgTemplateOutlet,
+    PlanRail,
+    TranslatePipe,
   ],
   templateUrl: './private-layout.html',
   styleUrl: './private-layout.scss',
@@ -289,6 +296,73 @@ export class PrivateLayout {
     { initialValue: this.deepestChrome() },
   );
 
+  /**
+   * Entering a `group: 'manage'` route swaps desktop to `PlanRail` and
+   * mobile to the Manage tab set, with a "← Back to app" exit above the
+   * content (hub ADR-0045 §3) — this is the one flag both halves of that
+   * swap read. Deliberately **not** a second chrome mechanism (ADR-0045 §3's
+   * own warning): it is `chrome().group`, the same route-data fact
+   * `nav-tabs.ts` already reads to keep grouped routes out of the primary
+   * nav, just consumed here for the layout swap instead of tab collapsing.
+   */
+  protected readonly inManage = computed(() => this.chrome().group === 'manage');
+
+  protected readonly NAV_TABS = NAV_TABS;
+  protected readonly MANAGE_GROUP_TABS = MANAGE_GROUP_TABS;
+
+  /** Where "← Back to app" and the Manage door's own active state exit to —
+   *  the signed-in role's own Home tab, read off `NAV_TABS` rather than
+   *  hardcoded `/dashboard`/`/me` so a route rename can't silently strand
+   *  the exit (hub ADR-0042 §6, the same reasoning `nav-tabs.ts` itself
+   *  documents for why it walks the route tree instead of hand-copying). */
+  protected readonly manageHomeLink = computed(() => {
+    const role = this.login.role();
+    return (
+      NAV_TABS.find((tab) => tab.id === 'home' && (!tab.roles || tab.roles.includes(role)))
+        ?.link ?? '/'
+    );
+  });
+
+  /** `PlanRail`'s top-level items — every Manage member except Settings,
+   *  which is pinned to the rail foot with its sections nested beneath it
+   *  (hub ADR-0045 §3, DS `PlanRail`'s own `MANAGE_RAIL`/footer split). */
+  protected readonly manageRailItems = computed<PlanRailItem[]>(() =>
+    MANAGE_GROUP_TABS.filter((tab) => tab.id !== 'config').map((tab) => ({
+      id: tab.id,
+      labelKey: tab.labelKey,
+    })),
+  );
+
+  /** Settings, alone, at the rail foot — its seven sections nest beneath it
+   *  only while it is the active item (`PlanRail`'s own anatomy), sourced
+   *  from `config-sections.ts` rather than a second hand-typed list. */
+  protected readonly manageRailFooter = computed<PlanRailItem[]>(() => {
+    const config = MANAGE_GROUP_TABS.find((tab) => tab.id === 'config');
+    if (!config) return [];
+    return [
+      {
+        id: config.id,
+        labelKey: config.labelKey,
+        sections: CONFIG_SECTIONS,
+      },
+    ];
+  });
+
+  /** `config-manager`'s own active section (`?section=`, `CONFIG_SECTION_PARAM`)
+   *  — read the same way {@link chrome} is, seeded on mount and refreshed on
+   *  every `NavigationEnd`, so the rail's nested Settings sections track
+   *  `config-manager`'s section-controlled state (T364) without a second
+   *  source of truth for "which section is active". Meaningless (and
+   *  harmless) on any other route — `PlanRail` only renders it under the
+   *  active item's own nested list. */
+  protected readonly manageActiveSection = toSignal(
+    this.router.events.pipe(
+      filter((e) => e instanceof NavigationEnd),
+      map(() => this.currentQueryParam(CONFIG_SECTION_PARAM)),
+    ),
+    { initialValue: this.currentQueryParam(CONFIG_SECTION_PARAM) },
+  );
+
   constructor() {
     // The "control" half of ADR-0042 §Consequences (T348): a screen that no
     // longer owns its scroller asks this layout to scroll it back to the
@@ -371,6 +445,34 @@ export class PrivateLayout {
     let route = this.router.routerState.snapshot.root;
     while (route.firstChild) route = route.firstChild;
     return route.data;
+  }
+
+  /** Reads a query param off the router's own current URL — same trick as
+   *  {@link deepestChrome}, for the same reason: this layout mounts after
+   *  the `NavigationEnd` that first activated it, so a param the URL already
+   *  carries on first paint must be read directly rather than only from the
+   *  event stream. */
+  private currentQueryParam(name: string): string | undefined {
+    return this.router.parseUrl(this.router.url).queryParamMap.get(name) ?? undefined;
+  }
+
+  /** `PlanRail`'s `navSelect` (hub ADR-0045 §3) — a top-level Manage item was
+   *  clicked; `id` is one of {@link manageRailItems}/{@link manageRailFooter},
+   *  each carrying its own route `link`, so this is a plain navigation, not
+   *  a lookup that could drift from the route tree (hub ADR-0042 §6). */
+  protected onManageNav(id: string): void {
+    const tab = MANAGE_GROUP_TABS.find((t) => t.id === id);
+    if (tab) void this.router.navigateByUrl(tab.link);
+  }
+
+  /** `PlanRail`'s `sectionSelect` — a Settings section was clicked while
+   *  Settings is the rail's active item; drives `config-manager`'s own
+   *  section-controlled state via the shared `CONFIG_SECTION_PARAM` (T364),
+   *  never a private lookup this layout owns. */
+  protected onManageSection(id: string): void {
+    const config = MANAGE_GROUP_TABS.find((t) => t.id === 'config');
+    if (!config) return;
+    void this.router.navigate([config.link], { queryParams: { [CONFIG_SECTION_PARAM]: id } });
   }
 
   protected onMainScroll(): void {

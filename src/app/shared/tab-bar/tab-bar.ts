@@ -35,10 +35,20 @@ export class TabBar {
   readonly active = input('');
   readonly open = signal(false);
 
+  /**
+   * Which tab set to render — the per-role primary surface (`NAV_TABS`,
+   * default) or the couple's Manage tab set (hub ADR-0045 §3:
+   * "entering swaps … mobile to the Manage tab set"). `PrivateLayout` binds
+   * `MANAGE_GROUP_TABS` here while the active route carries `group: 'manage'`.
+   * The overflow/standout machinery below is unchanged either way — Manage's
+   * own members carry no `standout` tab, so it is simply inert for them.
+   */
+  readonly tabs = input<readonly NavTab[]>(NAV_TABS);
+
   // Filtered once (role + enabled-route) before slicing into primary/rest, so
   // a disabled route can't eat a "primary slot" and desync the overflow math.
   protected readonly visibleTabs = computed(() =>
-    NAV_TABS.filter(
+    this.tabs().filter(
       (tab) =>
         (!tab.roles || tab.roles.includes(this.login.role())) &&
         this.routeConfig.isRouteEnabled(tab.link),

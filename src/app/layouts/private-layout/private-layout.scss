@@ -25,6 +25,73 @@
   width: 100%;
 }
 
+// Manage's mobile exit (hub ADR-0045 §3) — CSS-hidden at ≥900px, where the
+// rail below carries the same "you're in Manage" context (same convention as
+// `screen-header.scss`'s desktop nav: always in the DOM, CSS-gated by
+// breakpoint rather than re-rendered in TS).
+.manage-back-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6) 2px;
+  flex: 0 0 auto;
+  // Sits below the fixed `.header` (52px) — a flow sibling, not fixed itself,
+  // so it scrolls away with the rest of `.body` exactly like `.screen-head`
+  // does; it never competes with that slot (a Manage screen with a pinned
+  // head, none today, would stack both in document order).
+  margin-top: 52px;
+}
+
+.back-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.manage-eyebrow {
+  margin-left: auto;
+  font-size: var(--text-micro);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-accent);
+}
+
+// The body row (hub ADR-0045 §3): Manage's desktop rail sits beside the
+// screen's own head/main/foot column. Neither box carries a height or
+// `overflow` of its own — `min-height: 0` only, so the single-scroller rule
+// (ADR-0041 §3) still resolves inside `.body-main` exactly as it did when
+// `main` was a direct child of `:host`. `app-plan-rail` renders `display:
+// contents` so `.rail`'s own `flex-shrink: 0` (plan-rail.scss) is what
+// actually participates in this row, matching DS `AppShell`'s
+// `{rail}{body}` sibling structure.
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.manage-rail {
+  display: none;
+}
+
+.body-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  // A screen this narrow never has anything to its left, but a `min-width: 0`
+  // omission here would be the exact ADR-0041 §5 flex-truncation trap once a
+  // rail sibling exists — stated rather than left to chance.
+  min-width: 0;
+}
+
 // The active route's registered head (hub ADR-0042 §1/§2, T341) — only
 // present in the DOM at all when a screen registers one (`*appScreenHead`).
 // Carries the 52px clearance from the fixed `.header` above that `main`
@@ -73,6 +140,18 @@ main {
   // See `.screen-head` above: when a head is pinned, it — not `main` —
   // carries the 52px clearance from the fixed header.
   &.after-head {
+    margin-top: 0;
+  }
+
+  // Manage's mobile back row (hub ADR-0045 §3, `.manage-back-row` above) is
+  // the first in-flow element under the fixed header at mobile widths on a
+  // Manage route, carrying its own 52px clearance — so `main` must not add a
+  // second copy. `:not(.after-head)` is what keeps this from fighting a
+  // Manage route that *also* registers a real head (`guests`): that case
+  // never matches this selector at all, so `.after-head` above is the only
+  // rule deciding it, at every breakpoint. Restored at ≥900px, where the
+  // back row is CSS-hidden and contributes no clearance of its own.
+  &.in-manage:not(.after-head) {
     margin-top: 0;
   }
 }
@@ -135,7 +214,16 @@ main {
     padding-bottom: 0;
   }
 
-  main {
+  // The second selector restores the clearance `main.in-manage:not(.after-head)`
+  // drops below (that base rule has no media guard, so it would otherwise
+  // win here too by specificity): the mobile back row that provides it there
+  // is CSS-hidden at this width, and the rail beside `main` doesn't supply
+  // it either — see the base rule's own comment for the full reasoning.
+  // Shares this declaration rather than repeating the literal `52px` in a
+  // second ruleset (stylelint's `declaration-property-value-disallowed-list`
+  // — this file already carries its own baselined `52px`/`20px` above).
+  main,
+  main.in-manage:not(.after-head) {
     margin-top: 52px;
     padding-bottom: 20px;
   }
@@ -146,6 +234,19 @@ main {
 
   .mobile-moto {
     display: none;
+  }
+
+  // The desktop half of the Manage swap (hub ADR-0045 §3): the mobile back
+  // row's context is replaced by the rail itself being visible, and
+  // `app-plan-rail` becomes `display: contents` so its own `.rail` — not
+  // this host element — is the actual flex item in `.body` (see `.body`'s
+  // own comment above for why plan-rail.scss already assumes that).
+  .manage-back-row {
+    display: none;
+  }
+
+  .manage-rail {
+    display: contents;
   }
 }
 
