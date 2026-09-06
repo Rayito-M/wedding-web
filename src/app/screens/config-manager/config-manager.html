@@ -1,3 +1,28 @@
+<!--
+  Save, moved into each section's own header (hub ADR-0045 §3's
+  section-controlled mode — DS `ScreenConfigManager`'s `secHeader()`: "when
+  controlled, Save moves into the section header"). One `<ng-template>`,
+  reused via `NgTemplateOutlet` in every `.section-header` below, rather
+  than eight copies of the same status text + button. CSS-shown only at
+  `≥900px` (`.section-save` in config-manager.scss) — the `.toolbar` above
+  and `.mobile-bar` below keep covering Save on mobile, where Manage's
+  `PlanRail` doesn't mount and this screen still owns its own navigation.
+-->
+<ng-template #sectionSave>
+  <div class="section-save">
+    <p class="status" [class.dirty]="dirty()" [class.saved]="savedFlash()">
+      {{ statusKey() | translate }}
+    </p>
+    <button app-btn type="button" [disabled]="!dirty()" (click)="save()">
+      {{ 'configManager.actions.save' | translate }}
+    </button>
+  </div>
+</ng-template>
+
+<!-- Title/Save toolbar — CSS-hidden at `≥900px` (config-manager.scss),
+     where Manage's own `PlanRail` (hub ADR-0045 §3) supplies the section
+     list this screen's own `.rail` would otherwise duplicate, and Save
+     moves into each section's own header (`sectionSave` above) instead. -->
 <div class="toolbar">
   <div class="toolbar-titles">
     <span class="eyebrow">{{ 'configManager.eyebrow' | translate }}</span>
@@ -74,6 +99,7 @@
             <h2>{{ 'configManager.section.' + section() | translate }}</h2>
             <p class="note">{{ 'configManager.note.' + section() | translate }}</p>
           </div>
+          <ng-container [ngTemplateOutlet]="sectionSave" />
         </div>
         <div class="fields">
           <div class="grid-2">
@@ -107,6 +133,7 @@
                 <h2>{{ 'configManager.section.basics' | translate }}</h2>
                 <p class="note">{{ 'configManager.note.basics' | translate }}</p>
               </div>
+              <ng-container [ngTemplateOutlet]="sectionSave" />
             </div>
             <div class="fields">
               <div class="grid-2">
@@ -200,6 +227,7 @@
                 <h2>{{ 'configManager.section.couple' | translate }}</h2>
                 <p class="note">{{ 'configManager.note.couple' | translate }}</p>
               </div>
+              <ng-container [ngTemplateOutlet]="sectionSave" />
             </div>
             <div class="card-list">
               @for (user of coupleProfiles() | keyvalue; track user.key) {
@@ -357,6 +385,7 @@
                 <h2>{{ 'configManager.section.venues' | translate }}</h2>
                 <p class="note">{{ 'configManager.note.venues' | translate }}</p>
               </div>
+              <ng-container [ngTemplateOutlet]="sectionSave" />
             </div>
             <div class="card-list">
               @for (venue of cfg().venues; track venue.id) {
@@ -427,6 +456,7 @@
                 <h2>{{ 'configManager.section.agenda' | translate }}</h2>
                 <p class="note">{{ 'configManager.note.agenda' | translate }}</p>
               </div>
+              <ng-container [ngTemplateOutlet]="sectionSave" />
             </div>
             <div class="card schedule-status-card">
               <div>
@@ -668,6 +698,7 @@
                 <h2>{{ 'configManager.section.hotels' | translate }}</h2>
                 <p class="note">{{ 'configManager.note.hotels' | translate }}</p>
               </div>
+              <ng-container [ngTemplateOutlet]="sectionSave" />
             </div>
             <div class="card-list">
               @for (hotel of cfg().hotels; track hotel.id) {
@@ -761,6 +792,7 @@
                 <h2>{{ 'configManager.section.dietary' | translate }}</h2>
                 <p class="note">{{ 'configManager.note.dietary' | translate }}</p>
               </div>
+              <ng-container [ngTemplateOutlet]="sectionSave" />
             </div>
             <div class="tag-editors">
               <div class="tag-editor">
@@ -938,6 +970,7 @@
                 <h2>{{ 'configManager.section.appearance' | translate }}</h2>
                 <p class="note">{{ 'configManager.note.appearance' | translate }}</p>
               </div>
+              <ng-container [ngTemplateOutlet]="sectionSave" />
             </div>
             <div class="appearance-body">
               <div>

@@ -5,12 +5,14 @@ import {
   computed,
   effect,
   inject,
+  linkedSignal,
   signal,
   Signal,
   OnInit,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { KeyValuePipe } from '@angular/common';
+import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { map } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -41,7 +43,12 @@ import {
 } from '@app/core';
 import { LangCode, ThemeId } from '@app/model';
 import { Btn } from '@app/shared/button/button';
-import { SECTIONS, type SectionId } from '@app/shared/config-sections';
+import {
+  CONFIG_SECTION_PARAM,
+  isSectionId,
+  SECTIONS,
+  type SectionId,
+} from '@app/shared/config-sections';
 import { DecorFish } from '@app/shared/decor/fish';
 import { TextInput } from '@app/shared/input/input';
 import { Pill } from '@app/shared/pill/pill';
@@ -157,7 +164,7 @@ function buildEmptyConfig(): ConfigState {
 @Component({
   selector: 'app-config-manager',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Btn, TextInput, Pill, Toggle, DecorFish, TranslatePipe, KeyValuePipe],
+  imports: [Btn, TextInput, Pill, Toggle, DecorFish, TranslatePipe, KeyValuePipe, NgTemplateOutlet],
   templateUrl: './config-manager.html',
   styleUrl: './config-manager.scss',
 })
@@ -229,7 +236,28 @@ export class ConfigManager implements OnInit {
   protected readonly loading = isFirstLoad(this.weddingConfigCollection);
 
   protected readonly cfg = signal<ConfigState>(this.weddingConfig() ?? buildEmptyConfig());
-  protected readonly section = signal<SectionId>('basics');
+
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  /** `?section=` (`CONFIG_SECTION_PARAM`) — the active section, driven by
+   *  the URL rather than screen-private state (T364's section-controlled
+   *  mode, hub ADR-0045 §3). This is what lets Manage's desktop `PlanRail`
+   *  (`private-layout.ts`'s `onManageSection`) select a section from
+   *  *outside* this component without a second mechanism: the mobile pill
+   *  row below drives the exact same query param, so there is one source of
+   *  truth for "which section is open" regardless of which control moved
+   *  it — mirrors `travel.ts`'s own `?place=` `linkedSignal` pattern. */
+  private readonly requestedSection: Signal<string | null> = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get(CONFIG_SECTION_PARAM))),
+    { initialValue: null },
+  );
+
+  protected readonly section = linkedSignal<string | null, SectionId>({
+    source: this.requestedSection,
+    computation: (requested) => (isSectionId(requested) ? requested : 'basics'),
+  });
+
   protected readonly agendaFilter = signal<AgendaFilter>('all');
   protected readonly dirty = signal(false);
   protected readonly savedFlash = signal(false);
@@ -360,8 +388,17 @@ export class ConfigManager implements OnInit {
   ngOnInit(): void {
     this.weddingConfigCollection.load();
   }
+  /** Drives the URL, not just local state (T364) — `?section=` is what lets
+   *  Manage's desktop `PlanRail` (outside this component entirely) and this
+   *  screen's own mobile pill row agree on "which section is open" through
+   *  one mechanism instead of two. `linkedSignal` above updates `section()`
+   *  the moment the navigation resolves, same as `travel.ts`'s `?place=`. */
   protected selectSection(id: SectionId): void {
-    this.section.set(id);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [CONFIG_SECTION_PARAM]: id },
+      queryParamsHandling: 'merge',
+    });
   }
 
   protected selectAgendaFilter(filter: AgendaFilter): void {

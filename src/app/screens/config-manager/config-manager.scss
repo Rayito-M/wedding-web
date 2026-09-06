@@ -232,6 +232,15 @@
   margin: 0;
 }
 
+// Save, moved into the section header (hub ADR-0045 §3's section-controlled
+// mode) — desktop-only (`.section-save` gains `display: flex` at `≥900px`
+// below): mobile keeps `.mobile-bar`'s sticky Save exactly as before this
+// task, since Manage's `PlanRail` doesn't mount there and this screen still
+// draws its own navigation (`.pills`) on that width.
+.section-save {
+  display: none;
+}
+
 .note {
   font-size: var(--text-caption);
   color: var(--text-muted);
@@ -977,24 +986,20 @@
 }
 
 @media (min-width: 900px) {
-  .toolbar {
-    display: flex;
-  }
-
+  // T364 (hub ADR-0045 §3) — section-controlled mode. This screen is now
+  // always inside Manage at this width, so Manage's own `PlanRail`
+  // (`private-layout.ts`) supplies the section list `.rail` used to draw
+  // and the couple's account status `.toolbar` used to show; `.toolbar`
+  // stays `display: none` (the base, mobile-first rule) rather than the
+  // `display: flex` this used to switch to, and Save moves into each
+  // section's own header instead (`.section-save` below, DS
+  // `ScreenConfigManager`'s "controlled" `secHeader()`). `.rail` stays
+  // `display: none` for the same reason — a second, redundant section nav
+  // beside the rail this screen no longer draws itself would be the exact
+  // double-navigation ADR-0045 §3 exists to remove.
   .layout {
     flex-direction: row;
     align-items: stretch;
-  }
-
-  .rail {
-    display: flex;
-    flex: 0 0 208px;
-    flex-direction: column;
-    gap: 2px;
-    padding: var(--space-4) var(--space-3);
-    border-right: 1px solid var(--border-hairline);
-    background: var(--surface-card);
-    overflow-y: auto;
   }
 
   .pills {
@@ -1003,6 +1008,16 @@
 
   .mobile-bar {
     display: none;
+  }
+
+  // Save, inside each section's own header (`sectionSave` template,
+  // config-manager.html) — hidden on mobile, where `.mobile-bar` below
+  // still covers it, same as before this task.
+  .section-save {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex: 0 0 auto;
   }
 
   .schedule-status-card {

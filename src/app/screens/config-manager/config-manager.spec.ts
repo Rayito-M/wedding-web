@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
+import { BehaviorSubject, of } from 'rxjs';
 import { provideEffects } from '@ngrx/effects';
 import { provideEntityData, withEffects } from '@ngrx/data';
 import { provideStore } from '@ngrx/store';
@@ -62,8 +63,19 @@ const BASE_CONFIG: WeddingConfigResponseDto = {
 describe('ConfigManager — all-languages editor & key moments (T297)', () => {
   let fixture: ComponentFixture<ConfigManager>;
   let currentConfig: WeddingConfigResponseDto;
+  // T364 — `section` is now driven by `?section=` rather than private state
+  // (hub ADR-0045 §3, so Manage's desktop `PlanRail` can select a section
+  // from outside this component). The `Router.navigate` stub mirrors that
+  // one real effect a genuine router call has here — merging `queryParams`
+  // into the current `ParamMap` — rather than a bare no-op spy, so
+  // `selectSection()` (fired by both the rail buttons this suite already
+  // clicks and the mobile pills) is exercised the same way a real
+  // navigation would drive it.
+  let queryParamMap: BehaviorSubject<ParamMap>;
 
   async function create(): Promise<void> {
+    queryParamMap = new BehaviorSubject<ParamMap>(convertToParamMap({}));
+
     await TestBed.configureTestingModule({
       imports: [ConfigManager],
       providers: [
@@ -81,6 +93,16 @@ describe('ConfigManager — all-languages editor & key moments (T297)', () => {
         {
           provide: WeddingUsersService,
           useValue: { usersControllerListV1: () => of({ items: [] }) },
+        },
+        { provide: ActivatedRoute, useValue: { queryParamMap } },
+        {
+          provide: Router,
+          useValue: {
+            navigate: (_commands: unknown[], extras?: { queryParams?: Record<string, string> }) => {
+              queryParamMap.next(convertToParamMap({ ...extras?.queryParams }));
+              return Promise.resolve(true);
+            },
+          },
         },
       ],
     }).compileComponents();
@@ -231,8 +253,11 @@ describe('ConfigManager — all-languages editor & key moments (T297)', () => {
 describe('ConfigManager — EDIT_LANGS order (T297)', () => {
   let fixture: ComponentFixture<ConfigManager>;
   let currentConfig: WeddingConfigResponseDto;
+  let queryParamMap: BehaviorSubject<ParamMap>;
 
   async function create(): Promise<void> {
+    queryParamMap = new BehaviorSubject<ParamMap>(convertToParamMap({}));
+
     await TestBed.configureTestingModule({
       imports: [ConfigManager],
       providers: [
@@ -250,6 +275,16 @@ describe('ConfigManager — EDIT_LANGS order (T297)', () => {
         {
           provide: WeddingUsersService,
           useValue: { usersControllerListV1: () => of({ items: [] }) },
+        },
+        { provide: ActivatedRoute, useValue: { queryParamMap } },
+        {
+          provide: Router,
+          useValue: {
+            navigate: (_commands: unknown[], extras?: { queryParams?: Record<string, string> }) => {
+              queryParamMap.next(convertToParamMap({ ...extras?.queryParams }));
+              return Promise.resolve(true);
+            },
+          },
         },
       ],
     }).compileComponents();
