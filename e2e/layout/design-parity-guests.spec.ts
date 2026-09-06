@@ -113,8 +113,8 @@ test.describe('Guests (couple) — pixel parity with the DS kit (T369)', () => {
     await kitPage.close();
   });
 
-  test.fixme(
-    'mobile: header title font-size — kit ScreenGuestManagerMobile.jsx keeps the SAME 26px title as desktop, app\'s .header-text is 20px on mobile (guest-manager.scss, only scaling up to 26px at ≥900px)',
+  test(
+    'mobile: header title font-size — kit ScreenGuestManagerMobile.jsx keeps the SAME 26px title as desktop, app\'s .header-text now matches at every breakpoint (T370 — no 26px type-scale token exists, so guest-manager.scss composes it via calc() from --space-*, flagged in wedding-ui-design/contract/FINDINGS.md)',
     async ({ page, context }) => {
       const kitPage = await context.newPage();
       await openDsKitScreen(kitPage, kit.baseUrl, { device: 'Mobile', role: 'Couple', viewLabel: 'Guests' });

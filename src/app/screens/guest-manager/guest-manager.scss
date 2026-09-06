@@ -73,7 +73,14 @@ $table-grid-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
 
 .header-text {
   font-family: t.$font-serif;
-  font-size: 20px;
+  // 26px at every breakpoint — kit `ScreenGuestManagerMobile.jsx` keeps the
+  // SAME title size as the desktop `ScreenGuestManager.jsx` (T369/T370
+  // parity fix; was 20px here, only scaling up to 26px at `≥900px` below).
+  // Not on the type scale (18/22/32/36…) — a DS gap, flagged in
+  // `wedding-ui-design/contract/FINDINGS.md` (Open) rather than hardcoded;
+  // composed the same way T368 composed its own off-grid figures: --space-6
+  // (24px) + half of --space-1 (2px).
+  font-size: calc(var(--space-6) + var(--space-1) / 2);
   line-height: 1;
   margin: 0;
   font-weight: 400;
@@ -647,10 +654,6 @@ $table-grid-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
   .header-left {
     width: auto;
     gap: 18px;
-  }
-
-  .header-text {
-    font-size: 26px;
   }
 
   .header-stats {
