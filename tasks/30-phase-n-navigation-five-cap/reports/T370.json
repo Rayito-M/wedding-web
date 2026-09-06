@@ -1,0 +1,142 @@
+{
+  "task": "T370",
+  "status": "complete",
+  "summary": "Fixed all 7 real T369 parity deviations; converted the 8th (Overview task list) to permanent test.skip(). Schedule: header-title gap, note size, status pill (solid final/provisional, split off milestone's dashed default). RSVP: app-rsvp-create wraps a .card so :host is the outer 620px container-sm column. Overview: added a milestone-progress card, existing entity collection, no new endpoint. Guests mobile: header 26px via calc() (no token exists, flagged in FINDINGS.md). All fixmes enforced/green; refused one skipped. Suite 125/5/0. Occlusion 20/20. Unit 603/603. Lint/build clean.",
+  "acceptance": [
+    {
+      "criterion": "Schedule (x4): header->title gap to the kit's 26px desktop / 12px mobile; note font-size 11px; status pill solid fill per the kit's TimelineItem badge spec (check the DS status-pill mirror; find who introduced the dashed style before overwriting).",
+      "met": true,
+      "evidence": "src/app/screens/schedule/schedule.scss (.title-block padding-top: t.$space-3 base / calc(var(--space-6) + var(--space-1) / 2) at >=900px; .note font-size: t.$text-micro). src/app/shared/status-pill/status-pill.scss (:host(.final), :host(.provisional) split off :host(.reached)/:host(.not-reached), solid fill matching ScreenSchedule.jsx/ScreenHome.jsx's own inline statusPill, padding calc(var(--space-1) / 2) var(--space-2)). Traced the dashed style to T242's consolidation (git log -p status-pill.scss, commit 4654acf) and to ScreenMilestones(Mobile).jsx's own StatusPill (kept dashed, untouched). e2e/layout/design-parity-schedule.spec.ts: all 4 test.fixme() cases -> test(), 4/4 green across 5 projects (20/20 assertions)."
+    },
+    {
+      "criterion": "RSVP guest (x1): restore the outer 620px content column around the card -- shell.maxWidth is 620 in the contract; prefer the generated container-sm recipe over hand-typing widths.",
+      "met": true,
+      "evidence": "src/app/screens/rsvp-create/rsvp-create.html wraps .content/footer in a new .card; rsvp-create.scss's :host uses @include grid.container-sm at >=900px (620px, --space-6 gutters) instead of the old hand-typed max-width: 560px; .card carries the former :host desktop treatment (560px card). e2e/layout/design-parity-rsvp.spec.ts: the outer-column test.fixme() folded into the existing 'vs ds-contract.json maxWidth 620' test as a second enforced assertion -- app-rsvp-create now measures 620px, kit 620px. Green across 5 projects."
+    },
+    {
+      "criterion": "Overview (x1 of its 2): add the milestone-progress card per the kit's ScreenHome overview mode -- reuse the existing milestones data/service the dashboard already has access to; no new API calls, no new endpoints.",
+      "met": true,
+      "evidence": "src/app/screens/dashboard/dashboard.ts injects EntityServices.getEntityCollectionService<MilestoneDto>(EntityNamesEnum.MILESTONE) -- the SAME entity collection/service (MilestoneDataService, GET /v1/milestones) the /milestones screen already uses; no new service class, no new HTTP method. dashboard.html/.scss render the card (.plan-card, reusing %card-padded and the existing .stats/.stat/.value/.stat-label classes) with reached/open/overdue counts, a progress bar, and the soonest-3-upcoming list. New i18n keys public/i18n/{en,es,fr}.json dashboard.plan.*. e2e/layout/design-parity-overview.spec.ts: 'The plan so far' existence check is now an enforced test(), green."
+    },
+    {
+      "criterion": "Guests mobile (x1): header title to the kit's 26px -- use the DS type-scale token that carries 26px if one exists; if none does, that is a DS gap: flag it (in FINDINGS.md Open) rather than hardcoding, then use the nearest legal expression and note it.",
+      "met": true,
+      "evidence": "Grepped src/styles/_tokens.scss's type scale (54/36/32/22/18/15/13/12/11/10px) -- no 26px step exists. src/app/screens/guest-manager/guest-manager.scss's .header-text now reads calc(var(--space-6) + var(--space-1) / 2) at every breakpoint (was 20px mobile / 26px hardcoded desktop-only override, now removed as redundant). Gap flagged: /Users/christophecubat/Development/Perso/wedding/wedding-ui-design/contract/FINDINGS.md Open section, entry dated 2026-09-06 (ds-missing-spec). e2e/layout/design-parity-guests.spec.ts: mobile header-title test.fixme() -> test(), green."
+    },
+    {
+      "criterion": "Refused: convert Overview's 'this week' TaskRow-list fixme to a documented test.skip citing hub ADR-0029 §4.7 and T370; do not implement it.",
+      "met": true,
+      "evidence": "e2e/layout/design-parity-overview.spec.ts: test.skip('desktop: \"this week\" task list -- REFUSED, out of scope (hub ADR-0029 §4.7; TaskRow listed in wedding-ui-design/contract/scope.json's outOfScope; T370)', ...) -- verified TaskRow is in scope.json's outOfScope array (grep) and ADR-0029 §4.7 is titled 'Still out of scope, under Option B' before citing it. Not implemented: dashboard.html's commented-out <!-- tasks --> block is untouched."
+    },
+    {
+      "criterion": "Verify: full parity suite green (previously-fixme'd now enforced, refused one skipped with reason); occlusion guard green; pnpm lint (5 documented pre-existing ESLint errors; stylelint + ds fidelity clean, baseline not refreshed since nothing grew); ng test --watch=false (baseline 603); pnpm build.",
+      "met": true,
+      "evidence": "npx playwright test e2e/layout/design-parity-*.spec.ts: 125 passed, 5 skipped, 0 failed (5 projects x 26 tests). npx playwright test e2e/layout/occlusion-guard.spec.ts: 20 passed, 0 failed. node scripts/lint-all.mjs: ESLint 5 errors (guest-profile-modal.ts, modal.html x2, modal.ts -- all pre-existing, none of these files touched); stylelint 'no new violations (549 pre-existing, baselined)'; ds fidelity '31/31 clean pairs; 0 drifting values'. npx ng test --watch=false: 46 test files, 603 tests, all passed. npx tsc -p tsconfig.app.json --noEmit and -p tsconfig.spec.json --noEmit: both clean. node scripts/generate-release.mjs && npx ng build: pass; dist/wedding-app/browser/styles-*.css = 2658 bytes, identical to T369's own recorded 2658 (no file under src/styles/ was edited by this task, so the global stylesheet is provably unchanged, not just re-measured equal)."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "Task text: 'status-pill solid fill per the kit's TimelineItem badge spec'.",
+      "to": "Fixed against ScreenSchedule.jsx's/ScreenHome.jsx's own inline `statusPill` (the top-of-page final/provisional pill), not TimelineItem.jsx's per-row status badge (a different, outlined-not-filled element for a different concept -- confirmed and cross-checked line by line with the T369 parity table's own fixme wording, which measures `app-status-pill` bound to `isFinal() ? 'final' : 'provisional'` in schedule.html, i.e. the top pill).",
+      "reason": "T369's actual fixme assertion (`design-parity-schedule.spec.ts`) measures the top-of-page pill, and its own kit-source comments cite ScreenSchedule.jsx, not TimelineItem.jsx. TimelineItem.jsx's own status badge is a different, already-non-dashed (outlined) element the task's `app-status-pill` binding in schedule.html does not even render.",
+      "authorized_by": "T369's parity table and the fixme test body itself (the measured element and its DEVIATES row cite ScreenSchedule.jsx, not TimelineItem.jsx) -- the task prompt's 'TimelineItem.jsx' reference is read as pointing at the shared status-pill component family in general, which the fix addresses.",
+      "verified_how": "Read TimelineItem.jsx in full (wedding-ui-design/components/data-display/TimelineItem.jsx) -- its own status badge is `border: 1px solid s.color`, transparent background, no fill; ScreenSchedule.jsx's/ScreenHome.jsx's `statusPill`/`schedulePill` are solid-filled, matching exactly what T369 measured and flagged as DEVIATES."
+    },
+    {
+      "from": "No unit-spec instruction was explicit beyond 'add/adjust unit specs if your changes touch component APIs'.",
+      "to": "No new unit spec was added for dashboard.ts's new milestone computeds (milestonesReachedCount/OpenCount/OverdueCount/Percent, upcomingMilestones, planStatus).",
+      "reason": "Dashboard has no existing spec file at all (grepped src/app/screens/dashboard for *.spec.ts -- none), and it is a routed screen component with no consumer-facing Input/Output API; the new logic is exercised end-to-end by the (now green) design-parity-overview.spec.ts e2e assertion. Standing up a full TestBed harness for a previously-untested component (EntityServices, StatisticService, HeaderService, RouteConfigService, ActivatedRoute, TranslateService, DashboardService, TranslateLanguageService all need mocking) was judged disproportionate to this task's scope.",
+      "authorized_by": "none -- needs a decision",
+      "verified_how": "grep for src/app/screens/dashboard/*.spec.ts (none found, before and after this task); npx ng test --watch=false: 603/603 unchanged, confirming no regression in existing coverage."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit: no output, exit 0."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 603,
+        "failing": 0
+      },
+      "after": {
+        "total": 603,
+        "failing": 0
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2658,
+      "global_stylesheet_bytes_after": 2658,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 302.63 kB with a total of 802.63 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.91 kB with a total of 11.91 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.56 kB with a total of 9.56 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.54 kB with a total of 11.54 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.84 kB with a total of 16.84 kB."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "tasks/30-phase-n-navigation-five-cap/reports/T370.json"
+    ],
+    "modified": [
+      "src/app/screens/schedule/schedule.scss",
+      "src/app/shared/status-pill/status-pill.ts",
+      "src/app/shared/status-pill/status-pill.scss",
+      "e2e/layout/design-parity-schedule.spec.ts",
+      "src/app/screens/rsvp-create/rsvp-create.html",
+      "src/app/screens/rsvp-create/rsvp-create.scss",
+      "e2e/layout/design-parity-rsvp.spec.ts",
+      "src/app/screens/dashboard/dashboard.html",
+      "src/app/screens/dashboard/dashboard.scss",
+      "src/app/screens/dashboard/dashboard.ts",
+      "public/i18n/en.json",
+      "public/i18n/es.json",
+      "public/i18n/fr.json",
+      "e2e/layout/design-parity-overview.spec.ts",
+      "src/app/screens/guest-manager/guest-manager.scss",
+      "e2e/layout/design-parity-guests.spec.ts",
+      "tasks/30-phase-n-navigation-five-cap/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "status-pill.scss's 'final'/'provisional' fix also changes invitee.html's own itinerary status pill (invitee.jsx uses the same two variant names for its own agenda pill) -- no design-parity-invitee.spec.ts exists to confirm this against its own kit source, so the improvement is inferred from ScreenSchedule.jsx/ScreenHome.jsx sharing the same inline statusPill pattern, not independently measured for ScreenInvitee.jsx.",
+      "surfaces_at": "A future design-parity rescan of Guest/Invitee (no such spec exists yet), or an owner visually reviewing /me's itinerary status pill."
+    },
+    {
+      "risk": "The couple's /dashboard 'Today' tab (not just /overview) now also renders the new milestone-progress card, because dashboard.html's #plan ng-template is shared between both routes (an existing, pre-T370 architecture decision, hub ADR-0045 §3/T364) -- this task did not fork the template to show the card on /overview only.",
+      "surfaces_at": "Any future task auditing /dashboard's 'Today' content against ScreenHome.jsx's own `content` branch (which, unlike `overviewContent`, has no milestone-progress card in the kit at all)."
+    },
+    {
+      "risk": "Dashboard's new milestone computeds (reached/open/overdue counts, next-3 sort, status precedence) have no unit-spec coverage -- see deviations[] above. The logic is simple (three predicates and a sort) but untested in isolation; a future change to it is verified only by the e2e existence check, not by a fast unit test.",
+      "surfaces_at": "A future change to dashboard.ts's milestone logic, or a request to raise unit coverage on screens that currently have none."
+    }
+  ],
+  "decisions_needed": [
+    {
+      "question": "Should dashboard.ts (previously zero unit-spec coverage) get a new dashboard.spec.ts as part of closing out T370, covering the new milestone computeds?",
+      "options": [
+        "Leave as-is: the e2e design-parity-overview.spec.ts assertion is the only test coverage; fastest, but a future refactor of the milestone logic has no fast feedback loop.",
+        "Add a minimal dashboard.spec.ts now, mocking the DI graph (EntityServices, StatisticService, HeaderService, RouteConfigService, ActivatedRoute, TranslateService, TranslateLanguageService) just enough to exercise milestonesReachedCount/OpenCount/OverdueCount/Percent/upcomingMilestones/planStatus: more upfront work, but gives Dashboard its first unit coverage and a fast regression signal for this logic specifically."
+      ],
+      "recommendation": "Option 2, as a small follow-up task rather than folding it into T370 -- Dashboard's total lack of prior coverage is itself worth a deliberate task, not an incidental addition to a parity-fix task.",
+      "blocking": false,
+      "needed_by": "Before Dashboard's milestone logic changes again, or before a broader push to raise unit coverage on screens with none."
+    }
+  ],
+  "commits": ["052dfc0", "532ae22", "704013a", "f288281"]
+}

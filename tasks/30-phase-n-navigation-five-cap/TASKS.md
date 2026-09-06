@@ -304,7 +304,20 @@
   list first.
 
 ### T370 — Fix the T369 parity deviations (7 real; 1 refused as out-of-scope)
-- **Status:** todo
+- **Status:** done — all 7 real deviations fixed, `test.fixme()` flipped to enforced assertions
+  (green): Schedule ×4 (header→title gap calc'd to 26px desktop / 12px mobile; note font-size
+  11px; status-pill split into a solid final/provisional pair off milestone's dashed default —
+  `status-pill.scss`), RSVP guest ×1 (`app-rsvp-create` wraps a new `.card` so `:host` becomes
+  the outer 620px `container-sm` column), Overview ×1 (new `.plan-card` milestone-progress card,
+  reusing the existing `Milestone` entity collection — no new endpoint), Guests mobile ×1
+  (`.header-text` 26px at every breakpoint via `calc(var(--space-6) + var(--space-1) / 2)` — no
+  26px type-scale token exists, flagged `wedding-ui-design/contract/FINDINGS.md` Open). Overview's
+  "this week" TaskRow list converted to `test.skip()` citing ADR-0029 §4.7 + DS `scope.json`, not
+  built. Full parity suite: 125 passed / 5 skipped (the refused one × 5 projects) / 0 failed.
+  Occlusion guard: 20/20 green. `pnpm lint`: 5 pre-existing ESLint errors (unchanged), stylelint
+  0 new violations. `ng test`: 603/603 (unchanged). `pnpm build`: pass, global stylesheet
+  unchanged (2658 bytes — no global `src/styles/` file touched). Report:
+  `reports/T370.json`.
 - **ADR:** hub ADR-0044 (amended — parity evidence), ADR-0045; T369's table is the spec
 - Fix, flipping each `test.fixme()` to an enforced assertion as you go:
   1. **Schedule** (×4): header→title gap to kit 26px desktop / 12px mobile; note font-size 11px;
