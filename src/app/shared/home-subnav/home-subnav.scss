@@ -1,19 +1,77 @@
 @use '../../../styles/recipes' as r;
+@use '../../../styles/layout';
 
 // DS `AppShell.subnav` — Home's pill row (hub ADR-0045 §4). Same
 // `pill-interactive`/`pill-interactive-selected` recipes as
 // `config-manager`'s own mobile section pills (`configManager.scss`'s
 // `.pills`/`.pill`) — reused at the recipe level rather than re-typed.
+//
+// T368 (owner-reported pixel-fidelity defect): the row renders INSIDE the
+// screen's own 900px content column, flush with the greeting/h1 below it,
+// with the DS's own vertical rhythm (`AppShell.jsx` L40-46) — desktop:
+// header -> 26px -> row -> 18px -> greeting; mobile: header -> 10px -> row
+// -> 4px -> greeting. `dashboard.scss`/`invitee.scss`'s `.greeting`
+// already carries its own top padding (14px desktop / 12px mobile,
+// `%greeting-block`, unconditional and shared with the `overview` render
+// path this task does not touch), so this row's own bottom padding is the
+// DS figure *minus* that existing greeting padding, not the DS figure
+// itself — the two together reproduce the DS total gap even though the
+// split between the two boxes differs from `AppShell.jsx`'s (there the
+// wrapper owns the whole gap and the greeting adds none).
+//
+// DS gap flagged (see T368 report): 26px/18px/10px/6px sit on a 2px
+// sub-grid the token scale (4px steps, `--space-1`..`--space-7`) does not
+// name — each is exactly one `--space-N` step plus half of `--space-1`.
+// Composed via `calc()` below rather than hardcoded: stylelint's raw-px
+// rule (hub ADR-0041 §7) forbids the literal anyway, and a value with no
+// token is a gap to flag, not to hand-type (`CLAUDE.md`). The horizontal
+// inset uses `--space-6` (24px) at both breakpoints — not the DS's literal
+// 28px desktop figure — so the row stays flush with `.greeting`/`.content`,
+// which already use `--space-6` at both breakpoints; matching the sibling
+// takes priority over the DS's own literal, since flush alignment is this
+// task's first acceptance bullet.
+//
+// Also flagged: the recipe's own generic default (`pill-interactive`)
+// gives the unselected pill `background: transparent` and no
+// `font-weight` — both diverge from `AppShell.jsx`'s literal Home subnav
+// pill (`var(--surface)` fill, weight 500), overridden locally below.
+// `gap: 6` and `font-size` similarly diverge from what `config-manager`'s
+// own pill row already does with the same recipe (`--space-2` gap, one
+// font-size at every breakpoint) — not changed there, out of this task's
+// scope.
+//
+// Not reproduced: `AppShell.jsx`'s non-wide branch also shrinks pill
+// padding to `5px 11px` (from the shared `6px 14px`). Neither value sits
+// on any token grid, and `config-manager`'s own mobile pill row already
+// renders the shared recipe's `6px 14px` uniformly rather than chasing
+// it — same call here, flagged rather than hand-typed.
+:host {
+  display: block;
+  width: 100%;
+}
+
 .pills {
   display: flex;
-  gap: var(--space-2);
+  // 6px — AppShell.jsx L44 `gap: 6` (--space-1 + half of --space-1).
+  gap: calc(var(--space-1) + var(--space-1) / 2);
+  flex-wrap: nowrap;
   overflow-x: auto;
-  padding-bottom: var(--space-4);
+  // 10px top (--space-2 + half of --space-1), 4px bottom (--space-1 exact) —
+  // mobile branch of AppShell.jsx L44 (`padding: '10px 24px 4px'`).
+  padding: calc(var(--space-2) + var(--space-1) / 2) var(--space-6) var(--space-1);
 }
 
 .pill {
   @include r.pill-interactive;
   flex: 0 0 auto;
+  // 11px mobile — AppShell.jsx non-wide branch (`fontSize: wide ? 12 : 11`).
+  font-size: var(--text-micro);
+  // DS unselected pill is `var(--surface)`-filled — the recipe's generic
+  // `transparent` default is for filter/segment pills that already sit on
+  // a surface (see flagged divergence above).
+  background: var(--surface-card);
+  // The recipe omits font-weight; AppShell.jsx's pill is explicitly 500.
+  font-weight: 500;
 }
 
 .pill:hover {
@@ -22,4 +80,19 @@
 
 .pill.on {
   @include r.pill-interactive-selected;
+}
+
+@include layout.respond-to('lg') {
+  .pills {
+    // 26px top (--space-6 + half of --space-1), 4px bottom (--space-1,
+    // paired with `.greeting`'s own 14px top padding to total the DS's
+    // 18px row-to-greeting gap — see the file banner above) — wide branch
+    // of AppShell.jsx L44 (`padding: '0 0 18px'`).
+    padding: calc(var(--space-6) + var(--space-1) / 2) var(--space-6) var(--space-1);
+  }
+
+  .pill {
+    // 12px desktop — AppShell.jsx wide branch (`fontSize: wide ? 12 : 11`).
+    font-size: var(--text-caption);
+  }
 }

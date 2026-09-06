@@ -68,12 +68,8 @@
       <div class="greeting">
         <div class="hello">{{ 'invitee.greeting' | translate }}, {{ profile()?.firstName }}.</div>
         <h1>
-          {{ 'invitee.seeYouIn' | translate }} <span class="accent">{{ daysToGo() }} days</span>
-          @if (rsvpStatus() === 'attending') {
-            !
-          } @else {
-            ?
-          }
+          {{ 'invitee.seeYouIn' | translate }}
+          <span class="accent">{{ daysHeadingKey() | translate: { count: daysToGo() } }}</span>
         </h1>
       </div>
 
@@ -89,7 +85,7 @@
             {{ weddingConfig()?.venues?.find((v) => v.type === 'reception')?.name }}
           </div>
           <app-progress-bar class="progress" [percent]="(1 - daysToGo() / 365) * 100" [height]="3" />
-          <div class="caption">{{ daysToGo() }} {{ 'invitee.countdown.daysToGo' | translate }}</div>
+          <div class="caption">{{ daysCaptionKey() | translate: { count: daysToGo() } }}</div>
         </div>
 
         <!-- RSVP confirmed card -->

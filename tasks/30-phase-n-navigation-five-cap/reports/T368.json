@@ -1,0 +1,136 @@
+{
+  "task": "T368",
+  "status": "complete",
+  "summary": "Fixed home-subnav.scss (missing horizontal padding, vertical rhythm, pill background/weight) to compose the DS's values from --space-* tokens plus a calc() half-step for sub-grid numbers the scale doesn't name; flagged, not reproduced, the DS's ungrounded mobile pill padding. New e2e/helpers/ds-kit.ts + design-parity-home.spec.ts measure the row against the live DS kit (0px alignment delta, exact gaps/colors/fonts, 10/10 passing); proved it fails reverted, passes fixed. Also fixed invitee's mixed-language countdown heading and backward caption in es/en/fr.",
+  "acceptance": [
+    {
+      "criterion": "Alignment: the pill row renders inside the centered 900px content column, its left edge flush with the greeting/h1 below it",
+      "met": true,
+      "evidence": "home-subnav.scss's .pills now takes padding-inline: var(--space-6) (24px) at both breakpoints, matching .greeting/.content's own existing inset (%greeting-block/%content-block, _primitives.scss). Measured (first pill button's own rect.left vs .greeting .hello's rect.left, both via getBoundingClientRect -- container-edge measurements were tried first and gave a false -24px delta, since a padded element's own rect.left is its border-box edge, unmoved by its own padding; see design-parity-home.spec.ts's HomeSubnavMetrics doc): desktop kit delta=0 (218-218), desktop app delta=0 (214-214); mobile kit delta=0 (472-472), mobile app delta=0 (24-24)."
+    },
+    {
+      "criterion": "Vertical rhythm: header -> 26px -> pill row -> 18px -> greeting (desktop); DS mobile branch equivalent",
+      "met": true,
+      "evidence": "Desktop: kit header-to-row gap=26px (279-253), app=26px (85-59); kit row-to-greeting gap=18px (326-308), app=18px (133-115). Mobile: kit header-to-row gap=10px (284-274), app=10px (62-52); kit row-to-greeting gap=16px (326-310), app=16px (106-90) -- 16px is the DS's own total (4px row bottom padding + 12px content-wrapper top padding, ScreenHome.jsx), not a hand-picked number. All four app/kit pairs match exactly (0px delta), inside the spec's +/-1px tolerance. Values are composed from --space-1/--space-2/--space-6 via a documented calc() half-step (home-subnav.scss's own banner comment), since 26/18/10 sit on a 2px sub-grid the 4px-step token scale (--space-1..--space-7) doesn't name -- flagged as a DS gap rather than hardcoded, which stylelint's raw-px rule (hub ADR-0041 section 7) would reject in this file regardless."
+    },
+    {
+      "criterion": "Backgrounds/type: no band of its own on the row; unselected var(--surface) fill + hairline border; selected var(--accent) fill + transparent border; font 12px/500; padding 6px 14px; gap 6",
+      "met": true,
+      "evidence": "Row: .pills carries no background property (page --bg shows through, unchanged from before this task -- the reported defect was the PILL's own background, not the row's). Pill: added background: var(--surface-card) and font-weight: 500 locally (pill-interactive's own generic default is transparent/unweighted -- flagged as a recipe gap in home-subnav.scss's banner comment, config-manager's own pills share the same recipe default and are untouched, out of scope). Measured computed styles, exact string equality kit vs app at both breakpoints: unselected background rgb(255,255,255), border rgba(58,42,31,0.12); selected background rgb(201,113,85), border rgba(0,0,0,0); font-weight 500 both states; font-size 12px desktop / 11px mobile both states; padding '6px 14px' desktop both states (mobile: kit '5px 11px', app intentionally '6px 14px' -- see deviations). gap: 6px via calc(var(--space-1) + var(--space-1)/2), replacing the recipe-adjacent --space-2 (8px) default."
+    },
+    {
+      "criterion": "Also on this screen: es/en/fr countdown heading and caption verified single-language, singular variants included",
+      "met": true,
+      "evidence": "invitee.html's h1 hardcoded the English word 'days' after the translated invitee.seeYouIn prefix (mixed-language in es/fr) and had a stray-spaced '!'/'?' the DS reference doesn't carry; the caption built '{{count}} {{translated suffix}}', which reads backward in Spanish. Replaced both with per-locale singular/plural translation keys (invitee.ts's new daysHeadingKey()/daysCaptionKey(), mirroring dashboard.ts's existing daysTranslationKey ternary) and dropped the punctuation. Final strings -- es: heading '{{count}} dia'/'{{count}} dias', caption 'Falta {{count}} dia'/'Faltan {{count}} dias'; en: heading '{{count}} day'/'{{count}} days', caption '{{count}} day to go'/'{{count}} days to go'; fr: heading '{{count}} jour'/'{{count}} jours', caption '{{count}} jour a attendre'/'{{count}} jours a attendre'. Verified by reading the compiled i18n JSON and by the unchanged 603/603 unit suite (no spec asserted the old strings)."
+    },
+    {
+      "criterion": "Parity harness: e2e/helpers/ds-kit.ts (reusable) + e2e/layout/design-parity-home.spec.ts measuring the same metrics on the DS kit and the app, +/-1px / exact colors, desktop and mobile",
+      "met": true,
+      "evidence": "e2e/helpers/ds-kit.ts: startDsKitServer() spawns python3 -u -m http.server 0 from ../wedding-ui-design (ephemeral port read off the server's own startup banner) and openDsKitScreen() drives the kit's own .controls/.viewsel buttons (device/role/view), never a URL param the kit doesn't read. design-parity-home.spec.ts: 2 tests (desktop/mobile) x 5 projects = 10 cases, all passing -- npx playwright test e2e/layout/design-parity-home.spec.ts: '10 passed (18.8s)'."
+    },
+    {
+      "criterion": "Prove it bites: passes with the fix, fails when a defect is reintroduced, passes again once undone",
+      "met": true,
+      "evidence": "With the fix: 'npx playwright test e2e/layout/design-parity-home.spec.ts --project=\"Desktop Chrome\"' -> 2 passed. Scratch-reverted home-subnav.scss's .pills/.pill rules to their pre-fix content (plain Edit, not git stash/checkout, restored verbatim immediately after): same command -> 2 failed, 'Error: desktop app: pill row not flush with greeting: expected 0 +/-1, got -24' and the identical failure on mobile. Restored the fix, reran: 2 passed again."
+    },
+    {
+      "criterion": "Occlusion guard, layout suite, unit tests, lint, build all green",
+      "met": true,
+      "evidence": "Full local Playwright run (5 projects): 'npx playwright test' -> 150 passed, 5 failed, 15 skipped. The 5 failures are all guest-manager-scrolled-header.spec.ts (exactly the task's documented pre-existing exception, one per project); the 15 skips are all seating-plan.spec.ts (pre-existing, unrelated -- confirmed unchanged from prior phase runs). occlusion-guard.spec.ts: all cases pass within this run (grep confirms no occlusion-guard failures). npx ng test --watch=false: 603 passed (603 total), matching the task's stated baseline exactly. pnpm lint: ESLint exits 1 with exactly the 5 documented pre-existing errors (guest-profile-modal.ts, shared/modal/modal.html x2, shared/modal/modal.ts); stylelint 'no new violations (549 pre-existing, baselined)' -- home-subnav.scss itself carries 0 violations (verified directly: npx stylelint --config stylelint.config.mjs src/app/shared/home-subnav/home-subnav.scss -> no output); ds fidelity 31/31 clean pairs, 0 drifting values. pnpm build: pass, global stylesheet unchanged at 2658 bytes (home-subnav.scss is component-scoped, never part of the src/styles/main.scss global bundle), same 5 pre-existing budget warnings as every prior task in this phase. pnpm typecheck: clean, no output."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "AppShell.jsx's literal desktop horizontal inset (padding: '26px 28px 44px', i.e. 28px sides)",
+      "to": "var(--space-6) (24px) at both breakpoints, matching .greeting/.content's own existing inset",
+      "reason": "This app's screens don't reproduce AppShell's single outer content-column wrapper (dashboard.scss/invitee.scss's .greeting/.content each carry their own 24px horizontal padding independently, at every breakpoint, pre-existing and out of this task's scope). Giving the pill row the DS's literal 28px would misalign it from its own sibling by 4px -- the opposite of the task's first acceptance bullet (flush alignment). Matching the sibling's actual token takes priority over the DS's literal number here.",
+      "authorized_by": "Task text: 'its left edge is flush with the greeting/h1 below it' is listed first and is the acceptance criterion; the task also explicitly permits composing from tokens over hardcoding a DS literal that has no home in this app's own structure.",
+      "verified_how": "design-parity-home.spec.ts's alignment assertion (pill-row left edge vs greeting left edge, measured independently on each page) passes at 0px delta on both the kit and the app, both breakpoints."
+    },
+    {
+      "from": "AppShell.jsx's mobile-only pill padding (padding: '5px 11px', non-wide branch)",
+      "to": "The shared pill-interactive recipe's 6px 14px, unconditionally at both breakpoints",
+      "reason": "Neither 5px nor 11px sits on the app's 4px-step spacing token scale or the 2px sub-grid the other four DS numbers (26/18/10/6) turned out to fit (each of those is exactly one --space-N step plus half of --space-1; 5 and 11 are not). config-manager's own mobile pill row already renders the same shared recipe's 6px/14px uniformly rather than chasing this DS value -- this is the same call, not a new one.",
+      "authorized_by": "CLAUDE.md hard rule 3 / the task's own instruction: 'a value with no token is a DS gap to flag, not to hardcode'.",
+      "verified_how": "design-parity-home.spec.ts's mobile padding assertion checks the app's own value resolves to '6px 14px' (the intended, documented outcome) rather than asserting equality with the kit's '5px 11px', with an inline comment naming the gap; every other mobile metric (background, border, font-size, font-weight, gap, alignment, both rhythm gaps) is asserted against the kit and passes."
+    },
+    {
+      "from": "AppShell.jsx's greeting heading punctuation (a trailing '!' when attending, '?' otherwise, in this app's pre-existing invitee.html)",
+      "to": "No trailing punctuation, matching the DS reference literally ('See you in 44 days')",
+      "reason": "The owner-reported defect was 'Nos vemos en 272 days !' -- a stray space before the mark, on top of the mixed-language 'days'. Fixing only the spacing while keeping the mark would still diverge from the DS, which shows no punctuation in either RSVP state; dropping it for both states (not just 'attending') keeps the sentence consistent rather than bare only when pending.",
+      "authorized_by": "Task text: 'no stray space before \"!\" -- drop the exclamation if the DS reference \"See you in 44 days\" has none' (it has none).",
+      "verified_how": "Read invitee.html's rendered output after the edit; no unit spec asserted the removed punctuation (grepped invitee.spec.ts for '!'/'?'/'seeYouIn'/'daysToGo', no matches), so no test needed updating."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit: no output, exit 0."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 603,
+        "failing": 0
+      },
+      "after": {
+        "total": 603,
+        "failing": 0
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2658,
+      "global_stylesheet_bytes_after": 2658,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 302.63 kB with a total of 802.63 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.90 kB with a total of 11.90 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.56 kB with a total of 9.56 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.54 kB with a total of 11.54 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.84 kB with a total of 16.84 kB."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/helpers/ds-kit.ts",
+      "e2e/layout/design-parity-home.spec.ts",
+      "tasks/30-phase-n-navigation-five-cap/reports/T368.json"
+    ],
+    "modified": [
+      "src/app/shared/home-subnav/home-subnav.scss",
+      "src/app/screens/invitee/invitee.html",
+      "src/app/screens/invitee/invitee.ts",
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "tasks/30-phase-n-navigation-five-cap/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "pill-interactive (the generated recipe, tokens/recipes.json in wedding-ui-design) defaults the unselected pill to background: transparent and declares no font-weight at all. AppShell.jsx's Home subnav pill needs var(--surface) fill and weight 500 -- both overridden locally in home-subnav.scss rather than in the recipe, since config-manager's own pill row shares the same recipe and was not audited or changed here (out of this task's scope). Every future consumer of pill-interactive inherits the same generic default and will need the same two-line local override, or the recipe itself should gain a font-weight and/or a documented 'surface' variant.",
+      "surfaces_at": "Any future screen adding a new pill-interactive consumer against a component (not page) background, or a task auditing config-manager's own pill row against AppShell.jsx."
+    },
+    {
+      "risk": "AppShell.jsx's four Home-subnav rhythm numbers (26px/18px/10px/6px) sit on a 2px half-step grid the token scale (--space-1..--space-7, all multiples of 4) does not name -- each is exactly one --space-N step plus half of --space-1, composed here via calc() rather than a named token. If this half-step pattern recurs in a future DS component (it is plausible -- AppShell's mobile pill padding, 5px/11px, is the same idiom one step further, not reproduced here at all), each site will re-derive its own calc() rather than referencing one definition, and a future contract regeneration of _tokens.scss/_recipes.scss has no home for a half-step token today.",
+      "surfaces_at": "A future DS component that reuses this half-step spacing idiom, or a hub task auditing tokens/*.json for gaps against ui_kits/wedding-app/*.jsx's literals."
+    },
+    {
+      "risk": "`pnpm build`, run as this task's own required verification step, regenerates src/environments/release.ts (its own header comment: 'regenerated on every pnpm build ... any manual edit is overwritten on the next build') to the current git HEAD's commit hash. This overwrote the user's pre-existing uncommitted value in that file, which this task was explicitly told never to modify -- an unavoidable side effect of running a build, not an edit this task made deliberately, and an attempt to restore the prior value was blocked by this session's own permission classifier. The file is excluded from this report's `files.modified` and was never staged.",
+      "surfaces_at": "The user's own working tree the next time they inspect or commit src/environments/release.ts -- its uncommitted diff is a fresh build hash, not their own prior value, through no code change in this task."
+    }
+  ],
+  "commits": [
+    "d56a416f121ab1497f1441715880fc1e7dccc31a"
+  ]
+}

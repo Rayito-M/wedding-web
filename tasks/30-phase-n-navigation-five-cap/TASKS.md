@@ -205,7 +205,22 @@
   unit tests, lint, build all green.
 
 ### T368 — Home umbrella: pixel parity with the DS AppShell spec (owner-reported)
-- **Status:** todo
+- **Status:** done — `home-subnav.scss` now composes the DS's alignment/rhythm/pill values from
+  tokens (`--space-*` + a documented `calc()` half-step for the four sub-grid numbers the token
+  scale doesn't name); measured 0px alignment delta and exact 26/18px (desktop) and 10/16px
+  (mobile) gaps against the DS kit, plus exact pill color/font-size/weight parity both
+  breakpoints. Mobile pill padding (DS `5px 11px`) is a flagged, undone deviation — no token
+  fits it and `config-manager`'s own mobile pills already don't chase it either. Countdown
+  mixed-language and word-order bugs fixed in es/en/fr (singular included). New
+  `e2e/helpers/ds-kit.ts` (reusable kit-serving/toggle-driving) +
+  `e2e/layout/design-parity-home.spec.ts` (10/10 passing, all 5 projects); proved it fails on a
+  reintroduced defect (`pill row not flush with greeting: expected 0 ±1, got -24`) and passes
+  again once undone. `pnpm lint` green (5 documented pre-existing ESLint errors unchanged,
+  stylelint 0 new violations — `home-subnav.scss` itself carries 0 — ds fidelity 31/31 clean);
+  `npx ng test --watch=false` 603/603 (unchanged); `pnpm build` clean (global stylesheet
+  unchanged at 2658 bytes — the touched styles are component-scoped, not global). Full local
+  Playwright run: 150 passed, 5 failed (confirmed pre-existing `guest-manager-scrolled-header`),
+  15 skipped (pre-existing `seating-plan`, unrelated). Report: `reports/T368.json`.
 - **ADR:** hub ADR-0045 §4; ADR-0044 (the DS is the spec); DS `ui_kits/wedding-app/AppShell.jsx`
   lines 40–82 (the authoritative numbers below)
 - **Owner-reported, side-by-side screenshots (2026-09-06), desktop:** the implemented Home

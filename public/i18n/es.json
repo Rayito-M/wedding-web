@@ -575,7 +575,10 @@
     "countdown": {
       "date": "5 de junio de 2027 · Granada",
       "venue": "Palacio de los Córdova",
-      "daysToGo": "días falta"
+      "days_singular": "{{count}} día",
+      "days_plural": "{{count}} días",
+      "daysToGo_singular": "Falta {{count}} día",
+      "daysToGo_plural": "Faltan {{count}} días"
     },
     "rsvp": {
       "label": "Tu Respuesta",

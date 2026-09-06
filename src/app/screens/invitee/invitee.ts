@@ -198,6 +198,32 @@ export class Invitee {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   });
 
+  /** Countdown heading's day-count key (T368 fix, DS `AppShell.jsx`'s bare
+   *  "See you in 44 days"): the template used to append the literal English
+   *  word "days" after the translated `invitee.seeYouIn` prefix, rendering
+   *  as "Nos vemos en 272 days" in es/fr — an i18n hard-rule violation.
+   *  Same singular/plural ternary as `dashboard.ts`'s own
+   *  `daysTranslationKey`; no separate "0 days" branch, so the pre-existing
+   *  edge-case rendering (the plural-shaped string) is unchanged by this
+   *  fix. */
+  protected daysHeadingKey(): string {
+    return this.daysToGo() === 1
+      ? 'invitee.countdown.days_singular'
+      : 'invitee.countdown.days_plural';
+  }
+
+  /** Countdown caption key (T368 fix): the Spanish string read backward
+   *  ("272 días falta" instead of "Faltan 272 días") because the caption
+   *  was built as `{{count}} {{translated suffix}}` — grammatically fine in
+   *  English/French, wrong in Spanish. Each locale's whole sentence (count
+   *  substituted via `{{count}}`) is now the translated string, so word
+   *  order is a per-locale choice instead of fixed by the template. */
+  protected daysCaptionKey(): string {
+    return this.daysToGo() === 1
+      ? 'invitee.countdown.daysToGo_singular'
+      : 'invitee.countdown.daysToGo_plural';
+  }
+
   adultsCount = computed(() => (this.rsvp()?.adults.partner2 ? 2 : 1));
   childrenCount = computed(() => this.rsvp()?.children?.length ?? 0);
   partner2FirstName = computed(() => {

@@ -575,7 +575,10 @@
     "countdown": {
       "date": "5 juin 2027 · Grenade",
       "venue": "Palais des Córdova",
-      "daysToGo": "jours à attendre"
+      "days_singular": "{{count}} jour",
+      "days_plural": "{{count}} jours",
+      "daysToGo_singular": "{{count}} jour à attendre",
+      "daysToGo_plural": "{{count}} jours à attendre"
     },
     "rsvp": {
       "label": "Ta réponse",
