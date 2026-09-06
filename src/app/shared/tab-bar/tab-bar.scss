@@ -52,6 +52,19 @@
   border: none;
 }
 
+// The Manage door (hub ADR-0045 §3; DS `TabBar.prompt.md`): at rest it reads
+// at ink strength with an ink-hairline dot, "so it reads as different in
+// kind rather than as a sixth peer" — never the muted `--text-muted` the
+// other resting tabs get. Once active it falls through to `.tab.on` above,
+// same as any other tab.
+.tab.standout:not(.on) {
+  color: var(--text-body-color);
+}
+
+.tab.standout:not(.on) .dot {
+  border-color: var(--text-body-color);
+}
+
 // Chevron toggle on the "More" tab, built from two borders (rotates open/closed).
 .chevron {
   width: var(--dot-size);

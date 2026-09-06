@@ -1,4 +1,5 @@
 @use '../../../styles/tokens' as t;
+@use '../../../styles/recipes' as r;
 
 :host {
   display: block;
@@ -65,6 +66,35 @@ header {
 
 .link.on .dot {
   background: var(--brand-accent);
+}
+
+// The Manage door (hub ADR-0045 §3; DS `AppHeader.standoutId`): an outlined
+// pill pushed to the end of the nav — `.nav`'s own `flex: 1` reserves the
+// row, `margin-left: auto` moves this one item to it (DS `AppHeader.jsx`'s
+// `marginLeft: 'auto'`). `pill-interactive` supplies the padding, radius,
+// border, background and transition; only the resting color is overridden,
+// because the standout reads at ink strength rather than the recipe's muted
+// default — ADR-0045 §3 is explicit that this pill is never muted, active
+// or not.
+.standout {
+  @include r.pill-interactive;
+  margin-left: auto;
+  color: var(--text-body-color);
+  text-decoration: none;
+}
+
+.standout:focus-visible {
+  @include r.focus-ring;
+}
+
+// Active state: the outline and label go accent, same vocabulary as `.link.on`,
+// but the pill itself stays unfilled — DS `standoutActive` never swaps to a
+// filled/selected treatment (that is `pill-interactive-selected`'s job for
+// segmented controls, a different component).
+.standout.on {
+  border-color: var(--brand-accent);
+  color: var(--brand-accent);
+  font-weight: 600;
 }
 
 .end {

@@ -28,8 +28,16 @@ import {
 
 import { LangCode } from '../../model';
 import { Monogram } from '../monogram/monogram';
-import { NAV_TABS } from '../nav-tabs';
+import { MANAGE_GROUP_TABS, NAV_TABS } from '../nav-tabs';
 import { NotificationBell } from '../notification-bell/notification-bell';
+
+/**
+ * Six items is the ceiling for the desktop nav (DS `AppHeader.d.ts`
+ * `items` — "Six is the ceiling"; hub ADR-0045 §1's "header renders at most
+ * six items"). One of the six is the standout pill when a role has one, so
+ * the plain nav caps one lower in that case.
+ */
+const MAX_HEADER_ITEMS = 6;
 
 /**
  * Per-screen header row: monogram left, an uppercase meta label right, and the
@@ -79,9 +87,45 @@ export class ScreenHeader implements OnInit {
     return `roles.${role}`;
   });
 
-  protected readonly tabs = computed(() => {
-    const role = this.login.role();
-    return NAV_TABS.filter((tab) => !tab.roles || tab.roles.includes(role));
+  // Filtered once (role + enabled-route) before splitting into nav/standout,
+  // so a disabled route can't eat a "primary slot" (same reasoning as
+  // TabBar's `visibleTabs`).
+  protected readonly tabs = computed(() =>
+    NAV_TABS.filter(
+      (tab) =>
+        (!tab.roles || tab.roles.includes(this.login.role())) &&
+        this.routeConfig.isRouteEnabled(tab.link),
+    ),
+  );
+
+  /** The Manage door (hub ADR-0045 §3) — rendered as the outlined standout
+   *  pill at the end of the nav, DS `AppHeader.standoutId`. */
+  protected readonly standoutTab = computed(() => this.tabs().find((tab) => tab.standout));
+
+  /** Plain nav links, capped so the standout pill never pushes the row past
+   *  the DS's six-item ceiling. */
+  protected readonly navTabs = computed(() => {
+    const rest = this.tabs().filter((tab) => !tab.standout);
+    const cap = this.standoutTab() ? MAX_HEADER_ITEMS - 1 : MAX_HEADER_ITEMS;
+    return rest.slice(0, cap);
+  });
+
+  /**
+   * True while the active route is the standout's own door, *or* any other
+   * member of its group (hub ADR-0045 §3) — the risk T362 carried forward.
+   * A couple viewing `/milestones` or `/config` sees `active()` as
+   * `'milestones'`/`'config'`, neither of which is `standoutTab().id`
+   * (`'guests'`, the door route), so membership must be checked against
+   * {@link MANAGE_GROUP_TABS} rather than the tab's own id alone. Mirrors
+   * DS `AppHeader`'s `standoutActive`: while true, the plain nav's own dots
+   * go dark (`on = id === active && !standoutActive`) because the active
+   * thing is inside Manage, not the header.
+   */
+  protected readonly standoutActive = computed(() => {
+    const standout = this.standoutTab();
+    if (!standout) return false;
+    const activeId = this.active();
+    return activeId === standout.id || MANAGE_GROUP_TABS.some((tab) => tab.id === activeId);
   });
 
   /** Account avatar glyph — the signed-in user's initials from firstName and lastName. */
@@ -112,10 +156,6 @@ export class ScreenHeader implements OnInit {
     if (currentUser?.sub) {
       this.userProfileCollection.getByKey(currentUser.sub);
     }
-  }
-
-  isRouteEnabled(path: string) {
-    return this.routeConfig.isRouteEnabled(path);
   }
 
   protected toggleMenu(event: MouseEvent): void {

@@ -3,13 +3,21 @@
 
   @if (showNav()) {
     <nav class="nav">
-      @for (tab of tabs(); track tab.id) {
-        @if (isRouteEnabled(tab.link)) {
-          <a class="link" [class.on]="tab.id === active()" [routerLink]="tab.link">
-            <span class="dot"></span>
-            {{ tab.labelKey | translate }}
-          </a>
-        }
+      @for (tab of navTabs(); track tab.id) {
+        <a class="link" [class.on]="tab.id === active() && !standoutActive()" [routerLink]="tab.link">
+          <span class="dot"></span>
+          {{ tab.labelKey | translate }}
+        </a>
+      }
+      @if (standoutTab(); as standout) {
+        <a
+          class="standout"
+          [class.on]="standoutActive()"
+          [attr.aria-current]="standoutActive() ? 'true' : null"
+          [routerLink]="standout.link"
+        >
+          {{ standout.labelKey | translate }}
+        </a>
       }
     </nav>
   }

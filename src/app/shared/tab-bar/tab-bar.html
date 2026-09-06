@@ -10,14 +10,14 @@
     @for (tab of restTabs(); track tab.id) {
       <a
         class="sheet-row"
-        [class.on]="tab.id === active()"
+        [class.on]="isOn(tab)"
         role="menuitem"
         [routerLink]="tab.link"
         (click)="closeSheet()"
       >
         <span class="dot"></span>
         <span class="sheet-row-label">{{ tab.labelKey | translate }}</span>
-        @if (tab.id === active()) {
+        @if (isOn(tab)) {
           <span class="sheet-row-arrow">→</span>
         }
       </a>
@@ -27,7 +27,7 @@
 
 <div class="bar">
   @for (tab of primaryTabs(); track tab.id) {
-    <a class="tab" [class.on]="tab.id === active()" [routerLink]="tab.link">
+    <a class="tab" [class.on]="isOn(tab)" [class.standout]="tab.standout" [routerLink]="tab.link">
       <span class="dot"></span>
       {{ tab.labelKey | translate }}
     </a>
