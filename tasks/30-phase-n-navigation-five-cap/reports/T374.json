@@ -1,0 +1,113 @@
+{
+  "task": "T374",
+  "status": "complete",
+  "summary": "The guest-manager toolbar (filters/search/add) moved inside *appScreenHead's <header>, alongside the title/stats it already carried, via a new .header-top wrapper — matching ScreenGuestManager.jsx's fixed-row structure (header+toolbar around the one scrolling .table-body). Added assertPinnedUnderScroll() to ds-kit.ts; design-parity-guests.spec.ts asserts header/toolbar/footer pinned under scroll on desktop plus the toolbar's presence inside .screen-head; fail-on-revert proven. Swept milestones (only other existing parity spec with a kit-pinned head) — already correct, no fix needed; schedule has nothing to pin. guest-manager.spec.ts needed a mountPinnedHead() helper so its ~30 pre-existing toolbar-selector tests keep working now that the toolbar only renders via the layout's pinned-head portal.",
+  "acceptance": [
+    {
+      "criterion": "Add assertPinnedUnderScroll(page, selector, scrollRegionSel) to e2e/helpers/ds-kit.ts: capture boundingBox().y, scroll the content region a meaningful distance, assert y unchanged (±1px).",
+      "met": true,
+      "evidence": "e2e/helpers/ds-kit.ts:191-241 (exported assertPinnedUnderScroll) — scrolls scrollRegionSel.scrollTop by 600px, asserts it actually moved (guard clause), then expectClose(after.y, before.y, 1, ...)."
+    },
+    {
+      "criterion": "design-parity-guests.spec.ts: assert header, toolbar, and list footer stay pinned under scroll on desktop (and whatever the kit's mobile file pins, on mobile), plus the toolbar's presence in the pinned region.",
+      "met": true,
+      "evidence": "e2e/layout/design-parity-guests.spec.ts:171-227, test 'desktop: header, toolbar, and list footer stay pinned under scroll — the toolbar joined the pinned head (T374)': asserts .toolbar is inside .screen-head and NOT inside <app-guest-manager>, then assertPinnedUnderScroll on '.header-top', '.toolbar', '.list-footer' against 'main'. Mobile intentionally not asserted (see notes) — documented in the spec's own comment. Run: `npx playwright test e2e/layout/design-parity-guests.spec.ts -g T374 --project=\"Desktop Chrome\"` — 1 passed.",
+      "notes": "ScreenGuestManagerMobile.jsx's own @layout declares \"pinned\": {\"head\": false, \"foot\": false} (ds-contract.json → screens.ScreenGuestManagerMobile.layout) — nothing pinned there — so there is nothing this assertion could hold the app to matching on mobile. The app's own .screen-head/.screen-foot are pinned unconditionally at every breakpoint (a pre-existing app.routes.ts `guests` route fact this task's toolbar move does not change and was not asked to reconsider); see risks[]."
+    },
+    {
+      "criterion": "Fail-on-revert proof: temporarily move the toolbar back out (scratch edit, then undo — never stash), show the new assertions fail, restore, show green. Report both outputs.",
+      "met": true,
+      "evidence": "Before (git checkout -- guest-manager.html guest-manager.scss, restoring pre-T374 HEAD): `npx playwright test e2e/layout/design-parity-guests.spec.ts -g T374 --project=\"Desktop Chrome\"` → 1 failed: 'Error: .toolbar is not inside the pinned .screen-head — expect(received).toBe(expected) Expected: true / Received: false' at design-parity-guests.spec.ts:192. Restore (cp back the two files from a pre-saved scratch copy, verified `git diff --stat` identical to before the revert: 184/38 lines changed, same as the original edit): re-ran the same command → 1 passed (1.8s). No stash/checkout was used to reapply — the fix was copied back from a scratch-directory backup taken before the revert."
+    },
+    {
+      "criterion": "Sweep the other parity specs: wherever the kit renders a fixed row the app should pin (check each kit screen's @layout pinned declaration in ds-contract.json → screens[].layout), add assertPinnedUnderScroll where a scroll region exists; test.fixme() with measured numbers if one fails for a screen other than guest-manager.",
+      "met": true,
+      "evidence": "ds-contract.json screens[].layout audited for every screen with an EXISTING design-parity-*.spec.ts file. Only two others declare pinned:true anywhere: ScreenMilestones (lg: {head:true, foot:false}) — has design-parity-milestones.spec.ts; ScreenSchedule declares pinned:{head:false,foot:false} at every breakpoint (grepped ScreenSchedule.jsx for 'sticky'/'date-badge' — no match), so the task's own 'schedule's date badge if applicable' turned out not to apply. Added 'desktop: header stays pinned while the timeline list scrolls (T374 sweep)' to design-parity-milestones.spec.ts (assertPinnedUnderScroll('.header', '.list')) — PASSED, no fixme needed: Milestones pins its header via its own local screenScroll:'lg' component shell (milestones.scss), not *appScreenHead, and that mechanism already holds. ScreenMusic/ScreenSeatingPlan/ScreenTasks also declare pinned:true but have no existing design-parity-*.spec.ts file to sweep (out of this task's scope per the task's own phrase 'sweep the other parity specs' — creating three new full parity spec files from scratch is a separate, much larger undertaking); flagged in risks[].",
+      "notes": "No test.fixme() was needed anywhere in the sweep — both candidates checked (milestones, schedule) came back clean."
+    },
+    {
+      "criterion": "Filters visible after scrolling the guest list (measured).",
+      "met": true,
+      "evidence": "assertPinnedUnderScroll(page, '.toolbar', 'main') in design-parity-guests.spec.ts's T374 test — scrolls main by 600px (guarded: main.scrollTop actually changed) and measures .toolbar's boundingBox().y unchanged within 1px. Before the fix (see fail-on-revert row) the toolbar was not even inside the pinned region at all; after the fix it measures pinned."
+    },
+    {
+      "criterion": "Guest-manager parity spec's positioning assertions green and fail-on-revert proven once.",
+      "met": true,
+      "evidence": "Both rows above; plus the full parity+occlusion suite run below shows the new test green across all 5 projects (200 total vs T373's 190 baseline = +10 = the 2 new tests × 5 projects, all passing)."
+    },
+    {
+      "criterion": "Occlusion guard + full suite green.",
+      "met": true,
+      "evidence": "`npx playwright test e2e/layout/design-parity- e2e/layout/occlusion-guard.spec.ts` across all 5 projects (Desktop Chrome, iPhone SE/12/14, Pixel 7): 200 passed / 0 failed / 15 skipped (T373 baseline: 190/0/15 — the 2 new T374 tests × 5 projects account for the +10, no new fixmes). Broader `npx playwright test e2e/layout` (all 21 layout spec files, same 5 projects): 315 passed / 1 failed / 29 skipped — the 1 failure is `seating-plan.spec.ts`'s existing mobile test on iPhone 14 only ('Navigation … interrupted by another navigation to /dashboard'), pre-existing and unrelated to this task's files (seating-plan/guest-manager share nothing); re-run in isolation (`--repeat-each=3`, iPhone 14 only) it did not fail once (skipped 3/3, its own designed behaviour under a race that didn't reproduce), confirming a load-contention flake rather than a regression this task caused. `pnpm ng test --watch=false`: 616 passed / 0 failed (baseline 616, 0 new failures)."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit — no output, exit 0."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 616,
+        "failing": 0
+      },
+      "after": {
+        "total": 616,
+        "failing": 0
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2677,
+      "global_stylesheet_bytes_after": 2677,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 302.71 kB with a total of 802.71 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.96 kB with a total of 11.96 kB (pre-existing over-budget file per T373's report: 11.91 kB there; +0.05 kB from this task's added .header-top rule and comments).",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.55 kB with a total of 11.55 kB (pre-existing, untouched by this task).",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.58 kB with a total of 9.58 kB (pre-existing, untouched by this task).",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.85 kB with a total of 16.85 kB (pre-existing, untouched by this task)."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "tasks/30-phase-n-navigation-five-cap/reports/T374.json"
+    ],
+    "modified": [
+      "src/app/screens/guest-manager/guest-manager.html",
+      "src/app/screens/guest-manager/guest-manager.scss",
+      "src/app/screens/guest-manager/guest-manager.spec.ts",
+      "e2e/helpers/ds-kit.ts",
+      "e2e/layout/design-parity-guests.spec.ts",
+      "e2e/layout/design-parity-milestones.spec.ts",
+      "tasks/30-phase-n-navigation-five-cap/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "ScreenGuestManagerMobile.jsx's own @layout comment declares pinned:{head:false,foot:false} (nothing pinned, scroller:'page'), yet its own JSX renders header/filter-chips/search as fixed flex rows above a separately-scrolling row list — the same fixed-row-around-a-scroller shape the desktop kit uses, just not reflected in the annotation. The app currently pins .screen-head/.screen-foot unconditionally at every breakpoint (app.routes.ts's `guests` route sets headPinned/footPinned with no per-breakpoint mechanism — only screenScroll has breakpoint variants in this codebase's RouteChromeData shape). This task did not change that pre-existing pinning-at-every-breakpoint behaviour and was not asked to reconcile it against the mobile kit's contradictory annotation — it only moved the toolbar into the SAME already-pinned region, on both breakpoints, consistent with what the head already did before this task.",
+      "surfaces_at": "Any future task that takes the ScreenGuestManagerMobile.jsx @layout annotation as ground truth for a mobile-specific pinning assertion — it will need to first resolve whether the annotation or the JSX's actual rendered structure is the intended contract, ideally by asking the DS owner rather than guessing from either artifact alone."
+    },
+    {
+      "risk": "ScreenMusic, ScreenSeatingPlan and ScreenTasks all declare pinned:{head:true} in ds-contract.json (screens[].layout) but have no existing design-parity-*.spec.ts file — this task's sweep only extended existing parity specs (per its own phrasing, 'sweep the other parity specs'), so these three screens' positioning behaviour against their kit counterparts remains entirely unmeasured by any parity spec.",
+      "surfaces_at": "Whichever task first builds a design-parity spec for Music, Seating Plan, or Tasks should add an assertPinnedUnderScroll for their pinned head at that time, rather than assuming their existing screen-scroll-breakpoint.spec.ts / seating-plan.spec.ts layout-regression coverage (which does check pinning generically, but not against the kit) is equivalent parity evidence."
+    },
+    {
+      "risk": "seating-plan.spec.ts's mobile test ('mobile: the header and segmented tabs stay put…') failed once under this task's 5-project fully-parallel e2e/layout run (iPhone 14 only, a page.goto navigation race against a prior /dashboard redirect) but passed (skipped, its own designed behaviour) 3/3 in an isolated re-run. This is the same class of load-contention flake task-management.md §4 warns a clean run only ever proves as a floor — unrelated to seating-plan's own code and to anything this task touched, but not yet independently re-confirmed at N>3 isolated runs.",
+      "surfaces_at": "A future full-parallel e2e/layout run that hits this same flake again — worth a dedicated investigation (in the shape of T355/T357's own) if it recurs, not a T374 fix."
+    }
+  ],
+  "commits": [
+    "0c5dd1b"
+  ]
+}
