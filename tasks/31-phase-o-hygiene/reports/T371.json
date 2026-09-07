@@ -1,0 +1,91 @@
+{
+  "task": "T371",
+  "status": "complete",
+  "summary": "Three-item hygiene batch. (1) dashboard.spec.ts (new, 8 cases): countdown/daysToGo, RSVP-statistics bindings, and T370's milestone computeds across empty/all-reached/mixed/undated fixtures. (2) private-layout.ts's onMainScroll() dropped a stale screenChrome.head()-based suppression (predates ADR-0043's pinning/scroll-ownership split) — .scrolled now follows main's own scrollTop unconditionally; guest-manager-scrolled-header.spec.ts goes from 5/5 failing to 5/5 passing, spec text untouched. (3) i18n: added rsvp.hub.detail.declinedSub (missing from all three locales, used by delegate-edit.html since 289bd39) in third-person, gender-neutral ES/FR phrasing; full key-set comparison found 10 further orphaned paths (confirmed by grep — no template/ts reference), all deleted; es/en/fr.json are now key-set-identical at 764 keys each.",
+  "acceptance": [
+    {
+      "criterion": "dashboard.spec.ts covers the countdown/daysToGo logic, the RSVP-statistics bindings, and the T370 milestone computeds (empty list, all-reached, mixed, undated milestones)",
+      "met": true,
+      "evidence": "src/app/screens/dashboard/dashboard.spec.ts (new, 8 tests, all passing): 'the countdown' describe (2 tests: plural at 10 days, singular at 1 day, both against the hardcoded WEDDING_DATE 2027-06-05 via vi.setSystemTime); 'RSVP statistics bindings' describe (1 test: 3 guest profiles / 2 RSVP records -> total 3, attending 1, pending 1, declined 1, replied 67%, asserted against .stats-card .stats .value and .progress[aria-valuenow]); 'milestone-progress computeds (T370)' describe (5 tests: empty list all-zero, all-reached 100%/no-overdue/no-upcoming-list, mixed set with correct done/left/overdue counts + rounded percent + soonest-first next-3, a 4th test confirming the cap at 3, and an undated (plannedDate: '') milestone sorting first and rendering no date rather than crashing DatePipe). npx ng test --watch=false --include='**/dashboard.spec.ts': 8 passed (8), 0 failing."
+    },
+    {
+      "criterion": "guest-manager-scrolled-header.spec.ts fixed at the mechanism (private-layout.ts's onMainScroll()), all 5 Playwright projects green",
+      "met": true,
+      "evidence": "Root cause confirmed (not re-diagnosed — already root-caused by T364's and T366's reports): onMainScroll() read `this.screenChrome.head() ? false : (scrollTop > 0)`, forcing `.scrolled` false whenever a route registers a pinned head, which /guests always does. This predates hub ADR-0043 (T352): before it, headPinned/footPinned decided scroll ownership, so a pinned head implied main was overflow-y:clip and never actually scrolled, making the `false` branch inert; ADR-0043 made main /guests's real scroller (no screenScroll declared) while /guests kept its pinned head, turning the same line into a live defect. Fix: removed the screenChrome.head() branch — isScrolled now follows only `mainContent.nativeElement.scrollTop > 0`. Reproduced the pre-fix failure directly (git stash push -- private-layout.ts, then npx playwright test e2e/layout/guest-manager-scrolled-header.spec.ts): '5 failed' on iPhone SE/iPhone 12/iPhone 14/Pixel 7/Desktop Chrome, identical error to T364/T366's reports ('app-screen-header never gained .scrolled after scrolling'). After the fix (git stash pop, same command): '5 passed (7.6s)' — all 5 projects. The spec's own text/assertions were not touched; the mechanism was wrong, not the test."
+    },
+    {
+      "criterion": "public/i18n/{es,en,fr}.json are key-set identical; rsvp.hub.detail.declinedSub present and translated in all three; every other found drift resolved (translated in if used, deleted if orphaned)",
+      "met": true,
+      "evidence": "rsvp.hub.detail.declinedSub added to all three (delegate-edit.html's own 'sub' line under a declined subject's reply, third-person since a delegate reads about someone else's answer — distinct from rsvp.edit.declinedSub's first-person guest-facing text): en 'They told us they can't make it. You can still change that until 1 May.'; es 'Nos dijeron que no podrán venir. Aún puedes cambiar la respuesta hasta el 1 de mayo.' (3rd-person-plural reported-speech, gender-neutral); fr 'On nous a dit qu'il ne sera pas possible de venir. Vous pouvez encore modifier la réponse jusqu'au 1er mai.' (impersonal 'on'/'il', no pronoun refers to the subject's unstored gender, per hub CLAUDE.md hard rule 18(c)'s same reasoning). Full key-set comparison (flatten every leaf path per locale, diff the three sets — script run and re-run, see below) found 10 further mismatched paths, all confirmed orphaned by grep across src/app/**/*.{ts,html} before deletion: en.json-only shared.bride, shared.groom, welcome.location, welcome.couple.bride, welcome.couple.groom, welcome.couple.quote (whole now-empty welcome.couple object removed); es.json/fr.json-only grenade, spain, guest_manager.header.headCount, welcome.tagline. Before: es 768 keys, en 770, fr 768, union 774, 10 keys not present in all three. After: es 764, en 764, fr 764, union 764, 0 mismatched keys — 'Key-set identical: True' (comparison script re-run after the edit). delegate-edit.spec.ts: npx ng test --watch=false --include='**/delegate-edit.spec.ts' -> 7 passed (7), 0 failing (unaffected by the copy change, as expected)."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "npx tsc -p tsconfig.app.json --noEmit && npx tsc -p tsconfig.spec.json --noEmit: both clean, no output, exit 0."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 603,
+        "failing": 0
+      },
+      "after": {
+        "total": 611,
+        "failing": 0
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2677,
+      "global_stylesheet_bytes_after": 2677,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 302.71 kB with a total of 802.71 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.58 kB with a total of 9.58 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.55 kB with a total of 11.55 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.91 kB with a total of 11.91 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.85 kB with a total of 16.85 kB."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "src/app/screens/dashboard/dashboard.spec.ts",
+      "tasks/31-phase-o-hygiene/TASKS.md",
+      "tasks/31-phase-o-hygiene/reports/T371.json"
+    ],
+    "modified": [
+      "src/app/layouts/private-layout/private-layout.ts",
+      "public/i18n/en.json",
+      "public/i18n/es.json",
+      "public/i18n/fr.json",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/environments/release.ts",
+      "why": "Not edited by hand. pnpm build (a required verification command) unconditionally overwrites this file with the current git commit hash via scripts/generate-release.mjs. This file was already the user's own uncommitted, pre-existing change before this task started (per the hygiene instruction and confirmed via git status at session start); left exactly as the build produced it, never staged, never committed, never reverted."
+    },
+    {
+      "path": "src/app/screens/rsvp/rsvp.html",
+      "why": "Pre-existing uncommitted modification present in the working tree before this task started (confirmed via git status at session start). Never read, never staged, never committed, never reverted — outside this task's scope per the explicit hygiene instruction not to touch it."
+    }
+  ],
+  "risks": [],
+  "commits": [
+    "da8aab7",
+    "51744c8",
+    "1134d9e",
+    "29cc3f8"
+  ],
+  "decisions_needed": []
+}

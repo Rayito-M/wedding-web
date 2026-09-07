@@ -245,3 +245,4 @@ neither sort nor uniquely name them.
 | **T368** | Home umbrella: pixel parity with the DS AppShell spec | done | `30-phase-n-navigation-five-cap` |
 | **T369** | Design-parity rescan: every implemented screen measured against the kit | done | `30-phase-n-navigation-five-cap` |
 | **T370** | Fix the T369 parity deviations (7 real; 1 refused as out-of-scope) | done | `30-phase-n-navigation-five-cap` |
+| **T371** | Hygiene batch: dashboard unit coverage, the scrolled-header flake, i18n drift | done | `31-phase-o-hygiene` |
