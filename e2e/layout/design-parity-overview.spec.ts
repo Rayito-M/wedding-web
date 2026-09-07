@@ -1,7 +1,27 @@
 import { test, expect } from '@playwright/test';
 
 import { signInAsCouple } from '../support/auth';
-import { boxOf, expectClose, kitContentColumnBox, openDsKitScreen, startDsKitServer, stylesOf, type DsKitServer } from '../helpers/ds-kit';
+import {
+  blockOutline,
+  boxOf,
+  expectClose,
+  kitContentColumnBox,
+  openDsKitScreen,
+  startDsKitServer,
+  stylesOf,
+  type DsKitServer,
+} from '../helpers/ds-kit';
+
+/**
+ * The kit's "this week" `TaskRow` block is REFUSED, permanently, out of
+ * scope (hub ADR-0029 §4.7, `contract/scope.json`'s `outOfScope`) — see this
+ * file's own class doc. Filtered out of the kit outline explicitly, never
+ * silently dropped: the block-outline assertion below would otherwise fail
+ * on a difference this repo already decided, on purpose, to carry forever.
+ */
+function dropWeekBlock(blocks: Awaited<ReturnType<typeof blockOutline>>) {
+  return blocks.filter((b) => !b.label.includes('This week'));
+}
 
 /**
  * Design-parity rescan (T369) — Couple/"Manage · Overview" (kit) ↔
@@ -24,6 +44,15 @@ import { boxOf, expectClose, kitContentColumnBox, openDsKitScreen, startDsKitSer
  * parity with a kit screen never resurrects a feature the hub already cut.
  * `test.skip()` below, not `test.fixme()`: fixme documents a bug awaiting a
  * fix; this is a decision, not a defect.
+ *
+ * T373 fixes the remaining gap the T369 rescan flagged: the milestone card
+ * now sits in the kit's own `1.15fr 0.85fr` RIGHT column (`dashboard.html`'s
+ * `.overview-grid`/`.overview-col-left`/`.overview-col-right`), not appended
+ * below the stats card in a single flow column, and the old in-content
+ * "Manage" link list is gone — `Guests`/`Settings` are reachable from this
+ * route via `PlanRail`/`MANAGE_GROUP_TABS` already (`dashboard.ts`'s own
+ * class doc). The block-outline assertion below is the check that would
+ * have caught the original placement gap on its own.
  */
 
 const DESKTOP = { width: 1280, height: 900 };
@@ -141,4 +170,39 @@ test.describe('Manage · Overview (couple) — pixel parity with the DS kit (T36
       await kitPage.close();
     },
   );
+
+  // — T373: block-outline parity (hub ADR-0044 amendment) — the kit's own
+  // `1.15fr 0.85fr` grid: LEFT [rsvp stats, quick tiles], RIGHT [the plan so
+  // far]. The kit's "this week" block is filtered out above (REFUSED,
+  // permanent, see `dropWeekBlock`'s own doc) — it is accounted for
+  // explicitly here, not by loosening the assertion past it.
+  test('desktop: block outline (order + column) matches the DS kit, "this week" excluded (T373)', async ({
+    page,
+    context,
+  }) => {
+    const kitPage = await context.newPage();
+    await openDsKitScreen(kitPage, kit.baseUrl, {
+      device: 'Desktop',
+      role: 'Couple',
+      viewLabel: 'Manage · Overview',
+    });
+    await signInAsCouple(page);
+    await page.goto('/overview');
+    await page.setViewportSize(DESKTOP);
+    await page.waitForLoadState('networkidle');
+
+    const kitOutline = dropWeekBlock(
+      await blockOutline(kitPage, 'div[style*="grid-template-columns: 1.15fr 0.85fr"]'),
+    );
+    const appOutline = await blockOutline(page, '.overview-grid');
+
+    // 3 blocks: rsvp stats + tiles (LEFT, column 1), the plan so far (RIGHT,
+    // column 2) — the kit's neighboring "this week" slot excluded above.
+    expect(appOutline.length, 'block count (rsvp stats, tiles, the plan so far)').toBe(kitOutline.length);
+    expect(appOutline.map((b) => b.column), 'block column placement, in DOM order').toEqual(
+      kitOutline.map((b) => b.column),
+    );
+
+    await kitPage.close();
+  });
 });

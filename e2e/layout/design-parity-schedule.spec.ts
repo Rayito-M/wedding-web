@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 
 import { signInAsGuest } from '../support/auth';
 import {
+  blockOutline,
   boxOf,
   expectClose,
   kitContentColumnBox,
@@ -268,6 +269,28 @@ test.describe('Schedule (guest) — pixel parity with the DS kit (T369)', () => 
     expect(appM.pill?.background).toBe(kitM.pill?.background);
     expect(appM.pill?.borderStyle).toBe(kitM.pill?.borderStyle);
     expect(appM.pill?.padding).toBe(kitM.pill?.padding);
+    await kitPage.close();
+  });
+
+  // T373: block-outline parity. Kit root: the wide branch's own
+  // `maxWidth`/padded content column (`AppShell.jsx`'s
+  // `style*="padding: 26px 28px 44px"`); app root: `app-schedule`. Four
+  // blocks on both sides: title/subtitle, the date+status-pill corner, the
+  // note banner, the timeline — `column: null` throughout (neither side
+  // grids at the top level).
+  test('desktop: block outline (order) matches the DS kit (T373)', async ({ page, context }) => {
+    const kitPage = await openBoth(kit, context, page, 'Desktop', DESKTOP);
+
+    const kitOutline = await blockOutline(kitPage, 'div[style*="padding: 26px 28px 44px"]');
+    const appOutline = await blockOutline(page, 'app-schedule');
+
+    expect(appOutline.length, 'block count (title, date/status corner, note, timeline)').toBe(
+      kitOutline.length,
+    );
+    expect(appOutline.map((b) => b.column), 'block column placement, in reading order').toEqual(
+      kitOutline.map((b) => b.column),
+    );
+
     await kitPage.close();
   });
 });

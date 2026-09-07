@@ -424,3 +424,190 @@ export async function kitContentColumnBox(kitPage: Page): Promise<Box | null> {
     return { top: r.top, left: r.left, width: r.width, height: r.height };
   });
 }
+
+/**
+ * One entry in a {@link blockOutline} result — a screen's content blocks in
+ * DOM order, positioned relative to the queried root (never absolute page
+ * coordinates: the kit's frame and the app's real viewport are different
+ * sizes, so only each side's own internal geometry is comparable — same
+ * reasoning `assertHomeSubnavParity` already documents for its own deltas).
+ */
+export interface OutlineBlock {
+  /** Best-effort identifying text — the block's own collapsed, trimmed
+   *  `textContent`, capped at 60 chars. Not a stable id (neither side
+   *  carries one in common), but the actual copy on both sides is DS-kit
+   *  fixture data / the app's translated strings for the same fixture, so a
+   *  human (and a diff) can tell two outlines apart from this alone. */
+  label: string;
+  /** Border-box top, relative to the root's own top edge. */
+  top: number;
+  /** Border-box left, relative to the root's own left edge. */
+  left: number;
+  /** 1-based index of the nearest track in the root's own `grid-template-
+   *  columns`, or `null` when the root is not `display: grid` at the
+   *  measured breakpoint (e.g. every screen below its 900px content-grid
+   *  cutover, and every screen that never grids at all). */
+  column: number | null;
+}
+
+/**
+ * The ordered content blocks directly under `rootSel` (T373 — the
+ * block-outline harness hub ADR-0044's amendment requires: "generic metrics
+ * once declared the couple's planning dashboard a match for the kit's
+ * shared Home because both start with a greeting and a countdown").
+ *
+ * Runs the identical algorithm on whichever DOM `rootSel` names — kit or
+ * app — so a caller measures both sides with the same function, the same
+ * way {@link boxOf}/{@link stylesOf} already do; only the selector differs
+ * per side; per screen.
+ *
+ * A block is a direct child of the root, EXCEPT a purely-structural
+ * "transparent" wrapper (no border, no background — the kit's own `col()`
+ * helper, a bare `display:flex;flex-direction:column` grouping div; the
+ * app's own `.overview-col-left`/`.overview-col-right`) is substituted, one
+ * level only, by ITS OWN direct children — so a column wrapper reads as its
+ * cards, not as one opaque block, without also dissolving an actual card's
+ * own internal grid (e.g. `.tiles`' `1fr 1fr` stat-tile row stays ONE
+ * block: it is only ever encountered as an already-substituted result, and
+ * substitution is not applied recursively to those). This is deliberately
+ * NOT a deep structural diff — it does not try to match every DOM node,
+ * only the small set a design reviewer would call "the cards on this
+ * screen" — because the kit (bare inline-styled `div`s) and the app
+ * (Angular components with their own host elements) never share a DOM
+ * shape, only a visual one.
+ *
+ * `rootSel` defaults to the kit's own `[data-overlay-host]` (`AppShell`'s
+ * root) — the natural default for the kit side of a comparison; every app
+ * call site passes its own screen-specific root explicitly, since the app
+ * has no equivalent single landmark.
+ */
+export async function blockOutline(page: Page, rootSel = '[data-overlay-host]'): Promise<OutlineBlock[]> {
+  return page.evaluate((sel) => {
+    const root = document.querySelector(sel) as HTMLElement | null;
+    if (!root) throw new Error(`blockOutline: root not found for selector "${sel}"`);
+
+    const isRendered = (el: Element): el is HTMLElement => {
+      const htmlEl = el as HTMLElement;
+      if (getComputedStyle(htmlEl).display === 'none') return false;
+      const r = htmlEl.getBoundingClientRect();
+      return r.width > 0 || r.height > 0;
+    };
+
+    const isTransparent = (el: HTMLElement): boolean => {
+      const cs = getComputedStyle(el);
+      const noBorder = (['Top', 'Right', 'Bottom', 'Left'] as const).every(
+        (side) => parseFloat(cs.getPropertyValue(`border-${side.toLowerCase()}-width`)) === 0,
+      );
+      const bg = cs.backgroundColor;
+      const noBg = bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent';
+      // A structural grouping wrapper (kit's own `col()` helper; the app's
+      // `.overview-col-left`/`-right`) is ALSO always a flex/grid layout
+      // container, never plain block flow — that third condition is what
+      // keeps a genuine, chrome-less content section (e.g. Home's own day-
+      // highlights list, a bare `display: block` div with no border/
+      // background of its own) from being mistaken for one and dissolved
+      // into its individual rows.
+      const isLayoutGroup = cs.display === 'flex' || cs.display === 'grid';
+      return noBorder && noBg && isLayoutGroup;
+    };
+
+    // A structural wrapper worth substituting groups a HANDFUL of named UI
+    // sections (the kit's own `col()` never wraps more than 2; this repo's
+    // own widest column-wrapper, `.overview-col-left`, wraps 2) — never a
+    // data-driven repeating collection (a card grid, a guest list), which
+    // can share the exact same "transparent flex/grid, no border, no
+    // background" signature at dozens of items. Capped, not counted exactly
+    // right for every screen: a wrapper this rule mistakenly leaves opaque
+    // reads as one bigger block rather than being silently dissolved into a
+    // pile of near-identical repeated ones.
+    const MAX_GROUP_SIZE = 5;
+    const directChildren = Array.from(root.children).filter(isRendered);
+    const blocks: HTMLElement[] = [];
+    for (const child of directChildren) {
+      if (isTransparent(child) && child.children.length > 0 && child.children.length <= MAX_GROUP_SIZE) {
+        blocks.push(...(Array.from(child.children).filter(isRendered) as HTMLElement[]));
+      } else {
+        blocks.push(child);
+      }
+    }
+
+    const rootRect = root.getBoundingClientRect();
+    const rootStyle = getComputedStyle(root);
+    let colStarts: number[] | null = null;
+    if (rootStyle.display === 'grid') {
+      const tracks = rootStyle.gridTemplateColumns
+        .split(' ')
+        .map((v) => parseFloat(v))
+        .filter((n) => !Number.isNaN(n));
+      const gap = parseFloat(rootStyle.columnGap || rootStyle.gap) || 0;
+      const inset =
+        (parseFloat(rootStyle.borderLeftWidth) || 0) + (parseFloat(rootStyle.paddingLeft) || 0);
+      let cursor = rootRect.left + inset;
+      colStarts = tracks.map((w) => {
+        const start = cursor;
+        cursor += w + gap;
+        return start;
+      });
+    }
+
+    const columnOf = (left: number): number | null => {
+      if (!colStarts || colStarts.length === 0) return null;
+      let best = 0;
+      let bestDiff = Infinity;
+      colStarts.forEach((start, i) => {
+        const diff = Math.abs(left - start);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          best = i;
+        }
+      });
+      return best + 1;
+    };
+
+    const outline = blocks.map((block) => {
+      const r = block.getBoundingClientRect();
+      const label = (block.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+      return {
+        label,
+        top: r.top - rootRect.top,
+        left: r.left - rootRect.left,
+        // `colStarts` are viewport-relative (built off `rootRect.left`), same
+        // frame as `r.left` itself — compare before subtracting `rootRect`.
+        column: columnOf(r.left),
+      };
+    });
+
+    // Reading order, not DOM source order: a CSS grid places its items by
+    // explicit `grid-area`/`grid-column`, not by where they sit in markup,
+    // so two grids that render IDENTICALLY can still differ in raw DOM
+    // order (the kit's own `col()` groups a column's cards consecutively in
+    // JSX; this repo's own grid instead gives each card its own named
+    // `grid-area`, in whatever order reads best in the template). "Block
+    // order" for a design-fidelity check means what a reviewer scans, not
+    // an implementation detail invisible in the rendered page.
+    //
+    // Grid root: column-then-row (kit's own `col()` convention — read the
+    // left column top-to-bottom, then the right column). Any other root
+    // (flex row/column, plain flow): row-then-column, clustering blocks
+    // into visual rows by top-proximity rather than an exact match — two
+    // siblings of a `justify-content: space-between` toolbar row rarely
+    // share an identical `top` (their own content sets a different height
+    // even under `align-items: center`), so a strict `top` sort would
+    // reorder them on a few px of unrelated noise.
+    const ROW_THRESHOLD = 16;
+    if (rootStyle.display === 'grid') {
+      outline.sort((a, b) => (a.column ?? 0) - (b.column ?? 0) || a.top - b.top);
+    } else {
+      const byTop = outline.slice().sort((a, b) => a.top - b.top);
+      const rows: (typeof outline)[] = [];
+      for (const block of byTop) {
+        const row = rows.find((r) => Math.abs(r[0].top - block.top) <= ROW_THRESHOLD);
+        if (row) row.push(block);
+        else rows.push([block]);
+      }
+      rows.forEach((row) => row.sort((a, b) => a.left - b.left));
+      outline.splice(0, outline.length, ...rows.flat());
+    }
+    return outline;
+  }, rootSel);
+}

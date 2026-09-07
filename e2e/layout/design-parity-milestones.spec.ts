@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { signInAsCouple } from '../support/auth';
-import { boxOf, stylesOf, openDsKitScreen, startDsKitServer, type DsKitServer } from '../helpers/ds-kit';
+import { blockOutline, boxOf, stylesOf, openDsKitScreen, startDsKitServer, type DsKitServer } from '../helpers/ds-kit';
 
 /**
  * Design-parity rescan (T369) — Couple/Milestones (kit) ↔ `/milestones`
@@ -92,4 +92,47 @@ test.describe('Milestones (couple) — pixel parity with the DS kit (T369)', () 
       await kitPage.close();
     });
   }
+
+  // T373: block-outline parity, new deviation surfaced (not fixed here —
+  // out of T372/T373's scope; reported per the task's own instruction to
+  // `test.fixme()` a new gap on another screen rather than go fix it here).
+  //
+  // Kit outline (desktop, root: the screen's own outer flex-column div,
+  // seeded via "Start from the usual plan") — 2 blocks: [header (title +
+  // counters + "Add milestone"), the master/detail `.layout` area — the
+  // latter is one un-styled `<div>` in the kit source (no border/background
+  // of its own), so this harness correctly does not try to split master
+  // from detail].
+  //
+  // App outline (same viewport, root: `app-milestones`) — 5 blocks: header,
+  // the list content, and three additional zero-label blocks around
+  // `top: 821` this run did not identify — likely the detail pane's own
+  // empty-state affordances (`app-milestones` renders a detail pane with no
+  // milestone selected by default) resolving to distinct elements this
+  // harness's single-level substitution does not expect. Needs its own
+  // investigation of `milestones.html`'s detail-pane markup, not a T372/
+  // T373 fix — Milestones was untouched by both tasks.
+  test.fixme(
+    'desktop: block outline does not yet resolve the detail pane cleanly (found by T373, out of scope here)',
+    async ({ page, context }) => {
+      const kitPage = await context.newPage();
+      await openDsKitScreen(kitPage, kit.baseUrl, { device: 'Desktop', role: 'Couple', viewLabel: 'Milestones' });
+      await kitPage.getByRole('button', { name: /Start from the usual plan/i }).click();
+
+      await signInAsCouple(page);
+      await page.goto('/milestones');
+      await page.setViewportSize(DESKTOP);
+      await page.waitForLoadState('networkidle');
+
+      const kitOutline = await blockOutline(
+        kitPage,
+        '[data-overlay-host] div[style*="overflow: clip; position: relative"]',
+      );
+      const appOutline = await blockOutline(page, 'app-milestones');
+
+      expect(appOutline.length, 'block count').toBe(kitOutline.length);
+
+      await kitPage.close();
+    },
+  );
 });

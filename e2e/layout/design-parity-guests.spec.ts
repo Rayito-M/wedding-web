@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { signInAsCouple } from '../support/auth';
-import { boxOf, stylesOf, openDsKitScreen, startDsKitServer, type DsKitServer } from '../helpers/ds-kit';
+import { blockOutline, boxOf, stylesOf, openDsKitScreen, startDsKitServer, type DsKitServer } from '../helpers/ds-kit';
 
 /**
  * Design-parity rescan (T369) — Couple/Guests (kit) ↔ `/guests` (app,
@@ -130,6 +130,57 @@ test.describe('Guests (couple) — pixel parity with the DS kit (T369)', () => {
       });
       const appTitle = await stylesOf(page, '.header-text', ['fontSize']);
       expect(appTitle?.fontSize).toBe(kitTitle);
+      await kitPage.close();
+    },
+  );
+
+  // T373: block-outline parity, new deviation surfaced (not fixed here —
+  // out of T372/T373's scope, which is Home/Overview; reported per the
+  // task's own instruction to `test.fixme()` a new gap on another screen
+  // rather than either silently pass it or go fix it here).
+  //
+  // Kit outline (desktop, root: the screen's own outer flex-column div) —
+  // 6 blocks in reading order: [header ("Guest manager" title + stats),
+  // filters row, "+ Add guest", table column-header row, the scrollable
+  // row list (one block — many guest rows, correctly not exploded per
+  // `blockOutline`'s own `MAX_GROUP_SIZE` cap), the list footer.
+  //
+  // App outline (same viewport, root: `.guest-manager`) — only 3 blocks:
+  // [filters row, "+ Add guest", table column-header row]. The header and
+  // footer are MISSING from this count because they are pinned chrome
+  // (`headPinned`/`footPinned`, `app.routes.ts`'s own `guests` route data)
+  // — Angular renders them via `*appScreenHead`/`*appScreenFoot` into
+  // `PrivateLayout`'s own `.screen-head`/`.screen-foot`, never inside
+  // `.guest-manager`'s own DOM at all (see that route's own comment). The
+  // scrollable row list is ALSO absent from this measurement — its own
+  // `.table-body` did not resolve to a rendered block at the moment this
+  // ran (needs its own investigation: fixture timing, or `.table-body`
+  // nested one level deeper than this harness's single-level substitution
+  // reaches). None of this is a T372/T373 regression — Guests was
+  // untouched by both tasks — it is the block-outline harness catching a
+  // real, pre-existing architectural difference (pinned chrome vs the
+  // kit's own normal-flow header) that the metrics-only specs above never
+  // had a way to see. `T374` (blocked on a cloud pull) is already the
+  // task that investigates this screen's sticky/pinned-chrome behaviour.
+  test.fixme(
+    'desktop: block outline does not yet account for pinned head/foot chrome (found by T373, out of scope here)',
+    async ({ page, context }) => {
+      const kitPage = await context.newPage();
+      await openDsKitScreen(kitPage, kit.baseUrl, { device: 'Desktop', role: 'Couple', viewLabel: 'Guests' });
+
+      await signInAsCouple(page);
+      await page.goto('/guests');
+      await page.setViewportSize(DESKTOP);
+      await page.waitForLoadState('networkidle');
+
+      const kitOutline = await blockOutline(
+        kitPage,
+        '[data-overlay-host] div[style*="overflow: clip; position: relative"]',
+      );
+      const appOutline = await blockOutline(page, '.guest-manager');
+
+      expect(appOutline.length, 'block count').toBe(kitOutline.length);
+
       await kitPage.close();
     },
   );

@@ -27,8 +27,25 @@
   }
 }
 
-.content {
+// Manage · Overview's own content wrapper (kit `ScreenHome.jsx`'s
+// `overviewContent` branch, T373) — the SAME outer padding/mobile stacking
+// rhythm `%content-block` already gives Home's own content, reflowing at
+// 900px into the kit's own two-column grid (`.overview-col-left`/`-right`
+// below) instead of the single flow column every other consumer of
+// `%content-block` keeps.
+.overview-grid {
   @extend %content-block;
+}
+
+.overview-col-left,
+.overview-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  // Grid item of `.overview-grid` at ≥900px, default shrink — same
+  // automatic-minimum-size guard as every other flex/grid item on this
+  // screen (hub ADR-0041 §4 amendment, T347 audit).
+  min-width: 0;
 }
 
 .stats-card {
@@ -37,7 +54,7 @@
   border-radius: t.$radius-card;
   border: 1px solid var(--border-hairline);
   position: relative;
-  // Flex item of `.content` (`%content-block`: column), default shrink —
+  // Flex item of `.overview-col-left` (flex column), default shrink —
   // `min-height: 0` here is the automatic-minimum-size guard (hub ADR-0041
   // §4 amendment, T347 audit), unrelated to the *content-driven* floor the
   // comment below declines to add.
@@ -158,9 +175,9 @@
   justify-content: space-between;
   margin-bottom: t.$space-3;
 
-  // Same small accent-link recipe as `.tasks-header .see-all` — reused
-  // rather than re-typed under a differently-scoped selector. A `<button>`
-  // (not `<a>`), matching this file's own `.manage-row` and the kit's own
+  // Same small accent-link recipe as this file used for its own "manage"
+  // rows before T373 removed them — kept for one call site rather than a
+  // shared class. A `<button>` (not `<a>`), matching the kit's own
   // `<button onClick=…>All</button>` — so it needs its own reset.
   .plan-all {
     background: transparent;
@@ -221,75 +238,10 @@
   letter-spacing: 0.04em;
 }
 
-.manage-title {
-  margin-bottom: 8px;
-}
-
-.manage-list {
-  background: var(--surface-card);
-  border: 1px solid var(--border-hairline);
-  border-radius: t.$radius-card;
-  // Flex item of `.content` (`%content-block`: column), default shrink —
-  // declared explicitly rather than relying on which `overflow` value is
-  // in play (hub ADR-0041 §4 amendment, T347 audit).
-  min-height: 0;
-  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
-  overflow: clip; // creates no scroll container, so focus cannot shift it
-}
-
-.manage-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  text-align: left;
-  padding: 13px 16px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-
-  &:not(:last-child) {
-    border-bottom: 1px solid var(--border-hairline);
-  }
-}
-
-.manage-text {
-  flex: 1;
-}
-
-.manage-name {
-  display: block;
-  font-size: t.$text-body;
-  font-weight: 500;
-  color: var(--ink);
-}
-
-.manage-sub {
-  display: block;
-  font-size: t.$text-micro;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.manage-arrow {
-  color: var(--brand-accent);
-  font-size: 16px;
-}
-
-.tasks-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 8px;
-
-  .see-all {
-    font-size: t.$text-micro;
-    color: var(--brand-accent);
-  }
-}
-
-// Mobile-first single column; desktop reflows to the DS two-column Home grid
-// (main planning flow left, Manage list right) at maxWidth 900.
+// Mobile-first single column (`.overview-grid`'s own `%content-block` flex
+// stack); desktop reflows to the kit's own two-column grid (RSVP stats +
+// tiles left, "the plan so far" right) at the same 900px content-column cap
+// as Home.
 @media (min-width: 900px) {
   :host {
     max-width: 900px;
@@ -304,37 +256,16 @@
     }
   }
 
-  .content {
+  .overview-grid {
     padding-top: 22px;
     display: grid;
     grid-template-columns: 1.15fr 0.85fr;
-    column-gap: 22px;
+    // Kit `ScreenHome.jsx overviewContent`'s literal `gap: 22` — 22px does
+    // not land on the 4px spacing grid on its own, so expressed as token
+    // arithmetic (20 + 2), the same idiom `home-subnav.scss`/`schedule.scss`
+    // already use for an off-grid kit value, rather than a hardcoded `22px`.
+    column-gap: calc(var(--space-5) + var(--space-1) / 2);
     row-gap: 14px;
     align-items: start;
-    grid-template-areas:
-      'stats manage'
-      'tiles manage'
-      'plan manage'
-      'week manage';
-  }
-
-  .stats-card {
-    grid-area: stats;
-  }
-
-  .tiles {
-    grid-area: tiles;
-  }
-
-  .plan-card {
-    grid-area: plan;
-  }
-
-  .manage {
-    grid-area: manage;
-  }
-
-  .tasks {
-    grid-area: week;
   }
 }

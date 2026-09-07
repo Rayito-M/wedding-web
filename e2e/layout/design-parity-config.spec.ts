@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { signInAsCouple } from '../support/auth';
-import { boxOf, stylesOf, openDsKitScreen, startDsKitServer, type DsKitServer } from '../helpers/ds-kit';
+import { blockOutline, boxOf, stylesOf, openDsKitScreen, startDsKitServer, type DsKitServer } from '../helpers/ds-kit';
 
 /**
  * Design-parity rescan (T369) — Couple/Settings (kit) ↔ `/config` (app,
@@ -90,6 +90,29 @@ test.describe('Settings (couple) — pixel parity with the DS kit (T369)', () =>
     // Save silently carried over.
     const mobileBar = await boxOf(page, '.mobile-bar');
     expect(mobileBar, 'app: .mobile-bar (mobile Save affordance) not found').not.toBeNull();
+
+    await kitPage.close();
+  });
+
+  // T373: block-outline parity. Basics is one content region on both sides
+  // — the kit's `controlled` content pane (`ScreenConfigManager.jsx`'s
+  // `secHeader()` + fields, one un-styled wrapping `<div>`, so it is not
+  // itself a substitutable layout group) and the app's `.content > section`
+  // (same reasoning) — so this is a 1-block-vs-1-block check, not a column
+  // placement one (`fullBleed`, no grid here per this file's own doc).
+  test('desktop: block outline matches the DS kit (T373)', async ({ page, context }) => {
+    const kitPage = await context.newPage();
+    await openDsKitScreen(kitPage, kit.baseUrl, { device: 'Desktop', role: 'Couple', viewLabel: 'Settings' });
+
+    await signInAsCouple(page);
+    await page.goto('/config');
+    await page.setViewportSize(DESKTOP);
+    await page.waitForLoadState('networkidle');
+
+    const kitOutline = await blockOutline(kitPage, 'div[style*="padding: 24px 28px"]');
+    const appOutline = await blockOutline(page, '.content');
+
+    expect(appOutline.length, 'block count (Basics section)').toBe(kitOutline.length);
 
     await kitPage.close();
   });

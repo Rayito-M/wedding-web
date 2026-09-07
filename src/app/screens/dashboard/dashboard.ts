@@ -1,4 +1,4 @@
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -63,10 +63,21 @@ function milestoneStatus(m: MilestoneDto): MilestoneStatus {
  *   roles, only dropping the RSVP recap for the couple (`HomeToday`'s own
  *   `isCouple` gate). Getting-there/Good-to-know are the same shared,
  *   full-data-owning sections `invitee.ts` mounts.
- * - `/overview` (`id: 'overview'`) — Manage's Overview, the door T362 left
- *   pointing at `guests` as an interim choice. Renders exactly what this
- *   route used to show at `/dashboard` before Home became the umbrella:
- *   the RSVP reply stats, head count and manage shortcuts, unchanged.
+ * - `/overview` (`id: 'overview'`) — Manage's Overview: the RSVP reply
+ *   stats, quick tiles and "the plan so far" milestone-progress card (kit
+ *   `overviewContent`, T369/T370), laid out in the kit's own `1.15fr 0.85fr`
+ *   grid (T373). The kit's neighboring "this week" `TaskRow` slot is
+ *   REFUSED, permanently, as out of scope (hub ADR-0029 §4.7,
+ *   `contract/scope.json`'s `outOfScope`) — it simply does not render. The
+ *   old in-content "Manage" link list this mode used to also render is gone
+ *   (T373): `Guests`/`Settings` are already reachable from every Manage
+ *   route, including this one, via `PlanRail` (desktop) and
+ *   `MANAGE_GROUP_TABS` (mobile) — both rendered by `PrivateLayout` whenever
+ *   `inManage()` is true, which `/overview`'s own `group: 'manage'` route
+ *   data already satisfies (hub ADR-0045 §3). Re-listing them a second time
+ *   inside the content matched neither the kit nor ADR-0045, and nothing
+ *   else in this repo linked to that list (`app.routes.ts`/`nav-tabs.ts`
+ *   are the real navigation).
  *
  * `overview` is read once, off the activated route's own chrome `id`
  * (`app.routes.ts` already gives the two mounts distinct ids for active-tab
@@ -87,7 +98,6 @@ function milestoneStatus(m: MilestoneDto): MilestoneStatus {
     RouterLink,
     StatTile,
     StatusPill,
-    NgTemplateOutlet,
     HomeSubnav,
     HomeToday,
     GoodToKnow,

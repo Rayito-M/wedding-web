@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
 import { installApiMocks } from '../support/api-mocks';
-import { boxOf, expectClose, kitContentColumnBox, openDsKitScreen, startDsKitServer, stylesOf, type DsKitServer } from '../helpers/ds-kit';
+import { blockOutline, boxOf, expectClose, kitContentColumnBox, openDsKitScreen, startDsKitServer, stylesOf, type DsKitServer } from '../helpers/ds-kit';
 
 /**
  * Design-parity rescan (T369) — Guest/RSVP (kit) ↔ `/rsvp` (app, guest
@@ -113,6 +113,26 @@ test.describe('RSVP create (guest) — pixel parity with the DS kit (T369)', () 
     // this app rendered nowhere at all before (T369).
     expectClose(kitCol!.width, 620, 1, 'desktop kit: content column width vs ds-contract.json maxWidth 620');
     expectClose(appCol!.width, 620, 1, 'desktop app: content column width vs ds-contract.json maxWidth 620');
+
+    await kitPage.close();
+  });
+
+  // T373: block-outline parity. One reply card, one block, on both sides —
+  // kit's inner 560px card (`ScreenRSVPCreate.jsx` L179, bordered — so it is
+  // never itself a substitution candidate) inside the 620px AppShell
+  // column; the app's own `.card` (T370) inside `app-rsvp-create`'s `:host`.
+  test('desktop: block outline matches the DS kit (T373)', async ({ page, context }) => {
+    const kitPage = await context.newPage();
+    await openDsKitScreen(kitPage, kit.baseUrl, { device: 'Desktop', role: 'Guest', viewLabel: 'RSVP' });
+
+    await signInAsGuestPendingRsvp(page);
+    await page.setViewportSize(DESKTOP);
+    await page.waitForLoadState('networkidle');
+
+    const kitOutline = await blockOutline(kitPage, 'div[style*="padding: 26px 28px 44px"]');
+    const appOutline = await blockOutline(page, 'app-rsvp-create');
+
+    expect(appOutline.length, 'block count (the reply card)').toBe(kitOutline.length);
 
     await kitPage.close();
   });

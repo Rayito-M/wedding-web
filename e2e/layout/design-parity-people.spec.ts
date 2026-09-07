@@ -1,7 +1,16 @@
 import { test, expect } from '@playwright/test';
 
 import { signInAsGuest } from '../support/auth';
-import { boxOf, expectClose, kitContentColumnBox, openDsKitScreen, startDsKitServer, stylesOf, type DsKitServer } from '../helpers/ds-kit';
+import {
+  blockOutline,
+  boxOf,
+  expectClose,
+  kitContentColumnBox,
+  openDsKitScreen,
+  startDsKitServer,
+  stylesOf,
+  type DsKitServer,
+} from '../helpers/ds-kit';
 
 /**
  * Design-parity rescan (T369) — Guest/People (kit) ↔ `/people` (app, guest
@@ -92,4 +101,32 @@ test.describe('People (guest) — pixel parity with the DS kit (T369)', () => {
       await kitPage.close();
     });
   }
+
+  // T373: block-outline parity. Kit root: the wide branch's own
+  // `maxWidth`/padded content column (`AppShell.jsx`'s
+  // `style*="padding: 26px 28px 44px"`); app root: `.page`. Three blocks on
+  // both sides: the filter/search controls, the header (eyebrow/title/
+  // subtitle), the people grid — `column: null` throughout (`.page` itself
+  // is not a CSS grid; only the fixture-card grid nested inside it is, and
+  // that grid's own many items are capped out of substitution, see
+  // `blockOutline`'s own `MAX_GROUP_SIZE` doc, so it reads as ONE block).
+  test('desktop: block outline (order) matches the DS kit (T373)', async ({ page, context }) => {
+    const kitPage = await context.newPage();
+    await openDsKitScreen(kitPage, kit.baseUrl, { device: 'Desktop', role: 'Guest', viewLabel: 'People' });
+
+    await signInAsGuest(page);
+    await page.goto('/people');
+    await page.setViewportSize(DESKTOP);
+    await page.waitForLoadState('networkidle');
+
+    const kitOutline = await blockOutline(kitPage, 'div[style*="padding: 26px 28px 44px"]');
+    const appOutline = await blockOutline(page, '.page');
+
+    expect(appOutline.length, 'block count (controls, header, grid)').toBe(kitOutline.length);
+    expect(appOutline.map((b) => b.column), 'block column placement, in reading order').toEqual(
+      kitOutline.map((b) => b.column),
+    );
+
+    await kitPage.close();
+  });
 });
