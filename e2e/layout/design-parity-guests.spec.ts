@@ -1,7 +1,15 @@
 import { test, expect } from '@playwright/test';
 
 import { signInAsCouple } from '../support/auth';
-import { blockOutline, boxOf, stylesOf, openDsKitScreen, startDsKitServer, type DsKitServer } from '../helpers/ds-kit';
+import {
+  assertPinnedUnderScroll,
+  blockOutline,
+  boxOf,
+  stylesOf,
+  openDsKitScreen,
+  startDsKitServer,
+  type DsKitServer,
+} from '../helpers/ds-kit';
 
 /**
  * Design-parity rescan (T369) — Couple/Guests (kit) ↔ `/guests` (app,
@@ -133,6 +141,64 @@ test.describe('Guests (couple) — pixel parity with the DS kit (T369)', () => {
       await kitPage.close();
     },
   );
+
+  /**
+   * T374 — positioning context (hub ADR-0044's tightened parity rule: static
+   * geometry cannot see scroll behaviour). This is the owner-reported bug
+   * itself: the kit (`ScreenGuestManager.jsx`) draws the title/stats header
+   * AND the toolbar (filters/search/add) as fixed rows around the one
+   * scrolling `.table-body` (`@layout`'s own `"pinned": {"head": true,
+   * "foot": true}`, `ds-contract.json` → `screens.ScreenGuestManager
+   * .layout`) — only the title/stats block was pinned here before this
+   * task, so the toolbar's AT-REST geometry matched the kit perfectly while
+   * it still scrolled away, a class of bug none of the metrics/type-scale
+   * assertions above could ever catch.
+   *
+   * `main` is this route's real scroller (hub ADR-0043 §5 — `guests` sets
+   * `headPinned`/`footPinned` but no `screenScroll`, so `.screen-scroll`
+   * stays `display: contents` and never scrolls itself).
+   *
+   * Mobile: the kit's OWN separate mobile component
+   * (`ScreenGuestManagerMobile.jsx`) declares `"pinned": {"head": false,
+   * "foot": false}` — nothing pinned, `"scroller": "page"` — so there is
+   * nothing this assertion could hold the app to matching there, and this
+   * spec does not assert mobile pinning for that reason (documented, not
+   * an oversight: the app's own `.screen-head`/`.screen-foot` are pinned
+   * unconditionally at every breakpoint, a pre-existing route-data
+   * constraint — `app.routes.ts`'s `guests` route — this task's toolbar
+   * move does not change and was not asked to reconsider).
+   */
+  test('desktop: header, toolbar, and list footer stay pinned under scroll — the toolbar joined the pinned head (T374)', async ({
+    page,
+  }) => {
+    await signInAsCouple(page, { guestCount: 60 });
+    await page.goto('/guests');
+    await page.setViewportSize(DESKTOP);
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('.table-container[role="table"] .table-row').first()).toBeVisible();
+
+    // The toolbar's presence in the pinned region, not merely its rest
+    // geometry — proves this is structurally the same fix the kit calls
+    // for, not a coincidental match of numbers.
+    const toolbarLocation = await page.evaluate(() => {
+      const head = document.querySelector('.screen-head');
+      const toolbar = document.querySelector('.toolbar');
+      const screen = document.querySelector('app-guest-manager');
+      if (!head || !toolbar || !screen) return null;
+      return { insideHead: head.contains(toolbar), insideScreen: screen.contains(toolbar) };
+    });
+    expect(toolbarLocation, '.screen-head / .toolbar / app-guest-manager not found').not.toBeNull();
+    expect(toolbarLocation!.insideHead, '.toolbar is not inside the pinned .screen-head').toBe(true);
+    expect(
+      toolbarLocation!.insideScreen,
+      '.toolbar still renders inside <app-guest-manager> — not pinned by the layout',
+    ).toBe(false);
+
+    await assertPinnedUnderScroll(page, '.header-top', 'main');
+    await assertPinnedUnderScroll(page, '.toolbar', 'main');
+    await assertPinnedUnderScroll(page, '.list-footer', 'main');
+  });
 
   // T373: block-outline parity, new deviation surfaced (not fixed here —
   // out of T372/T373's scope, which is Home/Overview; reported per the

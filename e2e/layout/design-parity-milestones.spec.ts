@@ -1,7 +1,15 @@
 import { test, expect } from '@playwright/test';
 
 import { signInAsCouple } from '../support/auth';
-import { blockOutline, boxOf, stylesOf, openDsKitScreen, startDsKitServer, type DsKitServer } from '../helpers/ds-kit';
+import {
+  assertPinnedUnderScroll,
+  blockOutline,
+  boxOf,
+  stylesOf,
+  openDsKitScreen,
+  startDsKitServer,
+  type DsKitServer,
+} from '../helpers/ds-kit';
 
 /**
  * Design-parity rescan (T369) — Couple/Milestones (kit) ↔ `/milestones`
@@ -92,6 +100,30 @@ test.describe('Milestones (couple) — pixel parity with the DS kit (T369)', () 
       await kitPage.close();
     });
   }
+
+  /**
+   * T374 sweep — positioning context (hub ADR-0044's tightened parity rule).
+   * `ScreenMilestones.jsx`'s own `@layout` (`ds-contract.json` →
+   * `screens.ScreenMilestones.layout`) declares `"pinned": {"head": true,
+   * "foot": false}` at `lg`; the app's `screenScroll: 'lg'` route data
+   * (`app.routes.ts`) achieves the same result a different way from
+   * guest-manager's `headPinned`/`*appScreenHead` — no chrome leaves
+   * `Milestones`'s own template, `:host` becomes a local column shell at
+   * `≥900px` and `.header` simply sits above `.list`, the screen's own
+   * independent scroller (`milestones.scss`'s own header comment). Asserted
+   * here rather than assumed: this is exactly the class of bug (identical
+   * at-rest geometry, divergent scroll behaviour) T374 exists to catch.
+   */
+  test('desktop: header stays pinned while the timeline list scrolls (T374 sweep)', async ({ page }) => {
+    await signInAsCouple(page, { milestoneCount: 40 });
+    await page.goto('/milestones');
+    await page.setViewportSize(DESKTOP);
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('.list .row').first()).toBeVisible();
+
+    await assertPinnedUnderScroll(page, '.header', '.list');
+  });
 
   // T373: block-outline parity, new deviation surfaced (not fixed here —
   // out of T372/T373's scope; reported per the task's own instruction to

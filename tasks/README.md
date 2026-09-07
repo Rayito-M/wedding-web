@@ -248,4 +248,4 @@ neither sort nor uniquely name them.
 | **T371** | Hygiene batch: dashboard unit coverage, the scrolled-header flake, i18n drift | done | `31-phase-o-hygiene` |
 | **T372** | The couple shares the guest Home; planning only in Manage · Overview | done | `30-phase-n-navigation-five-cap` |
 | **T373** | Overview 1.15/0.85 grid + block-outline parity in the harness | done — Guests/Milestones fixme'd, see T373 report | `30-phase-n-navigation-five-cap` |
-| **T374** | Guest manager: filter toolbar joins the pinned head | todo | `30-phase-n-navigation-five-cap` |
+| **T374** | Guest manager: filter toolbar joins the pinned head | done | `30-phase-n-navigation-five-cap` |

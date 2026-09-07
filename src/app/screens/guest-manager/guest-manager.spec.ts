@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ApplicationRef, Component } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -45,6 +45,44 @@ function profile(overrides: Partial<UserProfileDto> = {}): UserProfileDto {
   };
 }
 
+/**
+ * T374 — the toolbar (filters/search/add) moved inside `*appScreenHead`'s
+ * `<header>`, alongside the title/stats it already carried. `AppScreenHead`
+ * never calls `createEmbeddedView()` itself (see `ScreenChromeHarness`'s own
+ * class doc) — only `PrivateLayout` (production) or `ScreenChromeHarness`
+ * (tests) instantiate the registered `TemplateRef`, so a bare `GuestManager`
+ * fixture stopped rendering `.search-input`/`.filter-btn`/`.add-btn` at all
+ * the moment they moved, the same gap that already applied to `.header`'s
+ * title/stats and `.list-footer` since T341.
+ *
+ * Rewriting the ~30 call sites below onto `ScreenChromeHarness` (like the
+ * dedicated "pinned head/foot content" describe further down) would also
+ * lose `fixture.componentInstance` typed as `GuestManager`, which most of
+ * them call directly (`loadMore()`, `setFilter` spies, …). Instead this
+ * mounts the SAME registered head `TemplateRef` as a second, independently
+ * change-detected embedded view — its expressions still bind against
+ * `GuestManager`'s own instance, exactly as the real one does, because that
+ * is a property of the `TemplateRef` the directive captured, not of who
+ * calls `createEmbeddedView()` — and grafts its root nodes into this same
+ * fixture's `nativeElement`, so every existing selector keeps finding what
+ * it always did. Wrapping `fixture.detectChanges` means every one of this
+ * spec's many `fixture.detectChanges()` calls transparently refreshes the
+ * grafted view too, with zero changes needed at any individual call site.
+ */
+function mountPinnedHead(fixture: ComponentFixture<GuestManager>): void {
+  const headTemplate = TestBed.inject(ScreenChromeService).head();
+  if (!headTemplate) return;
+  const headView = headTemplate.createEmbeddedView({});
+  TestBed.inject(ApplicationRef).attachView(headView);
+  headView.detectChanges();
+  fixture.nativeElement.prepend(...headView.rootNodes);
+  const original = fixture.detectChanges.bind(fixture);
+  fixture.detectChanges = ((...args: Parameters<typeof original>) => {
+    original(...args);
+    headView.detectChanges();
+  }) as typeof fixture.detectChanges;
+}
+
 async function createGuestManager(
   profiles: UserProfileDto[],
 ): Promise<ComponentFixture<GuestManager>> {
@@ -70,6 +108,7 @@ async function createGuestManager(
 
   const fixture = TestBed.createComponent(GuestManager);
   fixture.detectChanges();
+  mountPinnedHead(fixture);
   await fixture.whenStable();
   fixture.detectChanges();
   return fixture;
@@ -106,6 +145,7 @@ describe('GuestManager — search matches on nickname (T300)', () => {
 
     fixture = TestBed.createComponent(GuestManager);
     fixture.detectChanges();
+    mountPinnedHead(fixture);
     await fixture.whenStable();
     fixture.detectChanges();
   }

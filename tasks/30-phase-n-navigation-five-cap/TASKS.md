@@ -369,7 +369,24 @@
   two Home outlines); suite green.
 
 ### T374 — Guest manager: the filter toolbar joins the pinned head (owner-reported)
-- **Status:** todo — UNBLOCKED 2026-09-07: the pull-check found cloud == local (no owner cloud
+- **Status:** done (2026-09-07) — the toolbar (filters + search + add) now lives inside
+  `*appScreenHead`'s `<header>`, alongside the title/stats it already carried, via a new
+  `.header-top` wrapper (`guest-manager.html`/`.scss`); the skeleton branch's duplicate toolbar
+  moved with it. `assertPinnedUnderScroll()` added to `e2e/helpers/ds-kit.ts`;
+  `design-parity-guests.spec.ts` asserts header/toolbar/footer stay pinned under scroll on
+  desktop (mobile intentionally not asserted — the kit's own `ScreenGuestManagerMobile.jsx`
+  declares `pinned: {head:false, foot:false}`, nothing pinned there) plus the toolbar's presence
+  inside `.screen-head`; fail-on-revert proven (scratch-reverted, new assertion failed on
+  ".toolbar is not inside the pinned .screen-head", restored, green again). Swept the other
+  design-parity specs against `ds-contract.json`'s `pinned` declarations: milestones (the only
+  other existing parity spec whose kit screen pins a head) got the same assertion and is
+  green as-is (its `screenScroll: 'lg'` local shell already pins `.header` above `.list`
+  correctly); schedule has no pinned/sticky element in the kit source, so nothing to add.
+  Guest-manager's own `guest-manager.spec.ts` needed a `mountPinnedHead()` helper (grafts the
+  registered head `TemplateRef` into the raw fixture) so its ~30 pre-existing toolbar-selector
+  tests keep working now that the toolbar only renders via `*appScreenHead`. Full details in
+  `tasks/30-phase-n-navigation-five-cap/reports/T374.json`.
+- **Was:** UNBLOCKED 2026-09-07: the pull-check found cloud == local (no owner cloud
   edits); the kit's "sticky" is STRUCTURAL, not `position: sticky` — GuestManager is a shell
   where the header row AND the filter toolbar are fixed (`flex: 0 0 auto`) and only
   `.table-body` scrolls. The web pins only the title/stats header (`*appScreenHead`,

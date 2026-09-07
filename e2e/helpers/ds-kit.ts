@@ -188,6 +188,62 @@ export function expectClose(actual: number, expected: number, tolerance: number,
   );
 }
 
+/**
+ * Positioning-context assertion (T374 — hub ADR-0044's tightened parity rule:
+ * "computed `position` … and offset for every toolbar/header/rail element
+ * the kit renders pinned or sticky; static geometry cannot see scroll
+ * behaviour"). Static geometry is exactly what let the guest-manager toolbar
+ * bug through every prior parity spec: the toolbar's AT-REST geometry
+ * matched the kit perfectly, and it still scrolled away on this side while
+ * it never did on the kit's.
+ *
+ * Generalizes the manual pattern `pinned-regions.spec.ts` and
+ * `occlusion-guard.spec.ts` already hand-roll per screen (capture
+ * `boundingBox().y`, scroll, compare) so a parity spec can assert it in one
+ * call per pinned element, on either side of a comparison (kit or app —
+ * `page` is whichever page the caller passes).
+ *
+ * Scrolls `scrollRegionSel` by a fixed, meaningful distance (600px — the
+ * same figure those two specs already use, comfortably more than any
+ * sub-pixel/rounding noise) and asserts two things: the region actually
+ * moved (the guard clause `pinned-regions.spec.ts` already documents —
+ * without it this would pass on a page that never scrolled at all), and
+ * `selector`'s own `y` is unchanged, within a 1px tolerance for layout
+ * rounding.
+ */
+export async function assertPinnedUnderScroll(
+  page: Page,
+  selector: string,
+  scrollRegionSel: string,
+): Promise<void> {
+  const target = page.locator(selector).first();
+  const before = await target.boundingBox();
+  if (!before) {
+    throw new Error(`assertPinnedUnderScroll: "${selector}" not found before scrolling`);
+  }
+
+  const moved = await page.evaluate((sel) => {
+    const el = document.querySelector(sel) as HTMLElement | null;
+    if (!el) return null;
+    const start = el.scrollTop;
+    el.scrollTop += 600;
+    return el.scrollTop !== start;
+  }, scrollRegionSel);
+  if (moved === null) {
+    throw new Error(`assertPinnedUnderScroll: scroll region "${scrollRegionSel}" not found`);
+  }
+  expect(
+    moved,
+    `assertPinnedUnderScroll: "${scrollRegionSel}" did not move — nothing to prove`,
+  ).toBe(true);
+
+  const after = await target.boundingBox();
+  if (!after) {
+    throw new Error(`assertPinnedUnderScroll: "${selector}" disappeared after scrolling`);
+  }
+  expectClose(after.y, before.y, 1, `"${selector}" pinned under scroll of "${scrollRegionSel}"`);
+}
+
 export interface PillStyle {
   background: string;
   borderColor: string;

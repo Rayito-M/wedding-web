@@ -5,8 +5,19 @@
        renders inside `.guest-manager`'s own DOM in production — see
        `screen-chrome.spec.ts` for the pinning-contract test this replaced
        (formerly guest-manager.spec.ts:1137), and `ScreenChromeHarness` for
-       how this screen's own spec still asserts on this content. -->
+       how this screen's own spec still asserts on this content.
+
+       T374 — the toolbar (filters + search + add) joined this pinned region:
+       the kit (`ScreenGuestManager.jsx`) draws the title/stats block AND the
+       toolbar as fixed rows around the one scrolling `.table-body`, but only
+       the title/stats block was pinned here, so the toolbar scrolled away in
+       the app while it never did in the DS. `.header-top` now carries what
+       `.header` itself used to be (padding/background/the bottom hairline —
+       see guest-manager.scss); `.header` is the outer column stacking it
+       above the shared toolbar `@if`/`@else` below so both stay pinned
+       together, matching the kit's fixed-row structure. -->
   <header class="header" *appScreenHead>
+    <div class="header-top">
     <div class="header-left">
       <div class="header-title">
         <div class="header-meta">
@@ -92,37 +103,100 @@
         </div>
       </div>
     </div>
+    </div>
+
+    <!-- Toolbar — T374: moved inside the pinned head (see the header comment
+         above). Kept as one shared `@if`/`@else` (skeleton vs. real) rather
+         than duplicated per branch, same as the header's own stat values. -->
+    @if (initialLoading()) {
+      <div class="toolbar" aria-hidden="true">
+        <div class="filters">
+          @for (label of pendingFilters; track label) {
+            <span class="filter-btn">
+              {{ label | translate }}
+              <span class="count skeleton count-bar">&nbsp;</span>
+            </span>
+          }
+        </div>
+
+        <div class="toolbar-right">
+          <div class="search-box">
+            <div class="search-input skeleton">&nbsp;</div>
+          </div>
+          <span class="add-btn skeleton">&nbsp;</span>
+        </div>
+      </div>
+    } @else {
+      <div class="toolbar">
+        <div class="filters">
+          <button
+            type="button"
+            class="filter-btn"
+            [class.active]="getFilter() === 'all'"
+            (click)="setFilter('all')"
+          >
+            {{ 'guest_manager.filter.all' | translate }}
+            <span class="count">· {{ count().total }}</span>
+          </button>
+          <button
+            type="button"
+            class="filter-btn"
+            [class.active]="getFilter() === 'attending'"
+            (click)="setFilter('attending')"
+          >
+            {{ 'guest_manager.filter.attending' | translate }}
+            <span class="count">· {{ count().headCount.adults }}</span>
+          </button>
+          <button
+            type="button"
+            class="filter-btn"
+            [class.active]="getFilter() === 'pending'"
+            (click)="setFilter('pending')"
+          >
+            {{ 'guest_manager.filter.pending' | translate }}
+            <span class="count">· {{ count().pending }}</span>
+          </button>
+          <button
+            type="button"
+            class="filter-btn"
+            [class.active]="getFilter() === 'declined'"
+            (click)="setFilter('declined')"
+          >
+            {{ 'guest_manager.filter.declined' | translate }}
+            <span class="count">· {{ count().declined }}</span>
+          </button>
+        </div>
+
+        <div class="toolbar-right">
+          <div class="search-box">
+            <input
+              type="text"
+              class="search-input"
+              [value]="getSearchQuery()"
+              (change)="updateSearch($event.target.value)"
+              [attr.placeholder]="'guest_manager.search.placeholder' | translate"
+              aria-label="Search guests by name or party"
+            />
+          </div>
+          <button type="button" class="add-btn" app-btn (click)="addNewGuest()">
+            + {{ 'guest_manager.action.addGuest' | translate }}
+          </button>
+        </div>
+      </div>
+    }
   </header>
 
-  <!-- Everything below the header is the screen's content region: while the
-       first profile read is in flight it has nothing honest to draw — the
-       filter chips would read "· 0" and the table would read as empty. Rather
-       than blank the region, it draws the same toolbar and table with the
-       unknowns as skeletons (see %skeleton-bar), so nothing moves when the read
-       lands. The filter labels and column headings are static copy and are
-       real; the counts, the rows and the footer tally are not. The placeholder
-       is `aria-hidden` and the `role="status"` line below carries the wait —
-       the real table's ARIA semantics describe rows that do not exist yet. -->
+  <!-- Everything below the header (title/stats/toolbar, T374) is the
+       screen's content region: while the first profile read is in flight it
+       has nothing honest to draw — the table would read as empty. Rather
+       than blank the region, it draws the same table shape with the
+       unknowns as skeletons (see %skeleton-bar), so nothing moves when the
+       read lands. The column headings are static copy and are real; the
+       rows and the footer tally are not. The placeholder is `aria-hidden`
+       and the `role="status"` line below carries the wait — the real
+       table's ARIA semantics describe rows that do not exist yet. -->
   @if (initialLoading()) {
     <span class="sr-only" role="status">{{ 'guest_manager.list.loading' | translate }}</span>
-
-    <div class="toolbar" aria-hidden="true">
-      <div class="filters">
-        @for (label of pendingFilters; track label) {
-          <span class="filter-btn">
-            {{ label | translate }}
-            <span class="count skeleton count-bar">&nbsp;</span>
-          </span>
-        }
-      </div>
-
-      <div class="toolbar-right">
-        <div class="search-box">
-          <div class="search-input skeleton">&nbsp;</div>
-        </div>
-        <span class="add-btn skeleton">&nbsp;</span>
-      </div>
-    </div>
 
     <div class="table-container" aria-hidden="true">
       <!-- Desktop-only header row: the column labels are static, and the
@@ -161,64 +235,6 @@
       <span class="list-footer-info skeleton footer-bar">&nbsp;</span>
     </div>
   } @else {
-    <!-- Toolbar -->
-    <div class="toolbar">
-      <div class="filters">
-        <button
-          type="button"
-          class="filter-btn"
-          [class.active]="getFilter() === 'all'"
-          (click)="setFilter('all')"
-        >
-          {{ 'guest_manager.filter.all' | translate }}
-          <span class="count">· {{ count().total }}</span>
-        </button>
-        <button
-          type="button"
-          class="filter-btn"
-          [class.active]="getFilter() === 'attending'"
-          (click)="setFilter('attending')"
-        >
-          {{ 'guest_manager.filter.attending' | translate }}
-          <span class="count">· {{ count().headCount.adults }}</span>
-        </button>
-        <button
-          type="button"
-          class="filter-btn"
-          [class.active]="getFilter() === 'pending'"
-          (click)="setFilter('pending')"
-        >
-          {{ 'guest_manager.filter.pending' | translate }}
-          <span class="count">· {{ count().pending }}</span>
-        </button>
-        <button
-          type="button"
-          class="filter-btn"
-          [class.active]="getFilter() === 'declined'"
-          (click)="setFilter('declined')"
-        >
-          {{ 'guest_manager.filter.declined' | translate }}
-          <span class="count">· {{ count().declined }}</span>
-        </button>
-      </div>
-
-      <div class="toolbar-right">
-        <div class="search-box">
-          <input
-            type="text"
-            class="search-input"
-            [value]="getSearchQuery()"
-            (change)="updateSearch($event.target.value)"
-            [attr.placeholder]="'guest_manager.search.placeholder' | translate"
-            aria-label="Search guests by name or party"
-          />
-        </div>
-        <button type="button" class="add-btn" app-btn (click)="addNewGuest()">
-          + {{ 'guest_manager.action.addGuest' | translate }}
-        </button>
-      </div>
-    </div>
-
     <!-- Table — ARIA table semantics carried by the existing layout divs (T332).
          `role="table"`, not `role="grid"`: nothing here is cell-navigable, so the
          grid interaction contract (arrow keys, roving tabindex) would be a promise

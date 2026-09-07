@@ -22,13 +22,19 @@ $table-grid-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
 // Hub ADR-0042 §1/§2, T341: this screen is no longer its own shell. Its
 // `<header class="header">` and `.list-footer` are pinned by `PrivateLayout`
 // (`*appScreenHead` / `*appScreenFoot`, `guest-manager.html`) — never
-// rendered here in production — and its middle content (toolbar + table)
-// scrolls as part of `PrivateLayout`'s own `.screen-scroll`, not a scroller
-// of this screen's own. `:host` therefore no longer fills/clips a fixed
-// height, and `.guest-manager` carries no shell CSS of its own; both used to
-// (`height: 100%` / `overflow: hidden`), which is exactly the nested-scroller
-// defect ADR-0041 fixes. `.table-container` and `.table-body`'s own scroll
+// rendered here in production — and its middle content (the table) scrolls
+// as part of `PrivateLayout`'s own `.screen-scroll`, not a scroller of this
+// screen's own. `:host` therefore no longer fills/clips a fixed height, and
+// `.guest-manager` carries no shell CSS of its own; both used to (`height:
+// 100%` / `overflow: hidden`), which is exactly the nested-scroller defect
+// ADR-0041 fixes. `.table-container` and `.table-body`'s own scroll
 // ownership are struck for the same reason — see their own sites below.
+//
+// T374: `.toolbar` (below) joined `.header` inside the pinned region — the
+// kit (`ScreenGuestManager.jsx`) draws title/stats AND the toolbar as fixed
+// rows around the one scrolling `.table-body`; only title/stats was pinned
+// here before, so the toolbar scrolled away in the app while it never did
+// in the DS.
 :host {
   display: block;
   width: 100%;
@@ -40,13 +46,25 @@ $table-grid-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
 // Header (Mobile-First)
 // ─────────────────────────────────────────────────────────────
 
+// The outer pinned-head column (T374): stacks `.header-top` (the title/stats
+// row `.header` itself used to be, in full) above `.toolbar` so both stay
+// pinned together. Carries only the border that sits at the very top of the
+// whole pinned region — everything `.header` itself used to carry (padding,
+// background, the bottom hairline) moved onto `.header-top`, which is what
+// the kit's own `ScreenGuestManager.jsx` header block still carries alone
+// (its toolbar sits below it, unstyled, on the page's own background).
 .header {
   flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.header-top {
   padding: t.$space-3 t.$space-3 10px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  border-top: 1px solid var(--border-hairline);
   border-bottom: 1px solid var(--border-hairline);
   background: var(--surface-card);
 }
@@ -644,7 +662,11 @@ $table-grid-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
 }
 
 @include layout.respond-to('lg') {
-  .header {
+  // `.header` itself stays a column at every breakpoint (T374) — it is now
+  // the outer pinned-head stack, `.header-top` above `.toolbar`. Only
+  // `.header-top`'s own internal row layout changes here, exactly what
+  // `.header` itself used to switch to before the toolbar joined it.
+  .header-top {
     padding: 18px t.$space-6 14px;
     flex-direction: row;
     align-items: flex-end;
