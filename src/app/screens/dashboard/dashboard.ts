@@ -33,6 +33,7 @@ import {
 } from '@app/shared/home-section';
 import { GoodToKnow } from '@app/shared/good-to-know/good-to-know';
 import { HomeSubnav } from '@app/shared/home-subnav/home-subnav';
+import { HomeToday } from '@app/shared/home-today/home-today';
 import { ProgressBar } from '../../shared/progress-bar/progress-bar';
 import { StatTile } from '../../shared/stat-tile/stat-tile';
 import { StatusPill } from '@app/shared/status-pill/status-pill';
@@ -56,10 +57,12 @@ function milestoneStatus(m: MilestoneDto): MilestoneStatus {
  * two modes, rather than two components sharing this content by copy-paste.
  *
  * - `/dashboard` (`id: 'home'`) — the couple's Home, ADR-0045 §2/§4's
- *   umbrella: a pill row (Today · Getting there · Good to know) over this
- *   same planning content as "Today", the former top-level Travel screen
- *   embedded as "Getting there", and a new "Good to know" placeholder (see
- *   `GoodToKnow`'s own doc for why it has no real content yet).
+ *   umbrella: the SAME pill row (Today · Getting there · Good to know) AND
+ *   the same "Today" content the guest's `/me` renders (`app-home-today`,
+ *   T372) — kit `ScreenHome.jsx`'s `content` branch is one render for both
+ *   roles, only dropping the RSVP recap for the couple (`HomeToday`'s own
+ *   `isCouple` gate). Getting-there/Good-to-know are the same shared,
+ *   full-data-owning sections `invitee.ts` mounts.
  * - `/overview` (`id: 'overview'`) — Manage's Overview, the door T362 left
  *   pointing at `guests` as an interim choice. Renders exactly what this
  *   route used to show at `/dashboard` before Home became the umbrella:
@@ -86,6 +89,7 @@ function milestoneStatus(m: MilestoneDto): MilestoneStatus {
     StatusPill,
     NgTemplateOutlet,
     HomeSubnav,
+    HomeToday,
     GoodToKnow,
     Travel,
   ],
@@ -194,15 +198,21 @@ export class Dashboard {
 
   constructor() {
     inject(HeaderService).set(inject(TranslateService).instant('shared.couple'));
-    this.statistics.load();
 
-    // Same "load once, off `loaded$`" pattern as `milestones.ts`'s own
-    // constructor — this route may be the first (and only) place a session
-    // ever asks for `/v1/milestones`, so the collection cannot be assumed
-    // warm from a prior visit to `/milestones`.
-    this.milestoneCollection.loaded$.subscribe((loaded) => {
-      if (!loaded) this.milestoneCollection.getAll().subscribe();
-    });
+    // Overview-only data (T372): the plain Home route no longer renders the
+    // RSVP-stats/milestone-progress cards this feeds, so neither read fires
+    // on a couple's ordinary Home visit.
+    if (this.overview) {
+      this.statistics.load();
+
+      // Same "load once, off `loaded$`" pattern as `milestones.ts`'s own
+      // constructor — this route may be the first (and only) place a
+      // session ever asks for `/v1/milestones`, so the collection cannot be
+      // assumed warm from a prior visit to `/milestones`.
+      this.milestoneCollection.loaded$.subscribe((loaded) => {
+        if (!loaded) this.milestoneCollection.getAll().subscribe();
+      });
+    }
   }
 
   daysTranslationKey() {

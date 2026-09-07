@@ -1,25 +1,10 @@
 import { Component, computed, inject, linkedSignal, type Signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { map } from 'rxjs';
-import { EntityCollectionService, EntityServices } from '@ngrx/data';
-import { TranslatePipe } from '@ngx-translate/core';
 
-import {
-  byAgendaTime,
-  EntityNamesEnum,
-  isFirstLoad,
-  LoginService,
-  RouteConfigService,
-  RsvpDto,
-  UserProfileDto,
-  WeddingConfigResponseDto,
-  TranslateLanguageService,
-  PluralTranslatePipe,
-  AgendaTimePipe,
-} from '@app/core';
+import { RouteConfigService } from '@app/core';
 
 import {
   DEFAULT_HOME_SECTION,
@@ -29,44 +14,28 @@ import {
 } from '@app/shared/home-section';
 import { GoodToKnow } from '@app/shared/good-to-know/good-to-know';
 import { HomeSubnav } from '@app/shared/home-subnav/home-subnav';
-import { DecorFish } from '../../shared/decor/fish';
-import { ProgressBar } from '../../shared/progress-bar/progress-bar';
-import { RsvpStatusTick } from '../../shared/rsvp-status-tick/rsvp-status-tick';
-import { StatusPill } from '../../shared/status-pill/status-pill';
-import { TimelineItem } from '../../shared/timeline-item/timeline-item';
+import { HomeToday } from '@app/shared/home-today/home-today';
 import { Travel } from '../travel/travel';
 
-/** `adults.partner2`'s account id, when it has one — the union's second
- *  member (`…OneOf1`) carries no `id` at all, so it is only readable behind
- *  an `in` check (ADR W-0004 §Decision.1, §Consequences). */
-function partner2Id(rsvp: RsvpDto): string | undefined {
-  const partner2 = rsvp.adults.partner2;
-  return partner2 && 'id' in partner2 ? partner2.id : undefined;
-}
-
+/**
+ * The guest's Home (`/me`) — Home's umbrella pill row (Today · Getting there
+ * · Good to know, hub ADR-0045 §4) over the default "Today" section
+ * (`app-home-today`, T372's extraction of what used to be this screen's own
+ * inline greeting/countdown/RSVP/highlights markup into a component shared
+ * with `dashboard.ts`'s couple Home) and the two other sections, each its
+ * own shared, full-data-owning component exactly like "Today":
+ * `app-travel[embedded]` and `app-good-to-know`. This screen now owns only
+ * the pill-row wiring — which section is active, and the `enabledRoutes`
+ * gate on "Getting there" — matching `dashboard.ts`'s own Home-mode branch
+ * (hub ADR-0045 §2/§3, T372: one shell shape, two roles).
+ */
 @Component({
   selector: 'app-invitee',
-  imports: [
-    RouterLink,
-    DecorFish,
-    ProgressBar,
-    DatePipe,
-    TranslatePipe,
-    RsvpStatusTick,
-    PluralTranslatePipe,
-    AgendaTimePipe,
-    StatusPill,
-    TimelineItem,
-    HomeSubnav,
-    GoodToKnow,
-    Travel,
-  ],
+  imports: [HomeSubnav, GoodToKnow, HomeToday, Travel],
   templateUrl: './invitee.html',
   styleUrl: './invitee.scss',
 })
 export class Invitee {
-  private readonly login = inject(LoginService);
-  private readonly translate = inject(TranslateLanguageService);
   private readonly routeConfig = inject(RouteConfigService);
 
   /** Home's "Getting there" pill is the former `/travel` screen — still
@@ -93,186 +62,4 @@ export class Invitee {
   protected selectSection(section: HomeSection): void {
     this.section.set(section);
   }
-
-  private readonly userProfileCollection: EntityCollectionService<UserProfileDto> = inject(
-    EntityServices,
-  ).getEntityCollectionService<UserProfileDto>(EntityNamesEnum.USER_PROFILE);
-
-  readonly currentUser = computed(() => {
-    const user = this.login.currentUserClaims();
-    if (user) {
-      this.rsvpCollection.keys$.subscribe((keys) => {
-        if (!keys || keys.length === 0 || !(keys as string[]).includes(user.sub)) {
-          this.rsvpCollection.getByKey(user.sub); // Only fetches if cache is empty
-        }
-      });
-    }
-    return user;
-  });
-
-  protected readonly profile: Signal<UserProfileDto | undefined> = toSignal(
-    this.userProfileCollection.entities$.pipe(
-      map((profiles) => {
-        const currentUser = this.login.currentUserClaims();
-        return currentUser?.sub ? profiles.find((p) => p.id === currentUser.sub) : undefined;
-      }),
-    ),
-    { initialValue: undefined },
-  );
-
-  private readonly rsvpCollection: EntityCollectionService<RsvpDto> = inject(
-    EntityServices,
-  ).getEntityCollectionService<RsvpDto>(EntityNamesEnum.RSVP);
-
-  protected readonly rsvpStatus = computed(() => this.rsvp()?.status);
-
-  protected readonly rsvp: Signal<RsvpDto | undefined> = toSignal(
-    this.rsvpCollection.entities$.pipe(
-      map((rsvps) => {
-        const currentUser = this.login.currentUserClaims();
-        const found = rsvps.find(
-          (r) => r.id === currentUser?.sub || partner2Id(r) === currentUser?.sub,
-        );
-        if (currentUser && !found) {
-          this.rsvpCollection.getByKey(currentUser.sub); // Only fetches if cache is empty}
-        }
-        return found;
-      }),
-    ),
-    {
-      initialValue: undefined,
-    },
-  );
-
-  private readonly weddingConfigCollection: EntityCollectionService<WeddingConfigResponseDto> =
-    inject(EntityServices).getEntityCollectionService<WeddingConfigResponseDto>(
-      EntityNamesEnum.WEDDING_CONFIG,
-    );
-
-  /** Singleton resource: the collection holds at most one document. */
-  readonly weddingConfig: Signal<WeddingConfigResponseDto | undefined> = toSignal(
-    this.weddingConfigCollection.entities$.pipe(map((configs) => configs[0])),
-    { initialValue: undefined },
-  );
-
-  /**
-   * The wedding document this whole screen is written against — date,
-   * countdown, venue, agenda — has not arrived yet. Everything below the
-   * chrome would otherwise render as "0 days" over a nameless venue, so the
-   * template draws the same layout with those values skeletoned until the
-   * read lands.
-   */
-  protected readonly loading = isFirstLoad(this.weddingConfigCollection);
-
-  /** Placeholder agenda rows for the loading state — see the note in the
-   *  template on why the count is a guess. */
-  protected readonly pendingAgendaRows = [0, 1, 2];
-
-  constructor() {
-    // Trigger the fetch of the RSVP for the current user (if any).
-    this.weddingConfigCollection.getByKey(''); // Singleton resource, always fetches the same document
-  }
-
-  readonly currentLang = computed(() => this.translate.currentLang());
-
-  protected readonly isAgendaFinal = computed(
-    () => this.weddingConfig()?.agenda?.status === 'final',
-  );
-
-  /** `venueId -> name` for the home preview's agenda rows' second subtitle.
-   *  An unmatched or null id resolves to `''`, which `app-timeline-item`
-   *  simply doesn't render. */
-  private readonly venueNameById = computed(() => {
-    const venues = this.weddingConfig()?.venues ?? [];
-    return new Map(venues.map((venue) => [venue.id, venue.name]));
-  });
-
-  daysToGo = computed(() => {
-    const configuration = this.weddingConfig();
-    if (!configuration?.date) {
-      return 0;
-    }
-    const today = new Date();
-    const weddingDate = new Date(configuration.date); // Month is 0-based, so 5 = June
-    const diffTime = weddingDate.getTime() - today.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  });
-
-  /** Countdown heading's day-count key (T368 fix, DS `AppShell.jsx`'s bare
-   *  "See you in 44 days"): the template used to append the literal English
-   *  word "days" after the translated `invitee.seeYouIn` prefix, rendering
-   *  as "Nos vemos en 272 days" in es/fr — an i18n hard-rule violation.
-   *  Same singular/plural ternary as `dashboard.ts`'s own
-   *  `daysTranslationKey`; no separate "0 days" branch, so the pre-existing
-   *  edge-case rendering (the plural-shaped string) is unchanged by this
-   *  fix. */
-  protected daysHeadingKey(): string {
-    return this.daysToGo() === 1
-      ? 'invitee.countdown.days_singular'
-      : 'invitee.countdown.days_plural';
-  }
-
-  /** Countdown caption key (T368 fix): the Spanish string read backward
-   *  ("272 días falta" instead of "Faltan 272 días") because the caption
-   *  was built as `{{count}} {{translated suffix}}` — grammatically fine in
-   *  English/French, wrong in Spanish. Each locale's whole sentence (count
-   *  substituted via `{{count}}`) is now the translated string, so word
-   *  order is a per-locale choice instead of fixed by the template. */
-  protected daysCaptionKey(): string {
-    return this.daysToGo() === 1
-      ? 'invitee.countdown.daysToGo_singular'
-      : 'invitee.countdown.daysToGo_plural';
-  }
-
-  adultsCount = computed(() => (this.rsvp()?.adults.partner2 ? 2 : 1));
-  childrenCount = computed(() => this.rsvp()?.children?.length ?? 0);
-  partner2FirstName = computed(() => {
-    if (!this.rsvp()?.adults.partner2) return '';
-    if (this.rsvp()?.adults.partner1.id === this.rsvp()?.id)
-      return this.rsvp()?.adults.partner2?.firstName;
-    return this.rsvp()?.adults.partner1.firstName;
-  });
-  childrenFirstNames = computed(() => {
-    if (!this.rsvp()?.children) return [];
-    return (
-      this.rsvp()
-        ?.children?.map((c) => c.firstName)
-        .join(' - ') ?? ''
-    );
-  });
-
-  /**
-   * Home preview's "key moments" — filtered to `highlight` *before* mapping,
-   * mirroring `schedule.ts`'s `items` pattern. The `@for` in the template
-   * used to filter on `event.highlight` *inside* the loop while computing
-   * `let last = $last` over every agenda item, so `last` reflected the final
-   * agenda item overall rather than the final *rendered* row — the trailing
-   * connector line only stayed hidden by coincidence, while the last agenda
-   * item happened to be a key moment. Filtering here first keeps `$last`
-   * correct regardless of which items are highlighted.
-   *
-   * Rows are put in clock order by `byAgendaTime`, shared with the schedule
-   * screen and the config manager's agenda tab.
-   */
-  protected readonly highlightedAgendaItems = computed(() => {
-    const currentLang = this.translate.currentLang();
-    const venueNameById = this.venueNameById();
-    return byAgendaTime(
-      (this.weddingConfig()?.agenda?.items ?? []).filter((item) => item.highlight),
-    ).map((item) => {
-      // Only a venue that actually resolves gets a name — and only a named
-      // venue gets an id, so the row never links to a place the map cannot
-      // select. An unmatched or null id renders neither.
-      const venue = (item.venueId && venueNameById.get(item.venueId)) || '';
-      return {
-        id: item.id,
-        time: item.time,
-        title: item.title[currentLang],
-        desc: item.desc[currentLang],
-        venue,
-        venueId: venue ? (item.venueId ?? '') : '',
-        status: item.status,
-      };
-    });
-  });
 }

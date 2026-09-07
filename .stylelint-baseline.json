@@ -19,7 +19,7 @@
     "media-feature-name-disallowed-list": 1
   },
   "src/app/screens/invitee/invitee.scss": {
-    "declaration-property-value-disallowed-list": 25,
+    "declaration-property-value-disallowed-list": 1,
     "media-feature-name-disallowed-list": 1
   },
   "src/app/screens/guest-manager/guest-manager.scss": {
@@ -171,5 +171,9 @@
   },
   "src/app/screens/rsvp/rsvp-hub/rsvp-hub.scss": {
     "declaration-property-value-disallowed-list": 7
+  },
+  "src/app/shared/home-today/home-today.scss": {
+    "declaration-property-value-disallowed-list": 24,
+    "media-feature-name-disallowed-list": 1
   }
 }

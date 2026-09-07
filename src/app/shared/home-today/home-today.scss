@@ -1,0 +1,266 @@
+@use '../../../styles/tokens' as t;
+@use '../../../styles/primitives';
+
+// No `max-width`/`margin` here — the 900px content-column cap (DS
+// `ScreenHome`'s `shell.maxWidth`) lives on the HOSTING screen's own `:host`
+// (`invitee.scss`/`dashboard.scss`), exactly as it already does for the
+// "Getting there"/"Good to know" sections (`app-travel`/`app-good-to-know`):
+// this component is one more descendant of that capped box, not a second
+// place declaring the same cap.
+:host {
+  display: block;
+  width: 100%;
+}
+
+.greeting {
+  @extend %greeting-block;
+
+  .hello {
+    @extend %greeting-hello;
+  }
+
+  h1 {
+    font-family: t.$font-serif;
+    font-weight: 400;
+    font-size: 28px;
+    line-height: 1.05;
+    margin-top: 4px;
+
+    .accent {
+      @extend %accent-marker;
+    }
+  }
+}
+
+.content {
+  @extend %content-block;
+}
+
+.card {
+  @extend %card-shell;
+}
+
+.countdown {
+  padding: 16px;
+  position: relative;
+  // Redundant with `%card-shell`'s own (also paired, `_primitives.scss`)
+  // but kept as the explicit local override it was. `.card.countdown` is a
+  // flex item of `.content` (`%content-block`: column), default shrink —
+  // see `%card-shell`'s own `min-height: 0` in `_primitives.scss`, which
+  // this element already inherits via `@extend` above (T347 audit).
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // creates no scroll container, so focus cannot shift it
+
+  .deco-fish {
+    @extend %deco-fish-compact;
+  }
+
+  .venue {
+    font-family: t.$font-serif;
+    font-size: t.$text-display-sm;
+    margin-top: 4px;
+  }
+
+  // Shared app-progress-bar component (design system).
+  .progress {
+    margin-top: 12px;
+    position: relative;
+  }
+
+  .caption {
+    font-size: t.$text-label;
+    color: var(--text-muted);
+    margin-top: 4px;
+    letter-spacing: 0.06em;
+  }
+}
+
+.rsvp-card {
+  padding: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  .rsvp-info {
+    flex: 1;
+  }
+
+  .rsvp-title {
+    font-family: t.$font-serif;
+    font-size: 17px;
+    margin-top: 2px;
+  }
+
+  .rsvp-sub {
+    font-size: t.$text-micro;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .edit {
+    color: var(--brand-accent);
+    font-size: t.$text-micro;
+    text-decoration: none;
+  }
+}
+
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+
+  .label-group {
+    display: flex;
+    align-items: center;
+    gap: t.$space-2;
+  }
+
+  .all {
+    font-size: t.$text-micro;
+    color: var(--brand-accent);
+    text-decoration: none;
+  }
+}
+
+.provisional-note {
+  font-size: t.$text-label;
+  color: var(--text-muted);
+  margin-bottom: t.$space-2;
+}
+
+.no-events {
+  font-size: t.$text-caption;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+// Highlights rows are the shared app-timeline-item component (design system).
+
+.album-row {
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+
+  .album-info {
+    flex: 1;
+  }
+
+  .album-title {
+    font-size: t.$text-caption;
+    color: var(--ink);
+  }
+
+  .album-sub {
+    font-size: t.$text-label;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  .arrow {
+    color: var(--brand-accent);
+    font-size: 16px;
+  }
+}
+
+// ── Loading state ──
+// See %skeleton-bar. Each bar sits on the element it stands in for, so it
+// inherits that element's font metrics and margins and the card measures the
+// same loading as loaded. The RSVP tick has no loading state of its own, so
+// its 32px circle is restated here; app-status-pill and app-timeline-item own
+// theirs.
+.skeleton {
+  @include primitives.skeleton-bar;
+}
+
+.greeting h1 .skeleton.days {
+  display: inline-block;
+  width: 4.5rem;
+}
+
+.countdown .skeleton {
+  &.label {
+    width: 70%;
+  }
+
+  &.venue {
+    width: 55%;
+  }
+
+  // Keeps app-progress-bar itself, so the 3px track height matches by
+  // construction; only the track colour joins the skeleton palette.
+  &.progress {
+    background: var(--border-hairline);
+  }
+
+  &.caption {
+    width: 40%;
+  }
+}
+
+.rsvp-card .skeleton {
+  // Mirrors app-rsvp-status-tick's 32px circle.
+  &.tick-placeholder {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &.rsvp-title {
+    width: 65%;
+  }
+}
+
+.sr-only {
+  @extend %sr-only;
+}
+
+// Reflows to the DS two-column Home grid (countdown + highlights left,
+// RSVP + album right) at the same 900px breakpoint the hosting screen's own
+// `:host` switches its content-column cap on. When the right column has no
+// content for a given viewer (couple: neither RSVP-recap nor the
+// out-of-scope album; guest: album alone, already cut before this
+// extraction), the `rsvp`/`album` grid areas simply carry nothing — the same
+// already-shipped, already-accepted shape the guest render has had since
+// the album row was commented out.
+@media (min-width: 900px) {
+  .greeting {
+    padding-top: 14px;
+
+    h1 {
+      font-size: 34px;
+    }
+  }
+
+  .content {
+    padding-top: 22px;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    column-gap: 22px;
+    row-gap: 14px;
+    align-items: start;
+    grid-template-areas:
+      'countdown rsvp'
+      'highlights album';
+  }
+
+  .countdown {
+    grid-area: countdown;
+  }
+
+  .rsvp-card {
+    grid-area: rsvp;
+  }
+
+  .schedule {
+    grid-area: highlights;
+  }
+
+  .album-row {
+    grid-area: album;
+  }
+}

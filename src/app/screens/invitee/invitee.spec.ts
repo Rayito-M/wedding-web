@@ -2,15 +2,14 @@ import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { BehaviorSubject, of } from 'rxjs';
 import { provideEffects } from '@ngrx/effects';
 import { provideEntityData, withEffects } from '@ngrx/data';
 import { provideStore } from '@ngrx/store';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 
 import {
-  CreateWeddingConfigDtoAgendaItemsInner,
   LoginService,
   TranslateLanguageService,
   WeddingConfigResponseDto,
@@ -20,21 +19,6 @@ import {
 } from '@app/core';
 
 import { Invitee } from './invitee';
-
-function agendaItem(
-  overrides: Partial<CreateWeddingConfigDtoAgendaItemsInner> = {},
-): CreateWeddingConfigDtoAgendaItemsInner {
-  return {
-    id: 'a1',
-    status: CreateWeddingConfigDtoAgendaItemsInner.StatusEnum.CONFIRMED,
-    time: '10:00',
-    title: { es: 'Ceremonia', en: 'Ceremony', fr: 'Cérémonie' },
-    desc: { es: 'Descripción', en: 'Description', fr: 'Description' },
-    venueId: null,
-    highlight: false,
-    ...overrides,
-  };
-}
 
 const BASE_CONFIG: WeddingConfigResponseDto = {
   id: 'config',
@@ -57,24 +41,24 @@ const BASE_CONFIG: WeddingConfigResponseDto = {
 };
 
 /**
- * T297's guest-side bug fix: the home preview's `@for` used to compute
- * `let last = $last` over *every* agenda item while filtering to
- * `event.highlight` inside the loop, so `last` reflected the final agenda
- * item overall, not the final *rendered* (highlighted) row. `invitee.ts`
- * now pre-filters to highlighted items in `highlightedAgendaItems` before
- * the loop runs, mirroring `schedule.ts`'s `items` pattern.
+ * T372: `Invitee` now owns only Home's pill-row wiring — which section is
+ * active — and mounts a shared, full-data-owning component per section:
+ * `app-home-today` (default, extracted to `shared/home-today/`, own spec),
+ * `app-travel[embedded]`, `app-good-to-know`. This spec covers exactly that
+ * composition; the countdown/highlights/RSVP behaviour it used to test
+ * directly now lives in `home-today.spec.ts`.
  */
-describe('Invitee — home preview last-row bug (T297)', () => {
+describe('Invitee — Home pill-row composition (T372)', () => {
   let fixture: ComponentFixture<Invitee>;
-  let currentConfig: WeddingConfigResponseDto;
+  let queryParamMap: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
 
-  async function create(): Promise<void> {
+  async function create(params: Record<string, string> = {}): Promise<void> {
+    queryParamMap = new BehaviorSubject(convertToParamMap(params));
     await TestBed.configureTestingModule({
       imports: [Invitee],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([]),
         provideTranslateService({ lang: 'en', fallbackLang: 'en' }),
         provideStore(),
         provideEffects(),
@@ -82,18 +66,20 @@ describe('Invitee — home preview last-row bug (T297)', () => {
         provideEntityDataServices(),
         {
           provide: WeddingConfigurationService,
-          useValue: { weddingConfigControllerGetV1: () => of(currentConfig) },
+          useValue: { weddingConfigControllerGetV1: () => of(BASE_CONFIG) },
         },
         {
-          // No signed-in user: the "current RSVP" fetch branch never fires,
-          // which is irrelevant to the agenda block under test here.
           provide: LoginService,
-          useValue: { currentUserClaims: () => undefined },
+          useValue: { currentUserClaims: () => undefined, isCouple: () => false },
         },
         {
           provide: TranslateLanguageService,
           useValue: { currentLang: signal('en') },
         },
+        // Shared by both this screen's own `?section=` read and `app-travel`'s
+        // `?place=` read (Travel.spec.ts's own precedent) — a single flat
+        // provider, since neither child route actually navigates here.
+        { provide: ActivatedRoute, useValue: { queryParamMap } },
       ],
     }).compileComponents();
 
@@ -102,51 +88,28 @@ describe('Invitee — home preview last-row bug (T297)', () => {
     fixture = TestBed.createComponent(Invitee);
     fixture.detectChanges();
     await fixture.whenStable();
+    await Promise.resolve();
+    await Promise.resolve();
     fixture.detectChanges();
+    await fixture.whenStable();
   }
 
-  function queryAll<T extends HTMLElement>(selector: string): T[] {
-    return Array.from(fixture.nativeElement.querySelectorAll(selector)) as T[];
-  }
-
-  it('marks the last *rendered* (highlighted) row as last, not the last agenda item overall', async () => {
-    currentConfig = {
-      ...BASE_CONFIG,
-      agenda: {
-        status: 'final',
-        items: [
-          agendaItem({ id: 'a1', time: '10:00', highlight: true }),
-          agendaItem({ id: 'a2', time: '12:00', highlight: true }),
-          // The final agenda item is *not* a key moment — before the fix,
-          // this is the one `$last` would land on, and it never renders.
-          agendaItem({ id: 'a3', time: '20:00', highlight: false }),
-        ],
-      },
-    };
+  it('renders the shared Today content by default', async () => {
     await create();
-
-    const rows = queryAll('app-timeline-item');
-    expect(rows.length).toBe(2);
-
-    // Not the last rendered row: still draws its trailing connector.
-    expect(rows[0].querySelector('.line')).not.toBeNull();
-    // Last rendered row: connector suppressed.
-    expect(rows[1].querySelector('.line')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-home-today')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-travel')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-good-to-know')).toBeNull();
   });
 
-  it('only renders highlighted agenda items on the home preview', async () => {
-    currentConfig = {
-      ...BASE_CONFIG,
-      agenda: {
-        status: 'final',
-        items: [
-          agendaItem({ id: 'a1', highlight: true }),
-          agendaItem({ id: 'a2', highlight: false }),
-        ],
-      },
-    };
-    await create();
+  it('renders the embedded Travel screen for the "Getting there" pill', async () => {
+    await create({ section: 'travel' });
+    expect(fixture.nativeElement.querySelector('app-travel')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-home-today')).toBeNull();
+  });
 
-    expect(queryAll('app-timeline-item').length).toBe(1);
+  it('renders Good to know for the "Good to know" pill', async () => {
+    await create({ section: 'info' });
+    expect(fixture.nativeElement.querySelector('app-good-to-know')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-home-today')).toBeNull();
   });
 });
