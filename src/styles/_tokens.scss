@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-// GENERATED from ds-contract 2026-09-06-2b359bd — do not edit.
+// GENERATED from ds-contract 2026-09-07-a243cf0 — do not edit.
 // Source of truth: wedding-ui-design (tokens/*.css).
 // Regenerate: node tools/gen-scss.mjs  (in wedding-ui-design)
 // ─────────────────────────────────────────────────────────────
@@ -72,6 +72,7 @@
   --text-display-lg: 36px;
   --text-display-md: 32px;
   --text-display-sm: 22px;
+  --text-title: 26px;
   --text-heading: 18px;
   --text-body-lg: 15px;
   --text-body: 13px;
@@ -118,6 +119,7 @@ $text-display-xl: var(--text-display-xl);
 $text-display-lg: var(--text-display-lg);
 $text-display-md: var(--text-display-md);
 $text-display-sm: var(--text-display-sm);
+$text-title: var(--text-title);
 $text-heading: var(--text-heading);
 $text-body-lg: var(--text-body-lg);
 $text-body: var(--text-body);

@@ -1,6 +1,6 @@
 {
-  "contractVersion": "2026-09-06-2b359bd",
-  "updated": "2026-09-06",
+  "contractVersion": "2026-09-07-a243cf0",
+  "updated": "2026-09-07",
   "mirrors": {
     "Avatar": {
       "dsHash": "fc000fffaff2387383f65301c35064c94ac1b0df6b1621827fe2e58cf105eb01",
@@ -177,7 +177,7 @@
       ]
     },
     "BrideAtTower": {
-      "dsHash": "5765e652d82760afd0eb0bf24c7a43bffd31e94c8fab7ac0a97fd9fa9c617253",
+      "dsHash": "1732893d4e985c7926d120c33f36edfa91f624b5980f4a4d21dd8f1bd28b7307",
       "files": [
         "src/app/shared/bride-animation/bride-animation.ts",
         "src/app/shared/bride-animation/bride-animation.html",
@@ -201,7 +201,7 @@
       ]
     },
     "LanguageDropdown": {
-      "dsHash": "67d3c6d9a058d505684ac2b1e89330660c2d65848297d736bd1aae29f141d371",
+      "dsHash": "af396d9de27dcd48c395db8477f340173bf1f27783a7606fb62ed23d2c28c173",
       "files": [
         "src/app/shared/language-selector/language-selector.ts",
         "src/app/shared/language-selector/language-selector.html",
@@ -209,7 +209,7 @@
       ]
     },
     "NotificationBell": {
-      "dsHash": "5cbc57b907861faf6566f20ea03133589a29d307db771a4bf80f85ba464c2d32",
+      "dsHash": "aa94dc77ed94e08ac81e6406a9c91d5832e2b784340b33d92284989016ca4942",
       "files": [
         "src/app/shared/notification-bell/notification-bell.ts",
         "src/app/shared/notification-bell/notification-bell.html",
@@ -257,7 +257,7 @@
       ]
     },
     "PlanRail": {
-      "dsHash": "ee8b35b560ee8badb5b719c09d7cbbeaaf074760350eef7f11701ef1aa5dd982",
+      "dsHash": "5a7566883bd0c09ee1bd3766d841653a3e67d641d6729c18dec601ddb3201914",
       "files": [
         "src/app/shared/plan-rail/plan-rail.ts",
         "src/app/shared/plan-rail/plan-rail.html",

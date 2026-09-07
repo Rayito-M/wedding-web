@@ -80,7 +80,7 @@ $table-grid-columns: 1.7fr 0.95fr 0.62fr 0.68fr 1.3fr 0.8fr 0.9fr;
   // `wedding-ui-design/contract/FINDINGS.md` (Open) rather than hardcoded;
   // composed the same way T368 composed its own off-grid figures: --space-6
   // (24px) + half of --space-1 (2px).
-  font-size: calc(var(--space-6) + var(--space-1) / 2);
+  font-size: t.$text-title; // named 2026-09-07 (was a calc() workaround for the missing 26px step)
   line-height: 1;
   margin: 0;
   font-weight: 400;
