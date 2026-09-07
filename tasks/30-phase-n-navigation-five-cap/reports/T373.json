@@ -1,0 +1,101 @@
+{
+  "task": "T373",
+  "status": "complete_with_deviation",
+  "summary": "Overview now matches the kit's 1.15/0.85 grid (LEFT: rsvp stats + tiles, RIGHT: plan-so-far card; refused 'this week' slot stays empty); the old in-content 'Manage' link list is gone (reachable via PlanRail/MANAGE_GROUP_TABS instead). Added blockOutline() to ds-kit.ts + a block-outline assertion to all 9 parity specs; 7/9 green. Guests/Milestones each surfaced one real, out-of-scope deviation, test.fixme()'d with measured numbers. Full parity+occlusion: 190/190 green on a clean run (an earlier fully-parallel run hit 3 unrelated infra timeouts, confirmed flaky by isolated re-run).",
+  "acceptance": [
+    {
+      "criterion": "Overview matches the kit's grid and block order (measured); block-outline assertions added to all 9 parity specs and green (T372's home fix is a prerequisite for the two Home outlines); suite green.",
+      "met": "partial",
+      "evidence": "Overview grid + block order: e2e/layout/design-parity-overview.spec.ts 'desktop: block outline (order + column) matches the DS kit, \"this week\" excluded (T373)' — green; dashboard.scss's `.overview-grid` now uses `display: grid; grid-template-columns: 1.15fr 0.85fr; column-gap: calc(var(--space-5) + var(--space-1) / 2); align-items: start` at ≥900px, `.overview-col-left`/`.overview-col-right` holding [stats-card, tiles] / [plan-card] respectively, matching the kit's own `col()`-wrapped columns byte-for-byte in structure. blockOutline() added to e2e/helpers/ds-kit.ts (column detection via computed `grid-template-columns`, one-level transparent-wrapper substitution capped at 5 children so a repeating collection is never mistaken for a structural grouping, row/column-aware reading order). Assertions added to all 9 design-parity-*.spec.ts files: Home (guest, both breakpoints, role symmetry with Dashboard), Dashboard (couple, both breakpoints), Overview, Config, People, RSVP, Schedule are all GREEN; Guests and Milestones each surfaced one new, real, pre-existing structural deviation neither this task nor T372 caused, and are `test.fixme()`'d with the actual measured outlines documented in-line (design-parity-guests.spec.ts:165, design-parity-milestones.spec.ts:115) rather than being silently passed or fixed out-of-scope here. Suite: npx playwright test e2e/layout/design-parity-*.spec.ts e2e/layout/occlusion-guard.spec.ts, all 5 projects — run 1: 187 passed / 3 failed (all iPhone SE, page.goto timeout to the ds-kit static server, confirmed a full-parallel-load flake by an isolated re-run of exactly that file+project going 3/3 green immediately after) / 15 skipped; run 2 (identical command): 190 passed / 0 failed / 15 skipped.",
+      "notes": "Reported 'partial', not true, because 2 of the 9 specs (Guests, Milestones) do not have their new block-outline assertion enforced — they are fixme'd. The bullet's literal text ('added to all 9 parity specs and green') is satisfied for 'added'; 'green' holds for 7/9, with the other 2 explicitly not fixed here per this same task's own framing one paragraph earlier ('If the block-outline additions catch NEW deviations on other screens, do not fix them — test.fixme() them with measured numbers')."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "Task text says nothing about the in-content 'Manage' link list (Guests/Settings shortcuts) T370 had added to Overview.",
+      "to": "Removed it entirely from dashboard.html/.scss, rather than repositioning it inside the new grid.",
+      "reason": "The kit's own `overviewContent` (`ScreenHome.jsx`) has no such list at all — its two columns are exactly [rsvpStats, tiles] / [milestoneProgress, week]. Keeping the list anywhere in the new grid would fail the very block-outline check this task adds (an extra block the kit doesn't have), and it is functionally redundant: `/overview`'s own route data already carries `group: 'manage'`, which makes `PrivateLayout` render `PlanRail` (desktop) / `MANAGE_GROUP_TABS` (mobile) beside/below this content whenever `inManage()` is true — both already list Guests and Settings. No other file in the app links to the removed list.",
+      "authorized_by": "T373's own acceptance text ('Overview matches the kit's grid and block order') plus hub ADR-0045 §3, which lists Manage's rail/tab set (not an in-content list) as the mechanism for reaching Guests/Settings from Overview.",
+      "verified_how": "Grepped the whole repo for references to the removed classes (`.manage-row`, `.manage-list`, `dashboard.manage.*` i18n keys) — none outside `dashboard.html`/`.scss` themselves; confirmed `PrivateLayout`'s own `inManage()` (`chrome().group === 'manage'`) is true for the `overview` route (its own `app.routes.ts` entry carries `group: 'manage'`), so `PlanRail`/`MANAGE_GROUP_TABS` render for this exact route already, unconditionally of this change; ran `e2e/layout/navigation-five-cap.spec.ts`'s existing Manage-rail/tab-set coverage unchanged and green (7/7)."
+    },
+    {
+      "from": "Task text implies a single, uniform 'add the assertion' step across all 9 specs.",
+      "to": "Two specs (Guests, Milestones) got a `test.fixme()` instead of an enforced assertion.",
+      "reason": "Both screens' block outlines genuinely disagree with the kit for reasons outside this task's scope: Guests pins its header/footer as separate chrome (`headPinned`/`footPinned`, `app.routes.ts`), so they never render inside `.guest-manager`'s own DOM the way the kit's normal-flow header does; Milestones' detail pane resolves to several unlabeled extra blocks this harness's single-level wrapper-substitution does not yet explain. Neither screen was touched by T372 or T373's own fix; forcing a pass by loosening the assertion (or by expanding `blockOutline`'s heuristics specifically to paper over these two) would hide a real difference rather than measure it.",
+      "authorized_by": "The task's own text: \"If the block-outline additions catch NEW deviations on other screens, do not fix them — test.fixme() them with measured numbers and list them in the report (the owner triages).\"",
+      "verified_how": "Ran blockOutline() against both screens directly (kit and app), captured the real output, and wrote the measured block counts/labels into each fixme's own comment — not a guess. Guests: kit 6 blocks (header, filters, +Add guest, table-header row, the row list as one block, footer) vs app 3 (filters, +Add guest, table-header row — header/footer pinned elsewhere, the row list did not resolve at measurement time). Milestones: kit 2 blocks (header, the master/detail `.layout` area as one block) vs app 5 (header, the list content, plus three zero-label blocks around `top: 821` not yet identified)."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit — no output, exit 0. (This task's non-test changes are dashboard.html/.scss/.ts plus e2e/**, none of which tsconfig.app.json/tsconfig.spec.json's `include` reaches beyond the dashboard files already covered by T372's own typecheck run.)"
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 616,
+        "failing": 0
+      },
+      "after": {
+        "total": 616,
+        "failing": 0
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2677,
+      "global_stylesheet_bytes_after": 2677,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 302.71 kB with a total of 802.71 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.58 kB with a total of 9.58 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.85 kB with a total of 16.85 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.55 kB with a total of 11.55 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.91 kB with a total of 11.91 kB."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "tasks/30-phase-n-navigation-five-cap/reports/T373.json"
+    ],
+    "modified": [
+      "src/app/screens/dashboard/dashboard.html",
+      "src/app/screens/dashboard/dashboard.scss",
+      "src/app/screens/dashboard/dashboard.ts",
+      "e2e/helpers/ds-kit.ts",
+      "e2e/layout/design-parity-home.spec.ts",
+      "e2e/layout/design-parity-dashboard.spec.ts",
+      "e2e/layout/design-parity-overview.spec.ts",
+      "e2e/layout/design-parity-config.spec.ts",
+      "e2e/layout/design-parity-guests.spec.ts",
+      "e2e/layout/design-parity-milestones.spec.ts",
+      "e2e/layout/design-parity-people.spec.ts",
+      "e2e/layout/design-parity-rsvp.spec.ts",
+      "e2e/layout/design-parity-schedule.spec.ts",
+      "tasks/30-phase-n-navigation-five-cap/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "blockOutline()'s reading-order and wrapper-substitution heuristics (transparent flex/grid wrapper with ≤5 children gets flattened into its own children; a grid root sorts column-then-row, everything else clusters into visual rows by top-proximity within 16px) are tuned against the 9 screens this task actually measured. A future screen with a different shape — e.g. a 3+ column grid, or a wrapper that legitimately groups 6+ named (not repeating) blocks — may need the cap or the row-clustering threshold revisited rather than assumed correct by extension.",
+      "surfaces_at": "The next screen a design-parity spec adds a block-outline assertion to, if its layout doesn't fit the 'a handful of named sections, or a large repeating collection' split this heuristic assumes."
+    },
+    {
+      "risk": "Guests' and Milestones' block-outline gaps (documented in this report's deviations[]) are real, measured structural differences from the kit that remain unresolved. Guests' is architectural (pinned chrome vs the kit's normal-flow header) and directly adjacent to T374's own scope (sticky filters, blocked on a cloud pull); Milestones' detail-pane resolution gap has not been root-caused at all.",
+      "surfaces_at": "T374 once unblocked (it will need to reconcile Guests' pinned-header reality with whatever sticky behaviour the pulled kit change specifies), or a future task that picks up Milestones' own parity spec and investigates the detail pane."
+    }
+  ],
+  "commits": [
+    "b15b9329b64f945090b1fbf2dc96b00d0d0b9ed5"
+  ]
+}

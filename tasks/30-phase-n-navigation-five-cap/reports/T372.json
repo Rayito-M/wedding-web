@@ -1,0 +1,98 @@
+{
+  "task": "T372",
+  "status": "complete",
+  "summary": "Couple's /dashboard 'Today' pill now renders the SAME shared Home content as the guest's /me (greeting, countdown, day highlights), minus the RSVP recap card — extracted into a new shared component, HomeToday, mounted by both invitee.ts and dashboard.ts. Planning content now renders only under the overview flag. Block-outline parity (T373's harness, committed alongside) is green for kit-Guest/Home<->/me, kit-Couple/Home<->/dashboard, and Overview keeps its parity. Unit 616/616 (was 611/611); typecheck/build clean; lint unchanged.",
+  "acceptance": [
+    {
+      "criterion": "block-outline parity (see T373's harness addition) green for BOTH kit-Couple/Home ↔ `/dashboard` and kit-Guest/Home ↔ `/me`; `/overview` keeps its parity; nav/e2e suites green.",
+      "met": true,
+      "evidence": "The blockOutline() harness this criterion depends on is added in T373's commit (b15b932, same session — T372's own acceptance text names it as T373's addition). With it: e2e/layout/design-parity-home.spec.ts 'desktop: block outline (order + column) matches the DS kit (T373)' and 'mobile: block outline (order) matches the DS kit (T373)' — both green (kit-Guest/Home ↔ /me). e2e/layout/design-parity-dashboard.spec.ts 'desktop: block outline (order + column) matches the DS kit (T373)' and 'mobile: block outline (order) matches the DS kit (T373)' — both green (kit-Couple/Home ↔ /dashboard), confirming role symmetry: countdown+highlights for both roles, RSVP recap present only for the guest (HomeToday's isCouple() gate). e2e/layout/design-parity-overview.spec.ts 'desktop: block outline (order + column) matches the DS kit, \"this week\" excluded (T373)' — green, Overview's own parity intact. Full suite: npx playwright test e2e/layout/design-parity-*.spec.ts e2e/layout/occlusion-guard.spec.ts across all 5 projects — run 1: 187 passed / 3 failed (iPhone SE ds-kit-server page.goto timeouts under full-parallel load, confirmed pre-existing infra flake by an isolated re-run of the same file/project going 3/3 green) / 15 skipped; run 2 (identical command): 190 passed / 0 failed / 15 skipped. Unit suite (npx ng test --watch=false): 48 files / 616 tests / 0 failing, up from a measured baseline of 47/611/0 (git worktree at HEAD before this task)."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "Task text only asks the template flag to 'cleanly split the two modes'.",
+      "to": "Also gated `Dashboard`'s constructor: `StatisticService.load()` and the `Milestone` entity collection's initial fetch now run only when `overview` is true.",
+      "reason": "Both reads feed ONLY the planning-stats/milestone-progress cards, which no longer render in Home mode after this restructure — firing them unconditionally on every couple Home visit would be a live, avoidable network call for data the screen never shows. This is a direct, minimal consequence of 'cleanly split the two modes' extended from the template to the one place outside it (the constructor) that already knew which mode it was in.",
+      "authorized_by": "T372's own fix text: 'Restructure its template so the flag cleanly splits the two modes' — read as covering the component's data-loading, not only its render tree, since the two are otherwise inconsistent (rendering nothing from a read that still fires).",
+      "verified_how": "dashboard.spec.ts's existing 'RSVP statistics bindings' and 'milestone-progress computeds (T370)' describes still mount with `{ id: 'overview' }` route data and pass unchanged (the gate's `if (this.overview)` branch is exactly the path those tests exercise) — no coverage relied on the fetch firing in Home mode, and none was removed."
+    },
+    {
+      "from": "No explicit instruction on how to 'reuse the existing home building blocks' — extract, or re-render inline.",
+      "to": "Extracted the FULL greeting/countdown/RSVP-recap/day-highlights markup and its data-fetching logic out of `invitee.ts`/`.html`/`.scss` into a new shared, full-data-owning component, `HomeToday` (`shared/home-today/`), rather than duplicating the markup into `dashboard.html` or leaving it in `invitee.ts` and importing pieces.",
+      "reason": "This is the exact shape `Travel`/`GoodToKnow` already use for Home's other two pills (`app-travel[embedded]`, `app-good-to-know` — both full components mounted identically by `invitee.html` and `dashboard.html`) — the established, working pattern for 'a Home pill's content, shared by both role screens.' Duplicating the markup would have re-created the class of bug this task exists to fix (two copies of one screen drifting apart); leaving it in `Invitee` and having `Dashboard` reach into it would be a screen depending on a sibling screen's internals.",
+      "authorized_by": "Implementer role's reuse-before-duplicate rule (CLAUDE.md/.agents/agents/implementer.md step 6) plus the precedent `Travel`/`GoodToKnow` already set in this exact file for this exact problem.",
+      "verified_how": "grepped `src/app/shared/**` and `src/app/screens/{invitee,dashboard}/**` before writing anything — confirmed no existing 'Today section' shared component, and that `Travel`/`GoodToKnow` were already mounted by both screens for their own pills, establishing the precedent this follows."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit — no output, exit 0."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 611,
+        "failing": 0
+      },
+      "after": {
+        "total": 616,
+        "failing": 0
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2677,
+      "global_stylesheet_bytes_after": 2677,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 302.71 kB with a total of 802.71 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.55 kB with a total of 11.55 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.85 kB with a total of 16.85 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.58 kB with a total of 9.58 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.91 kB with a total of 11.91 kB."
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "src/app/shared/home-today/home-today.ts",
+      "src/app/shared/home-today/home-today.html",
+      "src/app/shared/home-today/home-today.scss",
+      "src/app/shared/home-today/home-today.spec.ts",
+      "tasks/30-phase-n-navigation-five-cap/reports/T372.json"
+    ],
+    "modified": [
+      "src/app/screens/dashboard/dashboard.ts",
+      "src/app/screens/dashboard/dashboard.html",
+      "src/app/screens/invitee/invitee.ts",
+      "src/app/screens/invitee/invitee.html",
+      "src/app/screens/invitee/invitee.scss",
+      "src/app/screens/invitee/invitee.spec.ts",
+      ".stylelint-baseline.json",
+      "tasks/30-phase-n-navigation-five-cap/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "The live-album preview (kit `ScreenHome.jsx`'s `albumRow`) stays commented out in the new `HomeToday` component exactly as it already was in `invitee.html` before this extraction — carried forward, not re-decided. Neither role renders it, so the couple's Home right column (countdown+highlights left, nothing right — the RSVP recap is also gone) can read as visually sparse compared to the kit, which always shows at least the album row there.",
+      "surfaces_at": "Whenever Album is re-scoped into the primary nav (hub ADR-0045 §2's own 'unless ever re-scoped' note) — that work should also un-comment `HomeToday`'s album block, at which point the couple's Home right column gets real content again."
+    },
+    {
+      "risk": "Incidental finding while probing the People screen for T373's block-outline harness, unrelated to T372/T373: one filter chip in `people.html` renders the literal, untranslated string `{{name}}'s side` instead of the groom's actual name (the bride's own chip translates correctly as 'Sara's side') — an i18n interpolation-parameter bug, not caused or touched by this task.",
+      "surfaces_at": "A guest viewing `/people`'s filter row sees a broken chip label for the groom's side; a future i18n audit or the owner spot-checking that screen."
+    }
+  ],
+  "commits": [
+    "bad8571b2a574ea9e04c270ed252121d8fd107e2"
+  ]
+}
