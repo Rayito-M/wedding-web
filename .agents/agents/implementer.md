@@ -52,6 +52,19 @@ occlusion or misalignment). Your task report's acceptance entries for visual cri
 the spec path and the measured numbers. The same rule gates the status ledger: a screen is
 stamped `implemented` only with its parity spec green (or an explicit owner waiver).
 
+A parity spec that measures only isolated metrics is NOT sufficient (rule tightened 2026-09-07
+after three owner-caught misses that green specs waved through). Every parity spec must also
+assert, against the kit:
+1. **Block outline** — the ordered sequence of the screen's content blocks and their grid/column
+   placement (`blockOutline()` in the harness). Generic metrics once declared the couple's
+   planning dashboard a "match" for the kit's shared Home because both start with a greeting
+   and a countdown.
+2. **Positioning context** — computed `position` (sticky/fixed/static) and offset for every
+   toolbar/header/rail element the kit renders pinned or sticky; static geometry cannot see
+   scroll behaviour.
+3. **Role symmetry where the kit declares it** — when the kit renders one screen for several
+   roles, the spec measures each role against its kit counterpart, not just one.
+
 ## Done means
 
 Every hard rule in `CLAUDE.md` holds, the acceptance criteria are each satisfied with evidence, and
