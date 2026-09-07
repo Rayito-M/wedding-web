@@ -77,11 +77,8 @@
       "unknownGuest": "Invitado desconocido"
     }
   },
-  "grenade": "granada",
-  "spain": "españa",
   "welcome": {
     "saveDate": "Marca el calendario",
-    "tagline": "Como la trucha al trucho",
     "cta": "Abrir invitación",
     "venue": "Palacio de los Córdova · Granada"
   },
@@ -360,6 +357,9 @@
     },
     "hub": {
       "title": "Respuestas de las que te ocupas",
+      "detail": {
+        "declinedSub": "Nos dijeron que no podrán venir. Aún puedes cambiar la respuesta hasta el 1 de mayo."
+      },
       "own": {
         "title": "Tu propia respuesta"
       },
@@ -760,8 +760,7 @@
   "guest_manager": {
     "header": {
       "meta": "Lista de invitados",
-      "title": "Gestor de invitados",
-      "headCount": "Total de asistentes"
+      "title": "Gestor de invitados"
     },
     "status": {
       "total": "Total",

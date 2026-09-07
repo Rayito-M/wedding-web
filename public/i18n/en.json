@@ -79,12 +79,6 @@
   },
   "welcome": {
     "saveDate": "Save the date",
-    "location": "GRANADA · ES",
-    "couple": {
-      "bride": "Sara",
-      "groom": "Christophe",
-      "quote": "« Como la trucha al trucho »"
-    },
     "cta": "Let's start",
     "venue": "Palacio de los Córdova · Granada"
   },
@@ -363,6 +357,9 @@
     },
     "hub": {
       "title": "Replies you look after",
+      "detail": {
+        "declinedSub": "They told us they can't make it. You can still change that until 1 May."
+      },
       "own": {
         "title": "Your own reply"
       },
@@ -647,8 +644,6 @@
     "hint": "Tap <strong>+</strong> to add a photo from the day."
   },
   "shared": {
-    "bride": "bride",
-    "groom": "groom",
     "couple": "COUPLE",
     "invitee": "INVITEE",
     "back": "Back",

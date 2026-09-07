@@ -77,11 +77,8 @@
       "unknownGuest": "Invité inconnu"
     }
   },
-  "grenade": "grenade",
-  "spain": "espagne",
   "welcome": {
     "saveDate": "Reservez la date",
-    "tagline": "Como la trucha al trucho",
     "cta": "Ouvrir l'invitation",
     "venue": "Palais des Córdova · Grenade"
   },
@@ -360,6 +357,9 @@
     },
     "hub": {
       "title": "Réponses dont vous vous occupez",
+      "detail": {
+        "declinedSub": "On nous a dit qu'il ne sera pas possible de venir. Vous pouvez encore modifier la réponse jusqu'au 1er mai."
+      },
       "own": {
         "title": "Votre propre réponse"
       },
@@ -760,8 +760,7 @@
   "guest_manager": {
     "header": {
       "meta": "Liste d'invités",
-      "title": "Gestionnaire d'invités",
-      "headCount": "Nombre total"
+      "title": "Gestionnaire d'invités"
     },
     "status": {
       "total": "Total",
