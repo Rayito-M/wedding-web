@@ -368,9 +368,22 @@
   assertions added to all 9 parity specs and green (T372's home fix is a prerequisite for the
   two Home outlines); suite green.
 
-### T374 — Guest manager: sticky filter toolbar (BLOCKED: cloud pull first)
-- **Status:** blocked — the local kit has NO sticky filters; the cloud DS (owner's edits) is
-  ahead of local and unpulled. Requires `/design-login`, then ds-sync pull + audit; the pulled
-  kit change defines the spec (and the parity spec then asserts computed `position: sticky` +
-  scroll behaviour — the second check class T369's metrics never covered).
-- **ADR:** hub ADR-0044 (ds-sync pull-before-work discipline)
+### T374 — Guest manager: the filter toolbar joins the pinned head (owner-reported)
+- **Status:** todo — UNBLOCKED 2026-09-07: the pull-check found cloud == local (no owner cloud
+  edits); the kit's "sticky" is STRUCTURAL, not `position: sticky` — GuestManager is a shell
+  where the header row AND the filter toolbar are fixed (`flex: 0 0 auto`) and only
+  `.table-body` scrolls. The web pins only the title/stats header (`*appScreenHead`,
+  guest-manager.html:9) while the toolbar (line 165) scrolls away with the content.
+- **ADR:** hub ADR-0042/0043 (pinned regions on route data), ADR-0044 (amended)
+- Fix: the toolbar (filters + search + add) moves inside the `*appScreenHead` template so the
+  pinned head = header + toolbar, matching the kit's fixed rows; the skeleton branch's
+  duplicate toolbar (line 109) follows. Scroll ownership unchanged (ADR-0043 keys untouched);
+  T367's `.body` clearance must still hold (occlusion guard will check).
+- **Harness (the positioning-context half the parity rule now requires):** parity specs assert,
+  for every element the kit renders as a fixed row or sticky, that the app element stays put
+  under a real scroll (measure `boundingBox().y` before/after scrolling the content region) —
+  starting with guest-manager's header/toolbar/footer, schedule's date badge if applicable, and
+  wired as a reusable `assertPinnedUnderScroll()` helper in `e2e/helpers/ds-kit.ts`.
+- **Acceptance:** filters visible after scrolling the guest list (measured); guest-manager
+  parity spec's positioning assertions green and fail-on-revert proven once; occlusion guard +
+  full suite green.
