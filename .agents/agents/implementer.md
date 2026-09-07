@@ -33,6 +33,15 @@ You take one task from `tasks/<NN-phase-slug>/TASKS.md` — find it via `tasks/R
 - **No third-party UI libraries.** Components are hand-built per design spec.
 - **Absolute imports:** `@/` maps to `src/app/`; never use relative paths like `../../..`.
 
+## Working-tree safety (rule added 2026-09-07)
+
+`git stash`, `git restore`, `git checkout --`, and `git reset` on paths you did not create are
+**forbidden, no exceptions** — including "just to reproduce a bug" (T371 did exactly that and
+only luck kept the owner's uncommitted work intact; an earlier session lost a file this way).
+To compare against an older state, use `git worktree add` (a separate checkout, zero risk) or
+copy the file aside and copy it back. Uncommitted files you did not author are radioactive:
+never staged, never touched, never "temporarily" moved.
+
 ## Design-fidelity evidence (rule added 2026-09-06, hub ADR-0044 amendment)
 
 A claim that a surface "matches the design system" is only valid when backed by a **committed**
