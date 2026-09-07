@@ -332,3 +332,43 @@
   this line; pixel parity never resurrects a cut feature.
 - **Acceptance:** all previously-fixme'd assertions (minus the refused one) enforced and green;
   full parity suite green; occlusion guard green; unit/lint/build green.
+
+### T372 — The couple shares the guest Home; planning lives only in Manage · Overview (owner-reported)
+- **Status:** todo
+- **ADR:** hub ADR-0045 §2/§3; DS `ScreenHome.jsx` (one screen, two modes)
+- **Owner report (2026-09-07):** in the DS, guest and couple see the SAME Home — greeting,
+  countdown, day highlights, album; the couple merely drops the RSVP recap
+  (`role === 'couple' ? null : rsvpConfirmed`, kit line ~201). Everything couple-specific lives
+  behind Manage. The app instead gives the couple the old planning dashboard (RSVP stats, tiles,
+  manage cards) AS Home at `/dashboard` — a leftover of T362's interim reading that T364 never
+  corrected.
+- Fix: `/dashboard` (couple Home) renders the shared umbrella-Home content (same blocks as
+  `/me` minus the RSVP recap, plus the umbrella pill row already there); the planning content
+  (stats, tiles, milestone card, manage links) renders ONLY under the `overview` flag
+  (`/overview`). One component, two modes — exactly the DS shape.
+- **Acceptance:** block-outline parity (see T373's harness addition) green for BOTH
+  kit-Couple/Home ↔ `/dashboard` and kit-Guest/Home ↔ `/me`; `/overview` keeps its parity;
+  nav/e2e suites green.
+
+### T373 — Overview layout: the kit's 1.15/0.85 grid, milestone card top-right + block-outline parity (owner-reported)
+- **Status:** todo
+- **ADR:** hub ADR-0044 (amended), ADR-0045 §3; DS `ScreenHome.jsx` overviewContent (~line 171)
+- **Owner report:** the milestone resume is not where the kit puts it. Kit truth: a
+  `1.15fr 0.85fr` grid (gap 22, align start) — LEFT column [rsvpStats, tiles], RIGHT column
+  [milestoneProgress, week]. T370 appended the card into a single-column flow instead. ("week"
+  is the out-of-scope TaskRow block — its slot stays empty, per the T370 refusal.)
+- **Harness addition (the process half):** `e2e/helpers/ds-kit.ts` gains a `blockOutline()`
+  helper — the ordered list of a screen's content blocks with their grid/column position —
+  measured identically on kit and app; every design-parity spec adds a block-outline assertion.
+  This is the check whose absence let generic metrics say "match" across structurally different
+  screens (T369 compared kit-couple-Home to the planning dashboard and passed).
+- **Acceptance:** Overview matches the kit's grid and block order (measured); block-outline
+  assertions added to all 9 parity specs and green (T372's home fix is a prerequisite for the
+  two Home outlines); suite green.
+
+### T374 — Guest manager: sticky filter toolbar (BLOCKED: cloud pull first)
+- **Status:** blocked — the local kit has NO sticky filters; the cloud DS (owner's edits) is
+  ahead of local and unpulled. Requires `/design-login`, then ds-sync pull + audit; the pulled
+  kit change defines the spec (and the parity spec then asserts computed `position: sticky` +
+  scroll behaviour — the second check class T369's metrics never covered).
+- **ADR:** hub ADR-0044 (ds-sync pull-before-work discipline)

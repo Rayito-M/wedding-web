@@ -246,3 +246,6 @@ neither sort nor uniquely name them.
 | **T369** | Design-parity rescan: every implemented screen measured against the kit | done | `30-phase-n-navigation-five-cap` |
 | **T370** | Fix the T369 parity deviations (7 real; 1 refused as out-of-scope) | done | `30-phase-n-navigation-five-cap` |
 | **T371** | Hygiene batch: dashboard unit coverage, the scrolled-header flake, i18n drift | done | `31-phase-o-hygiene` |
+| **T372** | The couple shares the guest Home; planning only in Manage · Overview | todo | `30-phase-n-navigation-five-cap` |
+| **T373** | Overview 1.15/0.85 grid + block-outline parity in the harness | todo | `30-phase-n-navigation-five-cap` |
+| **T374** | Guest manager sticky filters (blocked on cloud pull) | blocked | `30-phase-n-navigation-five-cap` |
