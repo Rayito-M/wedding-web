@@ -475,11 +475,26 @@ export class PrivateLayout {
     void this.router.navigate([config.link], { queryParams: { [CONFIG_SECTION_PARAM]: id } });
   }
 
+  /**
+   * Drives `app-screen-header`'s `.scrolled` class from `main`'s own scroll
+   * position — the same signal on every route, pinned head or not (Phase O
+   * hygiene, T371). A prior revision (535428d) suppressed this to `false`
+   * whenever `screenChrome.head()` held a registered head, which predates
+   * hub ADR-0043's decoupling of pinning from scroll ownership: back when
+   * `headPinned`/`footPinned` decided who scrolled, a pinned head implied
+   * `main` was `overflow-y: clip` and never actually moved, so the `false`
+   * branch was inert. ADR-0043 made `main` `/guests`'s real scroller (it
+   * declares no `screenScroll`) while still registering a pinned head, so
+   * the same ternary went from harmless to a standing defect: `.scrolled`
+   * could never fire on the one screen that both scrolls via `main` and
+   * pins a head — `guest-manager-scrolled-header.spec.ts`'s own root cause,
+   * confirmed pre-existing by two independent tasks (T364, T366) before
+   * this one fixed it. `screenChrome.head()` no longer has any bearing on
+   * whether `main` scrolled; only `main`'s own `scrollTop` does.
+   */
   protected onMainScroll(): void {
     if (this.mainContent) {
-      this.isScrolled.set(
-        this.screenChrome.head() ? false : (this.mainContent.nativeElement.scrollTop ?? 0) > 0,
-      );
+      this.isScrolled.set((this.mainContent.nativeElement.scrollTop ?? 0) > 0);
     }
   }
 
