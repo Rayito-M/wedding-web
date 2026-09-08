@@ -31,7 +31,9 @@ directory you have to search.
 
 Directories carry an ordinal prefix as well as the phase letter. Four sections predate the lettering
 (the two visual-refresh passes, the CSS-hygiene pass, and the scope-cuts note), so letters alone
-neither sort nor uniquely name them.
+neither sort nor uniquely name them. Two letters are also reused — `30-phase-n-…` and
+`31-phase-o-…` repeat the letters of `18-` and `19-` — so cite a phase by its **directory name**,
+never by its letter alone.
 
 ---
 
@@ -68,6 +70,9 @@ neither sort nor uniquely name them.
 | `27-phase-w-guest-manager-scroll` | Phase W — Guest manager: infinite scroll + sort re-sync (`wedding-ui-design` `6a76eba`) | 10 |
 | `28-phase-x-layout-layer` | Phase X — The layout layer (hub ADR-0041, amended by ADR-0042, ADR-0043) | 18 |
 | `29-phase-z-task-file-ergonomics` | Phase Z — Task-file ergonomics (no ADR; this is tooling, not a decision) | 1 |
+| `30-phase-n-navigation-five-cap` | Phase N (second use of the letter) — Navigation five-cap and the Manage door (hub ADR-0045) | 13 |
+| `31-phase-o-hygiene` | Phase O (second use of the letter) — Hygiene batch (no ADR) | 1 |
+| `32-good-to-know-content` | Good to know content (hub ADR-0046, accepted) — unlettered; the alphabet ran out | 4 |
 
 ---
 
@@ -249,3 +254,7 @@ neither sort nor uniquely name them.
 | **T372** | The couple shares the guest Home; planning only in Manage · Overview | done | `30-phase-n-navigation-five-cap` |
 | **T373** | Overview 1.15/0.85 grid + block-outline parity in the harness | done — Guests/Milestones fixme'd, see T373 report | `30-phase-n-navigation-five-cap` |
 | **T374** | Guest manager: filter toolbar joins the pinned head | done | `30-phase-n-navigation-five-cap` |
+| **T375** | Home's Good to know section renders the couple's blocks | todo | `32-good-to-know-content` |
+| **T376** | Settings grows an eighth section: authoring Good to know | blocked (on the DS design) | `32-good-to-know-content` |
+| **T377** | Good to know strings in es/en/fr | todo | `32-good-to-know-content` |
+| **T378** | The privacy notice covers couple-entered contact details, and nothing leaks pre-sign-in | todo | `32-good-to-know-content` |
