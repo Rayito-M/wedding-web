@@ -101,9 +101,9 @@
   (reference, with the two corrections above); counterpart `wedding-api` **T244**
 
 ### T376 — Settings grows an eighth section: authoring Good to know
-- **Status:** todo — **the reconciliation is resolved; this is a build again** (2026-09-09).
-  Blocked only on `wedding-api` **T246** landing in the contract (the contacts shape), and on the
-  one open row below.
+- **Status:** todo — **ready to build. Every open question is closed** (2026-09-09): T382 landed the
+  client, and hub ADR-0046 Amendment 3 closed row 5. Six block types, no swatch naming, Appearance
+  untouched.
   **How the five divergences of hub ADR-0046 Amendment 1 §C were settled** — four of them by
   decisions the Product Owner had already made in the feature description, which the design system
   simply predates:
@@ -118,8 +118,7 @@
     build one.
   - **Row 4, `note` — the contract wins.** PO-requested (*"anticipate free-form extra blocks"*), and
     §1 records that it exists precisely so the block-type enum never has to grow.
-  - **Row 5, swatch names — OPEN, and the only thing still owed.** See the acceptance bullet below;
-    do not guess it.
+  - **Row 5, swatch names — closed, derived wins** (Amendment 3). Nothing to build; see below.
   Precondition unchanged: `../wedding-ui-design` is **stale** on disk (still the 7-tuple, no
   `info.data.js`). Run its `/pipeline` sync before measuring anything against the kit.
 - **Owner:** agent (implementer)
@@ -146,14 +145,11 @@
   - Save rides the existing config `PATCH` path (`config-manager.ts` → `wedding-config-data.service`
     → `PATCH /v1/config`), sending the **whole** `goodToKnow` array. Section Save stays in the
     section header (ADR-0045 §3).
-  - **Row 5 — the swatch names. Do not implement either side until the hub says which.** The DS
-    stores them at `info.dressCode.palettes[themeId]` but edits them from **Appearance**, so one
-    stored value would have two owning sections; and keying them by theme means switching `themeId`
-    silently swaps which set a guest reads, possibly to one never filled. Hub ADR-0046 §2 currently
-    calls a stored swatch a **defect** (they are derived from the theme and therefore cannot go
-    stale). If the answer is "keep derived", there is nothing to build here and Appearance is
-    untouched. If it is "adopt names", they belong in the Good to know section, not Appearance, and
-    §2 needs amending first. **Stop and ask rather than picking one.**
+  - **Row 5 is CLOSED: swatches stay derived — build nothing for them** (hub ADR-0046
+    **Amendment 3**, 2026-09-09). The DS's `dressCode.palettes` is not adopted, §2's "a stored copy
+    is a defect" stands, and **Appearance is untouched by this feature**. The couple cannot rename a
+    colour; they get the theme's names. Do not add a naming control anywhere, and do not treat the
+    DS's Appearance section as a gap to fill.
   - **While here, fix a stale docstring found by the feature draft:** `config-manager.ts:158-160`
     still claims the save is local-only, contradicted by its own `save()`. One-line correction, in
     this task's commit, called out in the report.
