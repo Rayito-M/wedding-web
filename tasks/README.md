@@ -72,7 +72,7 @@ never by its letter alone.
 | `29-phase-z-task-file-ergonomics` | Phase Z — Task-file ergonomics (no ADR; this is tooling, not a decision) | 1 |
 | `30-phase-n-navigation-five-cap` | Phase N (second use of the letter) — Navigation five-cap and the Manage door (hub ADR-0045) | 13 |
 | `31-phase-o-hygiene` | Phase O (second use of the letter) — Hygiene batch (no ADR) | 1 |
-| `32-good-to-know-content` | Good to know content (hub ADR-0046, accepted; amended 2026-09-09) — unlettered; the alphabet ran out | 5 |
+| `32-good-to-know-content` | Good to know content (hub ADR-0046, accepted; amended 2026-09-09) — unlettered; the alphabet ran out | 6 |
 
 ---
 
@@ -259,3 +259,4 @@ never by its letter alone.
 | **T377** | Good to know strings in es/en/fr | done (guest half; authoring half split to T379) | `32-good-to-know-content` |
 | **T378** | The privacy notice covers couple-entered contact details, and nothing leaks pre-sign-in | done | `32-good-to-know-content` |
 | **T379** | The authoring form's strings, in es/en/fr | blocked (on T376) | `32-good-to-know-content` |
+| **T380** | The privacy notice still does not say a delegate reads someone else's whole reply | todo | `32-good-to-know-content` |

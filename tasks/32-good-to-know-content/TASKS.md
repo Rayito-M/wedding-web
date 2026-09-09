@@ -217,3 +217,34 @@
   - Voice: warm and personal, sentence case, per the DS content fundamentals.
   - Hard rule 11 gate green.
 - **Refs:** T377 (the guest half, done); T365 (key-parity method); hub ADR-0046 Amendment 1
+
+### T380 — The privacy notice still does not say a delegate reads someone else's whole reply
+- **Status:** todo — **pre-existing gap, found by T378, not caused by it**
+- **Owner:** agent (implementer)
+- **Depends on:** —
+- **ADR:** hub **ADR-0039** §6; ADR-0027 (the notice); `SPEC.md` Non-functional
+- **Why this is not polish:** `SPEC.md` (Non-functional, the delegation bullet) states plainly that
+  *"the privacy notice required by ADR-0027 should say that a delegate can see this"* — where *this*
+  is **named children, their ages, dietary preferences and allergies** on another guest's reply.
+  Verified 2026-09-09: the notice has nine sections (`title`, `intro`, `goodToKnow`, `analytics`,
+  `maps`, `cookies`, `ipAnonymization`, `googlePolicy`, `changeChoice`) and **none of them mentions
+  delegation at all** — no "delegate", no "answer for", no "allergies", no "reply", in any locale.
+  Delegation has been live since ADR-0039 shipped, so the notice has been incomplete in production
+  for the whole time the feature has existed, on the one category of data the SPEC itself calls
+  **health-adjacent**. T378 recorded it in `risks[]` and in the screen's docstring rather than
+  widening its own scope, which was correct.
+- **Acceptance:**
+  - A new `privacyPolicy.delegation` section in **es/en/fr**, in the same plain voice as
+    `goodToKnow`: the couple can name someone — a parent or sibling — who may answer for you, and
+    that person then sees your whole reply, including any children you name with their ages, dietary
+    preferences and **allergies**. Say that you can always see who holds it, and that only the
+    couple grants or removes it (ADR-0039's three bounds).
+  - **Say what ships, the T378 rule.** Do not describe a notification that does not exist — nobody
+    is told they have been made a delegate — and do not imply the delegate can be refused in-app.
+  - Extend `public-surface.spec.ts`'s third test (or add one beside it) so the notice is asserted to
+    carry the delegation disclosure, the same way it now asserts the Good-to-know one.
+  - No missing-key warnings in any locale; report the resolved key count for all three.
+  - Hard rule 11 gate green.
+- **Refs:** `tasks/32-good-to-know-content/reports/T378.json` → `risks[]`;
+  `src/app/screens/privacy-policy/privacy-policy.{ts,html}`; `e2e/public-surface.spec.ts:126-143`;
+  hub `SPEC.md` Non-functional (delegation bullet)
