@@ -306,3 +306,40 @@
   and merging the two would hide one behind the other in the history.
 - **Refs:** hub ADR-0046 Amendment 2 §C; `e2e/public-surface.spec.ts:126-144`;
   `src/app/screens/privacy-policy/`; T378 (the narrow version and why it was narrow); T380
+
+### T382 — Consume T246's contract: a contact carries its own details, and may have no account
+- **Status:** todo — **blocks T376**, and closes the gap T381's report found
+- **Owner:** agent (implementer)
+- **Depends on:** `wedding-api` **T246** (landed, `de5385b`; contract `6eb233e`)
+- **ADR:** hub **ADR-0046 Amendment 2 §A/§B/§D**
+- **Why:** T375's renderer was built against `{ userId, purpose }` and this repo has **not run
+  `pnpm gen:api` since T246 landed**. The generated entry type still declares `userId: string`
+  (required) — `create-wedding-config-dto-good-to-know-inner-one-of3-entries-inner.ts:14` — and
+  `good-to-know.ts:453` deliberately **drops any entry whose `userId` resolves to nobody**. That was
+  right for the old shape and is wrong for the new one: a third-party contact has no `userId` by
+  design, so today it would render **nothing**, while the privacy notice (T381) already discloses it.
+  The notice is ahead of the renderer, and this task closes that.
+- **Acceptance:**
+  - `pnpm gen:api`; `pnpm gen:api:check` green. Never hand-edit the generated model — hard rule 15.
+  - The contacts renderer reads **`firstName`, `lastName`, `phoneNumber`, `purpose` from the block
+    itself**, not from a resolved profile. `userId` is optional metadata and **must not gate
+    rendering**: an entry without one is a person with no account and renders like any other.
+  - **Delete the drop-if-unresolved branch** and its docstring (`good-to-know.ts:448-460`). Its
+    reasoning — *"half a person is worse than none"* — no longer applies, because the block now
+    carries the whole person. Keep the empty-block behaviour: a block with no entries renders no card.
+  - The `tel:` call button renders when `phoneNumber` is present and is **absent, not disabled**,
+    when it is not. Identifiers stay byte-identical across locales (hard rule 19a).
+  - **In the same commit, rewrite the provenance clause in es/en/fr.** `privacyPolicy.goodToKnow.body`
+    currently tells guests *"For someone who has an account here, those details come from their own
+    profile on this site"*. That is true of today's bundle and **false the moment this task lands** —
+    the details come from the block. Amendment 2 §D is the reason. Shipping the renderer without the
+    copy leaves a false statement in a legal notice.
+  - **Add the assertion that would have caught it.** T381's report is explicit that *no test catches
+    this drift*, which is why it is called out here rather than trusted to review. Pin the notice's
+    provenance claim to the renderer's actual source — the shape of the assertion is yours to design,
+    but a later change to one side must fail on the other.
+  - Unit tests: an entry with **no `userId`** renders in full; an entry with **no `phoneNumber`**
+    renders with no call button; ordering and the empty-block case unchanged from T375.
+  - Hard rule 11 gate green; report the baselines you measure.
+- **Refs:** hub ADR-0046 Amendment 2; `wedding-api` T246; `tasks/32-good-to-know-content/reports/`
+  T375 (the original renderer) and T381 (which found this); counterpart T376
