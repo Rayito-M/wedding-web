@@ -33,6 +33,7 @@ const COUPLE_PROFILE = {
   id: COUPLE_ID,
   firstName: 'Sara',
   lastName: 'Bride',
+  phoneNumber: '+34 655 012 118',
   preferredLang: 'en',
   role: 'bride',
 };
@@ -129,6 +130,93 @@ function agendaItems(): unknown[] {
   ];
 }
 
+/**
+ * `WeddingConfigResponseDto.goodToKnow` (T375, hub ADR-0046) — the couple's
+ * own blocks, mirroring the DS kit's own `ScreenInfo.jsx` seed data (same
+ * five blocks, same order, same copy) so `design-parity-info.spec.ts` can
+ * compare like with like rather than two different documents.
+ *
+ * Same standing as `agendaItems()` above: this is API *fixture* data standing
+ * in for content the real backend returns, not user-facing app copy — hard
+ * rule 19 forbids this text in a locale file or a component template, which
+ * is exactly where it is NOT. Per-locale prose repeats the same English
+ * string for the same reason `agendaItems()` does.
+ */
+function goodToKnowBlocks(): unknown[] {
+  const L = (text: string) => ({ es: text, en: text, fr: text });
+  return [
+    {
+      id: '01JAAAAAAAAAAAAAAAAAAAAAA1',
+      type: 'dress-code',
+      title: L('What to wear'),
+      headline: L('Elegant, garden-ready'),
+      body: L(
+        'Cocktail dress or a light suit, no black tie. Gravel gardens — bring a lower heel. Our colours, if you\u2019d like to match.',
+      ),
+      note: L('Please leave white and ivory to Sara — everything else is fair game.'),
+    },
+    {
+      id: '01JAAAAAAAAAAAAAAAAAAAAAA2',
+      type: 'gift',
+      title: L('Gifts'),
+      intro: L(
+        'You crossing a border to be there is already the present. If you would still like to give something, we are saving for three weeks in Japan — no list, no shop, just the account below.',
+      ),
+      accountHolder: 'Sara Moreno & Christophe Lef\u00e8vre',
+      iban: 'ES91 2100 0418 4502 0005 1332',
+      bic: 'CAIXESBBXXX',
+      reference: L('Your name'),
+      bizumPhone: '+34 655 012 118',
+      bizumNote: L('Put your name in the message so we know who to thank.'),
+    },
+    {
+      id: '01JAAAAAAAAAAAAAAAAAAAAAA3',
+      type: 'faq',
+      title: L('Questions we have been asked'),
+      entries: [
+        ['Can we bring the children?', 'Yes — tell us their names and ages in your RSVP.'],
+        ['Where do we park?', 'There is a public car park five minutes uphill from the palacio.'],
+        ['What will the weather be like?', 'Early June in Granada: 30\u00b0C in the afternoon.'],
+        ['Which language is the ceremony in?', 'Spanish, with a French reading and an English one.'],
+        ['May we bring someone?', 'Your invitation names everyone we have room for.'],
+        ['When should we arrive?', 'The church doors open at 16:00 for a 16:30 ceremony.'],
+      ].map(([question, answer], i) => ({
+        id: `01JBBBBBBBBBBBBBBBBBBBBBB${i}`,
+        question: L(question),
+        answer: L(answer),
+      })),
+    },
+    {
+      id: '01JAAAAAAAAAAAAAAAAAAAAAA4',
+      type: 'contacts',
+      // Since contract `0dc09db` an entry is `{ userId, purpose }` — a
+      // reference to a user of the system, whose name and number the web
+      // resolves from `GET /v1/profile` (stubbed below). The kit still draws
+      // three names and three numbers inline; only the first of these has a
+      // `phoneNumber` in the directory, so the other two render name +
+      // purpose and no call button, which is exactly what a guest sees when
+      // the API's couple-gating withholds a number.
+      title: L('Ask us anything'),
+      entries: [
+        [COUPLE_ID, 'Anything about the day'],
+        ['e2e-guest-0', 'Travel, transfers, logistics'],
+        ['e2e-guest-1', 'Maid of honour — for surprises'],
+      ].map(([userId, purpose]) => ({ userId, purpose: L(purpose) })),
+    },
+    {
+      id: '01JAAAAAAAAAAAAAAAAAAAAAA5',
+      type: 'day-line',
+      title: L('The day in one line'),
+      // Three authored variants; the app picks one by today's Europe/Madrid
+      // date against `rsvpDeadline` and `date` (hub ADR-0046 §4). The stub's
+      // own dates decide which — nothing stored says which phase is current.
+      rsvpOpen: L('5 June 2027 · the church at 16:30, then the party. Please reply by 1 May.'),
+      rsvpClosed: L('5 June 2027 · the church at 16:30, then the party. Replies are closed.'),
+      afterWedding: L('Thank you for celebrating with us.'),
+    },
+  ];
+}
+
 /** `WeddingConfigResponseDto` (admin `GET /v1/config`, `ConfigManager`'s own
  *  read) — a different, larger document than `CONFIG_PUBLIC` above, which is
  *  the read-only public mirror. `dietaryPreferencesCount` seeds the
@@ -158,6 +246,7 @@ function weddingConfigAdmin(dietaryPreferencesCount: number): unknown {
     })),
     allergies: [],
     menus: [],
+    goodToKnow: goodToKnowBlocks(),
   };
 }
 

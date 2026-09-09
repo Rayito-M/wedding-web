@@ -1,0 +1,223 @@
+{
+  "task": "T375",
+  "status": "complete_with_deviation",
+  "summary": "shared/good-to-know renders the couple's goodToKnow blocks off the wedding configuration Home already reads: stored order preserved (split into the DS's two columns at 900px), presence as the only switch, theme-derived swatches, a client-computed day-line variant, a single-open FAQ that starts closed, and a copy button that confirms only on a resolved clipboard write. Deviation: contract 0dc09db landed mid-task making a contacts entry {userId, purpose}, so names and numbers now resolve from the shared UserProfile collection - a second read the task forbade. Owner authorized.",
+  "acceptance": [
+    {
+      "criterion": "pnpm gen:api; pnpm gen:api:check green. Never hand-write the block types - hard rule 15.",
+      "met": true,
+      "evidence": "`pnpm gen:api` run twice (the contract moved under the task - see deviations): 14 new model files under src/app/core/api/model/create-wedding-config-dto-good-to-know-inner*. `pnpm gen:api:check` -> 'gen-api: committed client matches the contract (no drift)', exit 0. No block type is declared locally: good-to-know.ts:71 and :81-92 aliases the generated union (`type GoodToKnowBlock = CreateWeddingConfigDtoGoodToKnowInner`) and six one-line casts within that union stand in for discriminated narrowing, which the generator loses (every member's `type` is emitted as plain `string`, not the OpenAPI `const`).",
+      "notes": "The projected view types (RenderedBlock/GiftRow/FaqRow/ContactRow/Swatch) carry resolved prose, token names and hrefs - the same class as travel.ts's own Place/HotelRow - and never a copy of an API field set or of the closed block-type union; `RenderedBlock.type` is the API's own value passed through unmodified."
+    },
+    {
+      "criterion": "shared/good-to-know/ renders goodToKnow from the wedding configuration the Home screens already fetch. No new HTTP call and no new service - the content rides the config read.",
+      "met": "partial",
+      "evidence": "good-to-know.ts:264-274 reads the same EntityNamesEnum.WEDDING_CONFIG singleton Travel and HomeToday read (getByKey('')), and adds no service of its own. It DOES add a second read - the shared EntityNamesEnum.USER_PROFILE collection (GET /v1/profile), loaded$-guarded exactly as people.ts does - because contract 0dc09db made a contacts entry a userId reference with no name or phone on the CONFIG row. See deviations[0]; authorized by the owner during the task.",
+      "notes": "No new service class and no new endpoint: the collection and its data service (UserProfileDataService) already exist and /people already fills them, so the read is shared and cached, at most one request per session."
+    },
+    {
+      "criterion": "Stored order is render order. Iterate the array; never sort, group or re-arrange by type. On wide screens the DS distributes the same sequence into two columns - that is layout, not a second ordering.",
+      "met": true,
+      "evidence": "good-to-know.ts:315-323 maps config.goodToKnow in place (no sort/filter/group); leftColumn/rightColumn slice the SAME sequence at ceil(n/2). good-to-know.spec.ts 'renders the stored order, never a sort or a grouping by type' feeds [note, contacts, dress-code, faq, gift] - deliberately not the DS's own order - and asserts the rendered labels come back in exactly that order. Below 900px the two column wrappers nest as plain flex columns and read as one continuous list (good-to-know.scss:63-78); at 900px .layout becomes the DS's `1fr 1fr` grid.",
+      "notes": "The kit's own desktop distribution (dress code + contacts left; gifts, FAQ, day line right) is hand-picked for its five fixture blocks and does not generalize; design-parity-info.spec.ts asserts both sides use exactly two columns rather than pretending the assignment matches. Documented in that spec's header."
+    },
+    {
+      "criterion": "Presence is the only switch. A block not in the array renders nothing - no empty card, no placeholder. With no blocks at all (or the field absent), the section keeps today's shipped empty state (home.goodToKnowEmpty.title/.body). No per-block toggle.",
+      "met": true,
+      "evidence": "good-to-know.html:6-19 branches on blocks().length only; the empty state is T364's markup and both its keys, unchanged. Three unit tests: 'renders nothing for a block type that is not in the array' (one dress-code block -> no gift/faq/contacts/day/note card AND no empty state), 'keeps the shipped empty state when the array is empty', 'keeps the shipped empty state when the field is absent altogether'. No visibility flag exists anywhere in the component."
+    },
+    {
+      "criterion": "dress-code - headline, body, optional note. The swatch row is derived from the active theme, never authored and never stored.",
+      "met": true,
+      "evidence": "good-to-know.ts:105-127 (PALETTES, keyed by ThemeId) + :278 reads ThemeService.theme() - the resolved theme, which ThemeService itself seeds from the CONFIG themeId - so the row cannot disagree with it. Nothing about swatches is read from the block. Unit test 'derives the dress-code swatches from the active theme, never from the block' asserts five chips and that setting the theme to verdeagua changes the names. design-parity-info.spec.ts asserts 5 swatches, 40px circles in a 62px column."
+    },
+    {
+      "criterion": "gift - intro prose, then the labelled rows the couple filled (an empty field is not a row), plus the Bizum line. Copy button must not lie; copy the whitespace-stripped value; render the value exactly as stored.",
+      "met": true,
+      "evidence": "good-to-know.ts:395-442 pushes a row only for a field that is set; writeToClipboard() (good-to-know.ts:238-250) returns false on rejection AND on a missing navigator.clipboard, and copy() sets `{key, ok}` so the template shows the confirmation only when ok. Unit tests: 'renders only the fields the couple filled...' (BIC/reference dropped -> 2 rows), 'confirms a copy only when the clipboard call actually succeeded' (asserts the stripped value 'ES9121000418450200051332' reached the clipboard while the row still renders 'ES91 2100 0418 4502 0005 1332'), and 'shows NO confirmation when the clipboard call fails or is refused' (rejecting stub -> no .ok class, value still on screen and selectable).",
+      "notes": "Copyability follows the DS (IBAN and BIC only) and is not stored. The kit's serif gift headline has no field in the stored shape - recorded as a DS finding rather than invented."
+    },
+    {
+      "criterion": "faq - single-open accordion in stored order, aria-expanded, all entries closed on first render.",
+      "met": true,
+      "evidence": "good-to-know.ts:338-346 (openFaqId starts null; toggle closes the open one). Unit test 'opens the FAQ with every entry closed, then one at a time' asserts all three aria-expanded=false initially, one open after a click, and the previous one closed after the next. design-parity-info.spec.ts's FAQ test asserts the KIT opens its first row (useState(0)) and the app opens none - so the deliberate override fails loudly if the kit ever changes."
+    },
+    {
+      "criterion": "contacts - name, purpose line, phone, tel: call button. No WhatsApp, no email, no messaging affordance of any kind.",
+      "met": "partial",
+      "evidence": "Rendered, but resolved rather than transcribed - contract 0dc09db (deviations[0]). good-to-know.ts:452-478 resolves entry.userId against the profile directory; unresolvable references render no row, and a block whose every entry is unresolvable renders no card. Unit tests 'resolves a contact name and number from the referenced user profile', 'renders no call button, and no number, for a profile carrying no phone', 'renders no card at all when every contact reference is unresolvable', and 'offers exactly one contact affordance: a tel: link' (asserts href tel:+34691776402 and zero mailto:/wa.me links).",
+      "notes": "UserProfileDto.phoneNumber is optional AND couple-gated on the API side (people.ts:81-88), so for a signed-in GUEST - the audience this block exists for - a contact will usually render a name and a purpose line and NO number and NO call button. That is a hub/API question, not a client one; see risks[] and decisions_needed[]."
+    },
+    {
+      "criterion": "day-line - three localized sentences stored, exactly one rendered, chosen by comparing today's Europe/Madrid date against rsvpDeadline and date. Computed in the client; no stored field says which phase is current.",
+      "met": true,
+      "evidence": "good-to-know.ts:216-224 (madridCalendarDate, en-CA for ISO ordering, timeZone Europe/Madrid) + :481-495 (dayLineVariant). Six unit tests cover both boundaries and the timezone: rsvpOpen the day before the deadline, rsvpOpen ON the deadline, rsvpClosed the day after, rsvpClosed ON the wedding day, afterWedding the day after the wedding, and '2027-05-01T23:30:00Z' (already 01:30 the next day in Madrid) resolving to rsvpClosed. Nothing is read from the block or the config about a current phase."
+    },
+    {
+      "criterion": "note - title + prose, rendered as plain text.",
+      "met": true,
+      "evidence": "good-to-know.html's @default branch renders `{{ note }}` in a <p>. Unit test 'renders prose as plain text, never as markup' feeds '<b>bold</b> & <script>x</script>' and asserts no <b> element and the literal text in textContent."
+    },
+    {
+      "criterion": "Never translate stored content, and never reformat an identifier. Localized fields picked by the active locale; IBAN/BIC/account holder/Bizum number/contact names and phones byte-identical in every locale.",
+      "met": true,
+      "evidence": "Locale picking is `value[lang]` off TranslateLanguageService.currentLang() - the pattern home-today.ts:249 and schedule.ts:72 already use for milestone/agenda titles, never the translate pipe. Identifiers pass through untouched: no Intl, no toLocale*, no replace on any rendered value (the only replace is stripped(), used solely for the clipboard payload and the tel: href). Unit test 'renders identifiers byte-identically in every locale' flips the locale to fr and asserts the IBAN, the Bizum number, the contact name and the phone inside the meta line are unchanged while the purpose prose does follow the locale."
+    },
+    {
+      "criterion": "Prose is plain text. No Markdown parsing, no innerHTML, no sanitizer bypass.",
+      "met": true,
+      "evidence": "`grep -n 'innerHTML\\|bypassSecurity\\|DomSanitizer\\|marked' src/app/shared/good-to-know/` -> no matches. Every prose field is an interpolation. Covered by the plain-text unit test above."
+    },
+    {
+      "criterion": "Load/error behaviour is inherited from Home; this section adds no state of its own.",
+      "met": "partial",
+      "evidence": "No loading or error UI is declared: the component renders what the two shared collections hold, and Home owns the rest. Its only local state is the open FAQ id and the transient copy result. The profile read (deviations[0]) does add a window in which a contacts block has not resolved yet and renders nothing; no spinner, no placeholder, and the block appears when the read lands."
+    },
+    {
+      "criterion": "A design-parity-info.spec.ts measured against the served DS kit, per the harness in e2e/helpers/ds-kit.ts (block outline + the metrics T369/T373 established). Kit-owned deviations go to wedding-ui-design/contract/FINDINGS.md.",
+      "met": true,
+      "evidence": "e2e/layout/design-parity-info.spec.ts - 6 tests x 5 projects, all green. Uses startDsKitServer/openDsKitScreen ('Home . Good to know'), blockOutline (desktop and mobile, both pinned to the literal 5 blocks so neither side can pass vacuously), stylesOf (card fill/hairline/radius/padding read off the kit's own card() div; eyebrow 10px/1.4px/uppercase; serif headline 22px) and boxOf/expectClose (swatch 40/62, gift+FAQ rows >=52, contact row >=60, call button 44, section width 900). Two DS findings filed in ../wedding-ui-design/contract/FINDINGS.md (2026-09-09): the kit's one-off 9px gift-row key label, and ScreenInfo having neither an empty state nor a gift headline field.",
+      "notes": "Three structural differences are asserted loosely and explained in the spec's header rather than papered over: the desktop column distribution, the missing gift serif headline, and contacts carrying no inline number."
+    },
+    {
+      "criterion": "Unit tests for: stored order preserved; absent block renders nothing; empty/absent field renders the existing empty state; the three day-line branches at their boundaries; the copy failure path showing no confirmation.",
+      "met": true,
+      "evidence": "src/app/shared/good-to-know/good-to-know.spec.ts - 21 tests, all green (`npx ng test --filter GoodToKnow`: 21 passed). Every named case above has its own test, plus the identifier-locale, theme-swatch, tel:-only, plain-text and contact-resolution cases."
+    },
+    {
+      "criterion": "New hard rule 19 in CLAUDE.md, text to add verbatim.",
+      "met": true,
+      "evidence": "CLAUDE.md:88 — added verbatim from the task text, immediately after rule 18 and before '## Conventions'. Diff is one added line."
+    },
+    {
+      "criterion": "pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e per hard rule 11; report the baselines you measured.",
+      "met": true,
+      "evidence": "typecheck: exit 0, no output. lint: 5 ESLint errors before and after, all pre-existing and in files this task never opened (4 in shared/modal - CLAUDE.md's own known exception - plus an unused WeddingGuestsService import in guest-manager/modal/guest-profile-modal.ts, present at HEAD and NOT listed in that exception, which is stale); stylelint 'no new violations (550 pre-existing, baselined)'; ds:verify '31/31 clean pairs; 0 drifting values'. unit: 616 -> 637 tests, 0 failing (the 21 new ones). e2e: 355 passed / 30 skipped (baseline 325 passed / 30 skipped; +30 = 6 new tests x 5 projects; the 30 skips are pre-existing fixmes in seating-plan, design-parity-guests/-milestones/-overview, none of them mine).",
+      "notes": "The measured lint baseline is 5, not the 4 CLAUDE.md's hard rule 11 names."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "'No new HTTP call and no new service - the content rides the config read', with a contacts entry carrying name, purpose and phone inline (hub ADR-0046 section 2).",
+      "to": "GoodToKnow also reads the shared UserProfile collection (GET /v1/profile, loaded$-guarded) and resolves each contacts entry's userId to a name and - when present - a phone number.",
+      "reason": "Hub contract commit 0dc09db ('Good-to-know contacts are USER references', 2026-09-08 23:48, after this task started) changed a contacts entry to { userId, purpose }. The name and number are no longer on the CONFIG row at all, so the acceptance criterion's premise no longer holds: with the config read alone a contacts block is unrenderable. The commit message itself records that ADR-0046 sections 2, 5 and 7 still need amending to match.",
+      "authorized_by": "The owner, asked mid-task with the three options (resolve from the profile read / ship without the contacts block / stop and escalate first) and their consequences; chose 'resolve from the profile read'.",
+      "verified_how": "Reproduced as a compile failure, not assumed: after the second `pnpm gen:api`, `pnpm typecheck` reported 4 errors on good-to-know.ts - 'Property id/name/phone does not exist on type CreateWeddingConfigDtoGoodToKnowInnerOneOf3EntriesInner'. The regenerated interface is exactly `{ userId, purpose }`."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit - no output, exit 0."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 616,
+        "failing": 0
+      },
+      "after": {
+        "total": 637,
+        "failing": 0
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2677,
+      "global_stylesheet_bytes_after": 2677,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget (802.95 kB vs 500 kB) - pre-existing",
+        "guest-manager.scss 11.96 kB / milestones.scss 11.55 kB / seating-plan.scss 9.58 kB / config-manager.scss 16.85 kB over the 8 kB per-component budget - all pre-existing; good-to-know.scss raises no warning"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "src/app/shared/good-to-know/good-to-know.spec.ts",
+      "e2e/layout/design-parity-info.spec.ts",
+      "tasks/32-good-to-know-content/reports/T375.json",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of1.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of2.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of2-entries-inner.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of2-entries-inner-question.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of3.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of3-entries-inner.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of4.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of5.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of-title.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of-headline.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of-body.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of-note.ts"
+    ],
+    "modified": [
+      "src/app/shared/good-to-know/good-to-know.ts",
+      "src/app/shared/good-to-know/good-to-know.html",
+      "src/app/shared/good-to-know/good-to-know.scss",
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "e2e/support/api-mocks.ts",
+      "CLAUDE.md",
+      "tasks/32-good-to-know-content/TASKS.md",
+      "tasks/README.md",
+      "src/app/core/api/model/wedding-config-response-dto.ts",
+      "src/app/core/api/model/create-wedding-config-dto.ts",
+      "src/app/core/api/model/update-wedding-config-dto.ts",
+      "src/app/core/api/model/models.ts",
+      "src/app/core/api/.openapi-generator/FILES"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "../wedding-ui-design/contract/FINDINGS.md",
+      "why": "Two ScreenInfo findings the task's own acceptance routes there rather than reporting as app defects: the kit's one-off 9px gift-row key label, and ScreenInfo having neither an empty state nor a gift-card headline field."
+    },
+    {
+      "path": "src/environments/release.ts",
+      "why": "Not edited - `pnpm build` regenerates it, overwriting a pre-existing uncommitted value from an earlier build (e1b8f30) with the current HEAD (55dbb0d). Restored byte-for-byte to the state found at session start; `git diff` on it is identical to what it was before this task."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "A contacts block shows a guest a name and a purpose line but NO phone number and no call button. UserProfileDto.phoneNumber is couple-gated on the API side, so the very audience the block exists for cannot dial anyone - the affordance only lights up for the couple. The client is already forward-compatible (the number and button appear the moment the API populates the field), but as it stands the block is close to useless for its stated purpose.",
+      "surfaces_at": "The first time the couple authors a contacts block and views Home as a guest. Needs an API/hub answer, not a client change."
+    },
+    {
+      "risk": "Contract 0dc09db also removes the third-party contact case that ADR-0046 section 7 deliberately decided 'yes' on: a maid of honour who is not a user of the system can no longer be named at all, because a contacts entry is now a userId. The privacy line T378 is told to add ('contact details for people the couple names - including people who are not guests') may be describing something the contract no longer permits.",
+      "surfaces_at": "T378, when the privacy copy is written; and any hub amendment of ADR-0046 sections 2/5/7."
+    },
+    {
+      "risk": "The desktop two-column split (first half left, rest right) is this task's invention - the DS's own distribution is editorial and hand-picked for its five fixture blocks. A couple with, say, one very tall FAQ block and four short ones gets a visibly unbalanced pair of columns.",
+      "surfaces_at": "T376, once real authored content of varying length exists; revisit only if the DS ever specifies a distribution rule."
+    },
+    {
+      "risk": "The section renders its own title block (h1 + subtitle) in BOTH states, including the empty one, where T364 shipped the empty state alone. The DS draws that heading (ScreenInfo's heading() helper) and the sibling Home section (Travel, embedded) does the same, so this is alignment with both - but it is a visible change to the shipped empty screen.",
+      "surfaces_at": "Any screenshot comparison of the empty Good-to-know section against the T364 baseline."
+    }
+  ],
+  "commits": [],
+  "decisions_needed": [
+    {
+      "question": "Contract 0dc09db made a Good-to-know contact a reference to a user of the system, and UserProfileDto.phoneNumber is couple-gated - so a signed-in guest sees a name and a purpose line and no number. Does the API populate phoneNumber for users referenced by a goodToKnow contacts entry, or is the block accepted as name-and-purpose-only for guests?",
+      "options": [
+        "API populates phoneNumber for referenced contacts regardless of caller role (the block works as designed for guests; widens who can read a phone number, which needs its own privacy line in ADR-0027).",
+        "The block stays name + purpose only for guests (nothing to build, but the call button - the DS's whole point for this card - never renders for the audience it exists for, and the couple should probably be told that when authoring in T376).",
+        "The block regains an inline phone field alongside userId (reverses part of 0dc09db; restores the third-party maid-of-honour case ADR-0046 section 7 decided 'yes' on, at the cost of transcribing a number that also lives on a profile)."
+      ],
+      "recommendation": "Option 1 for the phone, and separately re-open the third-party case: 0dc09db silently cut the maid-of-honour pattern that ADR-0046 section 7 deliberately allowed, which is a product decision the contract made on the hub's behalf. Either way ADR-0046 sections 2, 5 and 7 need the amendment 0dc09db's own commit message says is owed.",
+      "blocking": false,
+      "needed_by": "T376 (the couple must be told what a guest will actually see when they pick a contact) and T378 (the privacy line describes people who may no longer be nameable)."
+    }
+  ]
+}

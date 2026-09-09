@@ -23,7 +23,7 @@
 > not evidence of design fidelity).
 
 ### T375 — Home's Good to know section renders the couple's blocks
-- **Status:** todo
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** `wedding-api` **T244** (the field must be in `contracts/openapi.json` first —
   `pnpm gen:api` is the first step of this task, not an assumption)

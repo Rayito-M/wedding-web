@@ -1,11 +1,41 @@
-// Same `.empty-state` shape as `milestones.scss`/`guest-manager.scss` (h2 +
-// p, centered, capped width) — reused visually rather than re-invented; see
-// this component's own class doc for why there is copy here at all rather
-// than real content.
+@use '../../../styles/tokens' as t;
+@use '../../../styles/layout';
+@use '../../../styles/primitives';
+@use '../../../styles/recipes' as r;
+
+// Home's "Good to know" section (DS `ScreenInfo.jsx`, hub ADR-0046 · T375).
+// Sizes that sit off the token scale are written in `rem` rather than raw
+// `px` — this file's stylelint baseline starts at zero, so a literal `px` on
+// a spacing/size property is an error (see `stylelint.config.mjs`). Each one
+// below is the DS's own figure, converted: 22px = 1.375rem, and so on.
+
 :host {
   display: block;
+  width: 100%;
 }
 
+// Same shape as `travel.scss`'s own title block — the sibling Home section,
+// which also renders its screen title under the umbrella pill row.
+.title-block {
+  padding: 0.875rem t.$space-6 0.75rem; // DS 14/24/12px
+
+  h1 {
+    font-family: t.$font-serif;
+    font-weight: 400;
+    font-size: 2.125rem; // DS 34px
+    line-height: 1;
+  }
+
+  .sub {
+    font-size: t.$text-caption;
+    color: var(--text-muted);
+    margin-top: 0.375rem;
+  }
+}
+
+// Same `.empty-state` shape as `milestones.scss`/`guest-manager.scss` (h2 +
+// p, centered, capped width) — T364's, unchanged: it is still what a guest
+// sees until the couple writes their first block (hub ADR-0046 §3).
 .empty-state {
   padding: var(--space-7) var(--space-6);
   text-align: center;
@@ -13,9 +43,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
-  // 420px in rem, same cap `milestones.scss`'s own `.empty-state` uses — `rem`
-  // rather than raw `px` per stylelint's `declaration-property-value-disallowed-list`
-  // (a new file starts its baseline at zero, unlike that pre-existing one).
+  // 420px in rem, same cap `milestones.scss`'s own `.empty-state` uses.
   max-width: 26.25rem;
   margin: 0 auto;
 
@@ -29,5 +57,341 @@
   p {
     color: var(--text-muted);
     font-size: var(--text-body);
+  }
+}
+
+// Below 900px the two columns nest as plain flex columns and read as one
+// continuous list in stored order; the identical gap on both means the seam
+// between them is invisible.
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.375rem; // DS 22px
+  padding: 0 t.$space-6 t.$space-6;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.375rem;
+}
+
+// One block: the couple's own section label, then the card.
+.block {
+  display: block;
+}
+
+.label {
+  @extend %eyebrow;
+  margin-bottom: 0.625rem;
+}
+
+.card {
+  @include r.card-surface;
+  padding: t.$space-4;
+  position: relative;
+}
+
+// ── dress-code ──────────────────────────────────────────────────────────
+
+.headline {
+  font-family: t.$font-serif;
+  font-size: t.$text-display-sm;
+  line-height: 1.15;
+}
+
+.prose {
+  font-size: t.$text-body;
+  color: var(--text-muted);
+  margin-top: 0.375rem;
+  line-height: 1.55;
+  max-width: 26.25rem; // DS 420px
+  text-wrap: pretty;
+}
+
+// Decorative trout, bled off the card's bottom-right corner and clipped by
+// the card's own `overflow: clip` (DS `FishIllustration`, opacity 0.14).
+.fish {
+  position: absolute;
+  right: -0.375rem;
+  bottom: -0.5rem;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.swatches {
+  display: flex;
+  gap: 0.625rem;
+  margin-top: t.$space-4;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  align-items: center;
+  width: 3.875rem; // DS 62px
+
+  .chip {
+    width: 2.5rem; // DS 40px
+    height: 2.5rem;
+    border-radius: t.$radius-pill;
+    @include r.hairline;
+  }
+
+  .chip-name {
+    font-size: t.$text-label;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.2;
+  }
+}
+
+.dress-note {
+  display: flex;
+  align-items: flex-start;
+  gap: t.$space-2;
+  margin-top: t.$space-4;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--border-hairline);
+  color: var(--text-muted);
+  font-size: t.$text-caption;
+  line-height: 1.5;
+
+  .note-icon {
+    color: var(--brand-accent);
+    flex: 0 0 auto;
+    display: flex;
+    margin-top: 0.0625rem;
+  }
+}
+
+// ── gift ────────────────────────────────────────────────────────────────
+
+.gift-rows {
+  margin-top: 0.875rem;
+  @include r.hairline;
+  border-radius: t.$radius-md;
+  overflow: hidden; // fallback: pre-Safari-16 UAs drop the next line
+  overflow: clip; // corner-radius clip, no scroll container (ADR-0041 §4)
+}
+
+.gift-row {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  padding: 0.625rem t.$space-3;
+  min-height: 3.25rem; // DS 52px
+
+  & + & {
+    border-top: 1px solid var(--border-hairline);
+  }
+}
+
+.gift-value {
+  flex: 1;
+  // Paired with the `word-break` below: a long IBAN wraps inside its own
+  // row instead of pushing the copy button off the card (ADR-0041 §5).
+  min-width: 0;
+}
+
+.row-label {
+  margin-bottom: 0;
+}
+
+.value {
+  font-size: t.$text-body-lg;
+  margin-top: 0.125rem;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.copy-btn {
+  @include r.pill-interactive;
+  flex: 0 0 auto;
+  font-size: t.$text-micro;
+  cursor: pointer;
+  min-height: 2rem; // DS 32px
+
+  &.ok {
+    background: var(--surface-chip);
+    color: var(--brand-accent);
+  }
+
+  &:focus-visible {
+    @include r.focus-ring;
+  }
+}
+
+.bizum {
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+  margin-top: 0.625rem;
+  line-height: 1.5;
+
+  .bizum-label {
+    @extend %eyebrow;
+    margin-right: t.$space-2;
+  }
+
+  .value {
+    display: inline;
+    font-size: t.$text-micro;
+    margin-right: t.$space-1;
+  }
+}
+
+// ── faq ─────────────────────────────────────────────────────────────────
+// The list itself is the card (DS): no padding on the shell, rows separated
+// by the one hairline.
+
+.faq-card,
+.contacts-card {
+  padding: 0;
+}
+
+.faq-entry + .faq-entry {
+  border-top: 1px solid var(--border-hairline);
+}
+
+.faq-q {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  padding: 0.875rem;
+  min-height: 3.25rem; // DS 52px
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text-body-color);
+
+  &.on {
+    background: var(--surface-chip);
+  }
+
+  &:focus-visible {
+    @include r.focus-ring;
+  }
+}
+
+.faq-text {
+  flex: 1;
+  font-size: t.$text-body-lg;
+  line-height: 1.35;
+}
+
+// Same CSS chevron `rsvp-editor.scss` and `tab-bar.scss` already draw.
+.chevron {
+  flex: 0 0 auto;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-right: 1.5px solid var(--text-muted);
+  border-bottom: 1.5px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform var(--transition-fast);
+
+  &.open {
+    transform: rotate(225deg);
+  }
+}
+
+.faq-a {
+  padding: 0.125rem 0.875rem t.$space-4;
+  font-size: t.$text-body;
+  color: var(--text-muted);
+  line-height: 1.6;
+  background: var(--surface-chip);
+  text-wrap: pretty;
+}
+
+// ── contacts ────────────────────────────────────────────────────────────
+
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: t.$space-3;
+  padding: t.$space-3 0.875rem;
+  min-height: 3.75rem; // DS 60px
+
+  & + & {
+    border-top: 1px solid var(--border-hairline);
+  }
+}
+
+.contact-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.contact-name {
+  font-family: t.$font-serif;
+  font-size: 1rem; // DS 16px
+  line-height: 1.2;
+}
+
+.contact-meta {
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+  margin-top: 0.125rem;
+}
+
+// The only contact affordance there is: a dial link. No WhatsApp, no email,
+// no messaging of any kind (hub ADR-0014).
+.call-btn {
+  flex: 0 0 auto;
+  width: 2.75rem; // DS 44px — also the WCAG 2.5.5 target size
+  height: 2.75rem;
+  border-radius: t.$radius-pill;
+  @include r.hairline;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-accent);
+  text-decoration: none;
+
+  &:focus-visible {
+    @include r.focus-ring;
+  }
+}
+
+// ── day-line ────────────────────────────────────────────────────────────
+// The one block whose label sits inside the card, beside the pin (DS
+// `venueNote`) rather than above it.
+
+.day-label {
+  display: flex;
+  align-items: center;
+  gap: t.$space-2;
+  margin-bottom: 0;
+}
+
+.day-line {
+  font-size: t.$text-body;
+  margin-top: 0.625rem;
+  line-height: 1.6;
+  color: var(--text-body-color);
+  text-wrap: pretty;
+}
+
+// ── ≥900px: the DS's two-column distribution ────────────────────────────
+
+// The 900px content column is the shell's, not this section's (hub ADR-0042
+// §2: a screen never declares its own shell) — Home already centres and caps
+// it, exactly as the kit's `AppShell` does at `maxWidth: 900`. All this
+// breakpoint owns is the DS's own two-column distribution inside it.
+@include layout.respond-to('lg') {
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: t.$space-6;
+  }
+
+  .column {
+    gap: t.$space-6;
   }
 }

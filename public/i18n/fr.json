@@ -734,6 +734,44 @@
     "goodToKnowEmpty": {
       "title": "Rien ici pour l'instant",
       "body": "Nous ajouterons ici des informations utiles à mesure que le jour approche."
+    },
+    "goodToKnowSection": {
+      "subtitle": "Les détails pratiques du jour.",
+      "copy": "Copier",
+      "copied": "Copié ✓",
+      "copyFailed": "Copie impossible",
+      "copyAria": "Copier {{label}}",
+      "callAria": "Appeler {{name}}",
+      "gift": {
+        "accountHolder": "Titulaire du compte",
+        "iban": "IBAN",
+        "bic": "BIC / SWIFT",
+        "reference": "Référence",
+        "bizum": "Bizum"
+      },
+      "palette": {
+        "terracotta": {
+          "accent": "Terracotta",
+          "accent2": "Beurre",
+          "accent3": "Amande",
+          "chip": "Crème chaude",
+          "ink": "Châtaigne"
+        },
+        "mauve": {
+          "accent": "Mauve poudré",
+          "accent2": "Rosé",
+          "accent3": "Pierre",
+          "chip": "Crème chaude",
+          "ink": "Encre"
+        },
+        "verdeagua": {
+          "accent": "Verde agua",
+          "accent2": "Écume",
+          "accent3": "Sauge",
+          "chip": "Crème froide",
+          "ink": "Pin"
+        }
+      }
     }
   },
   "manage": {

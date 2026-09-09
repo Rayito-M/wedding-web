@@ -12,6 +12,7 @@ import { CreateWeddingConfigDtoDietaryPreferencesInner } from './create-wedding-
 import { CreateWeddingConfigDtoMenusInner } from './create-wedding-config-dto-menus-inner';
 import { UpdateMilestoneDtoTitle } from './update-milestone-dto-title';
 import { UpdateWeddingConfigDtoAgenda } from './update-wedding-config-dto-agenda';
+import { CreateWeddingConfigDtoGoodToKnowInner } from './create-wedding-config-dto-good-to-know-inner';
 import { CreateWeddingConfigDtoHotelsInner } from './create-wedding-config-dto-hotels-inner';
 
 
@@ -32,6 +33,7 @@ export interface UpdateWeddingConfigDto {
     dietaryPreferences?: Array<CreateWeddingConfigDtoDietaryPreferencesInner>;
     allergies?: Array<CreateWeddingConfigDtoDietaryPreferencesInner>;
     menus?: Array<CreateWeddingConfigDtoMenusInner>;
+    goodToKnow?: Array<CreateWeddingConfigDtoGoodToKnowInner>;
 }
 export namespace UpdateWeddingConfigDto {
     export const ThemeIdEnum = {

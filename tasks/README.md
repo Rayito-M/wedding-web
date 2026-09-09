@@ -254,7 +254,7 @@ never by its letter alone.
 | **T372** | The couple shares the guest Home; planning only in Manage · Overview | done | `30-phase-n-navigation-five-cap` |
 | **T373** | Overview 1.15/0.85 grid + block-outline parity in the harness | done — Guests/Milestones fixme'd, see T373 report | `30-phase-n-navigation-five-cap` |
 | **T374** | Guest manager: filter toolbar joins the pinned head | done | `30-phase-n-navigation-five-cap` |
-| **T375** | Home's Good to know section renders the couple's blocks | todo | `32-good-to-know-content` |
+| **T375** | Home's Good to know section renders the couple's blocks | done | `32-good-to-know-content` |
 | **T376** | Settings grows an eighth section: authoring Good to know | blocked (on the DS design) | `32-good-to-know-content` |
 | **T377** | Good to know strings in es/en/fr | todo | `32-good-to-know-content` |
 | **T378** | The privacy notice covers couple-entered contact details, and nothing leaks pre-sign-in | todo | `32-good-to-know-content` |

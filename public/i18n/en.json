@@ -734,6 +734,44 @@
     "goodToKnowEmpty": {
       "title": "Nothing here yet",
       "body": "We'll add helpful details here as the day gets closer."
+    },
+    "goodToKnowSection": {
+      "subtitle": "The practical details of the day.",
+      "copy": "Copy",
+      "copied": "Copied ✓",
+      "copyFailed": "Couldn't copy",
+      "copyAria": "Copy {{label}}",
+      "callAria": "Call {{name}}",
+      "gift": {
+        "accountHolder": "Account holder",
+        "iban": "IBAN",
+        "bic": "BIC / SWIFT",
+        "reference": "Reference",
+        "bizum": "Bizum"
+      },
+      "palette": {
+        "terracotta": {
+          "accent": "Terracotta",
+          "accent2": "Butter",
+          "accent3": "Almond",
+          "chip": "Warm cream",
+          "ink": "Chestnut"
+        },
+        "mauve": {
+          "accent": "Dusty mauve",
+          "accent2": "Blush",
+          "accent3": "Stone",
+          "chip": "Warm cream",
+          "ink": "Ink"
+        },
+        "verdeagua": {
+          "accent": "Verde agua",
+          "accent2": "Seafoam",
+          "accent3": "Sage",
+          "chip": "Cool cream",
+          "ink": "Pine"
+        }
+      }
     }
   },
   "manage": {

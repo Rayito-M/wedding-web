@@ -1,4 +1,207 @@
-<div class="empty-state">
-  <h2>{{ 'home.goodToKnowEmpty.title' | translate }}</h2>
-  <p>{{ 'home.goodToKnowEmpty.body' | translate }}</p>
+<div class="title-block">
+  <h1>{{ 'home.goodToKnow' | translate }}</h1>
+  <p class="sub">{{ 'home.goodToKnowSection.subtitle' | translate }}</p>
 </div>
+
+@if (blocks().length === 0) {
+  <!--
+    The state the app is in on the day this ships, and the state it stays in
+    until the couple writes something (hub ADR-0046 §3) — T364's own honest
+    empty state, unchanged. No block means no card; there is no placeholder
+    and no per-block toggle.
+  -->
+  <div class="empty-state">
+    <h2>{{ 'home.goodToKnowEmpty.title' | translate }}</h2>
+    <p>{{ 'home.goodToKnowEmpty.body' | translate }}</p>
+  </div>
+} @else {
+  <!--
+    Two nested flex columns below 900px render as one continuous list in
+    stored order; at 900px the outer box becomes the DS's `1fr 1fr` grid and
+    the same two lists become the two columns (`ScreenInfo.jsx:169-186`).
+  -->
+  <div class="layout">
+    <div class="column">
+      @for (block of leftColumn(); track block.id) {
+        <ng-container [ngTemplateOutlet]="blockTpl" [ngTemplateOutletContext]="{ $implicit: block }" />
+      }
+    </div>
+    <div class="column">
+      @for (block of rightColumn(); track block.id) {
+        <ng-container [ngTemplateOutlet]="blockTpl" [ngTemplateOutletContext]="{ $implicit: block }" />
+      }
+    </div>
+  </div>
+}
+
+<ng-template #blockTpl let-block>
+  @switch (block.type) {
+    @case ('dress-code') {
+      @if (block.dressCode; as dress) {
+        <section class="block">
+          <div class="label">{{ block.title }}</div>
+          <div class="card dress-card">
+            <div class="fish" aria-hidden="true">
+              <app-decor-fish [w]="92" color="var(--brand-accent)" />
+            </div>
+            <div class="headline">{{ dress.headline }}</div>
+            <p class="prose">{{ dress.body }}</p>
+            <div class="swatches">
+              @for (swatch of dress.swatches; track swatch.token) {
+                <div class="swatch">
+                  <span class="chip" [style.background]="'var(' + swatch.token + ')'"></span>
+                  <span class="chip-name">{{ swatch.labelKey | translate }}</span>
+                </div>
+              }
+            </div>
+            @if (dress.note) {
+              <p class="dress-note">
+                <span class="note-icon"><app-icon name="info" [size]="16" /></span>
+                <span>{{ dress.note }}</span>
+              </p>
+            }
+          </div>
+        </section>
+      }
+    }
+    @case ('gift') {
+      @if (block.gift; as gift) {
+        <section class="block">
+          <div class="label">{{ block.title }}</div>
+          <div class="card gift-card">
+            @if (gift.intro) {
+              <p class="prose">{{ gift.intro }}</p>
+            }
+            @if (gift.rows.length > 0) {
+              <div class="gift-rows">
+                @for (row of gift.rows; track row.key) {
+                  <div class="gift-row">
+                    <div class="gift-value">
+                      <div class="label row-label">{{ row.labelKey | translate }}</div>
+                      <!-- Rendered exactly as stored: an identifier is
+                           transcribed, never translated, grouped or re-cased
+                           (hub ADR-0046 §5). -->
+                      <div class="value">{{ row.value }}</div>
+                    </div>
+                    @if (row.copyable) {
+                      <button
+                        type="button"
+                        class="copy-btn"
+                        [class.ok]="copyResult()?.key === row.key && copyResult()?.ok"
+                        [attr.aria-label]="'home.goodToKnowSection.copyAria' | translate: { label: (row.labelKey | translate) }"
+                        (click)="copy(row.key, row.value)"
+                      >
+                        @if (copyResult()?.key === row.key) {
+                          {{
+                            (copyResult()?.ok ? 'home.goodToKnowSection.copied' : 'home.goodToKnowSection.copyFailed')
+                              | translate
+                          }}
+                        } @else {
+                          {{ 'home.goodToKnowSection.copy' | translate }}
+                        }
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            }
+            @if (gift.bizumPhone || gift.bizumNote) {
+              <p class="bizum">
+                @if (gift.bizumPhone) {
+                  <span class="bizum-label">{{ 'home.goodToKnowSection.gift.bizum' | translate }}</span>
+                  <span class="value">{{ gift.bizumPhone }}</span>
+                }
+                @if (gift.bizumNote) {
+                  <span>{{ gift.bizumNote }}</span>
+                }
+              </p>
+            }
+          </div>
+        </section>
+      }
+    }
+    @case ('faq') {
+      @if (block.faq; as faq) {
+        <section class="block">
+          <div class="label">{{ block.title }}</div>
+          <div class="card faq-card">
+            @for (entry of faq; track entry.id) {
+              <div class="faq-entry">
+                <button
+                  type="button"
+                  class="faq-q"
+                  [class.on]="isFaqOpen(entry.id)"
+                  [attr.aria-expanded]="isFaqOpen(entry.id)"
+                  [attr.aria-controls]="'gtk-faq-' + entry.id"
+                  (click)="toggleFaq(entry.id)"
+                >
+                  <span class="faq-text">{{ entry.question }}</span>
+                  <span class="chevron" [class.open]="isFaqOpen(entry.id)" aria-hidden="true"></span>
+                </button>
+                @if (isFaqOpen(entry.id)) {
+                  <div class="faq-a" [id]="'gtk-faq-' + entry.id">{{ entry.answer }}</div>
+                }
+              </div>
+            }
+          </div>
+        </section>
+      }
+    }
+    @case ('contacts') {
+      @if (block.contacts; as contacts) {
+        <section class="block">
+          <div class="label">{{ block.title }}</div>
+          <div class="card contacts-card">
+            @for (contact of contacts; track contact.id) {
+              <div class="contact-row">
+                <div class="contact-text">
+                  <!-- Name and number come from the referenced user's own
+                       profile (contract `0dc09db`), rendered exactly as it
+                       carries them. No number means no line and no button —
+                       `UserProfileDto.phoneNumber` is couple-gated, and
+                       absent unambiguously means "don't show this". -->
+                  <div class="contact-name">{{ contact.name }}</div>
+                  <div class="contact-meta">
+                    {{ contact.purpose }}@if (contact.phone) { · {{ contact.phone }} }
+                  </div>
+                </div>
+                @if (contact.tel) {
+                  <a
+                    class="call-btn"
+                    [href]="contact.tel"
+                    [attr.aria-label]="'home.goodToKnowSection.callAria' | translate: { name: contact.name }"
+                  >
+                    <app-icon name="phone" [size]="20" />
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        </section>
+      }
+    }
+    @case ('day-line') {
+      @if (block.dayLine; as sentence) {
+        <section class="block">
+          <div class="card day-card">
+            <div class="label day-label">
+              <app-icon name="pin" [size]="16" />
+              <span>{{ block.title }}</span>
+            </div>
+            <p class="day-line">{{ sentence }}</p>
+          </div>
+        </section>
+      }
+    }
+    @default {
+      @if (block.note; as note) {
+        <section class="block">
+          <div class="label">{{ block.title }}</div>
+          <div class="card note-card">
+            <p class="prose">{{ note }}</p>
+          </div>
+        </section>
+      }
+    }
+  }
+</ng-template>
