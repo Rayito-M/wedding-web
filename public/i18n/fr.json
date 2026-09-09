@@ -467,7 +467,7 @@
       "appearance": "La palette et les libellés de langue vus par les invités.",
       "weddingDateChanged": "Le calendrier des préparatifs garde ses dates existantes : les étapes ne se déplacent pas avec la date du mariage.",
       "mapUrlEmbed": "Dans Google Maps, utilisez Partager → Intégrer une carte et collez le lien du code iframe. Un simple lien de partage ne peut pas s'afficher ; l'adresse du lieu est utilisée à la place.",
-      "good-to-know": "Le dress code, les cadeaux et les questions que lisent vos invités. Chaque mot ici est le vôtre : il est enregistré dans la configuration et affiché tel quel, dans l'ordre de cette liste."
+      "good-to-know": "Le dress code, les cadeaux et les questions que lisent vos invités. Chaque mot ici est le vôtre et s'affiche tel quel, dans l'ordre de cette liste."
     },
     "field": {
       "brideName": "Mariée",
@@ -600,7 +600,7 @@
         "title": "Titre du bloc"
       },
       "dressCode": {
-        "headline": "Titre",
+        "headline": "Accroche",
         "body": "Consignes",
         "note": "Note (facultatif)",
         "swatchesHint": "Les pastilles de couleur sous ce texte viennent du thème choisi dans Apparence — elles ne s'écrivent pas ici et ne peuvent jamais le contredire."
@@ -626,15 +626,15 @@
         "firstName": "Contact {{n}} · prénom",
         "lastName": "Nom (facultatif)",
         "phoneNumber": "Téléphone (facultatif)",
-        "purpose": "Pour quoi le contacter",
+        "purpose": "À quel sujet le contacter",
         "addEntry": "+ Ajouter un contact",
         "removeEntry": "Retirer le contact",
         "identifiersHint": "Les noms et numéros s'affichent à l'identique dans les trois langues."
       },
       "dayLine": {
-        "datesHint": "Dates actuelles : mariage le {{date}}, date limite du RSVP le {{deadline}}. Si l'une change, ces phrases ne se mettent pas à jour — relisez-les.",
+        "datesHint": "Dates actuelles : mariage le {{date}}, date limite du RSVP le {{deadline}}. Si l'une change, ces phrases ne se mettent pas à jour toutes seules — relisez-les.",
         "rsvpOpen": "Tant que le RSVP est ouvert",
-        "rsvpClosed": "Après la date limite, jusqu’au mariage",
+        "rsvpClosed": "Après la date limite, jusqu'au mariage",
         "afterWedding": "Après le mariage"
       },
       "note": {
@@ -643,7 +643,7 @@
       "issue": {
         "missingTitle": "Bloc {{n}} ({{type}}) : le titre manque dans l'une des trois langues.",
         "incomplete": "Bloc {{n}} ({{type}}) : complétez les champs obligatoires dans les trois langues.",
-        "faqTooFew": "Bloc {{n}} ({{type}}) : il faut au moins 3 questions.",
+        "faqTooFew": "Bloc {{n}} ({{type}}) : il faut au moins trois questions.",
         "contactsTooFew": "Bloc {{n}} ({{type}}) : il faut au moins une personne."
       }
     }

@@ -258,7 +258,7 @@ never by its letter alone.
 | **T376** | Settings grows an eighth section: authoring Good to know | done | `32-good-to-know-content` |
 | **T377** | Good to know strings in es/en/fr | done (guest half; authoring half split to T379) | `32-good-to-know-content` |
 | **T378** | The privacy notice covers couple-entered contact details, and nothing leaks pre-sign-in | done | `32-good-to-know-content` |
-| **T379** | The authoring form's strings, in es/en/fr | todo — unblocked by T376, which shipped the 50 keys; verification/voice pass remains | `32-good-to-know-content` |
+| **T379** | The authoring form's strings, in es/en/fr | done — verification/voice pass over T376's 50 keys; 15 values retouched, parity re-measured at 865/locale | `32-good-to-know-content` |
 | **T380** | The privacy notice still does not say a delegate reads someone else's whole reply | todo | `32-good-to-know-content` |
 | **T381** | The privacy notice widens: the third-party case now ships | done | `32-good-to-know-content` |
 | **T382** | Consume T246's contract: a contact carries its own details, and may have no account | done | `32-good-to-know-content` |

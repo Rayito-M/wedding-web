@@ -438,7 +438,7 @@
       "dirty": "Cambios sin guardar",
       "upToDate": "Todo actualizado",
       "saved": "Cambios guardados ✓",
-      "blocked": "Completa Información útil para poder guardar"
+      "blocked": "Completad Información útil para poder guardar"
     },
     "actions": {
       "save": "Guardar cambios",
@@ -467,7 +467,7 @@
       "appearance": "La paleta y las etiquetas de idioma que ven los invitados.",
       "weddingDateChanged": "El cronograma de preparativos mantiene sus fechas: los hitos no se mueven con la fecha de la boda.",
       "mapUrlEmbed": "En Google Maps, usa Compartir → Insertar un mapa y pega el enlace del código iframe. Un enlace normal de compartir no se puede mostrar; en su lugar se usa la dirección del lugar.",
-      "good-to-know": "El código de vestimenta, los regalos y las preguntas que leen los invitados. Cada palabra aquí es vuestra: se guarda en la configuración y se muestra tal cual, en el orden de esta lista."
+      "good-to-know": "El código de vestimenta, los regalos y las preguntas que leen los invitados. Cada palabra aquí es vuestra y se muestra tal cual, en el orden de esta lista."
     },
     "field": {
       "brideName": "Novia",
@@ -581,7 +581,7 @@
       "verdeagua": "Verde Agua"
     },
     "goodToKnow": {
-      "empty": "Aún no hay bloques. Añade el primero abajo — los invitados verán exactamente lo que escribáis, en este orden.",
+      "empty": "Aún no hay bloques. Añadid el primero abajo — los invitados verán exactamente lo que escribáis, en este orden.",
       "addTitle": "Añadir un bloque",
       "type": {
         "dress-code": "Código de vestimenta",
@@ -626,10 +626,10 @@
         "firstName": "Contacto {{n}} · nombre",
         "lastName": "Apellidos (opcional)",
         "phoneNumber": "Teléfono (opcional)",
-        "purpose": "Para qué escribirle",
+        "purpose": "Para qué contactarle",
         "addEntry": "+ Añadir contacto",
         "removeEntry": "Quitar contacto",
-        "identifiersHint": "Nombres y teléfonos se muestran igual en los tres idiomas."
+        "identifiersHint": "Los nombres y teléfonos se muestran igual en los tres idiomas."
       },
       "dayLine": {
         "datesHint": "Fechas actuales: boda el {{date}}, fecha límite del RSVP el {{deadline}}. Si alguna cambia, estas frases no se actualizan solas — revisadlas.",
@@ -642,8 +642,8 @@
       },
       "issue": {
         "missingTitle": "Bloque {{n}} ({{type}}): falta el título en alguno de los tres idiomas.",
-        "incomplete": "Bloque {{n}} ({{type}}): completa los campos obligatorios en los tres idiomas.",
-        "faqTooFew": "Bloque {{n}} ({{type}}): necesita al menos 3 preguntas.",
+        "incomplete": "Bloque {{n}} ({{type}}): completad los campos obligatorios en los tres idiomas.",
+        "faqTooFew": "Bloque {{n}} ({{type}}): necesita al menos tres preguntas.",
         "contactsTooFew": "Bloque {{n}} ({{type}}): necesita al menos una persona."
       }
     }

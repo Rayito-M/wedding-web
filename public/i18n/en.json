@@ -467,7 +467,7 @@
       "appearance": "The palette and language labels guests experience.",
       "weddingDateChanged": "The preparation timeline keeps its existing dates — milestones don't move with the wedding date.",
       "mapUrlEmbed": "In Google Maps, use Share → Embed a map and paste the link from the iframe code. A plain share link cannot be displayed; the venue address is used instead.",
-      "good-to-know": "The dress code, gifts and questions your guests read. Every word here is yours: it is stored on the configuration and shown exactly as written, in this list's order."
+      "good-to-know": "The dress code, gifts and questions your guests read. Every word here is yours and is shown exactly as written, in this list's order."
     },
     "field": {
       "brideName": "Bride",
@@ -643,7 +643,7 @@
       "issue": {
         "missingTitle": "Block {{n}} ({{type}}): the title is missing in one of the three languages.",
         "incomplete": "Block {{n}} ({{type}}): fill in the required fields in all three languages.",
-        "faqTooFew": "Block {{n}} ({{type}}): needs at least 3 questions.",
+        "faqTooFew": "Block {{n}} ({{type}}): needs at least three questions.",
         "contactsTooFew": "Block {{n}} ({{type}}): needs at least one person."
       }
     }

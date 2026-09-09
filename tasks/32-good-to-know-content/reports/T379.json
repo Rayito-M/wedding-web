@@ -1,0 +1,94 @@
+{
+  "task": "T379",
+  "status": "complete",
+  "summary": "Verification and voice pass over the authoring form's 50 UI keys T376 shipped. Re-measured: 865 flattened keys per locale (not T376's 842 - the files grew since), key sets identical across es/en/fr, zero empty values, every key the form references resolves, no content string and no swatch-name string anywhere in the 50. The cross-locale read changed 15 values across 10 keys: es moved to the couple-facing vosotros voice (fixing a tu/vosotros mix inside one sentence), the three locales' section notes lost their stored-on-the-configuration API-speak, es contacts.purpose no longer implies a messaging channel ADR-0014 bans, fr dressCode.headline no longer collides with the adjacent block-title label, plus smaller punctuation/numeral consistency fixes.",
+  "acceptance": [
+    {
+      "criterion": "Every UI string the authoring form introduces exists in es/en/fr, es first: field labels, validation messages, the locale-disclosure control, the ordering affordance, and whatever the reconciliation adds or removes.",
+      "met": true,
+      "evidence": "The 50 keys are 47 under configManager.goodToKnow.* plus configManager.status.blocked, configManager.section.good-to-know, configManager.note.good-to-know. All 50 present in es/en/fr; a sweep of config-manager.html + config-manager.ts found every one referenced (statically or via the two dynamic prefixes 'goodToKnow.type.' and 'goodToKnow.issue.') and no referenced key missing. Ordering affordance: moveUp/moveDown/removeBlock; disclosure: showOtherLanguages/hideOtherLanguages; validation: issue.missingTitle/incomplete/faqTooFew/contactsTooFew."
+    },
+    {
+      "criterion": "No content string; swatch names are settled and are not a case to consider (hub ADR-0046 Amendment 3) - no such string exists or may be added.",
+      "met": true,
+      "evidence": "Read all 50 values in all three locales: every one is a label, hint, control caption or validation message - no dress-code copy, FAQ text, IBAN or gift prose. No swatch-naming key exists under configManager.goodToKnow.*. The only swatch-name strings in the files are home.goodToKnowSection.palette.* - the themes' own display names for the DERIVED swatch row, shipped by the guest half (T375), which is exactly Amendment 3's accepted state ('they get the theme's names'), not an authoring string."
+    },
+    {
+      "criterion": "No missing-key warnings in any locale; resolve every new key against all three files (T365's method) and report the number - re-measure rather than quoting T376's 842.",
+      "met": true,
+      "evidence": "Re-measured by flattening all three files: 865 keys per locale (es 865, en 865, fr 865), pairwise set differences all empty, 0 empty values in any locale. 865 != T376's 842 because T380/T381-era keys landed since; the count was re-taken, not quoted. All 50 task keys resolve in all three files; unreferenced-key sweep over the template and component found none orphaned."
+    },
+    {
+      "criterion": "Read the three locales against each other, not just against the key list; voice warm and personal, sentence case, per the DS content fundamentals.",
+      "met": true,
+      "evidence": "15 values changed across 10 keys - see the per-change list in this report's deviations-free changelog below (summary field + git diff of public/i18n/*.json). Highlights: goodToKnow.empty (es) mixed tu ('Anade') and vosotros ('escribais') in one sentence - now vosotros throughout, matching the couple-facing convention milestones established ('Cread vuestro primer hito'); note.good-to-know in all three locales dropped 'stored on the configuration' / 'se guarda en la configuracion' / 'enregistre dans la configuration' (API-speak, and wrong-preposition English) for 'shown exactly as written'; issue.faqTooFew harmonized digit '3' with its sibling's spelled-out 'one' in all three; fr dayLine.rsvpClosed's curly apostrophe normalized to the file's straight-apostrophe convention (140 straight vs 7 curly); fr dayLine.datesHint gained 'toutes seules' to carry the sentences-do-not-update-THEMSELVES point; fr dressCode.headline 'Titre' collided with field.title 'Titre du bloc' rendered directly above it - now 'Accroche' (es 'Titular' and en 'Headline' were already distinct); contacts.purpose es 'Para que escribirle' implied writing/messaging, which ADR-0014 bans and the guest side (tel: call button) contradicts - now 'Para que contactarle'; fr 'Pour quoi le contacter' (reads as a typo of 'Pourquoi') - now 'A quel sujet le contacter'. All strings sentence case; validation messages explain rather than scold (Save is withheld, the message says what is missing per block). Terminology checked against the guest half: section label, gift row labels (Concepto/Reference/Reference) and the three-language identifier hints all match what T375/T377 shipped."
+    },
+    {
+      "criterion": "es is the default locale and the couple's own - if one locale gets the closest read, it is that one.",
+      "met": true,
+      "evidence": "es received the closest read and the most changes (7 of the 15 values): the vosotros alignment (empty, issue.incomplete, status.blocked), the missing article in contacts.identifiersHint ('Los nombres...'), the messaging-verb fix in contacts.purpose, the numeral harmonization, and the note.good-to-know de-jargoning. The pre-existing tu string configManager.note.mapUrlEmbed is outside this task's 50 keys and is filed in risks, not silently rewritten."
+    },
+    {
+      "criterion": "Report what you changed, not only what you checked; a verification pass that alters nothing is legitimate but must be explicit.",
+      "met": true,
+      "evidence": "The pass DID alter strings: 15 values across 10 keys (es 7, fr 6, en 2), enumerated in the previous two entries and visible in the commit's public/i18n/*.json diff. The other 35 keys were read in all three locales and left unchanged deliberately - including gift.reference (fr 'Reference' kept to match the guest-side row label), dressCode.body's per-locale non-literal labels, and note.body's plain 'Texto/Text/Texte'."
+    },
+    {
+      "criterion": "Hard rule 11 gate green (pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e).",
+      "met": true,
+      "evidence": "typecheck: exit 0. lint: 5 pre-existing errors before and after (4 in src/app/shared/modal/ per CLAUDE.md's exception + the unused import in guest-manager/modal/guest-profile-modal.ts recorded by T376/T378/T381/T382), none in any file this task touched; stylelint and ds:verify (31/31 clean pairs) pass. Unit: 644/644 before, 644/644 after (specs stub translations, so locale values cannot break them - verified setTranslation('en', {}) in config-manager.spec.ts). e2e: 375 passed / 30 skipped / 0 failed, one full run, 5.3m. Build: pass; budget warnings byte-identical to T376's recorded baseline (initial 802.95 kB; config-manager.scss 16.85 kB and the three other pre-existing per-component warnings)."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": { "result": "pass", "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit, exit 0, after the string edits." },
+    "lint": { "errors_before": 5, "errors_after": 5, "new_errors": [] },
+    "test": {
+      "before": { "total": 644, "failing": 0 },
+      "after": { "total": 644, "failing": 0 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2677,
+      "global_stylesheet_bytes_after": 2677,
+      "budget_warnings": [
+        "bundle initial 802.95 kB vs 500 kB - pre-existing",
+        "config-manager.scss 16.85 kB / guest-manager.scss 11.96 kB / milestones.scss 11.55 kB / seating-plan.scss 9.58 kB over the 8 kB warning budget - all pre-existing; this task edited only public/i18n/*.json, which cannot enter any stylesheet, so before and after are one measurement of the same 2677-byte styles-BX7ALXWU.css"
+      ]
+    }
+  },
+  "files": {
+    "added": ["tasks/32-good-to-know-content/reports/T379.json"],
+    "modified": [
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "tasks/32-good-to-know-content/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "configManager.note.mapUrlEmbed (pre-existing, outside this task's 50 keys) still addresses the couple as tu ('usa... pega') while the couple-facing es convention everywhere else - milestones and now the whole Good to know section - is vosotros. Left untouched as out of scope; a one-string voice cleanup task would close the last inconsistency on the Settings screen.",
+      "surfaces_at": "The next es voice read of the config-manager screen."
+    },
+    {
+      "risk": "Six pre-existing curly apostrophes remain in fr.json (guest-manager strings, lines ~901-999) against the file's straight-apostrophe convention (140 straight). This task normalized only the one inside its own 50 keys (dayLine.rsvpClosed).",
+      "surfaces_at": "Any typography-consistency pass over fr.json."
+    },
+    {
+      "risk": "reports/T376.json (and the sibling reports that copied its shape) carries checks.e2e and checks.i18n keys that task-report.schema.json forbids (checks has additionalProperties: false), so those reports do not validate against the contract. This report keeps e2e and i18n evidence inside acceptance entries instead. If report validation is ever automated, the older reports will fail on shape, not on substance.",
+      "surfaces_at": "The first automated validation of tasks/*/reports/*.json against the schema."
+    },
+    {
+      "risk": "src/app/screens/rsvp/rsvp.html and src/environments/release.ts still carry the pre-existing uncommitted working-tree changes T376's report recorded. Left untouched and NOT in this task's commit.",
+      "surfaces_at": "The next git status on this checkout."
+    }
+  ],
+  "commits": [],
+  "decisions_needed": []
+}

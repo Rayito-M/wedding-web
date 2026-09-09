@@ -219,7 +219,12 @@
   hub `GLOSSARY.md` → *Public wedding info*, *Good-to-know contact*
 
 ### T379 — The authoring form's strings, in es/en/fr
-- **Status:** todo — unblocked by T376 (2026-09-09). Note the shape of what remains: T376 could
+- **Status:** **done (2026-09-09)** — the verification and voice pass ran and it was not a no-op:
+  15 values changed across 10 of the 50 keys (es 7, fr 6, en 2 — vosotros alignment, de-jargoned
+  section notes, the ADR-0014 messaging-verb fix in `contacts.purpose`, the fr headline/title label
+  collision, punctuation/numeral consistency). Re-measured parity: **865** keys per locale (the 842
+  was stale), identical sets, none empty. Report: `reports/T379.json`.
+  Pre-pass state, kept for the history: todo — unblocked by T376 (2026-09-09). Note the shape of what remains: T376 could
   not ship a form with hardcoded text (hard rule 8), so its commit already carries the form's 50
   UI keys in es/en/fr with key parity verified. This task is now the *verification and voice*
   pass over those strings — T377's method, T365's counts — not a from-scratch write.
