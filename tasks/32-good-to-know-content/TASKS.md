@@ -308,7 +308,7 @@
   `src/app/screens/privacy-policy/`; T378 (the narrow version and why it was narrow); T380
 
 ### T382 — Consume T246's contract: a contact carries its own details, and may have no account
-- **Status:** todo — **blocks T376**, and closes the gap T381's report found
+- **Status:** done (2026-09-09) — unblocks T376; the gap T381's report found is closed
 - **Owner:** agent (implementer)
 - **Depends on:** `wedding-api` **T246** (landed, `de5385b`; contract `6eb233e`)
 - **ADR:** hub **ADR-0046 Amendment 2 §A/§B/§D**

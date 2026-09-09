@@ -40,11 +40,11 @@ import {
  *    kit defect and not an app defect: the ADR narrowed the shape after the
  *    mock was drawn.
  *
- * 3. **Contacts carry no inline number.** The kit draws three names and three
- *    numbers; since hub contract `0dc09db` a stored entry is
- *    `{ userId, purpose }` and the web resolves the name and number from that
- *    user's profile — where `phoneNumber` is optional and couple-gated. The
- *    fixture gives exactly one of the three a number, so one call button
+ * 3. **Two contact rows carry no number.** The kit draws three names and
+ *    three numbers; since `wedding-api` T246 (hub ADR-0046 Amendment 2 §A)
+ *    a stored entry carries the person itself and `phoneNumber` is optional
+ *    — absent means no number line and no call button, never a disabled one.
+ *    The fixture gives exactly one of the three a number, so one call button
  *    renders and two rows correctly show none.
  *
  * One measurement below is a kit finding rather than an app one and is
@@ -220,9 +220,10 @@ test.describe('Home · Good to know — parity with the DS kit (T375, hub ADR-00
     expectClose(call!.width, 44, 1, 'call button width');
     expectClose(call!.height, 44, 1, 'call button height');
 
-    // Resolution, not transcription: the name comes from the referenced
-    // user's profile, and the two rows whose profile carries no number show
-    // no number and no button rather than an empty affordance.
+    // Transcription, not resolution (Amendment 2 §A/§D): every name comes
+    // off the block itself — one of the three entries has no account at all
+    // — and the two rows without a stored number show no number and no
+    // button rather than an empty affordance.
     await expect(page.locator('app-good-to-know .contact-row')).toHaveCount(3);
     await expect(page.locator('app-good-to-know .contact-name').first()).toHaveText('Sara Bride');
     await expect(page.locator('app-good-to-know .call-btn')).toHaveCount(1);

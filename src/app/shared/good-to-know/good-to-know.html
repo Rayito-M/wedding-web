@@ -155,11 +155,10 @@
             @for (contact of contacts; track contact.id) {
               <div class="contact-row">
                 <div class="contact-text">
-                  <!-- Name and number come from the referenced user's own
-                       profile (contract `0dc09db`), rendered exactly as it
-                       carries them. No number means no line and no button —
-                       `UserProfileDto.phoneNumber` is couple-gated, and
-                       absent unambiguously means "don't show this". -->
+                  <!-- Name and number come off the block itself (`wedding-api`
+                       T246, hub ADR-0046 Amendment 2 §A), rendered exactly as
+                       stored in every locale. No number means no line and no
+                       button — absent, never disabled. -->
                   <div class="contact-name">{{ contact.name }}</div>
                   <div class="contact-meta">
                     {{ contact.purpose }}@if (contact.phone) { · {{ contact.phone }} }

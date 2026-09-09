@@ -16,7 +16,6 @@ import {
   CreateWeddingConfigDtoGoodToKnowInnerOneOf5,
   EntityNamesEnum,
   TranslateLanguageService,
-  UserProfileDto,
   WeddingConfigResponseDto,
 } from '@app/core';
 import { ThemeService } from '@app/core/theme.service';
@@ -145,18 +144,21 @@ interface FaqRow {
 }
 
 /**
- * One contact row. Only `purpose` is stored on the block — since contract
- * commit `0dc09db` a `contacts` entry is `{ userId, purpose }`, a reference to
- * a user of the system, so the **name and number are resolved from that
- * user's profile** rather than transcribed onto the CONFIG row. They are
- * still identifiers: reproduced exactly as the profile carries them, in every
- * locale (ADR-0046 §5).
+ * One contact row, read entirely off the block. Since `wedding-api` T246
+ * (contract `6eb233e`, hub ADR-0046 Amendment 2 §A) a `contacts` entry
+ * carries the person itself — `firstName`, optional `lastName`, optional
+ * `phoneNumber` — and `userId` is optional metadata retained so a later task
+ * *can* detect drift, never a render gate: an entry without one names a
+ * person with no account (the maid-of-honour case §7 decided *yes* on) and
+ * renders like any other. The name and number are identifiers, reproduced
+ * exactly as the block stores them in every locale (§5, restored by
+ * Amendment 2 §B) — and deliberately a second, staleable copy of what a
+ * profile may also carry: a profile edit does not update this card
+ * (Amendment 2 §D, an accepted cost, not a bug to fix here).
  *
- * `phone`/`tel` are nullable because `UserProfileDto.phoneNumber` is optional
- * *and* couple-gated on the API side — for a guest reading `GET /v1/profile`
- * it is simply absent, which unambiguously means "don't show this line" (the
- * same reading `people.ts` already documents). No number, no call button; the
- * name and the purpose line still render.
+ * `phone`/`tel` are nullable because `phoneNumber` is optional on the entry —
+ * absent unambiguously means "don't show this line". No number, no call
+ * button; the name and the purpose line still render.
  *
  * `tel` is the dial href — whitespace-stripped for the URI, which is a *link
  * target*, not a rendered value. No WhatsApp, no email, no other channel (hub
@@ -274,38 +276,8 @@ export class GoodToKnow {
     { initialValue: undefined },
   );
 
-  /**
-   * The people directory (`GET /v1/profile`), read for exactly one reason: a
-   * `contacts` entry stores a `userId`, so the name and number a guest reads
-   * live on that user's profile, not on the CONFIG row (contract `0dc09db`,
-   * which lands after ADR-0046 §2 was written and which the hub still owes an
-   * amendment for). The same shared, cached `@ngrx/data` collection `/people`
-   * already fills — guarded on `loaded$` exactly as `people.ts` does, so this
-   * costs one request per session at most and none at all if the directory is
-   * already in the store.
-   */
-  private readonly userProfileCollection: EntityCollectionService<UserProfileDto> = inject(
-    EntityServices,
-  ).getEntityCollectionService<UserProfileDto>(EntityNamesEnum.USER_PROFILE);
-
-  private readonly profilesById = computed(() => {
-    const byId = new Map<string, UserProfileDto>();
-    for (const profile of this.userProfiles()) byId.set(profile.id, profile);
-    return byId;
-  });
-
-  private readonly userProfiles: Signal<readonly UserProfileDto[]> = toSignal(
-    this.userProfileCollection.entities$,
-    { initialValue: [] },
-  );
-
   constructor() {
     this.weddingConfigCollection.getByKey(''); // Singleton resource, always fetches the same document
-    this.userProfileCollection.loaded$.subscribe((loaded) => {
-      if (!loaded) {
-        this.userProfileCollection.getAll(); // Only fetches if cache is empty
-      }
-    });
     inject(DestroyRef).onDestroy(() => this.clearCopyTimer());
   }
 
@@ -317,8 +289,7 @@ export class GoodToKnow {
     if (!config?.goodToKnow) return [];
     const lang = this.lang.currentLang();
     const swatches = PALETTES[this.theme.theme()] ?? PALETTES.terracotta;
-    const people = this.profilesById();
-    return config.goodToKnow.map((block) => this.render(block, lang, swatches, config, people));
+    return config.goodToKnow.map((block) => this.render(block, lang, swatches, config));
   });
 
   /** The first half of the sequence — the left column at `≥900px`, and simply
@@ -374,7 +345,6 @@ export class GoodToKnow {
     lang: LangCode,
     swatches: readonly Swatch[],
     config: WeddingConfigResponseDto,
-    people: ReadonlyMap<string, UserProfileDto>,
   ): RenderedBlock {
     const pick = (value: LangDescriptionType): string => value[lang];
     const base = { id: block.id, type: block.type, title: pick(block.title) };
@@ -450,24 +420,20 @@ export class GoodToKnow {
           })),
         };
       case 'contacts': {
-        // An entry whose `userId` resolves to nobody renders nothing — a
-        // deleted account, or the directory not read yet. Never a row saying
-        // "unknown": the couple pointed at a person, and half a person is
-        // worse than none. A block whose every entry is unresolvable renders
-        // no card at all, the same way an absent block does.
-        const rows = asContacts(block).entries.flatMap<ContactRow>((entry) => {
-          const person = people.get(entry.userId);
-          if (!person) return [];
-          const phone = person.phoneNumber ?? null;
-          return [
-            {
-              id: entry.userId,
-              name: `${person.firstName} ${person.lastName}`.trim(),
-              purpose: pick(entry.purpose),
-              phone,
-              tel: phone ? `tel:${stripped(phone)}` : null,
-            },
-          ];
+        // Every rendered field comes off the block itself (Amendment 2 §A):
+        // the entry carries the person, and `userId` never gates rendering —
+        // an entry without one names a person with no account and renders
+        // like any other. A block with no entries renders no card at all,
+        // the same way an absent block does.
+        const rows = asContacts(block).entries.map<ContactRow>((entry) => {
+          const phone = entry.phoneNumber ?? null;
+          return {
+            id: entry.id,
+            name: [entry.firstName, entry.lastName].filter(Boolean).join(' '),
+            purpose: pick(entry.purpose),
+            phone,
+            tel: phone ? `tel:${stripped(phone)}` : null,
+          };
         });
         return { ...base, contacts: rows.length > 0 ? rows : undefined };
       }

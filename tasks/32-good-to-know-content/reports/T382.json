@@ -1,0 +1,96 @@
+{
+  "task": "T382",
+  "status": "complete",
+  "summary": "The contacts renderer consumes T246's contract: entries carry firstName/lastName/phoneNumber/purpose on the block, userId never gates rendering, the drop-if-unresolved branch is deleted, and the whole GET /v1/profile read left the component with it. Same commit: the provenance clause in privacyPolicy.goodToKnow.body is rewritten in es/en/fr, and the drift T381 reported as uncaught is pinned from both sides - a unit test renders the block against a conflicting profile fixture; an e2e test asserts the three locales' provenance claims, proven to bite against the old copy.",
+  "acceptance": [
+    {
+      "criterion": "pnpm gen:api; pnpm gen:api:check green. Never hand-edit the generated model - hard rule 15.",
+      "met": true,
+      "evidence": "pnpm gen:api regenerated exactly one model: create-wedding-config-dto-good-to-know-inner-one-of3-entries-inner.ts now reads { id: string; firstName: string; lastName?: string; phoneNumber?: string; purpose: ...; userId?: string } - Amendment 2 SectionA's table verbatim. pnpm gen:api:check: 'committed client matches the contract (no drift)'. No file under src/app/core/api/ was hand-edited (git diff touches only the regenerated file)."
+    },
+    {
+      "criterion": "The contacts renderer reads firstName, lastName, phoneNumber, purpose from the block itself, not from a resolved profile. userId is optional metadata and must not gate rendering.",
+      "met": true,
+      "evidence": "good-to-know.ts's contacts case maps entries directly (entry.id, [entry.firstName, entry.lastName].filter(Boolean).join(' '), entry.phoneNumber, pick(entry.purpose)); no lookup, no filter on userId. The GET /v1/profile machinery (userProfileCollection, profilesById, the loaded$-guarded getAll) is deleted entirely - the component reads one endpoint again, the wedding config. Unit: 'reads a contact name and number off the block itself, never from a profile' passes against a mocked directory that deliberately carries a CONFLICTING copy for u-lucia; the stale name and number are asserted absent from the DOM.",
+      "notes": "The conflicting-directory mock (STALE_PROFILES) is kept wired in the spec on purpose: if anyone re-points the renderer at profiles, the stale copy leaks into the DOM and the test fails loudly instead of passing by coincidence."
+    },
+    {
+      "criterion": "Delete the drop-if-unresolved branch and its docstring (good-to-know.ts:448-460). Keep the empty-block behaviour: a block with no entries renders no card.",
+      "met": true,
+      "evidence": "The flatMap over people.get(entry.userId), the 'half a person is worse than none' docstring, and the ContactRow docstring describing profile resolution are all gone (git diff good-to-know.ts). Empty-block behaviour kept: rows.length > 0 ? rows : undefined is unchanged, and the unit test 'renders no card for a contacts block with no entries' (entries: []) asserts no .contacts-card and no .block."
+    },
+    {
+      "criterion": "The tel: call button renders when phoneNumber is present and is absent, not disabled, when it is not. Identifiers stay byte-identical across locales (hard rule 19a).",
+      "met": true,
+      "evidence": "Template unchanged in structure: @if (contact.tel) renders the anchor or nothing - there is no disabled state to reach. Unit: 'renders no call button, and no number, for an entry carrying no phone' (rows[2] has no .call-btn, meta is purpose only); 'renders identifiers byte-identically in every locale (Section5)' still passes - contact name and phone identical in EN and FR while the purpose line follows the locale."
+    },
+    {
+      "criterion": "In the same commit, rewrite the provenance clause in es/en/fr - 'those details come from their own profile on this site' is false the moment this task lands (Amendment 2 SectionD).",
+      "met": true,
+      "evidence": "Same commit, one string per locale. EN: 'It may include people who are not guests and have no account on this site at all. Whether or not someone has an account here, the couple types their name and number in directly - nothing is read from anyone's profile on this site, so what is shown only changes when the couple changes it.' ES: '...Tenga o no cuenta aqui esa persona, son los novios quienes escriben directamente su nombre y su numero: no se toma nada del perfil de nadie en este sitio...' FR: '...Que la personne ait un compte ici ou non, ce sont les mariés qui saisissent directement son nom et son numero : rien n'est repris du profil de qui que ce soit sur ce site...' T381's true parts survive verbatim in substance: the third-party disclosure, the offline-consent sentence, the bank-details half, 'None of this is visible before you sign in.' The literal phrase 'the couple types their name and number in directly' is kept so T381's e2e guard (public-surface.spec.ts:150-153) passes unchanged.",
+      "notes": "The rewrite also discloses SectionD's accepted staleness in guest terms ('what is shown only changes when the couple changes it') - the honest consequence of the block being the only source. i18n: 17 privacyPolicy.* keys per locale (T378's count), 792 flattened keys per file, key sets identical across es/en/fr, none empty."
+    },
+    {
+      "criterion": "Add the assertion that would have caught it: pin the notice's provenance claim to the renderer's actual source, so a later change to one side must fail on the other.",
+      "met": true,
+      "evidence": "Two halves, each naming the other in a comment. Renderer half: good-to-know.spec.ts 'reads a contact name and number off the block itself, never from a profile (Amendment 2 SectionD)' - renders against a conflicting profile fixture and asserts the stale copy never reaches the DOM, so re-pointing the renderer at profiles fails. Notice half: public-surface.spec.ts 'the notice claims the provenance the renderer actually has (T382, Amendment 2 SectionD)' - reads public/i18n/{es,en,fr}.json off disk and asserts per locale that the profile claim (/their own profile/, /su propio perfil/, /son propre profil/) is ABSENT and the couple-types claim is PRESENT, so rewording the notice back fails. PROVEN TO BITE: en.json was temporarily reverted to the pre-T382 clause and the e2e test failed on Desktop Chrome at the coupleClaim assertion; en.json was then restored from a scratchpad copy (grep confirms new clause present, old absent)."
+    },
+    {
+      "criterion": "Unit tests: an entry with no userId renders in full; an entry with no phoneNumber renders with no call button; ordering and the empty-block case unchanged from T375.",
+      "met": true,
+      "evidence": "'renders an entry with no userId in full - a person with no account (Amendment 2 SectionA)': c-rosa (no userId) renders name, purpose + number line, and a call button with href tel:+34600111222. 'renders no call button, and no number, for an entry carrying no phone': c-no-phone renders name + purpose, no button - and its dangling userId 'u-nobody' does not matter, pinning 'metadata, never a gate' from the other direction. Ordering ('renders the stored order, never a sort or a grouping by type') and both empty-state tests pass unchanged. Suite: 638 tests / 49 files, 0 failing."
+    },
+    {
+      "criterion": "Hard rule 11 gate green; report the baselines you measure.",
+      "met": true,
+      "evidence": "typecheck: exit 0, no output. lint: ESLint 5 pre-existing errors before and after (the 4 in src/app/shared/modal/ CLAUDE.md names + the unused import in guest-manager/modal/guest-profile-modal.ts T378/T381 both recorded), none in any file this task touched; stylelint 'no new violations (550 pre-existing, baselined)'; ds:verify 31/31 clean pairs, 0 drifting values. unit: 637 -> 638 (the 3 old contacts tests became 4), 0 failing. e2e: full suite 375 passed / 30 skipped vs T381's 370/30 - the +5 is the new provenance guard on 5 projects; the 5 design-parity-info failures that appeared mid-task (the api-mocks fixture still fed the old { userId, purpose } shape) were fixed by moving the fixture to the T246 shape, and the suite is fully green. build: pass, styles.css 2677 bytes unchanged, same pre-existing budget warnings as T375/T378."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": { "result": "pass", "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit - no output, exit 0." },
+    "lint": { "errors_before": 5, "errors_after": 5, "new_errors": [] },
+    "test": { "before": { "total": 637, "failing": 0 }, "after": { "total": 638, "failing": 0 }, "new_failures": [] },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2677,
+      "global_stylesheet_bytes_after": 2677,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget (802.95 kB vs 500 kB) - pre-existing",
+        "seating-plan.scss 9.58 kB / config-manager.scss 16.85 kB / guest-manager.scss 11.96 kB / milestones.scss 11.55 kB over the 8 kB per-component budget - all pre-existing; this task touched no .scss"
+      ]
+    }
+  },
+  "files": {
+    "added": ["tasks/32-good-to-know-content/reports/T382.json"],
+    "modified": [
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of3-entries-inner.ts",
+      "src/app/shared/good-to-know/good-to-know.ts",
+      "src/app/shared/good-to-know/good-to-know.html",
+      "src/app/shared/good-to-know/good-to-know.spec.ts",
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "e2e/public-surface.spec.ts",
+      "e2e/support/api-mocks.ts",
+      "e2e/layout/design-parity-info.spec.ts",
+      "tasks/32-good-to-know-content/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": ["public/i18n/en.json (temporarily, to prove the new e2e provenance guard fails on the pre-T382 clause; restored byte-for-byte from a scratchpad copy before commit)"]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "The e2e provenance guard pins exact phrases per locale (e.g. 'the couple types their name and number in directly', 'son los novios quienes escriben directamente...'). A legitimate future rewording of privacyPolicy.goodToKnow.body must update the guard's claims table in the same commit - that is the tripwire doing its job, but whoever edits the copy should know the failure is expected, not spurious.",
+      "surfaces_at": "Any future edit to privacyPolicy.goodToKnow.body in any locale (T380 is the nearest candidate; its delegation clause is additive and should not trip it)."
+    },
+    {
+      "risk": "src/app/screens/rsvp/rsvp.html and src/environments/release.ts carried uncommitted working-tree changes that predate this task. They were left untouched and are NOT in this task's commit; whoever owns them should commit or discard them.",
+      "surfaces_at": "The next git status on this checkout."
+    }
+  ],
+  "commits": [],
+  "decisions_needed": []
+}

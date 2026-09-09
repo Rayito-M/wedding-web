@@ -11,7 +11,11 @@ import { CreateWeddingConfigDtoGoodToKnowInnerOneOfHeadline } from './create-wed
 
 
 export interface CreateWeddingConfigDtoGoodToKnowInnerOneOf3EntriesInner { 
-    userId: string;
+    id: string;
+    firstName: string;
+    lastName?: string;
+    phoneNumber?: string;
     purpose: CreateWeddingConfigDtoGoodToKnowInnerOneOfHeadline;
+    userId?: string;
 }
 

@@ -74,38 +74,60 @@ const FAQ: CreateWeddingConfigDtoGoodToKnowInnerOneOf2 = {
 };
 
 /**
- * Since contract `0dc09db` a contacts entry is `{ userId, purpose }` — the
- * name and number are the referenced user's, resolved from `GET /v1/profile`.
- * `u-nobody` references an account this fixture's directory does not carry.
+ * Since `wedding-api` T246 (contract `6eb233e`, hub ADR-0046 Amendment 2 §A)
+ * a contacts entry carries the person itself — the couple's own transcription
+ * — and `userId` is optional metadata, never a render gate. Three deliberate
+ * shapes: `c-lucia` also has an account, `c-rosa` is the third-party case (no
+ * account at all), and `c-no-phone` carries no number plus a `userId` no
+ * directory resolves, which must not matter either.
  */
 const CONTACTS: CreateWeddingConfigDtoGoodToKnowInnerOneOf3 = {
   id: 'b-contacts',
   type: 'contacts',
   title: L('Ask us'),
   entries: [
-    { userId: 'u-lucia', purpose: L('Maid of honour') },
-    { userId: 'u-no-phone', purpose: L('Travel and transfers') },
-    { userId: 'u-nobody', purpose: L('Dangling reference') },
+    {
+      id: 'c-lucia',
+      firstName: 'Lucía',
+      lastName: 'Ferrer',
+      phoneNumber: '+34 691 776 402',
+      purpose: L('Maid of honour'),
+      userId: 'u-lucia',
+    },
+    {
+      id: 'c-rosa',
+      firstName: 'Rosa',
+      lastName: 'Delgado',
+      phoneNumber: '+34 600 111 222',
+      purpose: L('Venue coordinator'),
+    },
+    {
+      id: 'c-no-phone',
+      firstName: 'Christophe',
+      lastName: 'Groom',
+      purpose: L('Travel and transfers'),
+      userId: 'u-nobody',
+    },
   ],
 };
 
-/** The directory `GET /v1/profile` hands back. `u-no-phone` is the shape a
- *  guest sees for everyone: `phoneNumber` is couple-gated on the API side. */
-const PROFILES: UserProfileDto[] = [
+/**
+ * A deliberately CONFLICTING people directory — the provenance trap (T382,
+ * hub ADR-0046 Amendment 2 §D). The component no longer reads
+ * `GET /v1/profile` at all; this mock stays wired so that if anyone ever
+ * re-points the renderer at profiles, `u-lucia`'s stale copy leaks into the
+ * DOM and the provenance test below fails loudly instead of passing by
+ * coincidence. The block's copy is the accepted, staleable truth: a profile
+ * edit must NOT update the card.
+ */
+const STALE_PROFILES: UserProfileDto[] = [
   {
     id: 'u-lucia',
-    firstName: 'Lucía',
-    lastName: 'Ferrer',
+    firstName: 'Lucía-Renamed',
+    lastName: 'Profile-Copy',
     preferredLang: 'es',
     role: 'guest',
-    phoneNumber: '+34 691 776 402',
-  },
-  {
-    id: 'u-no-phone',
-    firstName: 'Christophe',
-    lastName: 'Groom',
-    preferredLang: 'fr',
-    role: 'groom',
+    phoneNumber: '+34 600 000 000',
   },
 ];
 
@@ -178,7 +200,7 @@ describe('GoodToKnow — couple-authored blocks (T375, hub ADR-0046)', () => {
         {
           provide: WeddingUserProfileService,
           useValue: {
-            profileControllerGetAllV1: () => of({ items: PROFILES, nextCursor: null }),
+            profileControllerGetAllV1: () => of({ items: STALE_PROFILES, nextCursor: null }),
           },
         },
         { provide: TranslateLanguageService, useValue: { currentLang: lang } },
@@ -427,30 +449,50 @@ describe('GoodToKnow — couple-authored blocks (T375, hub ADR-0046)', () => {
     expect(fixture.nativeElement.querySelectorAll('a[href*="wa.me"]').length).toBe(0);
   });
 
-  it('resolves a contact name and number from the referenced user profile', async () => {
+  it('reads a contact name and number off the block itself, never from a profile (Amendment 2 §D)', async () => {
     await create([CONTACTS]);
 
+    // The mocked directory deliberately carries a conflicting copy for
+    // `u-lucia` ('Lucía-Renamed', '+34 600 000 000'). The block wins: the
+    // stored contact is an accepted, staleable second copy, and re-resolving
+    // it from the profile is exactly the drift this assertion exists to
+    // catch. Its other half is the privacy notice — `e2e/public-surface.spec.ts`
+    // pins `privacyPolicy.goodToKnow.body` to this same block provenance
+    // (T382) — so flipping either side alone fails a test.
     const names = queryAll('.contact-name').map((n) => n.textContent?.trim());
-    // `u-nobody` resolves to no account and renders no row at all — never a
-    // half-row saying "unknown".
-    expect(names).toEqual(['Lucía Ferrer', 'Christophe Groom']);
+    expect(names).toEqual(['Lucía Ferrer', 'Rosa Delgado', 'Christophe Groom']);
     expect(text('.contact-row .contact-meta')).toBe('Maid of honour EN · +34 691 776 402');
+    const dom = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(dom).not.toContain('Lucía-Renamed');
+    expect(dom).not.toContain('+34 600 000 000');
   });
 
-  it('renders no call button, and no number, for a profile carrying no phone', async () => {
+  it('renders an entry with no userId in full — a person with no account (Amendment 2 §A)', async () => {
+    await create([CONTACTS]);
+
+    const rosa = queryAll('.contact-row')[1];
+    expect(rosa.querySelector('.contact-name')?.textContent?.trim()).toBe('Rosa Delgado');
+    expect(rosa.querySelector('.contact-meta')?.textContent?.trim()).toBe(
+      'Venue coordinator EN · +34 600 111 222',
+    );
+    expect(rosa.querySelector('.call-btn')?.getAttribute('href')).toBe('tel:+34600111222');
+  });
+
+  it('renders no call button, and no number, for an entry carrying no phone', async () => {
     await create([CONTACTS]);
 
     const rows = queryAll('.contact-row');
-    // `phoneNumber` is couple-gated on the API side, so for a guest it is
-    // simply absent — the name and purpose still render, the button does not.
-    expect(rows[1].querySelector('.call-btn')).toBeNull();
-    expect(rows[1].querySelector('.contact-meta')?.textContent?.trim()).toBe(
+    // No number means no line and no button — absent, never disabled. The
+    // entry's dangling `userId` ('u-nobody') must not matter either way: it
+    // is metadata, not a render gate.
+    expect(rows[2].querySelector('.call-btn')).toBeNull();
+    expect(rows[2].querySelector('.contact-meta')?.textContent?.trim()).toBe(
       'Travel and transfers EN',
     );
   });
 
-  it('renders no card at all when every contact reference is unresolvable', async () => {
-    await create([{ ...CONTACTS, entries: [{ userId: 'u-nobody', purpose: L('Nobody') }] }]);
+  it('renders no card for a contacts block with no entries', async () => {
+    await create([{ ...CONTACTS, entries: [] }]);
 
     expect(fixture.nativeElement.querySelector('.contacts-card')).toBeNull();
     expect(queryAll('.block').length).toBe(0);

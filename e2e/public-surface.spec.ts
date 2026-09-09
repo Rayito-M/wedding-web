@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { test, expect } from '@playwright/test';
 
 import { CONFIG_PUBLIC, installApiMocks } from './support/api-mocks';
@@ -147,5 +150,52 @@ test.describe('the public surface carries no Good to know content (T378, hub ADR
       notice,
       'the notice must say the couple supplies that name and number itself',
     ).toMatch(/the couple types their name and number in directly/i);
+  });
+
+  test('the notice claims the provenance the renderer actually has (T382, Amendment 2 §D)', async () => {
+    // The other half of this pin is a unit test:
+    // `src/app/shared/good-to-know/good-to-know.spec.ts` proves the renderer
+    // reads a contact's name and number off the block itself, against a
+    // deliberately conflicting profile fixture. This half pins the notice to
+    // that same truth in all three locales — so re-pointing the renderer at
+    // profiles, or rewording the notice back to profile provenance, each
+    // fails a test on its own. T381's report is explicit that until T382
+    // nothing caught this drift; the clause it flagged ("those details come
+    // from their own profile on this site") became false the commit the
+    // renderer switched to the T246 block shape, which is why the false and
+    // true claims are asserted separately rather than as one regex.
+    const body = (locale: string): string =>
+      (
+        JSON.parse(
+          readFileSync(path.resolve(__dirname, `../public/i18n/${locale}.json`), 'utf8'),
+        ) as { privacyPolicy: { goodToKnow: { body: string } } }
+      ).privacyPolicy.goodToKnow.body;
+
+    const claims = {
+      es: {
+        profileClaim: /su propio perfil/i,
+        coupleClaim: /son los novios quienes escriben directamente su nombre y su número/i,
+      },
+      en: {
+        profileClaim: /their own profile/i,
+        coupleClaim: /the couple types their name and number in directly/i,
+      },
+      fr: {
+        profileClaim: /son propre profil/i,
+        coupleClaim: /les mariés qui saisissent directement son nom et son numéro/i,
+      },
+    } as const;
+
+    for (const [locale, claim] of Object.entries(claims)) {
+      const notice = body(locale);
+      expect(
+        notice,
+        `${locale}: the notice must not claim contact details come from a profile`,
+      ).not.toMatch(claim.profileClaim);
+      expect(
+        notice,
+        `${locale}: the notice must say the couple types the details in itself`,
+      ).toMatch(claim.coupleClaim);
+    }
   });
 });

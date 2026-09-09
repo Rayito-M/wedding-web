@@ -196,19 +196,37 @@ function goodToKnowBlocks(): unknown[] {
     {
       id: '01JAAAAAAAAAAAAAAAAAAAAAA4',
       type: 'contacts',
-      // Since contract `0dc09db` an entry is `{ userId, purpose }` — a
-      // reference to a user of the system, whose name and number the web
-      // resolves from `GET /v1/profile` (stubbed below). The kit still draws
-      // three names and three numbers inline; only the first of these has a
-      // `phoneNumber` in the directory, so the other two render name +
-      // purpose and no call button, which is exactly what a guest sees when
-      // the API's couple-gating withholds a number.
+      // Since `wedding-api` T246 (hub ADR-0046 Amendment 2 §A) an entry
+      // carries the person itself — the couple's own transcription — and
+      // `userId` is optional metadata, never a render gate. Exactly one
+      // entry carries a `phoneNumber`, so one call button renders and the
+      // other two rows show name + purpose and no button. The third entry
+      // has no `userId` at all: the third-party case (a person with no
+      // account on this site), which must render like any other.
       title: L('Ask us anything'),
       entries: [
-        [COUPLE_ID, 'Anything about the day'],
-        ['e2e-guest-0', 'Travel, transfers, logistics'],
-        ['e2e-guest-1', 'Maid of honour — for surprises'],
-      ].map(([userId, purpose]) => ({ userId, purpose: L(purpose) })),
+        {
+          id: '01JCCCCCCCCCCCCCCCCCCCCCC1',
+          firstName: 'Sara',
+          lastName: 'Bride',
+          phoneNumber: '+34 655 012 118',
+          purpose: L('Anything about the day'),
+          userId: COUPLE_ID,
+        },
+        {
+          id: '01JCCCCCCCCCCCCCCCCCCCCCC2',
+          firstName: 'Guest0',
+          lastName: 'Fixture0',
+          purpose: L('Travel, transfers, logistics'),
+          userId: 'e2e-guest-0',
+        },
+        {
+          id: '01JCCCCCCCCCCCCCCCCCCCCCC3',
+          firstName: 'Amparo',
+          lastName: 'Delgado',
+          purpose: L('Maid of honour — for surprises'),
+        },
+      ],
     },
     {
       id: '01JAAAAAAAAAAAAAAAAAAAAAA5',
