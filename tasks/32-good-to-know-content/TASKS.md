@@ -101,16 +101,27 @@
   (reference, with the two corrections above); counterpart `wedding-api` **T244**
 
 ### T376 — Settings grows an eighth section: authoring Good to know
-- **Status:** blocked — **not on the design any more, on a reconciliation.** A design now exists
-  (Claude Design, 2026-09-08: `SECTIONS` is an 8-tuple, `['info', 'Good to know', '07']`, and
-  Appearance moved to `'08'`). But it proposes a **different data model** from the one this repo's
-  client and the API already ship, in five ways — see hub **ADR-0046 Amendment 1 §C** for the table.
-  This is therefore a **reconciliation task, not a build**: somebody must decide, row by row, which
-  side wins, and rows 1 and 5 contradict decisions the Product Owner already made. Do not start it
-  by picking one and coding.
-  Two further preconditions: `../wedding-ui-design` is **stale** on disk (still the 7-tuple, no
-  `info.data.js`) so run its `/pipeline` sync first, and §B of that amendment — the contacts shape —
-  must be settled, since it changes what this screen authors.
+- **Status:** todo — **the reconciliation is resolved; this is a build again** (2026-09-09).
+  Blocked only on `wedding-api` **T246** landing in the contract (the contacts shape), and on the
+  one open row below.
+  **How the five divergences of hub ADR-0046 Amendment 1 §C were settled** — four of them by
+  decisions the Product Owner had already made in the feature description, which the design system
+  simply predates:
+  - **Row 1, ordering — the contract wins.** The couple's order is what guests read
+    (`docs/features/good-to-know-content.md` §5.5 answer: *"order need to be the same as the one in
+    settings"*). The DS's fixed named objects have no ordering; build the ordered array.
+  - **Row 2, contacts — neither.** `wedding-api` T246 defines the shape: `firstName`, optional
+    `lastName`, optional E.164 `phoneNumber`, localized `purpose`, optional `userId`. **Wait for it**
+    — do not author against `{userId, purpose}`.
+  - **Row 3, `day-line` — the contract wins.** Three authored variants, PO-requested (*"2 entry for
+    each phase of the RSVP (open, Close) and after the wedding"*). The DS has no editor for it;
+    build one.
+  - **Row 4, `note` — the contract wins.** PO-requested (*"anticipate free-form extra blocks"*), and
+    §1 records that it exists precisely so the block-type enum never has to grow.
+  - **Row 5, swatch names — OPEN, and the only thing still owed.** See the acceptance bullet below;
+    do not guess it.
+  Precondition unchanged: `../wedding-ui-design` is **stale** on disk (still the 7-tuple, no
+  `info.data.js`). Run its `/pipeline` sync before measuring anything against the kit.
 - **Owner:** agent (implementer)
 - **Depends on:** T375 (the block types and the generated client), the DS design above
 - **ADR:** hub **ADR-0046** §2/§3/§8; ADR-0045 §3 (Settings inside Manage, its sections nested under
@@ -135,6 +146,14 @@
   - Save rides the existing config `PATCH` path (`config-manager.ts` → `wedding-config-data.service`
     → `PATCH /v1/config`), sending the **whole** `goodToKnow` array. Section Save stays in the
     section header (ADR-0045 §3).
+  - **Row 5 — the swatch names. Do not implement either side until the hub says which.** The DS
+    stores them at `info.dressCode.palettes[themeId]` but edits them from **Appearance**, so one
+    stored value would have two owning sections; and keying them by theme means switching `themeId`
+    silently swaps which set a guest reads, possibly to one never filled. Hub ADR-0046 §2 currently
+    calls a stored swatch a **defect** (they are derived from the theme and therefore cannot go
+    stale). If the answer is "keep derived", there is nothing to build here and Appearance is
+    untouched. If it is "adopt names", they belong in the Good to know section, not Appearance, and
+    §2 needs amending first. **Stop and ask rather than picking one.**
   - **While here, fix a stale docstring found by the feature draft:** `config-manager.ts:158-160`
     still claims the save is local-only, contradicted by its own `save()`. One-line correction, in
     this task's commit, called out in the report.
