@@ -272,3 +272,37 @@
 - **Refs:** `tasks/32-good-to-know-content/reports/T378.json` → `risks[]`;
   `src/app/screens/privacy-policy/privacy-policy.{ts,html}`; `e2e/public-surface.spec.ts:126-143`;
   hub `SPEC.md` Non-functional (delegation bullet)
+
+### T381 — The privacy notice widens: the third-party case now ships
+- **Status:** todo — **gates the v1.3.0 deploy** (the notice is narrower than what ships)
+- **Owner:** agent (implementer)
+- **Depends on:** `wedding-api` **T246** (landed, `de5385b`; contract `6eb233e`)
+- **ADR:** hub **ADR-0046 Amendment 2 §C**; ADR-0027 (the notice); ADR-0046 §7 (the original *yes*)
+- **Why:** T378 wrote the notice **without** "including people who are not guests" on the explicit
+  instruction of Amendment 1 §B, because the capability did not exist. **T246 built it.** A contacts
+  entry with no `userId` now names a person with no account, and their name and phone number are
+  stored on the CONFIG row and shown to every signed-in guest. The notice must say so. Of the two
+  directions to be wrong in, a notice that under-discloses is the worse one.
+- **Acceptance:**
+  - `privacyPolicy.goodToKnow.body` in **es/en/fr** widens to disclose that the people the couple
+    names **may not be guests and may have no account on this site**, and that in that case the
+    couple types their name and number in directly. Keep T378's voice and its true parts: the couple
+    chooses, can remove anyone at any time, none of it is visible before sign-in.
+  - **Consent stays offline and must not be implied to be otherwise** (ADR-0046 §7): the app has no
+    consent flow and the person named has no account and no way to act in-app. Do not write anything
+    that suggests they were asked, or can object, through this site.
+  - **Invert the guard in the same commit.** `e2e/public-surface.spec.ts:143` currently asserts the
+    notice does **not** match `/who are not guests|not a guest/i`. That assertion was correct when
+    written and is wrong now — it will fail the corrected copy. Replace it with a **positive**
+    assertion that the third-party disclosure is present, so the tripwire keeps working in the
+    direction that is now true. **A green suite is not evidence here** until you have done this: the
+    suite currently asserts the stale requirement.
+  - Re-check the other two tests in that file still pass unchanged — nothing about the leak guard
+    changes, and if one of them breaks, that is a real finding, not a fixture to update.
+  - No missing-key warnings in any locale; report the resolved `privacyPolicy.*` count for all three
+    (T378 measured 17).
+  - Hard rule 11 gate green.
+- **Not in scope:** the **delegation** disclosure — that is **T380**, a separate pre-existing gap,
+  and merging the two would hide one behind the other in the history.
+- **Refs:** hub ADR-0046 Amendment 2 §C; `e2e/public-surface.spec.ts:126-144`;
+  `src/app/screens/privacy-policy/`; T378 (the narrow version and why it was narrow); T380
