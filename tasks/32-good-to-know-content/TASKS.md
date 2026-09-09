@@ -12,9 +12,11 @@
 > a guest reads here comes from the config; every string *around* it (section chrome, buttons,
 > empty states) is ordinary i18n.
 >
-> Sequence: **T375 → T377**, with **T376 blocked** until the design system has an eighth Settings
-> section (hub ADR-0046 §8 — the kit's `SECTIONS` is a fixed 7-tuple and the hub may not draw it).
-> **T378 is independent** and can run at any point.
+> Sequence, as it actually went: **T375 done** and shipped in v1.3.0 with the guest strings (so
+> **T377's guest half is done** and its authoring half is split to **T379**). **T378** is
+> independent and gates the v1.3.0 deploy. **T376 is still blocked, but no longer for want of a
+> design** — one exists as of 2026-09-08 and proposes a *different data model* from the one shipped;
+> it is now a reconciliation, described in hub **ADR-0046 Amendment 1 §C**. T379 waits behind it.
 >
 > Phase is done when: a signed-in guest reads couple-authored content in es/en/fr in the couple's
 > order; the couple can write and re-order every field in Settings; nothing from this feature is
@@ -99,10 +101,16 @@
   (reference, with the two corrections above); counterpart `wedding-api` **T244**
 
 ### T376 — Settings grows an eighth section: authoring Good to know
-- **Status:** blocked — on the design system. The kit's `SECTIONS` is a fixed 7-tuple
-  (`ScreenConfigManager.jsx:55-63`) and **no design exists for the eighth section**. Under hub
-  ADR-0044 §4 that design is DS-repo work queued in its ledger; inventing the screen here is
-  exactly what the behavioural lane exists to prevent. Unblocks when the DS ships and queues it.
+- **Status:** blocked — **not on the design any more, on a reconciliation.** A design now exists
+  (Claude Design, 2026-09-08: `SECTIONS` is an 8-tuple, `['info', 'Good to know', '07']`, and
+  Appearance moved to `'08'`). But it proposes a **different data model** from the one this repo's
+  client and the API already ship, in five ways — see hub **ADR-0046 Amendment 1 §C** for the table.
+  This is therefore a **reconciliation task, not a build**: somebody must decide, row by row, which
+  side wins, and rows 1 and 5 contradict decisions the Product Owner already made. Do not start it
+  by picking one and coding.
+  Two further preconditions: `../wedding-ui-design` is **stale** on disk (still the 7-tuple, no
+  `info.data.js`) so run its `/pipeline` sync first, and §B of that amendment — the contacts shape —
+  must be settled, since it changes what this screen authors.
 - **Owner:** agent (implementer)
 - **Depends on:** T375 (the block types and the generated client), the DS design above
 - **ADR:** hub **ADR-0046** §2/§3/§8; ADR-0045 §3 (Settings inside Manage, its sections nested under
@@ -141,7 +149,11 @@
   `src/app/core/data/wedding-config-data.service.ts:44-55`
 
 ### T377 — Good to know strings in es/en/fr
-- **Status:** todo
+- **Status:** **done (guest half, 2026-09-09)** — the guest-facing strings shipped inside T375 and
+  are verified in all three locales. The **authoring-form half is split out to T379**, which is
+  parked with T376: those strings cannot be written until the reconciliation decides what the form
+  contains. Splitting rather than leaving this `todo` because an 80%-complete `todo` misreports the
+  phase.
 - **Owner:** agent (implementer)
 - **Depends on:** T375 (and T376's strings once it unblocks)
 - **ADR:** hub ADR-0046; ADR-0009/ADR-0028 §4 (UI strings are governed separately from stored
@@ -169,9 +181,14 @@
   precedent — the notice already has to say a delegate sees someone else's whole reply)
 - **Acceptance:**
   - The privacy policy copy gains, in **es/en/fr**, a plain-language line that the site may show
-    **contact details for people the couple names — including people who are not guests** — to
-    signed-in guests, and that those details are provided by the couple. Hub ADR-0046 §7 decided
-    **yes** on this question deliberately; it is not optional polish.
+    **contact details for people the couple names** to signed-in guests. Hub ADR-0046 §7 decided
+    **yes** on disclosing this deliberately; it is not optional polish.
+  - **Word it for what ships, and do not write "including people who are not guests"** (hub
+    ADR-0046 **Amendment 1 §B**, 2026-09-09). A contact is currently a reference to a *user of this
+    system*, so the third-party/maid-of-honour case §7 describes is decided but **not built**. A
+    privacy notice that describes a capability the system does not have is worse than one that is
+    merely narrow — it invites a reader to assume data is being collected that is not. The notice
+    widens on the day that case ships, not before.
   - The same copy covers the couple's own bank details being visible to signed-in guests.
   - An e2e assertion that the **unauthenticated** landing page and the `GET /v1/config/public`
     response the app consumes carry **no** Good to know content — no IBAN, no Bizum number, no
@@ -180,3 +197,23 @@
   - Hard rule 11 gate green.
 - **Refs:** hub ADR-0046 §7; hub `SPEC.md` → Non-functional (the third-party-contacts clause);
   hub `GLOSSARY.md` → *Public wedding info*, *Good-to-know contact*
+
+### T379 — The authoring form's strings, in es/en/fr
+- **Status:** blocked — on T376's reconciliation (split out of T377, 2026-09-09)
+- **Owner:** agent (implementer)
+- **Depends on:** T376 (there is no form to label until the data model is settled)
+- **ADR:** hub **ADR-0046** §5 and Amendment 1 §C; ADR-0009 / ADR-0028 §4 (UI strings are governed
+  separately from stored content)
+- **Acceptance:**
+  - Every **UI** string the authoring form introduces exists in es/en/fr, `es` first: field labels,
+    validation messages, the locale-disclosure control, the ordering affordance, and whatever the
+    reconciliation adds or removes.
+  - **No content string.** The same rule T377 shipped under and hard rule 19 states: a dress-code
+    line, an FAQ question or an IBAN never appears in a locale file. If the reconciliation adopts
+    the DS's swatch **names** (Amendment 1 §C row 5), note that those are *authored content* and do
+    not belong here either.
+  - No missing-key warnings in any locale; resolve every new key against all three files (T365's
+    method) and report the number.
+  - Voice: warm and personal, sentence case, per the DS content fundamentals.
+  - Hard rule 11 gate green.
+- **Refs:** T377 (the guest half, done); T365 (key-parity method); hub ADR-0046 Amendment 1
