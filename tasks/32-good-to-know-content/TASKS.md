@@ -219,7 +219,12 @@
 - **Refs:** T377 (the guest half, done); T365 (key-parity method); hub ADR-0046 Amendment 1
 
 ### T380 — The privacy notice still does not say a delegate reads someone else's whole reply
-- **Status:** todo — **pre-existing gap, found by T378, not caused by it**
+- **Status:** todo — **pre-existing gap, found by T378, not caused by it. Does not gate v1.3.0**
+  (Product Owner, 2026-09-09): **no delegation has been created in production yet**, so no guest's
+  reply is currently readable by anyone the notice failed to warn about. That is what makes this a
+  bug to fix after the release rather than a disclosure failure already in effect — and it is also
+  the thing that expires. The moment the couple grants the first delegation, the gap stops being
+  theoretical and this task becomes urgent. Fix it before that happens, not after.
 - **Owner:** agent (implementer)
 - **Depends on:** —
 - **ADR:** hub **ADR-0039** §6; ADR-0027 (the notice); `SPEC.md` Non-functional
