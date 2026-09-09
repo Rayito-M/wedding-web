@@ -52,9 +52,16 @@ const GUEST_PROFILE = {
   role: 'guest',
 };
 
-/** `WeddingConfigPublicResponseDto` — loaded unconditionally by
- *  `ConfigurationService` on app bootstrap, before anything else renders. */
-const CONFIG_PUBLIC = {
+/**
+ * `WeddingConfigPublicResponseDto` — loaded unconditionally by
+ * `ConfigurationService` on app bootstrap, before anything else renders.
+ *
+ * Exported so `public-surface.spec.ts` (T378) can build a deliberately
+ * poisoned variant of the REAL shape rather than a hand-made stand-in: a leak
+ * test that starts from a different document proves less than one that starts
+ * from this one and adds the forbidden field.
+ */
+export const CONFIG_PUBLIC = {
   id: 'e2e-config-1',
   version: 1,
   brideName: 'Sara',

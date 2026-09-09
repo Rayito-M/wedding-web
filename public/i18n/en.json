@@ -1089,7 +1089,11 @@
   },
   "privacyPolicy": {
     "title": "Privacy policy",
-    "intro": "This page explains how the site uses Google services — Analytics, to understand overall visitor traffic, and Maps, to show you where the wedding takes place.",
+    "intro": "This page explains what you can see here about other people, and how the site uses Google services — Analytics, to understand overall visitor traffic, and Maps, to show you where the wedding takes place.",
+    "goodToKnow": {
+      "title": "Contacts and bank details",
+      "body": "When you sign in, the “Good to know” section may show contact details for people the couple has chosen — their name and what you can ask them about, taken from their own profile on this site. The couple decides who appears there and can remove anyone at any time. The same section may show the couple's own bank details — account holder, IBAN, BIC and Bizum number — in case you would like to send a gift: it is text you can copy, and no payment ever passes through this site. None of this is visible before you sign in."
+    },
     "analytics": {
       "title": "Google Analytics",
       "body": "We use Google Analytics to see aggregate traffic on this site — things like visits, page views, and general device and geographic trends. We do not track individual actions or set up custom event tracking."

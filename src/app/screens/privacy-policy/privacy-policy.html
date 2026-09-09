@@ -10,6 +10,21 @@
     <h1>{{ 'privacyPolicy.title' | translate }}</h1>
     <p class="intro">{{ 'privacyPolicy.intro' | translate }}</p>
 
+    <!--
+      What signed-in guests can see about other people (hub ADR-0046 §7, as
+      amended 2026-09-09; ADR-0027 is the notice this extends). Worded for
+      what SHIPS: a Good-to-know contact is today a reference to a user of
+      this system, so this says the couple may show contact details for
+      people they name — and deliberately NOT "including people who are not
+      guests", which Amendment 1 §B records as intended but unbuilt. A notice
+      describing a capability the system lacks is worse than one that is
+      merely narrow; it widens on the day that mechanism ships, not before.
+    -->
+    <section>
+      <h2>{{ 'privacyPolicy.goodToKnow.title' | translate }}</h2>
+      <p>{{ 'privacyPolicy.goodToKnow.body' | translate }}</p>
+    </section>
+
     <section>
       <h2>{{ 'privacyPolicy.analytics.title' | translate }}</h2>
       <p>{{ 'privacyPolicy.analytics.body' | translate }}</p>

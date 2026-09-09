@@ -1,0 +1,124 @@
+{
+  "task": "T378",
+  "status": "complete_with_deviation",
+  "summary": "The privacy notice gains a 'Contacts and bank details' section in es/en/fr, above the Google disclosures, with the intro widened to announce both. Worded for what ships per ADR-0046 Amendment 1 SectionB: the couple may show contact details for people they choose and their own bank details to signed-in guests - deliberately WITHOUT 'including people who are not guests', which the amendment records as intended but unbuilt. e2e/public-surface.spec.ts adds three tests, including a poisoned public response that must still render nothing pre-sign-in (fail-on-injection proven).",
+  "acceptance": [
+    {
+      "criterion": "The privacy policy copy gains, in es/en/fr, a plain-language line that the site may show contact details for people the couple names - including people who are not guests - to signed-in guests, and that those details are provided by the couple.",
+      "met": "partial",
+      "evidence": "privacyPolicy.goodToKnow.title/.body added to all three locale files, rendered at privacy-policy.html:23-26. The copy states the section is visible after sign-in, that it may show contact details for people the couple has chosen, that the details are taken from those people's own profile on this site, and that the couple decides who appears and can remove anyone at any time. The phrase 'including people who are not guests' is deliberately ABSENT - see deviations[0]; ADR-0046 Amendment 1 SectionB instructs exactly this, and the e2e assertion 'the notice must not promise the unbuilt third-party case' locks it in so a later edit cannot quietly add it back.",
+      "notes": "The copy also omits any promise of a contact's PHONE number: Amendment 1 SectionB leaves undecided whether the API populates phoneNumber for a referenced contact and says that question 'owes its own ADR-0027 line'. Today a signed-in guest sees a name and a purpose line only, and the notice describes that."
+    },
+    {
+      "criterion": "The same copy covers the couple's own bank details being visible to signed-in guests.",
+      "met": true,
+      "evidence": "Second half of privacyPolicy.goodToKnow.body in each locale: names account holder, IBAN, BIC and the Bizum number explicitly, says it is text you can copy, and states that no payment ever passes through the site (SPEC.md's narrowed registry non-goal, ADR-0046 Section6). e2e assertion: expect(notice).toMatch(/bank details/i) and expect(notice).toMatch(/IBAN/)."
+    },
+    {
+      "criterion": "An e2e assertion that the unauthenticated landing page and the GET /v1/config/public response the app consumes carry no Good to know content - no IBAN, no Bizum number, no contact phone, no block of any kind.",
+      "met": true,
+      "evidence": "e2e/public-surface.spec.ts, 3 tests x 5 projects, all green. (1) 'GET /v1/config/public - the response the app consumes has no goodToKnow' reads the body off the wire via page.on('response') rather than asserting against the constant this suite serves, checks the key is absent and that the JSON matches no /iban|bizum|dress-code|day-line/i. (2) 'a leaked block still renders nothing before sign-in' overrides the public route with CONFIG_PUBLIC plus a forbidden goodToKnow array carrying an IBAN, a BIC, a Bizum number and a contact phone (in the pre-0dc09db inline shape, deliberately - a leak need not arrive in an expected shape), then asserts none of the five strings appear in the rendered body of BOTH unauthenticated routes (/ and /privacy-policy) and that app-good-to-know is mounted on neither.",
+      "notes": "Fail-on-injection proven, not assumed: injecting `<span>ES91 2100 0418 4502 0005 1332</span>` into welcome.html made test (2) fail with 'ES91 2100 0418 4502 0005 1332 must not reach an unauthenticated visitor' at public-surface.spec.ts:110; the file was restored from a scratch copy (git diff --stat clean) and the spec went green again."
+    },
+    {
+      "criterion": "Hard rule 11 gate green (pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e).",
+      "met": true,
+      "evidence": "typecheck exit 0, no output. lint: 5 ESLint errors before and after - all pre-existing, none in a file this task opened (4 in shared/modal, CLAUDE.md's known exception, plus the unused WeddingGuestsService import in guest-manager/modal/guest-profile-modal.ts); stylelint 'no new violations (550 pre-existing, baselined)'; ds:verify '31/31 clean pairs; 0 drifting values'. unit: 637 -> 637, 0 failing (this task adds no unit test - it adds copy and an e2e guard). e2e: 355 -> 370 passed, 30 skipped both before and after (+15 = 3 new tests x 5 projects). i18n key parity: all 17 privacyPolicy.* keys the template references resolve in es, en and fr - 0 missing."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "The task's own wording: a line that the site may show contact details for people the couple names 'including people who are not guests'.",
+      "to": "The same line without that clause - contact details for people the couple has chosen, taken from those people's own profile on this site.",
+      "reason": "ADR-0046 Amendment 1 SectionB (2026-09-09), which post-dates the task text: Section7's third-party intent is reaffirmed but was made unimplementable by Amendment 1 SectionA (a contacts entry is a userId, which cannot name someone with no account). The amendment instructs this task by name - 'wedding-web T378 is worded for signed-in guests seeing couple-entered contact details and the couple's own bank details - deliberately without \"including people who are not guests\", because a privacy notice that describes a capability the system lacks is worse than one that is merely narrow.' SPEC.md:162-163 carries the same distinction.",
+      "authorized_by": "hub ADR-0046 Amendment 1 SectionB, and the user's instruction for this task ('Read Amendment 1 SectionB before writing the copy - word it for what ships').",
+      "verified_how": "Read against the shipped code, not just the ADR: WeddingConfigPublicResponseDto carries no goodToKnow (grep of the generated model), and CreateWeddingConfigDtoGoodToKnowInnerOneOf3EntriesInner is exactly { userId, purpose } - there is no field in which a non-user's name or number could be stored, so the clause would describe something the system cannot do."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit - no output, exit 0."
+    },
+    "lint": {
+      "errors_before": 5,
+      "errors_after": 5,
+      "new_errors": []
+    },
+    "test": {
+      "before": {
+        "total": 637,
+        "failing": 0
+      },
+      "after": {
+        "total": 637,
+        "failing": 0
+      },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2677,
+      "global_stylesheet_bytes_after": 2677,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget (802.95 kB vs 500 kB) - pre-existing",
+        "config-manager.scss 16.85 kB / guest-manager.scss 11.96 kB / milestones.scss 11.55 kB / seating-plan.scss 9.58 kB over the 8 kB per-component budget - all pre-existing; this task touched no .scss"
+      ]
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/public-surface.spec.ts",
+      "tasks/32-good-to-know-content/reports/T378.json"
+    ],
+    "modified": [
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "src/app/screens/privacy-policy/privacy-policy.html",
+      "src/app/screens/privacy-policy/privacy-policy.ts",
+      "e2e/support/api-mocks.ts",
+      "tasks/32-good-to-know-content/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/app/screens/welcome/welcome.html",
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/app/screens/privacy-policy/privacy-policy.ts",
+      "why": "Docstring only, no behaviour: the class doc said the screen discloses 'the app's use of Google services', which stopped being the whole truth the moment a non-Google section landed above them. Also records the phoneNumber question Amendment 1 SectionB leaves open, and the inherited ADR-0039 delegate gap (see risks)."
+    },
+    {
+      "path": "public/i18n/{es,en,fr}.json - privacyPolicy.intro",
+      "why": "The intro read 'This page explains how the site uses Google services', which would have been false with a contacts/bank section directly beneath it. Widened by one clause in each locale to announce both halves; no other existing string was touched."
+    },
+    {
+      "path": "e2e/support/api-mocks.ts",
+      "why": "CONFIG_PUBLIC changed from a module-local const to an export, so the leak test can poison the REAL fixture shape rather than a hand-made stand-in. No value in it changed."
+    },
+    {
+      "path": "src/app/screens/welcome/welcome.html",
+      "why": "Not a change - injected one line to prove the leak assertion fails on a real leak, then restored from a scratch copy. `git diff --stat` on it is empty."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "The notice still does not say that a DELEGATE reads someone else's whole reply, including named children, ages, dietary preferences and allergies. SPEC.md:161 requires the ADR-0027 notice to say so (hub ADR-0039), and no section does. T378's scope was Good to know, so this was recorded in the screen's docstring rather than fixed here - but it is a live gap in a legal notice, not a nicety.",
+      "surfaces_at": "Any review of the privacy notice against SPEC.md's Non-functional clause; needs its own task."
+    },
+    {
+      "risk": "The copy is worded for a contacts block that shows a name and a purpose line and no phone number. If the API is later changed to populate a referenced contact's phoneNumber for guests (the open question in ADR-0046 Amendment 1 SectionB), this section under-describes what a guest can see and must be widened in the same release - the amendment says that change 'owes its own ADR-0027 line'.",
+      "surfaces_at": "The API decision on phoneNumber gating; the e2e assertion here does not catch it, because it checks what the notice must NOT say, not what a future API might expose."
+    },
+    {
+      "risk": "The notice describes the section by its user-facing name in each locale ('Informacion util' / 'Good to know' / 'Bon a savoir'), matching home.goodToKnow. If that label is ever renamed, three privacy strings silently stop matching the screen they describe.",
+      "surfaces_at": "Any rename of home.goodToKnow; nothing automated ties the two together."
+    }
+  ],
+  "commits": [],
+  "decisions_needed": []
+}

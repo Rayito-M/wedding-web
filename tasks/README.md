@@ -257,5 +257,5 @@ never by its letter alone.
 | **T375** | Home's Good to know section renders the couple's blocks | done | `32-good-to-know-content` |
 | **T376** | Settings grows an eighth section: authoring Good to know | blocked (reconciliation — the DS proposes a different data model, ADR-0046 Amendment 1 §C) | `32-good-to-know-content` |
 | **T377** | Good to know strings in es/en/fr | done (guest half; authoring half split to T379) | `32-good-to-know-content` |
-| **T378** | The privacy notice covers couple-entered contact details, and nothing leaks pre-sign-in | todo | `32-good-to-know-content` |
+| **T378** | The privacy notice covers couple-entered contact details, and nothing leaks pre-sign-in | done | `32-good-to-know-content` |
 | **T379** | The authoring form's strings, in es/en/fr | blocked (on T376) | `32-good-to-know-content` |

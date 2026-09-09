@@ -1089,7 +1089,11 @@
   },
   "privacyPolicy": {
     "title": "Politique de confidentialité",
-    "intro": "Cette page explique comment le site utilise les services Google : Analytics, pour comprendre le trafic global des visiteurs, et Maps, pour vous montrer où se déroule le mariage.",
+    "intro": "Cette page explique ce que vous pouvez voir ici au sujet d'autres personnes, et comment le site utilise les services Google : Analytics, pour comprendre le trafic global des visiteurs, et Maps, pour vous montrer où se déroule le mariage.",
+    "goodToKnow": {
+      "title": "Contacts et coordonnées bancaires",
+      "body": "Lorsque vous vous connectez, la section « Bon à savoir » peut afficher les coordonnées des personnes choisies par les mariés : leur nom et ce pour quoi vous pouvez les solliciter, repris de leur propre profil sur ce site. Les mariés décident qui y figure et peuvent retirer quelqu'un à tout moment. Cette même section peut afficher les coordonnées bancaires des mariés — titulaire, IBAN, BIC et numéro Bizum — si vous souhaitez leur offrir un cadeau : c'est du texte que vous pouvez copier, et aucun paiement ne transite par ce site. Rien de tout cela n'est visible avant la connexion."
+    },
     "analytics": {
       "title": "Google Analytics",
       "body": "Nous utilisons Google Analytics pour observer le trafic agrégé de ce site — visites, pages vues, et tendances générales d'appareil et de géographie. Nous ne suivons pas d'actions individuelles et ne configurons aucun suivi d'événement personnalisé."

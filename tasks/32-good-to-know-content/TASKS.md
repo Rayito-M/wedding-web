@@ -174,7 +174,7 @@
   convention)
 
 ### T378 — The privacy notice covers couple-entered contact details, and nothing leaks pre-sign-in
-- **Status:** todo
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** —
 - **ADR:** hub **ADR-0046** §7; ADR-0027 (the privacy notice this amends); ADR-0039 (the existing
