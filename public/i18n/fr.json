@@ -437,7 +437,8 @@
     "status": {
       "dirty": "Modifications non enregistrées",
       "upToDate": "À jour",
-      "saved": "Modifications enregistrées ✓"
+      "saved": "Modifications enregistrées ✓",
+      "blocked": "Terminez Bon à savoir avant d'enregistrer"
     },
     "actions": {
       "save": "Enregistrer",
@@ -453,7 +454,8 @@
       "agenda": "Agenda",
       "hotels": "Hébergements",
       "dietary": "Régimes",
-      "appearance": "Apparence"
+      "appearance": "Apparence",
+      "good-to-know": "Bon à savoir"
     },
     "note": {
       "basics": "Les prénoms, la formule et les dates clés qui structurent chaque écran.",
@@ -464,7 +466,8 @@
       "dietary": "Options proposées aux invités lors de leur réponse. Libellés affichés par langue.",
       "appearance": "La palette et les libellés de langue vus par les invités.",
       "weddingDateChanged": "Le calendrier des préparatifs garde ses dates existantes : les étapes ne se déplacent pas avec la date du mariage.",
-      "mapUrlEmbed": "Dans Google Maps, utilisez Partager → Intégrer une carte et collez le lien du code iframe. Un simple lien de partage ne peut pas s'afficher ; l'adresse du lieu est utilisée à la place."
+      "mapUrlEmbed": "Dans Google Maps, utilisez Partager → Intégrer une carte et collez le lien du code iframe. Un simple lien de partage ne peut pas s'afficher ; l'adresse du lieu est utilisée à la place.",
+      "good-to-know": "Le dress code, les cadeaux et les questions que lisent vos invités. Chaque mot ici est le vôtre : il est enregistré dans la configuration et affiché tel quel, dans l'ordre de cette liste."
     },
     "field": {
       "brideName": "Mariée",
@@ -576,6 +579,73 @@
       "mauve": "Mauve",
       "terracotta": "Terracotta",
       "verdeagua": "Verde Agua"
+    },
+    "goodToKnow": {
+      "empty": "Pas encore de bloc. Ajoutez le premier ci-dessous — les invités liront exactement ce que vous écrivez, dans cet ordre.",
+      "addTitle": "Ajouter un bloc",
+      "type": {
+        "dress-code": "Dress code",
+        "gift": "Cadeaux",
+        "faq": "Questions fréquentes",
+        "contacts": "Contacts",
+        "day-line": "La journée en une ligne",
+        "note": "Note libre"
+      },
+      "moveUp": "Monter",
+      "moveDown": "Descendre",
+      "removeBlock": "Retirer le bloc",
+      "showOtherLanguages": "Modifier les autres langues",
+      "hideOtherLanguages": "Masquer les autres langues",
+      "field": {
+        "title": "Titre du bloc"
+      },
+      "dressCode": {
+        "headline": "Titre",
+        "body": "Consignes",
+        "note": "Note (facultatif)",
+        "swatchesHint": "Les pastilles de couleur sous ce texte viennent du thème choisi dans Apparence — elles ne s'écrivent pas ici et ne peuvent jamais le contredire."
+      },
+      "gift": {
+        "intro": "Introduction (facultatif)",
+        "bankTitle": "Coordonnées bancaires",
+        "identifiersHint": "Identiques dans les trois langues : on les transcrit, on ne les traduit pas.",
+        "accountHolder": "Titulaire du compte",
+        "iban": "IBAN",
+        "bic": "BIC / SWIFT",
+        "reference": "Référence à indiquer par les invités",
+        "bizumPhone": "Numéro Bizum",
+        "bizumNote": "Note Bizum (facultatif)"
+      },
+      "faq": {
+        "question": "Question {{n}}",
+        "answer": "Réponse",
+        "addEntry": "+ Ajouter une question",
+        "removeEntry": "Retirer la question"
+      },
+      "contacts": {
+        "firstName": "Contact {{n}} · prénom",
+        "lastName": "Nom (facultatif)",
+        "phoneNumber": "Téléphone (facultatif)",
+        "purpose": "Pour quoi le contacter",
+        "addEntry": "+ Ajouter un contact",
+        "removeEntry": "Retirer le contact",
+        "identifiersHint": "Les noms et numéros s'affichent à l'identique dans les trois langues."
+      },
+      "dayLine": {
+        "datesHint": "Dates actuelles : mariage le {{date}}, date limite du RSVP le {{deadline}}. Si l'une change, ces phrases ne se mettent pas à jour — relisez-les.",
+        "rsvpOpen": "Tant que le RSVP est ouvert",
+        "rsvpClosed": "Après la date limite, jusqu’au mariage",
+        "afterWedding": "Après le mariage"
+      },
+      "note": {
+        "body": "Texte"
+      },
+      "issue": {
+        "missingTitle": "Bloc {{n}} ({{type}}) : le titre manque dans l'une des trois langues.",
+        "incomplete": "Bloc {{n}} ({{type}}) : complétez les champs obligatoires dans les trois langues.",
+        "faqTooFew": "Bloc {{n}} ({{type}}) : il faut au moins 3 questions.",
+        "contactsTooFew": "Bloc {{n}} ({{type}}) : il faut au moins une personne."
+      }
     }
   },
   "invitee": {

@@ -437,7 +437,8 @@
     "status": {
       "dirty": "Unsaved changes",
       "upToDate": "Up to date",
-      "saved": "All changes saved ✓"
+      "saved": "All changes saved ✓",
+      "blocked": "Finish Good to know before saving"
     },
     "actions": {
       "save": "Save changes",
@@ -453,7 +454,8 @@
       "agenda": "Agenda",
       "hotels": "Stays",
       "dietary": "Dietary",
-      "appearance": "Appearance"
+      "appearance": "Appearance",
+      "good-to-know": "Good to know"
     },
     "note": {
       "basics": "The names, saying and key dates that anchor every screen.",
@@ -464,7 +466,8 @@
       "dietary": "Options guests choose from when they RSVP. Labels shown per-language.",
       "appearance": "The palette and language labels guests experience.",
       "weddingDateChanged": "The preparation timeline keeps its existing dates — milestones don't move with the wedding date.",
-      "mapUrlEmbed": "In Google Maps, use Share → Embed a map and paste the link from the iframe code. A plain share link cannot be displayed; the venue address is used instead."
+      "mapUrlEmbed": "In Google Maps, use Share → Embed a map and paste the link from the iframe code. A plain share link cannot be displayed; the venue address is used instead.",
+      "good-to-know": "The dress code, gifts and questions your guests read. Every word here is yours: it is stored on the configuration and shown exactly as written, in this list's order."
     },
     "field": {
       "brideName": "Bride",
@@ -576,6 +579,73 @@
       "mauve": "Mauve",
       "terracotta": "Terracotta",
       "verdeagua": "Verde Agua"
+    },
+    "goodToKnow": {
+      "empty": "No blocks yet. Add the first one below — guests will read exactly what you write, in this order.",
+      "addTitle": "Add a block",
+      "type": {
+        "dress-code": "Dress code",
+        "gift": "Gifts",
+        "faq": "FAQ",
+        "contacts": "Contacts",
+        "day-line": "The day in one line",
+        "note": "Free note"
+      },
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "removeBlock": "Remove block",
+      "showOtherLanguages": "Edit the other languages",
+      "hideOtherLanguages": "Hide the other languages",
+      "field": {
+        "title": "Block title"
+      },
+      "dressCode": {
+        "headline": "Headline",
+        "body": "Guidance",
+        "note": "Note (optional)",
+        "swatchesHint": "The colour swatches under this text come from the theme picked in Appearance — they are not written here and can never disagree with it."
+      },
+      "gift": {
+        "intro": "Introduction (optional)",
+        "bankTitle": "Bank details",
+        "identifiersHint": "Identical in all three languages: transcribed, never translated.",
+        "accountHolder": "Account holder",
+        "iban": "IBAN",
+        "bic": "BIC / SWIFT",
+        "reference": "Reference guests should use",
+        "bizumPhone": "Bizum number",
+        "bizumNote": "Bizum note (optional)"
+      },
+      "faq": {
+        "question": "Question {{n}}",
+        "answer": "Answer",
+        "addEntry": "+ Add a question",
+        "removeEntry": "Remove question"
+      },
+      "contacts": {
+        "firstName": "Contact {{n}} · first name",
+        "lastName": "Last name (optional)",
+        "phoneNumber": "Phone (optional)",
+        "purpose": "What to ask them about",
+        "addEntry": "+ Add a contact",
+        "removeEntry": "Remove contact",
+        "identifiersHint": "Names and phone numbers render the same in all three languages."
+      },
+      "dayLine": {
+        "datesHint": "Current dates: wedding on {{date}}, RSVP deadline {{deadline}}. If either moves, these sentences do not update themselves — reread them.",
+        "rsvpOpen": "While the RSVP is open",
+        "rsvpClosed": "After the deadline, until the wedding",
+        "afterWedding": "After the wedding"
+      },
+      "note": {
+        "body": "Text"
+      },
+      "issue": {
+        "missingTitle": "Block {{n}} ({{type}}): the title is missing in one of the three languages.",
+        "incomplete": "Block {{n}} ({{type}}): fill in the required fields in all three languages.",
+        "faqTooFew": "Block {{n}} ({{type}}): needs at least 3 questions.",
+        "contactsTooFew": "Block {{n}} ({{type}}): needs at least one person."
+      }
     }
   },
   "invitee": {

@@ -24,7 +24,7 @@ import { signInAsCouple } from '../support/auth';
  * width is always inside Manage (hub ADR-0045 §3) and Manage's own desktop
  * rail (`app-plan-rail`, mounted by `private-layout.html` as `.manage-rail`
  * whenever the active route's `group` is `'manage'`) supplies the section
- * list instead — Settings' seven sections nest under its rail-foot item
+ * list instead — Settings' eight sections nest under its rail-foot item
  * (`private-layout.ts`'s `manageRailFooter()`, sourced from this screen's
  * own `config-sections.ts`). `/config` itself carries `group: 'manage'`
  * (`app.routes.ts`), so landing on it directly already renders `.manage-rail`

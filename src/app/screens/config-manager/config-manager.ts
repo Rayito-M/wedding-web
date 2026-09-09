@@ -21,9 +21,19 @@ import { EntityCollectionService, EntityServices, DataServiceError } from '@ngrx
 import {
   CreateWeddingConfigDtoAgendaItemsInner,
   CreateWeddingConfigDtoDietaryPreferencesInner,
+  CreateWeddingConfigDtoGoodToKnowInner,
+  CreateWeddingConfigDtoGoodToKnowInnerOneOf,
+  CreateWeddingConfigDtoGoodToKnowInnerOneOf1,
+  CreateWeddingConfigDtoGoodToKnowInnerOneOf2,
+  CreateWeddingConfigDtoGoodToKnowInnerOneOf2EntriesInner,
+  CreateWeddingConfigDtoGoodToKnowInnerOneOf3,
+  CreateWeddingConfigDtoGoodToKnowInnerOneOf3EntriesInner,
+  CreateWeddingConfigDtoGoodToKnowInnerOneOf4,
+  CreateWeddingConfigDtoGoodToKnowInnerOneOf5,
   CreateWeddingConfigDtoHotelsInner,
   CreateWeddingConfigDtoVenuesInner,
   HeaderService,
+  TranslateLanguageService,
   WeddingConfigResponseDto,
   byAgendaTime,
   EntityNamesEnum,
@@ -41,7 +51,7 @@ import {
   // as the old `CreateWeddingConfigDtoAgendaItemsInnerTitle`.
   MilestoneListResponseDtoItemsInnerTitle,
 } from '@app/core';
-import { LangCode, ThemeId } from '@app/model';
+import { LangCode, LangDescriptionType, ThemeId } from '@app/model';
 import { Btn } from '@app/shared/button/button';
 import {
   CONFIG_SECTION_PARAM,
@@ -64,6 +74,79 @@ type AgendaItem = CreateWeddingConfigDtoAgendaItemsInner;
 type Hotel = CreateWeddingConfigDtoHotelsInner;
 type DietTag = CreateWeddingConfigDtoDietaryPreferencesInner;
 type TagCollection = 'dietaryPreferences' | 'allergies';
+
+// ── Good to know (hub ADR-0046 §2/§8, T376) ─────────────────────────────────
+// Aliases resolve to the generated union and its members (hard rule 15) — a
+// regenerated client that reshapes a block is a compile error here, not drift.
+type GoodToKnowBlock = CreateWeddingConfigDtoGoodToKnowInner;
+type FaqEntry = CreateWeddingConfigDtoGoodToKnowInnerOneOf2EntriesInner;
+type ContactEntry = CreateWeddingConfigDtoGoodToKnowInnerOneOf3EntriesInner;
+
+/**
+ * The closed block-type set of hub ADR-0046 §2, in the order the add row
+ * offers them. Not a type redeclaration: the generator flattens each member's
+ * `const`-typed `type` to a plain `string` (see `good-to-know.ts`'s identical
+ * workaround), so there is no generated union to import — these are the same
+ * string literals the renderer's `switch` already carries, held in one place
+ * so the add row can iterate them. Growing this list is a breaking contract
+ * change (§1) and never happens client-first.
+ */
+const GOOD_TO_KNOW_TYPES = [
+  'dress-code',
+  'gift',
+  'faq',
+  'contacts',
+  'day-line',
+  'note',
+] as const;
+
+/** `dress-code`, `gift` and `day-line` are at-most-once (§2); the add row
+ *  stops offering one that exists rather than letting the API 400. */
+const SINGLETON_BLOCK_TYPES: ReadonlySet<string> = new Set(['dress-code', 'gift', 'day-line']);
+
+/** §2's bounds: at most 12 blocks; FAQ holds 3–10 entries, contacts 1–10. */
+const GOOD_TO_KNOW_MAX_BLOCKS = 12;
+const FAQ_MIN_ENTRIES = 3;
+const FAQ_MAX_ENTRIES = 10;
+const CONTACTS_MIN_ENTRIES = 1;
+const CONTACTS_MAX_ENTRIES = 10;
+
+/**
+ * The block-type discriminants cannot narrow the generated union (the
+ * generator flattens each `type` to `string`), so these casts *within* the
+ * union — the same one-place workaround `good-to-know.ts` documents — are how
+ * the template reaches a member's fields without a local copy of its shape.
+ */
+const asDressCode = (b: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf =>
+  b as CreateWeddingConfigDtoGoodToKnowInnerOneOf;
+const asGift = (b: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf1 =>
+  b as CreateWeddingConfigDtoGoodToKnowInnerOneOf1;
+const asFaq = (b: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf2 =>
+  b as CreateWeddingConfigDtoGoodToKnowInnerOneOf2;
+const asContacts = (b: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf3 =>
+  b as CreateWeddingConfigDtoGoodToKnowInnerOneOf3;
+const asDayLine = (b: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf4 =>
+  b as CreateWeddingConfigDtoGoodToKnowInnerOneOf4;
+const asNote = (b: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf5 =>
+  b as CreateWeddingConfigDtoGoodToKnowInnerOneOf5;
+
+/** All three locales carry non-blank text — what "complete" means for a
+ *  required localized field (§5: all three required, not three *distinct*). */
+const allFilled = (value: LangDescriptionType | undefined): boolean =>
+  !!value && ['es', 'en', 'fr'].every((lang) => value[lang as LangCode].trim() !== '');
+
+/** Every locale blank — an optional localized field the couple never wrote,
+ *  dropped from the save payload rather than sent as three empty strings. */
+const allBlank = (value: LangDescriptionType | undefined): boolean =>
+  !value || ['es', 'en', 'fr'].every((lang) => value[lang as LangCode].trim() === '');
+
+/** One row of the section's "cannot save yet" message list: which block (its
+ *  1-based position and type, so the message can name it) and why. */
+interface GoodToKnowIssue {
+  readonly key: string;
+  readonly n: number;
+  readonly type: string;
+}
 // Agenda filter (T297) — local UI state only, not an API field: "key moments"
 // reads the existing `highlight` boolean (see the phase note above T295 —
 // DS `important` *is* `highlight`), it is not a value stored anywhere itself.
@@ -154,12 +237,12 @@ function buildEmptyConfig(): ConfigState {
 }
 
 /**
- * Admin-only wedding configuration editor (7 sections: basics, the couple,
- * venues, agenda, stays, dietary, appearance). UI-only, local component
- * state — there is no live `PATCH /v1/config` wiring yet (blocked on
- * T211-T214); Save just clears the `dirty` flag and flashes a confirmation.
- * See the design reference: `ScreenConfigManager.jsx` /
- * `ScreenConfigManagerMobile.jsx`.
+ * Admin-only wedding configuration editor (8 sections: basics, the couple,
+ * venues, agenda, stays, dietary, appearance, good to know). Edits are local
+ * draft state until Save, which persists the whole document through the
+ * `WeddingConfig` collection to `PATCH /v1/config` (`save()` below →
+ * `wedding-config-data.service.ts`). See the design reference:
+ * `ScreenConfigManager.jsx` / `ScreenConfigManagerMobile.jsx`.
  */
 @Component({
   selector: 'app-config-manager',
@@ -318,6 +401,10 @@ export class ConfigManager implements OnInit {
 
   protected readonly statusKey = computed(() => {
     if (this.savedFlash()) return 'configManager.status.saved';
+    // A half-built Good to know block withholds Save for the whole document
+    // (one PATCH carries every section) — say so instead of showing a mutely
+    // disabled button from another section.
+    if (this.dirty() && this.saveBlocked()) return 'configManager.status.blocked';
     return this.dirty() ? 'configManager.status.dirty' : 'configManager.status.upToDate';
   });
 
@@ -355,6 +442,134 @@ export class ConfigManager implements OnInit {
     const keyMoments = items.filter((item) => item.highlight).length;
     return { all: items.length, keyMoments, optional: items.length - keyMoments };
   });
+
+  // ── Good to know (hub ADR-0046 §8, T376) ──────────────────────────────────
+
+  private readonly translateLanguage = inject(TranslateLanguageService);
+
+  /** The one language typed by default; the other two sit behind the
+   *  per-block disclosure (hub ADR-0031's ergonomics, the milestones-form
+   *  precedent). */
+  protected readonly goodToKnowLang = this.translateLanguage.currentLang;
+
+  protected readonly goodToKnowOtherLangs = computed(() =>
+    EDIT_LANGS.filter((lang) => lang !== this.goodToKnowLang()),
+  );
+
+  /** Stored order, verbatim — the couple's order is what guests read
+   *  (ADR-0046 §3); never sorted or grouped by type. */
+  protected readonly goodToKnowBlocks = computed<readonly GoodToKnowBlock[]>(
+    () => this.cfg().goodToKnow ?? [],
+  );
+
+  /** What the add row offers: a singleton type already in the array is not
+   *  offered again, and nothing is offered at the 12-block cap — the UI
+   *  withholds the control rather than letting the API 400. */
+  protected readonly addableBlockTypes = computed<readonly string[]>(() => {
+    const blocks = this.goodToKnowBlocks();
+    if (blocks.length >= GOOD_TO_KNOW_MAX_BLOCKS) return [];
+    const present = new Set(blocks.map((block) => block.type));
+    return GOOD_TO_KNOW_TYPES.filter(
+      (type) => !(SINGLETON_BLOCK_TYPES.has(type) && present.has(type)),
+    );
+  });
+
+  /** Template-facing copies of §2's entry caps — the add-entry buttons
+   *  disappear at the ceiling instead of letting the API 400. */
+  protected readonly faqMaxEntries = FAQ_MAX_ENTRIES;
+  protected readonly contactsMaxEntries = CONTACTS_MAX_ENTRIES;
+
+  /** Blocks whose EN/FR rows are disclosed (per block, not per field). */
+  private readonly openLocaleBlocks = signal<ReadonlySet<string>>(new Set());
+
+  protected isLocalesOpen(blockId: string): boolean {
+    return this.openLocaleBlocks().has(blockId);
+  }
+
+  protected toggleBlockLocales(blockId: string): void {
+    this.openLocaleBlocks.update((open) => {
+      const next = new Set(open);
+      if (next.has(blockId)) next.delete(blockId);
+      else next.add(blockId);
+      return next;
+    });
+  }
+
+  /** The languages a localized field currently shows rows for: just the
+   *  primary until the block's disclosure is open, then all three. */
+  protected visibleLangs(blockId: string): readonly LangCode[] {
+    return this.isLocalesOpen(blockId) ? EDIT_LANGS : [this.goodToKnowLang()];
+  }
+
+  /**
+   * Why the draft cannot be saved yet, one row per offending block — the
+   * "message that says what is missing" (T376): a block cannot be saved
+   * half-built (ADR-0046 §2), FAQ holds 3–10 entries, contacts 1–10. Upper
+   * bounds need no row here because the add controls disappear at the cap.
+   */
+  protected readonly goodToKnowIssues = computed<readonly GoodToKnowIssue[]>(() => {
+    const issues: GoodToKnowIssue[] = [];
+    this.goodToKnowBlocks().forEach((block, index) => {
+      const issue = (key: string): void => {
+        issues.push({ key, n: index + 1, type: block.type });
+      };
+      if (!allFilled(block.title)) issue('configManager.goodToKnow.issue.missingTitle');
+      switch (block.type) {
+        case 'dress-code': {
+          const dressCode = asDressCode(block);
+          const noteOk = allBlank(dressCode.note) || allFilled(dressCode.note);
+          if (!allFilled(dressCode.headline) || !allFilled(dressCode.body) || !noteOk)
+            issue('configManager.goodToKnow.issue.incomplete');
+          break;
+        }
+        case 'gift': {
+          // Every gift field is optional (§2) — only a *partially* localized
+          // prose field blocks the save (all-blank ones are dropped from the
+          // payload instead).
+          const gift = asGift(block);
+          const ok = [gift.intro, gift.reference, gift.bizumNote].every(
+            (field) => allBlank(field) || allFilled(field),
+          );
+          if (!ok) issue('configManager.goodToKnow.issue.incomplete');
+          break;
+        }
+        case 'faq': {
+          const entries = asFaq(block).entries;
+          if (entries.length < FAQ_MIN_ENTRIES)
+            issue('configManager.goodToKnow.issue.faqTooFew');
+          if (!entries.every((entry) => allFilled(entry.question) && allFilled(entry.answer)))
+            issue('configManager.goodToKnow.issue.incomplete');
+          break;
+        }
+        case 'contacts': {
+          const entries = asContacts(block).entries;
+          if (entries.length < CONTACTS_MIN_ENTRIES)
+            issue('configManager.goodToKnow.issue.contactsTooFew');
+          if (!entries.every((entry) => entry.firstName.trim() && allFilled(entry.purpose)))
+            issue('configManager.goodToKnow.issue.incomplete');
+          break;
+        }
+        case 'day-line': {
+          const dayLine = asDayLine(block);
+          if (
+            !allFilled(dayLine.rsvpOpen) ||
+            !allFilled(dayLine.rsvpClosed) ||
+            !allFilled(dayLine.afterWedding)
+          )
+            issue('configManager.goodToKnow.issue.incomplete');
+          break;
+        }
+        default:
+          if (!allFilled(asNote(block).body)) issue('configManager.goodToKnow.issue.incomplete');
+      }
+    });
+    return issues;
+  });
+
+  /** Save is withheld while any block is half-built — the whole document goes
+   *  up in one PATCH, so an invalid block would take every section's edits
+   *  down with it. */
+  protected readonly saveBlocked = computed(() => this.goodToKnowIssues().length > 0);
 
   /** `agendaItems()` (clock order) narrowed by the selected `agendaFilter`. */
   protected readonly filteredAgendaItems = computed(() => {
@@ -406,7 +621,10 @@ export class ConfigManager implements OnInit {
   }
 
   protected save(): void {
-    this.weddingConfigCollection.update(this.cfg()).subscribe({
+    // Defensive twin of the disabled buttons: a half-built Good to know block
+    // must not reach the API (ADR-0046 §2's recorded consequence).
+    if (this.saveBlocked()) return;
+    this.weddingConfigCollection.update(this.sanitizedConfig()).subscribe({
       next: () => {
         this.dirty.set(false);
         this.savedFlash.set(true);
@@ -827,6 +1045,287 @@ export class ConfigManager implements OnInit {
 
   protected setTheme(themeId: ThemeId): void {
     this.mutate((c) => ({ ...c, themeId: themeId as ConfigState['themeId'] }));
+  }
+
+  // ── Good to know mutators (hub ADR-0046 §2/§3, T376) ──────────────────────
+
+  /** Template-facing casts (see the `as*` helpers above): the generated
+   *  union's `type` is a plain `string`, so `@switch (block.type)` narrows
+   *  nothing and each branch reaches its fields through one of these. */
+  protected dressCode(block: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf {
+    return asDressCode(block);
+  }
+  protected gift(block: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf1 {
+    return asGift(block);
+  }
+  protected faqOf(block: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf2 {
+    return asFaq(block);
+  }
+  protected contactsOf(block: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf3 {
+    return asContacts(block);
+  }
+  protected dayLineOf(block: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf4 {
+    return asDayLine(block);
+  }
+  protected noteOf(block: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf5 {
+    return asNote(block);
+  }
+
+  /** A localized value off any block, by field name — the read half of
+   *  `setBlockLocale`, so the template's language rows stay one generic
+   *  chunk instead of a per-field copy. */
+  protected blockLocaleValue(block: GoodToKnowBlock, field: string, lang: LangCode): string {
+    const record = block as unknown as Record<string, LangDescriptionType | undefined>;
+    return record[field]?.[lang] ?? '';
+  }
+
+  private mutateGoodToKnow(
+    updater: (blocks: readonly GoodToKnowBlock[]) => GoodToKnowBlock[],
+  ): void {
+    this.mutate((c) => ({ ...c, goodToKnow: updater(c.goodToKnow ?? []) }));
+  }
+
+  private updateBlock(id: string, updater: (block: GoodToKnowBlock) => GoodToKnowBlock): void {
+    this.mutateGoodToKnow((blocks) =>
+      blocks.map((block) => (block.id === id ? updater(block) : block)),
+    );
+  }
+
+  /**
+   * One typed value pre-fills all three locales (hub ADR-0031's ergonomics,
+   * T376): an edit in the primary language mirrors into every locale that
+   * still tracked the primary's previous value (or was empty) and leaves a
+   * locale the couple customized alone — the stateless equivalent of the
+   * milestones form's `customizedLocales` set, applied to draft state that
+   * lives on the config document itself. An edit in a non-primary language
+   * only ever writes that language (and thereby stops its mirroring).
+   */
+  private mergeLocalized(
+    current: LangDescriptionType | undefined,
+    lang: LangCode,
+    value: string,
+  ): LangDescriptionType {
+    const previous = current ?? emptyLangText();
+    if (lang !== this.goodToKnowLang()) return { ...previous, [lang]: value };
+    const before = previous[lang];
+    const next: LangDescriptionType = { ...previous, [lang]: value };
+    for (const other of EDIT_LANGS) {
+      if (other !== lang && (previous[other] === before || previous[other].trim() === '')) {
+        next[other] = value;
+      }
+    }
+    return next;
+  }
+
+  /** Write one locale of a localized field on a block. The record cast stays
+   *  within the block's own shape — same workaround as the `as*` helpers. */
+  protected setBlockLocale(id: string, field: string, lang: LangCode, value: string): void {
+    this.updateBlock(id, (block) => {
+      const record = block as unknown as Record<string, LangDescriptionType | undefined>;
+      return {
+        ...block,
+        [field]: this.mergeLocalized(record[field], lang, value),
+      } as GoodToKnowBlock;
+    });
+  }
+
+  /** Identifier fields are single plain strings, byte-identical in every
+   *  locale (ADR-0046 §5 / hard rule 19a) — never localized, never
+   *  reformatted. An emptied input stores `undefined`: a field the couple
+   *  left empty is not a row (§2). */
+  protected setBlockIdentifier(id: string, field: string, value: string): void {
+    this.updateBlock(id, (block) => {
+      return { ...block, [field]: value === '' ? undefined : value } as GoodToKnowBlock;
+    });
+  }
+
+  protected addGoodToKnowBlock(type: string): void {
+    if (!this.addableBlockTypes().includes(type)) return;
+    const base = { id: uid(), type, title: emptyLangText() };
+    let block: GoodToKnowBlock;
+    switch (type) {
+      case 'dress-code':
+        block = { ...base, headline: emptyLangText(), body: emptyLangText() };
+        break;
+      case 'gift':
+        block = base as GoodToKnowBlock;
+        break;
+      case 'faq':
+        // Seeded at the 3-entry floor (§2): the couple fills them rather than
+        // discovering the minimum at save time.
+        block = {
+          ...base,
+          entries: Array.from({ length: FAQ_MIN_ENTRIES }, () => this.emptyFaqEntry()),
+        };
+        break;
+      case 'contacts':
+        block = { ...base, entries: [this.emptyContactEntry()] };
+        break;
+      case 'day-line':
+        block = {
+          ...base,
+          rsvpOpen: emptyLangText(),
+          rsvpClosed: emptyLangText(),
+          afterWedding: emptyLangText(),
+        };
+        break;
+      default:
+        block = { ...base, body: emptyLangText() };
+    }
+    this.mutateGoodToKnow((blocks) => [...blocks, block]);
+  }
+
+  protected removeGoodToKnowBlock(id: string): void {
+    this.mutateGoodToKnow((blocks) => blocks.filter((block) => block.id !== id));
+  }
+
+  /** Reorder by one step — the saved order is what guests read (§3). */
+  protected moveGoodToKnowBlock(id: string, delta: -1 | 1): void {
+    this.mutateGoodToKnow((blocks) => {
+      const index = blocks.findIndex((block) => block.id === id);
+      const target = index + delta;
+      if (index < 0 || target < 0 || target >= blocks.length) return [...blocks];
+      const next = [...blocks];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
+  private emptyFaqEntry(): FaqEntry {
+    return { id: uid(), question: emptyLangText(), answer: emptyLangText() };
+  }
+
+  private emptyContactEntry(): ContactEntry {
+    return { id: uid(), firstName: '', purpose: emptyLangText() };
+  }
+
+  protected addFaqEntry(blockId: string): void {
+    this.updateBlock(blockId, (block) => {
+      const faq = asFaq(block);
+      if (faq.entries.length >= FAQ_MAX_ENTRIES) return block;
+      return { ...faq, entries: [...faq.entries, this.emptyFaqEntry()] };
+    });
+  }
+
+  protected removeFaqEntry(blockId: string, entryId: string): void {
+    this.updateBlock(blockId, (block) => {
+      const faq = asFaq(block);
+      return { ...faq, entries: faq.entries.filter((entry) => entry.id !== entryId) };
+    });
+  }
+
+  protected setFaqEntryText(
+    blockId: string,
+    entryId: string,
+    field: 'question' | 'answer',
+    lang: LangCode,
+    value: string,
+  ): void {
+    this.updateBlock(blockId, (block) => {
+      const faq = asFaq(block);
+      return {
+        ...faq,
+        entries: faq.entries.map((entry) =>
+          entry.id === entryId
+            ? { ...entry, [field]: this.mergeLocalized(entry[field], lang, value) }
+            : entry,
+        ),
+      };
+    });
+  }
+
+  protected addContactEntry(blockId: string): void {
+    this.updateBlock(blockId, (block) => {
+      const contacts = asContacts(block);
+      if (contacts.entries.length >= CONTACTS_MAX_ENTRIES) return block;
+      return { ...contacts, entries: [...contacts.entries, this.emptyContactEntry()] };
+    });
+  }
+
+  protected removeContactEntry(blockId: string, entryId: string): void {
+    this.updateBlock(blockId, (block) => {
+      const contacts = asContacts(block);
+      return { ...contacts, entries: contacts.entries.filter((entry) => entry.id !== entryId) };
+    });
+  }
+
+  /** A contact's name and number are identifiers (§5, Amendment 2 §B):
+   *  plain strings, the same in every locale. Optional ones store
+   *  `undefined` when emptied so the renderer's "no number, no call button"
+   *  rule sees a genuinely absent field. */
+  protected setContactField(
+    blockId: string,
+    entryId: string,
+    field: 'firstName' | 'lastName' | 'phoneNumber',
+    value: string,
+  ): void {
+    this.updateBlock(blockId, (block) => {
+      const contacts = asContacts(block);
+      return {
+        ...contacts,
+        entries: contacts.entries.map((entry) =>
+          entry.id === entryId
+            ? { ...entry, [field]: field !== 'firstName' && value === '' ? undefined : value }
+            : entry,
+        ),
+      };
+    });
+  }
+
+  protected setContactPurpose(
+    blockId: string,
+    entryId: string,
+    lang: LangCode,
+    value: string,
+  ): void {
+    this.updateBlock(blockId, (block) => {
+      const contacts = asContacts(block);
+      return {
+        ...contacts,
+        entries: contacts.entries.map((entry) =>
+          entry.id === entryId
+            ? { ...entry, purpose: this.mergeLocalized(entry.purpose, lang, value) }
+            : entry,
+        ),
+      };
+    });
+  }
+
+  /**
+   * The save payload: the draft with every never-written optional localized
+   * field dropped (three blank strings are not "a value in all three
+   * locales") and blank identifiers normalized to absent. Required fields are
+   * untouched — a half-built block never gets this far (`saveBlocked`).
+   */
+  private sanitizedConfig(): ConfigState {
+    const goodToKnow = this.cfg().goodToKnow;
+    if (!goodToKnow) return this.cfg();
+    const dropBlank = (value: LangDescriptionType | undefined): LangDescriptionType | undefined =>
+      allBlank(value) ? undefined : value;
+    const sanitized = goodToKnow.map((block) => {
+      switch (block.type) {
+        case 'dress-code': {
+          const dressCode = asDressCode(block);
+          return { ...dressCode, note: dropBlank(dressCode.note) };
+        }
+        case 'gift': {
+          const gift = asGift(block);
+          return {
+            ...gift,
+            intro: dropBlank(gift.intro),
+            reference: dropBlank(gift.reference),
+            bizumNote: dropBlank(gift.bizumNote),
+            accountHolder: gift.accountHolder?.trim() === '' ? undefined : gift.accountHolder,
+            iban: gift.iban?.trim() === '' ? undefined : gift.iban,
+            bic: gift.bic?.trim() === '' ? undefined : gift.bic,
+            bizumPhone: gift.bizumPhone?.trim() === '' ? undefined : gift.bizumPhone,
+          };
+        }
+        default:
+          return block;
+      }
+    });
+    return { ...this.cfg(), goodToKnow: sanitized };
   }
 
   protected inputValue(event: Event): string {

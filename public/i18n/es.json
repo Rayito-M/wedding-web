@@ -437,7 +437,8 @@
     "status": {
       "dirty": "Cambios sin guardar",
       "upToDate": "Todo actualizado",
-      "saved": "Cambios guardados ✓"
+      "saved": "Cambios guardados ✓",
+      "blocked": "Completa Información útil para poder guardar"
     },
     "actions": {
       "save": "Guardar cambios",
@@ -453,7 +454,8 @@
       "agenda": "Agenda",
       "hotels": "Alojamiento",
       "dietary": "Dietas",
-      "appearance": "Apariencia"
+      "appearance": "Apariencia",
+      "good-to-know": "Información útil"
     },
     "note": {
       "basics": "Los nombres, el lema y las fechas clave que dan forma a cada pantalla.",
@@ -464,7 +466,8 @@
       "dietary": "Opciones que los invitados eligen al confirmar asistencia. Las etiquetas se muestran por idioma.",
       "appearance": "La paleta y las etiquetas de idioma que ven los invitados.",
       "weddingDateChanged": "El cronograma de preparativos mantiene sus fechas: los hitos no se mueven con la fecha de la boda.",
-      "mapUrlEmbed": "En Google Maps, usa Compartir → Insertar un mapa y pega el enlace del código iframe. Un enlace normal de compartir no se puede mostrar; en su lugar se usa la dirección del lugar."
+      "mapUrlEmbed": "En Google Maps, usa Compartir → Insertar un mapa y pega el enlace del código iframe. Un enlace normal de compartir no se puede mostrar; en su lugar se usa la dirección del lugar.",
+      "good-to-know": "El código de vestimenta, los regalos y las preguntas que leen los invitados. Cada palabra aquí es vuestra: se guarda en la configuración y se muestra tal cual, en el orden de esta lista."
     },
     "field": {
       "brideName": "Novia",
@@ -576,6 +579,73 @@
       "mauve": "Malva",
       "terracotta": "Terracota",
       "verdeagua": "Verde Agua"
+    },
+    "goodToKnow": {
+      "empty": "Aún no hay bloques. Añade el primero abajo — los invitados verán exactamente lo que escribáis, en este orden.",
+      "addTitle": "Añadir un bloque",
+      "type": {
+        "dress-code": "Código de vestimenta",
+        "gift": "Regalos",
+        "faq": "Preguntas frecuentes",
+        "contacts": "Contactos",
+        "day-line": "El día en una línea",
+        "note": "Nota libre"
+      },
+      "moveUp": "Subir",
+      "moveDown": "Bajar",
+      "removeBlock": "Quitar bloque",
+      "showOtherLanguages": "Editar los otros idiomas",
+      "hideOtherLanguages": "Ocultar los otros idiomas",
+      "field": {
+        "title": "Título del bloque"
+      },
+      "dressCode": {
+        "headline": "Titular",
+        "body": "Descripción",
+        "note": "Nota (opcional)",
+        "swatchesHint": "Los colores bajo este texto salen del tema elegido en Apariencia — no se escriben aquí y nunca pueden discrepar de él."
+      },
+      "gift": {
+        "intro": "Introducción (opcional)",
+        "bankTitle": "Datos bancarios",
+        "identifiersHint": "Idénticos en los tres idiomas: se transcriben, no se traducen.",
+        "accountHolder": "Titular de la cuenta",
+        "iban": "IBAN",
+        "bic": "BIC / SWIFT",
+        "reference": "Concepto que deben usar los invitados",
+        "bizumPhone": "Número de Bizum",
+        "bizumNote": "Nota sobre Bizum (opcional)"
+      },
+      "faq": {
+        "question": "Pregunta {{n}}",
+        "answer": "Respuesta",
+        "addEntry": "+ Añadir pregunta",
+        "removeEntry": "Quitar pregunta"
+      },
+      "contacts": {
+        "firstName": "Contacto {{n}} · nombre",
+        "lastName": "Apellidos (opcional)",
+        "phoneNumber": "Teléfono (opcional)",
+        "purpose": "Para qué escribirle",
+        "addEntry": "+ Añadir contacto",
+        "removeEntry": "Quitar contacto",
+        "identifiersHint": "Nombres y teléfonos se muestran igual en los tres idiomas."
+      },
+      "dayLine": {
+        "datesHint": "Fechas actuales: boda el {{date}}, fecha límite del RSVP el {{deadline}}. Si alguna cambia, estas frases no se actualizan solas — revisadlas.",
+        "rsvpOpen": "Mientras el RSVP está abierto",
+        "rsvpClosed": "Tras la fecha límite, hasta la boda",
+        "afterWedding": "Después de la boda"
+      },
+      "note": {
+        "body": "Texto"
+      },
+      "issue": {
+        "missingTitle": "Bloque {{n}} ({{type}}): falta el título en alguno de los tres idiomas.",
+        "incomplete": "Bloque {{n}} ({{type}}): completa los campos obligatorios en los tres idiomas.",
+        "faqTooFew": "Bloque {{n}} ({{type}}): necesita al menos 3 preguntas.",
+        "contactsTooFew": "Bloque {{n}} ({{type}}): necesita al menos una persona."
+      }
     }
   },
   "invitee": {

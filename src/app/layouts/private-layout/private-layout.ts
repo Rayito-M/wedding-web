@@ -333,7 +333,7 @@ export class PrivateLayout {
     })),
   );
 
-  /** Settings, alone, at the rail foot — its seven sections nest beneath it
+  /** Settings, alone, at the rail foot — its eight sections nest beneath it
    *  only while it is the active item (`PlanRail`'s own anatomy), sourced
    *  from `config-sections.ts` rather than a second hand-typed list. */
   protected readonly manageRailFooter = computed<PlanRailItem[]>(() => {

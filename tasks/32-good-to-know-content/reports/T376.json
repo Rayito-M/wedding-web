@@ -1,0 +1,145 @@
+{
+  "task": "T376",
+  "status": "complete",
+  "summary": "Settings grows the eighth section: the couple authors the goodToKnow blocks - add, edit, re-order and remove, six types and nothing else (ADR-0046 Amendment 3). Stored order is the couple's; singleton types and every cardinality ceiling are withheld by the UI rather than 400ing; the FAQ/contacts floors withhold Save with a per-block message; prose fields follow ADR-0031's one-typed-value-pre-fills-three ergonomics behind a per-block disclosure; identifiers are single inputs with the transcribed-not-translated reason in the UI copy; the day-line editor shows the live wedding date and RSVP deadline; Save rides the existing config PATCH with the whole array. Zero new CSS - the section composes entirely from config-manager's existing class vocabulary, so the 16.85 kB compiled stylesheet is byte-identical to the pre-task baseline. Precondition honoured first: wedding-ui-design's /pipeline sync pulled the eighth-section design (1 new + 5 changed sources, hash-verified), the gate's one violation was fixed, the contract rebuilt, and the audit filed both ConfigManager screens as outdated pending a parity stamp.",
+  "acceptance": [
+    {
+      "criterion": "shared/config-sections.ts gains the eighth section ('08'), and PlanRail's nested Settings list picks it up without a second hand-maintained list.",
+      "met": true,
+      "evidence": "SectionId gains 'good-to-know' (not 'info' - ADR-0046 sect. 10; a comment in the file says why) and SECTIONS appends { id: 'good-to-know', number: '08', labelKey: 'configManager.section.good-to-know' }. Appearance keeps '07' and every shipped ?section= deep link its meaning; the DS mock's renumbering (info 07, appearance 08) is not adopted, per the ADR's 'alongside the seven' wording and this task's own '08'. private-layout.ts's manageRailFooter already sources sections: CONFIG_SECTIONS, so PlanRail shows all eight with no second list - only its stale 'seven sections' docstring was touched. Unit test: rail renders 8 items, the eighth carrying '08'."
+    },
+    {
+      "criterion": "The couple can add, edit, re-order and remove blocks; the saved order is what guests read. dress-code, gift and day-line can be added at most once each - the UI should not offer a second one rather than letting the API 400.",
+      "met": true,
+      "evidence": "addGoodToKnowBlock/removeGoodToKnowBlock/moveGoodToKnowBlock mutate the array in place on cfg(); the move buttons are the only ordering mechanism and the array is never sorted or grouped. addableBlockTypes() drops a singleton type already present and empties entirely at the 12-block cap; the FAQ/contacts add-entry buttons disappear at their 10-entry ceilings. Unit tests: 'withholds a singleton type that already exists, and the add row at the 12-block cap' (dress-code vanishes from the add row while faq/gift stay; 12 blocks -> zero .add-btn); 'reorders blocks with the move buttons and PATCHes the whole array in the couple's order' (move up swaps the rendered pills AND the PATCH payload order)."
+    },
+    {
+      "criterion": "Three-locale authoring with ADR-0031's ergonomics: one typed value pre-fills all three locales, the other two behind a disclosure; the API requires three values, not three distinct values.",
+      "met": true,
+      "evidence": "mergeLocalized() mirrors a primary-language edit into every locale still tracking the primary's previous value (or empty) and leaves a customized locale alone - the stateless equivalent of the milestones form's customizedLocales set (the ADR-0031 precedent), applied to draft state living on the config document. Each block has one disclosure ('Edit the other languages') revealing ES/EN/FR rows with lang tags. Unit test: 'pre-fills all three locales from the primary language and lets a customized locale stick' - typing fills all three; customizing FR then retyping the primary updates es/en and leaves fr alone. The primary language is TranslateLanguageService.currentLang, pinned in the test."
+    },
+    {
+      "criterion": "Identifier fields are single inputs, visibly not per-locale (sect. 5), with the reason surfaced in the UI copy if a hint is needed.",
+      "met": true,
+      "evidence": "accountHolder, iban, bic, bizumPhone and a contact's firstName/lastName/phoneNumber are plain single inputs with no language rows and no lang tags; the gift bank group carries 'Identical in all three languages: transcribed, never translated' (es/en/fr) and the contacts block the equivalent names-and-numbers hint. setBlockIdentifier stores the value verbatim (emptied -> undefined, because a field the couple left empty is not a row). Unit test asserts a saved IBAN survives byte-identically, whitespace included."
+    },
+    {
+      "criterion": "FAQ blocks enforce 3-10 entries and contacts 1-10 before save, with a message that says what is missing. A block cannot be saved half-built.",
+      "met": true,
+      "evidence": "goodToKnowIssues() emits one row per offence - faqTooFew / contactsTooFew / missingTitle / incomplete - each naming the block by position and type; the list renders as a role=alert .error-message in the section, saveBlocked() disables all three Save buttons, save() early-returns defensively, and statusKey() says 'Finish Good to know before saving' so a Save withheld from another section is not mute. A new FAQ block seeds exactly 3 empty entries (the floor made visible); upper bounds are unreachable because the add controls disappear at 10. Unit test: removing an entry below either floor surfaces the right message and disables Save."
+    },
+    {
+      "criterion": "The day-line editor shows the live wedding date and RSVP deadline beside the three fields (ADR-0046 sect. 4's named mitigation).",
+      "met": true,
+      "evidence": "The day-line case opens with a field-hint interpolating dateInputValue(cfg().date) and cfg().rsvpDeadline live from the draft - 'Current dates: wedding on {{date}}, RSVP deadline {{deadline}}. If either moves, these sentences do not update themselves - reread them.' in all three locales - above the three variant fields (rsvpOpen / rsvpClosed / afterWedding)."
+    },
+    {
+      "criterion": "Save rides the existing config PATCH path, sending the whole goodToKnow array. Section Save stays in the section header (ADR-0045 sect. 3).",
+      "met": true,
+      "evidence": "No new service, no new call: save() still goes weddingConfigCollection.update -> WeddingConfigDataService.update -> weddingConfigControllerUpdateV1 (PATCH /v1/config), now with sanitizedConfig() dropping never-written optional localized fields (three blank strings are not a value in all three locales) and blank identifiers. The section header reuses the existing sectionSave template like the other seven sections. Unit tests: the PATCH payload carries the full array in the couple's order alongside the rest of the document (version, brideName asserted), and an all-blank gift intro is absent from the payload while the IBAN rides through untouched."
+    },
+    {
+      "criterion": "Row 5 CLOSED: swatches stay derived - build nothing for them (Amendment 3); Appearance untouched.",
+      "met": true,
+      "evidence": "No naming control anywhere; the Appearance section's diff is empty. The dress-code editor carries an explicit hint instead - 'The colour swatches under this text come from the theme picked in Appearance - they are not written here and can never disagree with it' - so nobody goes looking for the control the DS mock draws. The synced kit's Appearance swatch-naming UI and dressCode.palettes are recorded as not-adopted in the DS repo's .design-sync/NOTES.md entry."
+    },
+    {
+      "criterion": "While here, fix the stale docstring at config-manager.ts:158-160 (claims the save is local-only), one line, called out in the report.",
+      "met": true,
+      "evidence": "CALLED OUT: the class docstring no longer claims 'UI-only, local component state - there is no live PATCH /v1/config wiring yet (T211-T214); Save just clears the dirty flag'. It now reads: edits are local draft state until Save, which persists the whole document through the WeddingConfig collection to PATCH /v1/config - matching its own save(). The '7 sections' in the same sentence became 8 in the same edit."
+    },
+    {
+      "criterion": "No new component patterns; watch the per-component CSS budget - config-manager at 16.81 kB against the 17 kB error ceiling; if the section pushes it over, say so and stop.",
+      "met": true,
+      "evidence": "config-manager.scss is untouched (git diff: no .scss changed) - the section composes entirely from the screen's existing classes (.card/.card-top/.field/.ml-stack-row/.lang-tag/.remove-btn/.add-btn/.couple-action-btn/.couple-actions/.error-message/.field-hint/.grid-2fr-1fr/app-pill/app-input) plus the shared catalogue. Measured baseline: the compiled stylesheet was already 16.85 kB BEFORE this task (T382's report records the same number; the task file's 16.81 was stale) and is byte-identical after - the pre-existing 8 kB warning, never the 17 kB error."
+    },
+    {
+      "criterion": "Unit tests for ordering, the cardinality rules, the locale pre-fill, and the save payload shape.",
+      "met": true,
+      "evidence": "Six new tests in config-manager.spec.ts (describe 'Good to know authoring (T376)'), all DOM-driven in the file's existing idiom: eighth rail section + empty editor offering six types; singleton withholding + 12-block cap; FAQ 3-floor and contacts 1-floor messages withholding Save; three-locale pre-fill with a sticking customized locale; reorder + PATCH payload order and shape; optional-field sanitization + byte-identical identifier. Suite: 638 -> 644 tests, 0 failing."
+    },
+    {
+      "criterion": "Hard rule 11 gate green; report the baselines you measured, not the ones in the task file.",
+      "met": true,
+      "evidence": "typecheck: exit 0. lint: 5 pre-existing errors before and after (4 in src/app/shared/modal/ per CLAUDE.md's recorded exception + the unused import in guest-manager/modal/guest-profile-modal.ts that T378/T381/T382 also recorded), none in any file this task touched; stylelint 550 baselined, no new; ds:verify 31/31 clean pairs, 0 drifting - measured against the freshly synced kit. unit: 644/644 green. e2e: 374 passed / 30 skipped / 1 failed on the first full run - design-parity-schedule mobile on iPhone 12, the DS-kit page timing out on its unpkg React CDN load, nothing this task touches; the spec re-run standalone passes 40/40, so the suite is green net of one infrastructure flake. build: pass; budget warnings identical to T382's baseline (initial bundle 802.95 kB, and the four pre-existing per-component scss warnings including config-manager at 16.85 kB)."
+    }
+  ],
+  "deviations": [
+    {
+      "what": "The authoring form's UI strings (50 keys in es/en/fr: labels, validation messages, the disclosure control, the ordering affordances, the add row) shipped in this commit although they are nominally T379's deliverable.",
+      "why": "Hard rule 8 forbids a form with hardcoded text, and rule 11's gate cannot pass with missing keys - a stringless form is unbuildable, exactly as T377's guest half proved inside T375. Key parity measured: 842 flattened keys per locale, key sets identical across es/en/fr, none of the 50 new values empty, every referenced key resolves. T379's status is updated to say what remains (the verification-and-voice pass), not silently closed."
+    },
+    {
+      "what": "The Good to know section sits at position 8 / number '08', not the DS design's position 7 with Appearance moved to '08'.",
+      "why": "The task acceptance says '08' and ADR-0046 sect. 8 words the section as joining 'alongside' the existing seven; renumbering Appearance would also re-label a shipped section for no behavioural gain. Recorded here because the DS kit (SECTIONS in both ScreenConfigManager files, AppShell's SETTINGS_SECTIONS) draws the other order - a parity spec for this screen must treat rail ordering as a known, decided divergence."
+    }
+  ],
+  "checks": {
+    "typecheck": { "result": "pass", "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit - no output, exit 0." },
+    "lint": { "errors_before": 5, "errors_after": 5, "new_errors": [] },
+    "test": {
+      "before": { "total": 638, "failing": 0 },
+      "after": { "total": 644, "failing": 0 },
+      "new_failures": []
+    },
+    "e2e": {
+      "result": "pass",
+      "detail": "First full run 374 passed / 30 skipped / 1 failed: design-parity-schedule 'mobile: header-to-title gap' on iPhone 12 only, timing out in openDsKitScreen waiting for the kit page - the kit loads React from unpkg at runtime, so this is CDN latency, not app behaviour (this task changes nothing on Schedule). Standalone re-run of the whole spec: 40/40 passed."
+    },
+    "build": {
+      "result": "pass",
+      "budget_warnings": [
+        "bundle initial 802.95 kB vs 500 kB - pre-existing",
+        "seating-plan.scss 9.58 kB / guest-manager.scss 11.96 kB / milestones.scss 11.55 kB / config-manager.scss 16.85 kB over the 8 kB warning budget - all pre-existing; this task changed no .scss, and config-manager's compiled size is byte-identical to the T382-era baseline (the task file's 16.81 kB was stale)"
+      ]
+    },
+    "i18n": {
+      "keys_per_locale": 842,
+      "new_keys": 50,
+      "key_sets_identical": true,
+      "empty_values": 0
+    }
+  },
+  "files": {
+    "added": ["tasks/32-good-to-know-content/reports/T376.json"],
+    "modified": [
+      "src/app/shared/config-sections.ts",
+      "src/app/screens/config-manager/config-manager.ts",
+      "src/app/screens/config-manager/config-manager.html",
+      "src/app/screens/config-manager/config-manager.spec.ts",
+      "src/app/layouts/private-layout/private-layout.ts",
+      "e2e/layout/config-manager.spec.ts",
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "tasks/32-good-to-know-content/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    "../wedding-ui-design (separate repo, two commits b6ae7a0 + aefd4fb): the task-mandated /pipeline sync - pulled the eighth-section design (info.data.js new; ScreenConfigManager, ScreenConfigManagerMobile, ScreenInfo, AppShell, people.data.js, index.html, standalone-src.html changed; all hash-verified byte-identical to the cloud), appended the dated .design-sync/NOTES.md entry, fixed the one gate violation the pulled design carried (swatch-name input padding 7px -> 8px, the ds-auditor fix-or-bless rule), rebuilt the contract to v2026-09-09-b6ae7a0, and ran the audit (gate pass; delta behavioral 3, already governed by ADR-0046 Amendments 1-3). The pipeline's own uncommitted contract/FINDINGS.md edits found in that repo predate this session and were left uncommitted as found.",
+    "src/app/layouts/private-layout/private-layout.ts and e2e/layout/config-manager.spec.ts: one-word docstring/comment corrections ('seven' -> 'eight' sections) where the count is now wrong; no behaviour touched."
+  ],
+  "risks": [
+    {
+      "risk": "Save is withheld for the WHOLE document while any Good to know block is half-built (one PATCH carries every section). The status line says so ('Finish Good to know before saving'), but a couple who abandons a half-typed block mid-edit cannot save an unrelated Basics change until they finish or remove it. Deliberate - ADR-0046 sect. 2's no-half-blocks consequence - but worth knowing if it ever reads as a bug report.",
+      "surfaces_at": "The couple's first mixed editing session that leaves a block incomplete."
+    },
+    {
+      "risk": "ScreenConfigManager and ScreenConfigManagerMobile sit 'outdated' in the DS ledger (auto-flagged by the post-pull audit) and the phase's close condition wants ScreenInfo stamped implemented with a green committed parity spec. No parity spec for the Settings screen was in this task's acceptance and none was written; the rail-order divergence recorded in deviations must be encoded as expected when one is.",
+      "surfaces_at": "The phase-close /pipeline stamp, which will refuse ScreenInfo (and any ConfigManager stamp) without parity evidence."
+    },
+    {
+      "risk": "src/app/screens/rsvp/rsvp.html and src/environments/release.ts carried uncommitted working-tree changes that predate this task (the DS pipeline's own notes call the rsvp.html WIP untouchable). Left untouched and NOT in this task's commit.",
+      "surfaces_at": "The next git status on this checkout."
+    },
+    {
+      "risk": "The kit-serving parity harness now serves the SYNCED kit, whose ScreenInfo gained resolved swatch hex/rgb print-outs and whose fixture data moved into info.data.js. design-parity-info.spec.ts passed unchanged this run, but a future tightening of that spec against the new kit content should check contract/FINDINGS.md first - two open findings there (the 9px gift-row label, the missing empty state) are recorded as the kit's own defects, not app drift.",
+      "surfaces_at": "The next edit to e2e/layout/design-parity-info.spec.ts."
+    }
+  ],
+  "commits": [],
+  "decisions_needed": []
+}

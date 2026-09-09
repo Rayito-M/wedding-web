@@ -101,9 +101,14 @@
   (reference, with the two corrections above); counterpart `wedding-api` **T244**
 
 ### T376 — Settings grows an eighth section: authoring Good to know
-- **Status:** todo — **ready to build. Every open question is closed** (2026-09-09): T382 landed the
-  client, and hub ADR-0046 Amendment 3 closed row 5. Six block types, no swatch naming, Appearance
-  untouched.
+- **Status:** done (2026-09-09) — built as decided: six block types, ordered array, no swatch
+  naming, Appearance untouched. Report: `reports/T376.json`. The DS kit was synced first
+  (`wedding-ui-design` b6ae7a0/aefd4fb): the eighth-section design is on disk, its one gate
+  violation fixed, and both ConfigManager screens sit `outdated` in the DS ledger awaiting a
+  parity stamp.
+  Pre-build state, kept for the history: **ready to build. Every open question is closed**
+  (2026-09-09): T382 landed the client, and hub ADR-0046 Amendment 3 closed row 5. Six block
+  types, no swatch naming, Appearance untouched.
   **How the five divergences of hub ADR-0046 Amendment 1 §C were settled** — four of them by
   decisions the Product Owner had already made in the feature description, which the design system
   simply predates:
@@ -214,7 +219,11 @@
   hub `GLOSSARY.md` → *Public wedding info*, *Good-to-know contact*
 
 ### T379 — The authoring form's strings, in es/en/fr
-- **Status:** blocked — on T376's reconciliation (split out of T377, 2026-09-09)
+- **Status:** todo — unblocked by T376 (2026-09-09). Note the shape of what remains: T376 could
+  not ship a form with hardcoded text (hard rule 8), so its commit already carries the form's 50
+  UI keys in es/en/fr with key parity verified. This task is now the *verification and voice*
+  pass over those strings — T377's method, T365's counts — not a from-scratch write.
+  Previously: blocked — on T376's reconciliation (split out of T377, 2026-09-09)
 - **Owner:** agent (implementer)
 - **Depends on:** T376 (there is no form to label until the data model is settled)
 - **ADR:** hub **ADR-0046** §5 and Amendment 1 §C; ADR-0009 / ADR-0028 §4 (UI strings are governed
