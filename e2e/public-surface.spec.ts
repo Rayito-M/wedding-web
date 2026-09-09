@@ -135,11 +135,17 @@ test.describe('the public surface carries no Good to know content (T378, hub ADR
     expect(notice).toMatch(/contact details for people the couple has chosen/i);
     expect(notice).toMatch(/bank details/i);
     expect(notice).toMatch(/IBAN/);
-    // Worded for what ships (ADR-0046 Amendment 1 §B): the third-party case is
-    // intended but unbuilt, so the notice must NOT promise it.
+    // The third-party case now ships (ADR-0046 Amendment 2 §C, `wedding-api` T246):
+    // a contacts entry needs no account, so the couple's own typing is what a guest
+    // reads. The guard was negative here until T381 and had to be inverted with the
+    // copy — under-disclosing is the worse direction to be wrong in.
     expect(
       notice,
-      'the notice must not promise the unbuilt third-party case (Amendment 1 §B)',
-    ).not.toMatch(/who are not guests|not a guest/i);
+      'the notice must disclose the third-party case (Amendment 2 §C)',
+    ).toMatch(/not guests|no account on this site/i);
+    expect(
+      notice,
+      'the notice must say the couple supplies that name and number itself',
+    ).toMatch(/the couple types their name and number in directly/i);
   });
 });

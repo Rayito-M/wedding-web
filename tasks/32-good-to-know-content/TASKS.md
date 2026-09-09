@@ -274,7 +274,7 @@
   hub `SPEC.md` Non-functional (delegation bullet)
 
 ### T381 — The privacy notice widens: the third-party case now ships
-- **Status:** todo — **gates the v1.3.0 deploy** (the notice is narrower than what ships)
+- **Status:** done
 - **Owner:** agent (implementer)
 - **Depends on:** `wedding-api` **T246** (landed, `de5385b`; contract `6eb233e`)
 - **ADR:** hub **ADR-0046 Amendment 2 §C**; ADR-0027 (the notice); ADR-0046 §7 (the original *yes*)

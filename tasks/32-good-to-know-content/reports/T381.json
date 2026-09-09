@@ -1,0 +1,79 @@
+{
+  "task": "T381",
+  "status": "complete",
+  "summary": "privacyPolicy.goodToKnow.body widens in es/en/fr to disclose the third-party case that wedding-api T246 shipped: the people the couple names may not be guests and may have no account here, and in that case the couple types the name and number in directly. The notice also now names the phone number a guest can see, and says in one clause that the site never contacts those people and gives them no way to change or object to what is shown - the offline-consent line ADR-0046 Section7 requires. e2e/public-surface.spec.ts:143's negative assertion is inverted in the same commit into two positive ones, and the inversion was proven to bite: the new assertions FAIL against the old copy.",
+  "acceptance": [
+    {
+      "criterion": "privacyPolicy.goodToKnow.body in es/en/fr widens to disclose that the people the couple names may not be guests and may have no account on this site, and that in that case the couple types their name and number in directly. Keep T378's voice and its true parts.",
+      "met": true,
+      "evidence": "One string changed per locale, same key, same position, same register. EN: '...It may also include people who are not guests and have no account on this site at all; in that case the couple types their name and number in directly.' ES: '...Tambien puede incluir a personas que no son invitadas y que no tienen ninguna cuenta en este sitio; en ese caso son los novios quienes escriben directamente su nombre y su numero.' FR: '...Elle peut aussi inclure des personnes qui ne sont pas invitees et qui n'ont aucun compte sur ce site ; dans ce cas, ce sont les maries qui saisissent directement leur nom et leur numero.' T378's true parts are carried over verbatim in substance: the couple chooses who appears and can remove anyone at any time; the bank-details half (account holder, IBAN, BIC, Bizum, text you can copy, no payment passes through the site); 'None of this is visible before you sign in.'",
+      "notes": "Two additions beyond the literal ask, both required for the notice to be true of what ships. (1) The phone number is now named ('their name, a phone number and what you can ask them about'). T378 deliberately omitted it because Amendment 1 SectionB left phoneNumber gating undecided; Amendment 2 SectionA closes it - the number is on the block, a guest sees it and a call button, and good-to-know.html:165-172 already renders both. A notice that discloses a name but not the number would under-disclose exactly the field T246 added. (2) The profile clause is scoped rather than dropped: 'For someone who has an account here, those details come from their own profile on this site.' Dropping it would have lost a real disclosure to guests that their own profile data is shown to other guests - which is what the shipping bundle still does (see risks[0])."
+    },
+    {
+      "criterion": "Consent stays offline and must not be implied to be otherwise (ADR-0046 Section7): do not write anything suggesting the person named was asked, or can object, through this site.",
+      "met": true,
+      "evidence": "One sentence in each locale states the opposite of a consent flow, in the negative, and points offline: EN 'This site never contacts those people and offers them no way to change what is shown or to object to it - that is settled with the couple directly.' ES '...Este sitio nunca se pone en contacto con esas personas ni les ofrece ninguna forma de cambiar lo que se muestra ni de oponerse a ello: eso se resuelve directamente con los novios.' FR '...Ce site ne contacte jamais ces personnes et ne leur offre aucun moyen de modifier ce qui est affiche ni de s'y opposer : cela se regle directement avec les maries.' No verb anywhere in the three strings claims the person agreed, was notified, or can act in-app.",
+      "notes": "The sentence deliberately does not assert that consent WAS obtained offline either - the app has no evidence of that and the notice must not vouch for it. It says only what this site does and does not do, plus where the matter is settled."
+    },
+    {
+      "criterion": "Invert the guard in the same commit. e2e/public-surface.spec.ts:143 asserted the notice does NOT match /who are not guests|not a guest/i; replace it with a positive assertion that the third-party disclosure is present.",
+      "met": true,
+      "evidence": "Same commit, same file. The .not.toMatch is gone, replaced by two positive assertions at public-surface.spec.ts:141-152: toMatch(/not guests|no account on this site/i) ('the notice must disclose the third-party case (Amendment 2 SectionC)') and toMatch(/the couple types their name and number in directly/i) ('the notice must say the couple supplies that name and number itself'). Two rather than one because the criterion has two halves - that the person may have no account, and that the couple supplies the data - and a single regex on the first half would let a future edit drop the second silently.",
+      "notes": "PROVEN TO BITE, not assumed. public/i18n/en.json was reverted to T378's copy and the test re-run on Desktop Chrome: it failed at public-surface.spec.ts:145 with 'the notice must disclose the third-party case (Amendment 2 SectionC)', printing the old notice text. en.json was then restored from a scratchpad copy and the spec went green again. Without this check a green suite would have been worthless, which is what Amendment 2 SectionC warns about."
+    },
+    {
+      "criterion": "Re-check the other two tests in that file still pass unchanged - if one breaks, that is a real finding, not a fixture to update.",
+      "met": true,
+      "evidence": "Neither test was touched (git diff on e2e/public-surface.spec.ts shows one hunk, inside the third test only). Both pass on all five projects: 'GET /v1/config/public - the response the app consumes has no goodToKnow' and 'a leaked block still renders nothing before sign-in'. 15/15 in the file green (3 tests x 5 projects).",
+      "notes": "Expected: this task changed only strings on the AUTHENTICATED privacy screen and the leak guards assert on the public config response and the pre-sign-in render, neither of which this task can reach."
+    },
+    {
+      "criterion": "No missing-key warnings in any locale; report the resolved privacyPolicy.* count for all three (T378 measured 17).",
+      "met": true,
+      "evidence": "17 in es, 17 in en, 17 in fr - unchanged from T378, as expected for a task that edits one existing string per locale and adds no key. Flattened key sets of the three files are IDENTICAL (792 keys each, symmetric difference empty against es for both en and fr), and no privacyPolicy.* value is empty or whitespace. Nothing renders a raw key: e2e reads the notice via innerText on all five projects and asserts on real prose."
+    },
+    {
+      "criterion": "Hard rule 11 gate green.",
+      "met": true,
+      "evidence": "typecheck exit 0, no output. lint: 5 ESLint errors before and after, all pre-existing: the 4 in src/app/shared/modal/ that CLAUDE.md names, plus an unused import in guest-manager/modal/guest-profile-modal.ts that it does not (see risks[2]); none in a file this task opened; stylelint 'no new violations (550 pre-existing, baselined)'; ds:verify '31/31 clean pairs; 0 drifting values'. ESLint does cover e2e (eslint.config files: ['**/*.ts'], ignoring only src/app/core/api/**), so the edited spec is lint-clean, not merely unlinted. unit: 49 files / 637 tests, 0 failing - unchanged; this task adds copy and an e2e guard, and there is no unit-level surface for either. e2e: FULL suite 370 passed / 30 skipped, identical to T378's post-state - the inversion changed what the third test asserts, not how many tests exist."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": { "result": "pass", "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit - no output, exit 0." },
+    "lint": { "errors_before": 5, "errors_after": 5, "new_errors": [] },
+    "test": { "before": { "total": 637, "failing": 0 }, "after": { "total": 637, "failing": 0 }, "new_failures": [] },
+    "e2e": { "before": { "passed": 370, "skipped": 30 }, "after": { "passed": 370, "skipped": 30 }, "new_failures": [] },
+    "i18n": { "privacyPolicy_keys": { "es": 17, "en": 17, "fr": 17 }, "key_sets_identical": true, "missing": 0, "empty": 0 }
+  },
+  "files": {
+    "added": ["tasks/32-good-to-know-content/reports/T381.json"],
+    "modified": [
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "e2e/public-surface.spec.ts",
+      "tasks/32-good-to-know-content/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": ["public/i18n/en.json (temporarily, to prove the inverted guard fails on T378's copy; restored byte-for-byte)"]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "This repo has NOT yet consumed T246's contract. src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of3-entries-inner.ts is still { userId, purpose }, and good-to-know.ts:453-468 resolves a contact's name and number from the referenced user profile, dropping any entry whose userId resolves to nobody. So in the bundle v1.3.0 ships, a third-party contact RENDERS NOTHING - the notice is ahead of the renderer, not behind it. It is still correct to widen now and it is not over-disclosure: goodToKnow is on WeddingConfigResponseDto, so the couple-typed name and phone number are in the JSON payload every signed-in guest's browser receives, rendered or not. Of the two directions, disclosing data the guest's browser is actually sent is the safe one.",
+      "surfaces_at": "T376/T379, when the client regenerates and starts rendering the block-stored fields. Nothing fails in the meantime."
+    },
+    {
+      "risk": "The clause 'For someone who has an account here, those details come from their own profile on this site' is TRUE of the shipping bundle and becomes FALSE the moment the client switches to the T246 shape - Amendment 2 SectionD is explicit that a profile edit no longer updates a contact card. Whoever lands T376/T379 must rewrite that one clause in three locales in the same commit as the renderer change.",
+      "surfaces_at": "T376/T379. No test catches it: the e2e assertions cover the third-party half and the bank half, not the provenance clause."
+    },
+    {
+      "risk": "ESLint reports 5 errors, not the 4 CLAUDE.md's known exception names: the 4 in src/app/shared/modal/ (3 in modal.html, 1 in modal.ts) plus an unused WeddingGuestsService import in src/app/screens/guest-manager/modal/guest-profile-modal.ts. The fifth is pre-existing too - T378 recorded the same 5 - but it is outside the documented exception, so a strict reading of hard rule 11 has been failing on an undocumented error since before this task.",
+      "surfaces_at": "Any hard-rule-11 run. Either delete the dead import or widen CLAUDE.md's exception; neither belongs in this task."
+    }
+  ],
+  "commits": [],
+  "decisions_needed": []
+}

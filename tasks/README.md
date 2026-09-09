@@ -260,4 +260,4 @@ never by its letter alone.
 | **T378** | The privacy notice covers couple-entered contact details, and nothing leaks pre-sign-in | done | `32-good-to-know-content` |
 | **T379** | The authoring form's strings, in es/en/fr | blocked (on T376) | `32-good-to-know-content` |
 | **T380** | The privacy notice still does not say a delegate reads someone else's whole reply | todo | `32-good-to-know-content` |
-| **T381** | The privacy notice widens: the third-party case now ships | todo (gates the v1.3.0 deploy) | `32-good-to-know-content` |
+| **T381** | The privacy notice widens: the third-party case now ships | done | `32-good-to-know-content` |
