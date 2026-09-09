@@ -123,7 +123,7 @@
   Precondition unchanged: `../wedding-ui-design` is **stale** on disk (still the 7-tuple, no
   `info.data.js`). Run its `/pipeline` sync before measuring anything against the kit.
 - **Owner:** agent (implementer)
-- **Depends on:** T375 (the block types and the generated client), the DS design above
+- **Depends on:** **T382** (the client must be able to render the shape before Settings authors it), T375, the DS design above
 - **ADR:** hub **ADR-0046** §2/§3/§8; ADR-0045 §3 (Settings inside Manage, its sections nested under
   `PlanRail`); ADR-0031 (three-locale authoring ergonomics)
 - **Acceptance:**

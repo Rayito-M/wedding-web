@@ -72,7 +72,7 @@ never by its letter alone.
 | `29-phase-z-task-file-ergonomics` | Phase Z — Task-file ergonomics (no ADR; this is tooling, not a decision) | 1 |
 | `30-phase-n-navigation-five-cap` | Phase N (second use of the letter) — Navigation five-cap and the Manage door (hub ADR-0045) | 13 |
 | `31-phase-o-hygiene` | Phase O (second use of the letter) — Hygiene batch (no ADR) | 1 |
-| `32-good-to-know-content` | Good to know content (hub ADR-0046, accepted; amended 2026-09-09) — unlettered; the alphabet ran out | 7 |
+| `32-good-to-know-content` | Good to know content (hub ADR-0046, accepted; amended 2026-09-09) — unlettered; the alphabet ran out | 8 |
 
 ---
 
@@ -255,9 +255,10 @@ never by its letter alone.
 | **T373** | Overview 1.15/0.85 grid + block-outline parity in the harness | done — Guests/Milestones fixme'd, see T373 report | `30-phase-n-navigation-five-cap` |
 | **T374** | Guest manager: filter toolbar joins the pinned head | done | `30-phase-n-navigation-five-cap` |
 | **T375** | Home's Good to know section renders the couple's blocks | done | `32-good-to-know-content` |
-| **T376** | Settings grows an eighth section: authoring Good to know | todo (reconciliation resolved; waits on `wedding-api` T246 + the row-5 call) | `32-good-to-know-content` |
+| **T376** | Settings grows an eighth section: authoring Good to know | todo (waits on T382 + the row-5 call) | `32-good-to-know-content` |
 | **T377** | Good to know strings in es/en/fr | done (guest half; authoring half split to T379) | `32-good-to-know-content` |
 | **T378** | The privacy notice covers couple-entered contact details, and nothing leaks pre-sign-in | done | `32-good-to-know-content` |
 | **T379** | The authoring form's strings, in es/en/fr | blocked (on T376) | `32-good-to-know-content` |
 | **T380** | The privacy notice still does not say a delegate reads someone else's whole reply | todo | `32-good-to-know-content` |
 | **T381** | The privacy notice widens: the third-party case now ships | done | `32-good-to-know-content` |
+| **T382** | Consume T246's contract: a contact carries its own details, and may have no account | todo (blocks T376) | `32-good-to-know-content` |
