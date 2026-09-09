@@ -233,12 +233,21 @@
     validation messages, the locale-disclosure control, the ordering affordance, and whatever the
     reconciliation adds or removes.
   - **No content string.** The same rule T377 shipped under and hard rule 19 states: a dress-code
-    line, an FAQ question or an IBAN never appears in a locale file. If the reconciliation adopts
-    the DS's swatch **names** (Amendment 1 §C row 5), note that those are *authored content* and do
-    not belong here either.
+    line, an FAQ question or an IBAN never appears in a locale file. **Swatch names are settled and
+    are not a case to consider** — hub ADR-0046 **Amendment 3** kept swatches derived and did not
+    adopt the DS's `palettes`, so no such string exists or may be added.
   - No missing-key warnings in any locale; resolve every new key against all three files (T365's
-    method) and report the number.
-  - Voice: warm and personal, sentence case, per the DS content fundamentals.
+    method) and report the number. **T376 measured 842 keys per locale with identical key sets and
+    none empty — re-measure rather than quoting that**, per the skill's baselines rule.
+  - **Read the three locales against each other, not just against the key list.** This is the half a
+    parity check cannot do: an `es` string that is correct but stiff, an `fr` label longer than its
+    control, a validation message that states a rule the UI already withholds (the form disables
+    Save; a message that scolds instead of explaining is the wrong voice for a screen only the couple
+    ever sees). Voice: warm and personal, sentence case, per the DS content fundamentals.
+  - **`es` is the default locale and the couple's own** — if one locale gets the closest read, it is
+    that one.
+  - Report what you **changed**, not only what you checked. A verification pass that alters nothing
+    is a legitimate outcome, but say so explicitly rather than leaving it implied.
   - Hard rule 11 gate green.
 - **Refs:** T377 (the guest half, done); T365 (key-parity method); hub ADR-0046 Amendment 1
 
