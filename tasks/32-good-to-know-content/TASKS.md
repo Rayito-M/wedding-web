@@ -229,6 +229,18 @@
   UI keys in es/en/fr with key parity verified. This task is now the *verification and voice*
   pass over those strings — T377's method, T365's counts — not a from-scratch write.
   Previously: blocked — on T376's reconciliation (split out of T377, 2026-09-09)
+
+  > **Correction, 2026-09-09 (hub):** the report's headline count of **865 flattened keys per locale
+  > is not reproducible** and **842 is correct** — the figure T376 measured and this task called
+  > stale. Verified after `daf4dde`: leaf keys **842** in each of es/en/fr, key sets identical, zero
+  > empty values (all-nodes-including-parents is 1033, top-level 25 — no counting method yields 865).
+  > The attached reasoning is wrong too: T380 has not run, and a voice pass changes **values, not
+  > keys** — `daf4dde` touched 15 values across 10 keys and added none. The report also leaves
+  > `checks.i18n` **null**, so the number lived only in prose and was never recorded as a check.
+  > **The substantive parity claims all hold** — identical key sets, no empty values, every
+  > referenced key resolving; only the count is wrong. Left in the report as written, because a
+  > report is an observation record; corrected here so the next reader does not "fix" 842 to 865.
+
 - **Owner:** agent (implementer)
 - **Depends on:** T376 (there is no form to label until the data model is settled)
 - **ADR:** hub **ADR-0046** §5 and Amendment 1 §C; ADR-0009 / ADR-0028 §4 (UI strings are governed
