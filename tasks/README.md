@@ -73,6 +73,7 @@ never by its letter alone.
 | `30-phase-n-navigation-five-cap` | Phase N (second use of the letter) — Navigation five-cap and the Manage door (hub ADR-0045) | 13 |
 | `31-phase-o-hygiene` | Phase O (second use of the letter) — Hygiene batch (no ADR) | 1 |
 | `32-good-to-know-content` | Good to know content (hub ADR-0046, accepted; amended 2026-09-09) — unlettered; the alphabet ran out | 8 |
+| `33-general-information` | `generalInfo` replaces the block array (hub ADR-0047); phase 32's shape tasks are superseded, not deleted | 4 |
 
 ---
 
@@ -262,3 +263,7 @@ never by its letter alone.
 | **T380** | The privacy notice still does not say a delegate reads someone else's whole reply | todo | `32-good-to-know-content` |
 | **T381** | The privacy notice widens: the third-party case now ships | done | `32-good-to-know-content` |
 | **T382** | Consume T246's contract: a contact carries its own details, and may have no account | done | `32-good-to-know-content` |
+| **T383** | Render the `generalInfo` sections | blocked (on `wedding-api` T249) | `33-general-information` |
+| **T384** | The authoring screen becomes a fixed-shape editor | blocked (on T383) | `33-general-information` |
+| **T385** | The privacy notice describes what actually ships | blocked (on T383) | `33-general-information` |
+| **T386** | Mark phase 32's superseded tasks, and say why | todo | `33-general-information` |
