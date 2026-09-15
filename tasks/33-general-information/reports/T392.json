@@ -1,0 +1,105 @@
+{
+  "task": "T392",
+  "status": "complete",
+  "summary": "Basics' two name inputs no longer call setBasics(); they call a new setCoupleFirstName(role, value) that writes the deprecated brideName/groomName *and* couple.<role>.firstName, spreading the stored couple and the stored member so the PATCH carries the whole digest — updateWeddingConfig merges shallowly ({...config, ...update}), so a partial couple would replace the stored one and drop id, lastName, email and phoneNumber. With no stored couple the deprecated field travels alone: coupleSchema requires id, lastName and phoneNumber, so no valid digest can be built from a first name and inventing one would 400 the whole document. 'brideName'|'groomName' were removed from setBasics' Pick, so the old silently-inert path no longer typechecks — that is the guard against it coming back. couple is NOT refreshed from the USER documents (hub ADR-0047 Amendment 4). Three unit tests: bride rename, groom rename, and a config row with no couple.",
+  "acceptance": [
+    {
+      "criterion": "Basics' bride/groom name inputs write couple.bride.firstName / couple.groom.firstName and keep writing the deprecated brideName/groomName",
+      "met": true,
+      "evidence": "config-manager.html:146,155 now bind (input)=\"setCoupleFirstName('bride'|'groom', inputValue($event))\"; config-manager.ts:788-797 sets both the deprecated field and couple[role].firstName. Test 'sends the complete couple and the deprecated field when the bride is renamed' asserts lastUpdate.brideName === 'Sarah' and lastUpdate.couple.bride.firstName === 'Sarah'.",
+      "notes": "setBasics' Pick no longer accepts 'brideName' | 'groomName' (config-manager.ts:757), so the inert write is now a compile error rather than a convention."
+    },
+    {
+      "criterion": "The PATCH must carry the complete couple object — updateWeddingConfig merges shallowly, so a partial couple replaces it and drops id, lastName, email and phoneNumber",
+      "met": true,
+      "evidence": "config-manager.ts:793 spreads both levels: { ...couple, [role]: { ...couple[role], firstName } }. The test fixture COUPLE carries id, firstName, lastName, email and phoneNumber for both members, and the assertion is toEqual({ bride: {...COUPLE.bride, firstName: 'Sarah'}, groom: COUPLE.groom }) — a dropped field fails it. The transport was already whole-document: WeddingConfigDataService.update spreads update.changes, and cfg() is the GET response, which includes couple (weddingConfigFromDocument spreads ...response).",
+      "notes": "The groom test asserts the untouched member survives byte-for-byte, not just that the renamed one changed."
+    },
+    {
+      "criterion": "If the config row has no couple, write only the deprecated pair — coupleSchema requires id, lastName and phoneNumber, so the PATCH would 400",
+      "met": true,
+      "evidence": "config-manager.ts:791 returns { ...c, ...deprecated } untouched when c.couple is undefined — no key is added, so nothing is sent. Test 'sends only the deprecated field when the config row has no couple' asserts lastUpdate.brideName === 'Sarah' and lastUpdate.couple === undefined against BASE_CONFIG, which has no couple.",
+      "notes": "Verified against the schema rather than the task text: ../wedding-api/src/common/documents/wedding-config.ts:17 composes coupleSchema from brideDigestSchema/groomDigestSchema, which pick id, firstName, lastName, email, phoneNumber from UserDocumentSchema (user.ts:315)."
+    },
+    {
+      "criterion": "Do not refresh couple from the USER documents — that is deferred (hub ADR-0047 Amendment 4)",
+      "met": true,
+      "evidence": "git diff touches no user-collection code: setPerson/addPerson/coupleProfiles are unchanged, and setCoupleFirstName reads only c.couple. Editing a name under Settings → 'The couple' still changes neither surface — unchanged, and recorded as the accepted cost in the method's doc comment (config-manager.ts:782-786).",
+      "notes": "The inverse direction is equally untouched: renaming in Basics does not write the USER document."
+    },
+    {
+      "criterion": "Unit test: editing the bride's name sends a complete couple and the deprecated field, and a config without couple sends only the deprecated field",
+      "met": true,
+      "evidence": "New suite 'ConfigManager — Basics writes couple.*.firstName (T392)' in config-manager.spec.ts, 3 tests, all passing. Unit suite 644 → 647, 0 failing.",
+      "notes": "The third test (groom rename) is beyond the bullet: it is the one that would catch a handler that writes the correct field on the wrong member."
+    },
+    {
+      "criterion": "Hard rule 11 gate green",
+      "met": true,
+      "evidence": "typecheck pass; lint 4 errors before and 4 after, all four the documented src/app/shared/modal/ exception; test 647 passed / 0 failed (644 before); build pass; e2e 395 passed / 30 skipped / 0 failed, identical to the baseline measured with these three files restored to HEAD.",
+      "notes": "Both halves of every gate were measured this run: the three touched files were reset to their HEAD content (backed up first, then restored byte-identically) for the before pass, so the baseline includes the tree's other three uncommitted files rather than being quoted from an earlier session."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck (tsc -p tsconfig.app.json && tsc -p tsconfig.spec.json) — no output, exit 0, before and after."
+    },
+    "lint": {
+      "result": "fail",
+      "errors_before": 4,
+      "errors_after": 4,
+      "new_errors": [],
+      "detail": "ESLint fails on the 4 pre-existing src/app/shared/modal/ errors named as a known exception in CLAUDE.md hard rule 11 (3 template a11y in modal.html, 1 no-output-native in modal.ts). Identical list before and after. stylelint: no new violations (550 pre-existing, baselined). ds fidelity: 31/31 clean pairs, 0 drifting values."
+    },
+    "test": {
+      "before": { "files": 49, "passed": 644, "failing": 0, "total": 644 },
+      "after": { "files": 49, "passed": 647, "failing": 0, "total": 647 },
+      "new_failures": [],
+      "detail": "pnpm test (Vitest). +3 tests, all in the new T392 suite."
+    },
+    "build": {
+      "result": "pass",
+      "budget_warnings": [
+        "src/app/screens/milestones/milestones.scss 11.55 kB over an 8.00 kB budget",
+        "src/app/screens/config-manager/config-manager.scss 16.85 kB over an 8.00 kB budget",
+        "src/app/screens/seating-plan/seating-plan.scss 9.58 kB over an 8.00 kB budget"
+      ],
+      "detail": "pnpm build → dist/wedding-app. All three budget warnings are pre-existing; this task adds no CSS (config-manager.scss is untouched)."
+    },
+    "e2e": {
+      "before": { "passed": 395, "failed": 0, "skipped": 30 },
+      "after": { "passed": 395, "failed": 0, "skipped": 30 },
+      "result": "pass",
+      "new_failures": [],
+      "detail": "pnpm test:e2e, 4 browsers, local dev server. Baseline run (4.8m) and post-change run (4.4m) both 395/0/30. No e2e spec drives Settings → Basics, so this is a no-regression measurement, not coverage of the change.",
+      "note": "T389 (DS-kit static server races under parallel load) did not reproduce in either run; that flake still blocks a general green-e2e claim and is unrelated to this task."
+    }
+  },
+  "files": {
+    "added": ["tasks/33-general-information/reports/T392.json"],
+    "modified": [
+      "src/app/screens/config-manager/config-manager.ts",
+      "src/app/screens/config-manager/config-manager.html",
+      "src/app/screens/config-manager/config-manager.spec.ts",
+      "tasks/33-general-information/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "config.couple is still a stored copy of the USER documents that nothing refreshes, so Settings → 'The couple' remains a screen whose name edits change nothing any surface shows. This task makes Basics the only working path to the displayed names — which is a smaller surprise than today's, but still a surprise.",
+      "surfaces_at": "hub ADR-0047 Amendment 4's deferred propagation work (with wedding-api T251's contacts digests)"
+    },
+    {
+      "risk": "The invariant couple.bride.firstName == brideName now holds because one handler writes both. Any future writer of either field — a seed script, a migration, a second editor — can separate them again, and nothing in the app detects it; only scripts/migration/check-config-row.sh does, and it is run by hand.",
+      "surfaces_at": "ADR-0037's contract phase, which drops the deprecated pair and makes the question moot (blocked on wedding-api T225, PITR)"
+    }
+  ],
+  "commits": [],
+  "decisions_needed": []
+}

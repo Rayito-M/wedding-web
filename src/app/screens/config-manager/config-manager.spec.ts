@@ -10,6 +10,7 @@ import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 
 import {
   CreateWeddingConfigDtoAgendaItemsInner,
+  CreateWeddingConfigDtoCouple,
   CreateWeddingConfigDtoGeneralInfo,
   TranslateLanguageService,
   UserDto,
@@ -737,5 +738,165 @@ describe('ConfigManager — Good to know authoring (T384)', () => {
     save();
     expect(lastUpdate!.generalInfo!.dressCode).toBeUndefined();
     expect(lastUpdate!.generalInfo!.faq).toBeDefined();
+  });
+});
+
+/**
+ * T392 — Settings → Basics owns the couple's *displayed* names, and since
+ * `wedding-api` T252 those are read from `couple.<role>.firstName` whenever
+ * the config row has a `couple`. Writing only the deprecated
+ * `brideName`/`groomName` pair changes nothing any surface shows.
+ *
+ * The two assertions that matter are about the **payload**, not the field:
+ * the PATCH carries the *whole* `couple` object (`updateWeddingConfig` merges
+ * shallowly, so a partial one replaces the stored digest and drops `id`,
+ * `lastName`, `email` and `phoneNumber`), and it carries **no** `couple` at
+ * all when the row has none (`coupleSchema` requires `id`, `lastName` and
+ * `phoneNumber` — an invented digest would 400 the whole document).
+ */
+describe('ConfigManager — Basics writes couple.*.firstName (T392)', () => {
+  let fixture: ComponentFixture<ConfigManager>;
+  let currentConfig: WeddingConfigResponseDto;
+  let queryParamMap: BehaviorSubject<ParamMap>;
+  let lastUpdate: UpdateWeddingConfigDto | undefined;
+
+  /** A stored digest with every field `coupleSchema` requires, so dropping
+   *  one on the way out is visible. */
+  const COUPLE: CreateWeddingConfigDtoCouple = {
+    bride: {
+      id: '01J0BRIDE0000000000000000',
+      firstName: 'Sara',
+      lastName: 'García',
+      email: 'sara@example.com',
+      phoneNumber: '+34 600 11 22 33',
+    },
+    groom: {
+      id: '01J0GROOM0000000000000000',
+      firstName: 'Christophe',
+      lastName: 'Cubat',
+      email: 'christophe@example.com',
+      phoneNumber: '+34 600 44 55 66',
+    },
+  };
+
+  async function create(): Promise<void> {
+    queryParamMap = new BehaviorSubject<ParamMap>(convertToParamMap({}));
+    lastUpdate = undefined;
+
+    await TestBed.configureTestingModule({
+      imports: [ConfigManager],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTranslateService({ lang: 'en', fallbackLang: 'en' }),
+        provideStore(),
+        provideEffects(),
+        provideEntityData(entityConfig, withEffects()),
+        provideEntityDataServices(),
+        {
+          provide: WeddingConfigurationService,
+          useValue: {
+            weddingConfigControllerGetV1: () => of(currentConfig),
+            weddingConfigControllerUpdateV1: (args: {
+              updateWeddingConfigDto: UpdateWeddingConfigDto;
+            }) => {
+              lastUpdate = args.updateWeddingConfigDto;
+              return of(currentConfig);
+            },
+          },
+        },
+        {
+          provide: WeddingUsersService,
+          useValue: { usersControllerListV1: () => of({ items: [] }) },
+        },
+        { provide: ActivatedRoute, useValue: { queryParamMap } },
+        {
+          provide: Router,
+          useValue: {
+            navigate: (_commands: unknown[], extras?: { queryParams?: Record<string, string> }) => {
+              queryParamMap.next(convertToParamMap({ ...extras?.queryParams }));
+              return Promise.resolve(true);
+            },
+          },
+        },
+      ],
+    }).compileComponents();
+
+    TestBed.inject(TranslateService).setTranslation('en', {}, true);
+
+    fixture = TestBed.createComponent(ConfigManager);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  function queryAll<T extends HTMLElement>(selector: string): T[] {
+    return Array.from(fixture.nativeElement.querySelectorAll(selector)) as T[];
+  }
+
+  /** Basics is the first section and the default one; its first `.grid-2`
+   *  holds the bride's name then the groom's. */
+  function nameInput(role: 'bride' | 'groom'): HTMLInputElement {
+    return queryAll<HTMLInputElement>('.grid-2 input')[role === 'bride' ? 0 : 1];
+  }
+
+  function setValue(el: HTMLInputElement, value: string): void {
+    el.value = value;
+    el.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  }
+
+  function save(): void {
+    queryAll<HTMLButtonElement>('.mobile-bar button')[0].click();
+    fixture.detectChanges();
+  }
+
+  it('sends the complete couple and the deprecated field when the bride is renamed', async () => {
+    currentConfig = { ...BASE_CONFIG, couple: COUPLE };
+    await create();
+
+    setValue(nameInput('bride'), 'Sarah');
+    save();
+
+    expect(lastUpdate).toBeDefined();
+    // The deprecated pair keeps travelling until ADR-0037's contract phase.
+    expect(lastUpdate!.brideName).toBe('Sarah');
+    // …and the digest travels whole: a partial `couple` would *replace* the
+    // stored one, since `updateWeddingConfig` merges shallowly.
+    expect(lastUpdate!.couple).toEqual({
+      bride: { ...COUPLE.bride, firstName: 'Sarah' },
+      groom: COUPLE.groom,
+    });
+    // The invariant `check-config-row.sh` asserts.
+    expect(lastUpdate!.couple!.bride.firstName).toBe(lastUpdate!.brideName);
+  });
+
+  it('renames the groom without touching the bride', async () => {
+    currentConfig = { ...BASE_CONFIG, couple: COUPLE };
+    await create();
+
+    setValue(nameInput('groom'), 'Chris');
+    save();
+
+    expect(lastUpdate!.groomName).toBe('Chris');
+    expect(lastUpdate!.couple).toEqual({
+      bride: COUPLE.bride,
+      groom: { ...COUPLE.groom, firstName: 'Chris' },
+    });
+    expect(lastUpdate!.brideName).toBe(BASE_CONFIG.brideName);
+  });
+
+  it('sends only the deprecated field when the config row has no couple', async () => {
+    currentConfig = { ...BASE_CONFIG };
+    await create();
+
+    setValue(nameInput('bride'), 'Sarah');
+    save();
+
+    expect(lastUpdate!.brideName).toBe('Sarah');
+    // No digest can be built from a first name — `coupleSchema` requires
+    // `id`, `lastName` and `phoneNumber` — so none is sent, and the API's
+    // fallback keeps serving the deprecated pair.
+    expect(lastUpdate!.couple).toBeUndefined();
   });
 });

@@ -143,7 +143,7 @@
                     app-input
                     type="text"
                     [value]="cfg().brideName"
-                    (input)="setBasics({ brideName: inputValue($event) })"
+                    (input)="setCoupleFirstName('bride', inputValue($event))"
                   />
                 </label>
                 <label class="field">
@@ -152,7 +152,7 @@
                     app-input
                     type="text"
                     [value]="cfg().groomName"
-                    (input)="setBasics({ groomName: inputValue($event) })"
+                    (input)="setCoupleFirstName('groom', inputValue($event))"
                   />
                 </label>
               </div>

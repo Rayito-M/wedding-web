@@ -384,8 +384,15 @@
   (`e2e/public-surface.spec.ts`); hub ADR-0047 Amendment 3 §A
 
 ### T392 — Settings → Basics must write `couple.*.firstName`, not only the deprecated pair
-- **Status:** todo — **the couple's names are currently uneditable end-to-end.** Not a regression:
-  `wedding-api` T252 made both surfaces agree, and this is the other half of that change
+- **Status:** done (2026-09-15) — Basics' two inputs call `setCoupleFirstName`, which writes the
+  deprecated field **and** `couple.<role>.firstName`, spreading the stored digest at both levels so
+  the shallow merge cannot drop `id`, `lastName`, `email` or `phoneNumber`; a row with no `couple`
+  sends the deprecated field alone. `'brideName' | 'groomName'` came **out of `setBasics`' `Pick`**,
+  so the silently-inert write is now a compile error rather than a convention. `couple` is still not
+  refreshed from the USER documents (ADR-0047 Amendment 4) — "The couple" keeps changing nothing.
+  Gates: typecheck green, lint 4 → 4 (the documented modal exception), unit 644 → 647, build green,
+  e2e 395/0/30 before and after. See `reports/T392.json`. **Still to do by hand:** the
+  `check-config-row.sh` verification below, which needs a deployed bundle.
 - **Owner:** agent (implementer)
 - **Depends on:** `wedding-api` **T252** (landed, `936d0ec`) — no further API work is needed
 - **ADR:** hub **ADR-0037** (the switch phase T252 completed on the read side); **ADR-0047**

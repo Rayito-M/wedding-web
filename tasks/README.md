@@ -271,5 +271,5 @@ never by its letter alone.
 | **T388** | The e2e fixtures still serve the block array, so 30 specs assert a dead render | done — info spec 45/45; suite 420, 0 assertion failures; residual flake is the ds-kit harness | `33-general-information` |
 | **T389** | The DS-kit static server loses races under parallel e2e load | todo — **blocks any green e2e-gate claim** | `33-general-information` |
 | **T391** | The copy that carries a factual claim should be asserted, not just written | todo — not release-blocking | `33-general-information` |
-| **T392** | Settings → Basics must write `couple.*.firstName`, not only the deprecated pair | todo — **the couple's names are uneditable until it lands** | `33-general-information` |
+| **T392** | Settings → Basics must write `couple.*.firstName`, not only the deprecated pair | done — unit 644 → 647, e2e 395/0/30 unchanged; post-deploy `check-config-row.sh` still owed | `33-general-information` |
 | **T390** | Settings says contact cards self-update; the notice says they don't | done (`5b75068`) | `33-general-information` |

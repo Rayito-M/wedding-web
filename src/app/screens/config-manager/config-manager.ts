@@ -751,15 +751,51 @@ export class ConfigManager implements OnInit {
     this.dirty.set(true);
   }
 
+  /** Every Basics field *except* the two names, which need `couple` written
+   *  alongside the deprecated pair — `setCoupleFirstName` below, and no other
+   *  path (T392). */
   protected setBasics(
     patch: Partial<
-      Pick<
-        ConfigState,
-        'brideName' | 'groomName' | 'tagline' | 'date' | 'rsvpDeadline' | 'country' | 'city'
-      >
+      Pick<ConfigState, 'tagline' | 'date' | 'rsvpDeadline' | 'country' | 'city'>
     >,
   ): void {
     this.mutate((c) => ({ ...c, ...patch }));
+  }
+
+  /**
+   * Basics' bride/groom name fields (T392). `GET /v1/config` derives the two
+   * displayed names from `couple.<role>.firstName` whenever the row has a
+   * `couple`, falling back to the deprecated pair when it does not
+   * (`wedding-api` T252) — so writing `brideName`/`groomName` alone changes
+   * nothing any surface reads. Write **both**, until ADR-0037's contract phase
+   * drops the pair.
+   *
+   * The whole `couple` object goes up, not the one changed field:
+   * `updateWeddingConfig` merges shallowly (`{ ...config, ...update }`), so a
+   * partial `couple` *replaces* the stored one and drops `id`, `lastName`,
+   * `email` and `phoneNumber`.
+   *
+   * With no stored `couple` the deprecated field travels alone: `coupleSchema`
+   * requires `id`, `lastName` and `phoneNumber`, so a valid `couple` cannot be
+   * built from a first name and inventing one would 400 the whole PATCH.
+   * Production has a `couple`; a fresh or seeded environment may not.
+   *
+   * What this is **not**: a refresh of `couple` from the bride's and groom's
+   * USER documents. That staleness — why editing a name under "The couple"
+   * still changes nothing — is deferred by hub ADR-0047 Amendment 4, as one
+   * pattern with the contacts digests rather than a patch to one field.
+   */
+  protected setCoupleFirstName(role: CoupleRole, firstName: string): void {
+    this.mutate((c) => {
+      const deprecated = role === 'bride' ? { brideName: firstName } : { groomName: firstName };
+      const couple = c.couple;
+      if (!couple) return { ...c, ...deprecated };
+      return {
+        ...c,
+        ...deprecated,
+        couple: { ...couple, [role]: { ...couple[role], firstName } },
+      };
+    });
   }
 
   protected setLanguageLabel(code: LangCode, value: string): void {
