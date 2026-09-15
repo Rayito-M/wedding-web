@@ -137,38 +137,59 @@ function agendaItems(): unknown[] {
   ];
 }
 
+/** The ULID prefix every `faq` entry id in this fixture shares — the render
+ *  keys its rows by the stored id, never by the array index (hub ADR-0047
+ *  §1), and `design-parity-info.spec.ts` asserts the rendered id carries
+ *  this, which an index-keyed render could not produce. */
+export const FAQ_ULID_PREFIX = '01JBBBBBBBBBBBBBBBBBBBBBB';
+
+/** The single `note` entry's ULID — same reason as {@link FAQ_ULID_PREFIX}. */
+export const NOTE_ULID = '01JDDDDDDDDDDDDDDDDDDDDDD1';
+
 /**
- * `WeddingConfigResponseDto.goodToKnow` (T375, hub ADR-0046) — the couple's
- * own blocks, mirroring the DS kit's own `ScreenInfo.jsx` seed data (same
- * five blocks, same order, same copy) so `design-parity-info.spec.ts` can
- * compare like with like rather than two different documents.
+ * The couple's own `generalInfo` sections (T388, hub **ADR-0047 §1/§2**) —
+ * the fixed-shape object that replaced ADR-0046's ordered array of typed
+ * blocks. There is no `type`, no block `id` and no stored order here: each
+ * section is its own named field and the client renders the design system's
+ * fixed arrangement.
+ *
+ * Copy mirrors the DS kit's own `info.data.js` seed (the same dress-code
+ * headline, the same six FAQ questions, the same bank identifiers) so
+ * `design-parity-info.spec.ts` compares like with like — a difference it
+ * measures is then a *design* difference, never a content one.
  *
  * Same standing as `agendaItems()` above: this is API *fixture* data standing
  * in for content the real backend returns, not user-facing app copy — hard
  * rule 19 forbids this text in a locale file or a component template, which
  * is exactly where it is NOT. Per-locale prose repeats the same English
  * string for the same reason `agendaItems()` does.
+ *
+ * The fixture deliberately covers what the renderer BRANCHES on rather than
+ * a happy path (T388): a `note` section the kit never drew, ULID-keyed `faq`
+ * and `note` entries, all three `dayLine` variants, and — see
+ * {@link GENERAL_INFORMATION} — a contact with no `phoneNumber`.
+ *
+ * Shape: `CreateWeddingConfigDtoGeneralInfo`, i.e. what `GET /v1/config`
+ * carries. The couple digest is NOT part of it — it belongs to the read
+ * route alone (ADR-0047 §4), which is why {@link GENERAL_INFORMATION} adds it
+ * rather than this function.
  */
-function goodToKnowBlocks(): unknown[] {
+function generalInfoSections() {
   const L = (text: string) => ({ es: text, en: text, fr: text });
-  return [
-    {
-      id: '01JAAAAAAAAAAAAAAAAAAAAAA1',
-      type: 'dress-code',
-      title: L('What to wear'),
+  return {
+    dressCode: {
       headline: L('Elegant, garden-ready'),
       body: L(
         'Cocktail dress or a light suit, no black tie. Gravel gardens — bring a lower heel. Our colours, if you\u2019d like to match.',
       ),
       note: L('Please leave white and ivory to Sara — everything else is fair game.'),
     },
-    {
-      id: '01JAAAAAAAAAAAAAAAAAAAAAA2',
-      type: 'gift',
-      title: L('Gifts'),
+    gift: {
       intro: L(
         'You crossing a border to be there is already the present. If you would still like to give something, we are saving for three weeks in Japan — no list, no shop, just the account below.',
       ),
+      // Identifiers: non-localized by decision (hub ADR-0046 §5, kept by
+      // ADR-0047 §6) and rendered byte-identically in all three locales.
       accountHolder: 'Sara Moreno & Christophe Lef\u00e8vre',
       iban: 'ES91 2100 0418 4502 0005 1332',
       bic: 'CAIXESBBXXX',
@@ -176,71 +197,123 @@ function goodToKnowBlocks(): unknown[] {
       bizumPhone: '+34 655 012 118',
       bizumNote: L('Put your name in the message so we know who to thank.'),
     },
-    {
-      id: '01JAAAAAAAAAAAAAAAAAAAAAA3',
-      type: 'faq',
-      title: L('Questions we have been asked'),
-      entries: [
-        ['Can we bring the children?', 'Yes — tell us their names and ages in your RSVP.'],
-        ['Where do we park?', 'There is a public car park five minutes uphill from the palacio.'],
-        ['What will the weather be like?', 'Early June in Granada: 30\u00b0C in the afternoon.'],
-        ['Which language is the ceremony in?', 'Spanish, with a French reading and an English one.'],
-        ['May we bring someone?', 'Your invitation names everyone we have room for.'],
-        ['When should we arrive?', 'The church doors open at 16:00 for a 16:30 ceremony.'],
-      ].map(([question, answer], i) => ({
-        id: `01JBBBBBBBBBBBBBBBBBBBBBB${i}`,
-        question: L(question),
-        answer: L(answer),
-      })),
-    },
-    {
-      id: '01JAAAAAAAAAAAAAAAAAAAAAA4',
-      type: 'contacts',
-      // Since `wedding-api` T246 (hub ADR-0046 Amendment 2 §A) an entry
-      // carries the person itself — the couple's own transcription — and
-      // `userId` is optional metadata, never a render gate. Exactly one
-      // entry carries a `phoneNumber`, so one call button renders and the
-      // other two rows show name + purpose and no button. The third entry
-      // has no `userId` at all: the third-party case (a person with no
-      // account on this site), which must render like any other.
-      title: L('Ask us anything'),
-      entries: [
-        {
-          id: '01JCCCCCCCCCCCCCCCCCCCCCC1',
-          firstName: 'Sara',
-          lastName: 'Bride',
-          phoneNumber: '+34 655 012 118',
-          purpose: L('Anything about the day'),
-          userId: COUPLE_ID,
-        },
-        {
-          id: '01JCCCCCCCCCCCCCCCCCCCCCC2',
-          firstName: 'Guest0',
-          lastName: 'Fixture0',
-          purpose: L('Travel, transfers, logistics'),
-          userId: 'e2e-guest-0',
-        },
-        {
-          id: '01JCCCCCCCCCCCCCCCCCCCCCC3',
-          firstName: 'Amparo',
-          lastName: 'Delgado',
-          purpose: L('Maid of honour — for surprises'),
-        },
-      ],
-    },
-    {
-      id: '01JAAAAAAAAAAAAAAAAAAAAAA5',
-      type: 'day-line',
-      title: L('The day in one line'),
-      // Three authored variants; the app picks one by today's Europe/Madrid
-      // date against `rsvpDeadline` and `date` (hub ADR-0046 §4). The stub's
-      // own dates decide which — nothing stored says which phase is current.
+    // 1-10 entries, each carrying a ULID `id` the render keys its rows by,
+    // never the array index (ADR-0047 §1). Six of them: the kit's own count.
+    faq: [
+      ['Can we bring the children?', 'Yes — tell us their names and ages in your RSVP.'],
+      ['Where do we park?', 'There is a public car park five minutes uphill from the palacio.'],
+      ['What will the weather be like?', 'Early June in Granada: 30\u00b0C in the afternoon.'],
+      ['Which language is the ceremony in?', 'Spanish, with a French reading and an English one.'],
+      ['May we bring someone?', 'Your invitation names everyone we have room for.'],
+      ['When should we arrive?', 'The church doors open at 16:00 for a 16:30 ceremony.'],
+    ].map(([question, answer], i) => ({
+      id: `${FAQ_ULID_PREFIX}${i}`,
+      question: L(question),
+      answer: L(answer),
+    })),
+    // All three variants are stored and the client picks ONE, by today's
+    // `Europe/Madrid` date against the config's `rsvpDeadline` and `date`
+    // (hub ADR-0046 §4, unchanged by ADR-0047). Nothing stored says which
+    // phase is current, so the three strings are deliberately distinct — a
+    // spec can tell which branch ran only if they differ.
+    dayLine: {
       rsvpOpen: L('5 June 2027 · the church at 16:30, then the party. Please reply by 1 May.'),
       rsvpClosed: L('5 June 2027 · the church at 16:30, then the party. Replies are closed.'),
       afterWedding: L('Thank you for celebrating with us.'),
     },
-  ];
+    // The one section the DS kit never drew: 1-10 free notes, each with a
+    // ULID `id` and an authored `title` that IS its section label (ADR-0047
+    // §1) — never unlabelled prose.
+    note: [
+      {
+        id: NOTE_ULID,
+        title: L('One last thing'),
+        body: L('The palacio gate closes at 03:00 — the taxis know, and so do we.'),
+      },
+    ],
+  };
 }
+
+/**
+ * `WeddingGeneralInformationDto` — the authenticated read route
+ * `GET /v1/config/general-information` (hub **ADR-0047 §4**), which is what
+ * `app-good-to-know` actually reads (T383). Same sections as
+ * {@link generalInfoSections}, plus the one thing only this route carries:
+ *
+ * **`contact.couple` is present, and required.** The route composes the
+ * digest from the CONFIG document server-side (§4, resolved by Amendment 2),
+ * so `contact` and `contact.couple` are both required on this response and
+ * the renderer opens its card with the bride and the groom. A mock that
+ * omitted it would be testing a response the API cannot produce.
+ *
+ * **A contact with no number, and contacts with one.** `phoneNumber` is
+ * REQUIRED on a `weddingPlanner` and on a `guest` entry and OPTIONAL only on
+ * the composed couple digest — so the groom is the one row that can have
+ * none, and he has none here: no number line and **no call button, absent
+ * rather than disabled** (T383). Three of the four rows carry a number, so
+ * both branches render in the same fixture.
+ *
+ * The people are accounts (ADR-0047 §2 — a contact is a person with an
+ * account here): the bride and groom of `COUPLE_USERS`, a wedding planner,
+ * and the guest `e2e-guest-0` that `guestProfiles()` already serves. Only the
+ * guest entry carries `purpose`, which is what makes the section "who to call
+ * **about what**"; a planner's role already says it (§2).
+ */
+export const GENERAL_INFORMATION = {
+  ...generalInfoSections(),
+  contact: {
+    couple: {
+      bride: {
+        id: COUPLE_ID,
+        firstName: 'Sara',
+        lastName: 'Moreno',
+        email: 'sara@example.com',
+        phoneNumber: '+34 600 112 233',
+      },
+      // No `phoneNumber`: the one row the contract lets go without one.
+      groom: {
+        id: 'e2e-groom-1',
+        firstName: 'Christophe',
+        lastName: 'Lef\u00e8vre',
+        email: 'christophe@example.com',
+      },
+    },
+    weddingPlanner: [
+      {
+        id: 'e2e-planner-1',
+        role: 'wedding-planner',
+        firstName: 'Elena',
+        lastName: 'Vidal',
+        email: 'elena@vidalbodas.es',
+        phoneNumber: '+34 640 118 227',
+      },
+    ],
+    guest: [
+      {
+        id: 'e2e-guest-0',
+        role: 'guest',
+        firstName: 'Guest0',
+        lastName: 'Fixture0',
+        email: 'guest0@example.com',
+        phoneNumber: '+34 655 012 118',
+        purpose: { es: 'Travel, transfers, logistics', en: 'Travel, transfers, logistics', fr: 'Travel, transfers, logistics' },
+      },
+    ],
+  },
+};
+
+/**
+ * The two dates `app-good-to-know` picks its `dayLine` variant against (hub
+ * ADR-0046 §4, unchanged by ADR-0047): today's `Europe/Madrid` calendar date
+ * is compared to `rsvpDeadline`, then to the wedding `date`. Exported because
+ * no stored field says which phase is current — a spec can only know which of
+ * the three authored sentences must render by applying the same rule to the
+ * same two dates.
+ */
+export const CONFIG_DATES = {
+  date: '2026-10-10T00:00:00.000Z',
+  rsvpDeadline: '2026-09-01T00:00:00.000Z',
+};
 
 /** `WeddingConfigResponseDto` (admin `GET /v1/config`, `ConfigManager`'s own
  *  read) — a different, larger document than `CONFIG_PUBLIC` above, which is
@@ -256,12 +329,12 @@ function weddingConfigAdmin(dietaryPreferencesCount: number): unknown {
     brideName: 'Sara',
     groomName: 'Christophe',
     tagline: 'Como la trucha al trucho',
-    date: '2026-10-10T00:00:00.000Z',
+    date: CONFIG_DATES.date,
     language: { en: 'English', es: 'Español', fr: 'Français' },
     themeId: 'terracotta',
     city: 'Granada',
     country: 'ES',
-    rsvpDeadline: '2026-09-01T00:00:00.000Z',
+    rsvpDeadline: CONFIG_DATES.rsvpDeadline,
     venues: [],
     agenda: { status: 'provisional', items: agendaItems() },
     hotels: [],
@@ -271,7 +344,7 @@ function weddingConfigAdmin(dietaryPreferencesCount: number): unknown {
     })),
     allergies: [],
     menus: [],
-    goodToKnow: goodToKnowBlocks(),
+    generalInfo: generalInfoSections(),
   };
 }
 
@@ -420,6 +493,15 @@ export async function installApiMocks(
   // bride/groom accounts its "the couple" section resolves.
   await page.route('**/v1/config', (route) =>
     json(route, weddingConfigAdmin(dietaryPreferencesCount)),
+  );
+
+  // The authenticated read route `app-good-to-know` reads (T383, hub
+  // ADR-0047 §4). A separate stub from `**/v1/config` above, which does NOT
+  // match this path and never did — before T388 nothing mocked it at all, so
+  // every request fell through to the 501 catch-all and the section rendered
+  // nothing.
+  await page.route('**/v1/config/general-information', (route) =>
+    json(route, GENERAL_INFORMATION),
   );
   await page.route('**/v1/users', (route) => json(route, COUPLE_USERS));
 
