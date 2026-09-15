@@ -22,7 +22,6 @@ import {
   GuestListResponseDtoItemsInnerRelationOneOf,
   TranslateLanguageService,
   UserListResponseDtoItemsInnerDelegateToInner,
-  WeddingGuestsService,
   lastSeenLabel as formatLastSeen,
   relationLinkLabel as formatRelationLink,
   todayInMadrid,
@@ -121,20 +120,20 @@ export class GuestProfileModal {
     EntityServices,
   ).getEntityCollectionService<RsvpDto>(EntityNamesEnum.RSVP);
 
-  private readonly guestCollection: EntityCollectionService<GuestDto> = inject(
-    EntityServices,
-  ).getEntityCollectionService<GuestDto>(EntityNamesEnum.GUEST);
-
   /**
    * Delegation (hub ADR-0039) writes through `PATCH /v1/guests/:id`, not
    * `/v1/profile` — `UpdateUserProfileDto` structurally has no `delegateTo`
    * field (grepped `src/app/core/api/model/`: absent), so it rides its own
-   * envelope/`version`, fetched directly from `WeddingGuestsService` rather
-   * than through an `@ngrx/data` collection (no `Guest` entity exists yet —
-   * `guest-create-modal.ts` calls this same service the same way, for the
-   * same reason).
+   * envelope/`version`, carried by the `Guest` collection rather than by the
+   * profile. Delegation went through `WeddingGuestsService` directly when it
+   * shipped (289bd39); c3d8eb8 rewired it onto this collection and T360's
+   * 1406d85 kept that, reconciling the patch body and the 409 unwrapping to
+   * it — `guest-create-modal.ts` still calls the service directly, since
+   * creating a guest is not a collection read.
    */
-  // private readonly guestsApi = inject(WeddingGuestsService);
+  private readonly guestCollection: EntityCollectionService<GuestDto> = inject(
+    EntityServices,
+  ).getEntityCollectionService<GuestDto>(EntityNamesEnum.GUEST);
 
   /**
    * Read-only lookup into the profiles `guest-manager.ts` already bulk-loads
@@ -174,7 +173,7 @@ export class GuestProfileModal {
 
   /**
    * The guest's own `GuestDto` — fetched separately from `guestProfile()`
-   * (see `guestsApi`'s doc) purely for its `delegateTo`/`version`; every
+   * (see `guestCollection`'s doc) purely for its `delegateTo`/`version`; every
    * other field on it is unused (the read-only view and the edit form both
    * keep reading `guestProfile()` for identity/relation/contact). `null`
    * before the fetch resolves or when it fails (`delegationError`).
@@ -391,7 +390,7 @@ export class GuestProfileModal {
   /**
    * Fetch the guest's `GuestDto` — the one source for `delegateTo` and the
    * `version` a grant/removal is optimistic-locked on (`UserProfileDto` has
-   * neither, see `guestsApi`'s doc). Also the retry target on both the
+   * neither, see `guestCollection`'s doc). Also the retry target on both the
    * picker's own error state and a 409 on save (re-read, per
    * `milestones.ts`'s established pattern).
    */
