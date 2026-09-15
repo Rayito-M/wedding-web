@@ -13,11 +13,21 @@
 > naming them), and Good to know is Settings section **08** with Appearance at **07**
 > (Amendment 4 §A).
 >
-> Order: **T383 → T384 → T385**, all after `wedding-api` **T249**'s contract lands. **T386** can run
-> at any point.
+> Order: **T383 → T384 → T385**; `wedding-api` T249 has landed, so T383 is unblocked. **T386** can
+> run at any point.
+>
+> **The working tree holds ~30 uncommitted files from an earlier attempt, and they are stale.** The
+> generated client there was regenerated against an *intermediate* API state — it still carries 14
+> `good-to-know-*` models — and the hand-edits to `config-manager` and `shared/good-to-know` were
+> written before `couple` became optional, before `purpose` returned, and before `faq`/`note` gained
+> ids and titles. `pnpm gen:api` will replace the generated half. **The hand-written half is the
+> Product Owner's to keep or discard — ask before assuming either** (`.agent/skills/task-management.md`
+> §3: uncommitted work in the tree is not yours). Do not `git stash`, `git clean` or `checkout --`
+> any of it.
 
 ### T383 — Render the `generalInfo` sections
-- **Status:** blocked — on `wedding-api` **T249**'s contract reaching `contracts/openapi.json`
+- **Status:** todo — **unblocked 2026-09-15**: `wedding-api` T249 landed and the contract is in the
+  hub (`d836e3c`). **Read the note on the working tree in this phase's header before you start.**
 - **Owner:** agent (implementer)
 - **Depends on:** `wedding-api` T247, T248, T249
 - **ADR:** hub **ADR-0047 §1/§2**; ADR-0046 §6 and Amendment 3 (both unchanged)
