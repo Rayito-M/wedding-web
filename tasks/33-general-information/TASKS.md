@@ -274,3 +274,41 @@
   - Report the number of consecutive full runs you achieved and **call it a floor, not a fix**
     (§4). Say what would falsify it — here, more runs under load.
 - **Refs:** `e2e/helpers/ds-kit.ts`; T388's report (the 6/4-spec measurement); `.agent/skills/task-management.md` §4
+
+### T390 — Settings tells the couple their contact cards self-update; the privacy notice says they don't
+- **Status:** todo — **gates the v1.3.0 tag.** Both strings ship in the same release and contradict
+  each other in the same app
+- **Owner:** agent (implementer)
+- **Depends on:** —
+- **ADR:** hub **ADR-0047 Amendment 3 §A**; §2 (struck bullet); §3
+- **Why:** `configManager.goodToKnow.contact.hint` currently tells the couple, in all three locales:
+  > *"Their name, email and phone number come from that account and are not edited here — **if they
+  > change their profile, their card changes too**."*
+
+  `privacyPolicy.goodToKnow.body`, shipped by T385 in the same release, tells the guest:
+  > *"a later edit to their account **does not update** the section, and closing an account does not
+  > remove them from it."*
+
+  **The notice is correct and the hint is false** (Amendment 3 §A: digests are stored verbatim).
+  Found by T385's implementer, who filed it rather than folding it into a task that did not own it.
+  This is the **fourth** copy of the same false claim — after ADR-0047 §2, `SPEC.md`/`GLOSSARY.md`,
+  and `wedding-api/src/common/documents/wedding-config.ts:199-202` (now T251's first bullet) — and
+  the first one **a user reads**. It is the worst of the four for a reason worth stating: the couple
+  will *act* on it. Someone told their contact cards self-update has no reason to revisit the
+  section when a guest changes their number, and the number a guest is asked to call goes quietly
+  stale.
+- **Acceptance:**
+  - The hint, in **es/en/fr**, says what is true: the details are **copied from the account when the
+    couple adds the person**, and **do not update afterwards** — so if someone's number changes, the
+    couple re-picks them. Keep the true half (only account holders; not edited here; someone without
+    an account is added as a guest first).
+  - **Match the privacy notice's register and its facts** — the two strings are read by different
+    people about the same data, and a guest comparing them should find no daylight. T385's copy is
+    the reference.
+  - **Do not promise a fix that does not exist.** If `wedding-api` T251 later makes details resolve
+    at read time, *both* strings change again, in that task's commit. Say nothing here about what
+    might change.
+  - No missing-key warnings; report the resolved counts you measure.
+  - Hard rule 11 gate green.
+- **Refs:** T384 (which shipped the hint), T385 (which found it and shipped the correct notice);
+  hub ADR-0047 Amendment 3 §A; `wedding-api` T251
