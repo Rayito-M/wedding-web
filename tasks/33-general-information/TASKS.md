@@ -26,8 +26,14 @@
 > any of it.
 
 ### T383 — Render the `generalInfo` sections
-- **Status:** todo — **unblocked 2026-09-15**: `wedding-api` T249 landed and the contract is in the
-  hub (`d836e3c`). **Read the note on the working tree in this phase's header before you start.**
+- **Status:** done (2026-09-15) — built against the regenerated client (`d836e3c`); the section reads
+  `GET /v1/config/general-information`, and the trade-off is in the report. **The hard-rule-11 gate is
+  red and T383 cannot close it alone:** `pnpm gen:api` deletes the 14 `good-to-know-*` models, and
+  `config-manager` at **HEAD** — not just in the stale tree — has 30 references to them and 18 to
+  `config.goodToKnow`, so the app does not compile until **T384** lands. Typecheck, unit tests, build
+  and e2e all fail on that one file and nothing else. **T383 + T384 are one merge unit.** Unit tests
+  were proven green (20 new, 630 total, 0 failing) behind a reversible local stub, restored
+  byte-identically. See `reports/T383.json`.
 - **Owner:** agent (implementer)
 - **Depends on:** `wedding-api` T247, T248, T249
 - **ADR:** hub **ADR-0047 §1/§2**; ADR-0046 §6 and Amendment 3 (both unchanged)

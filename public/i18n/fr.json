@@ -3,7 +3,8 @@
     "bride": "Mariée",
     "groom": "Marié",
     "guest": "Invité",
-    "provider": "Prestataire"
+    "provider": "Prestataire",
+    "wedding-planner": "Wedding planner"
   },
   "relation": {
     "side": {
@@ -591,8 +592,6 @@
         "day-line": "La journée en une ligne",
         "note": "Note libre"
       },
-      "moveUp": "Monter",
-      "moveDown": "Descendre",
       "removeBlock": "Retirer le bloc",
       "showOtherLanguages": "Modifier les autres langues",
       "hideOtherLanguages": "Masquer les autres langues",
@@ -801,11 +800,14 @@
     "gettingThere": "S'y rendre",
     "goodToKnow": "Bon à savoir",
     "subnavAriaLabel": "Sections de l'accueil",
-    "goodToKnowEmpty": {
-      "title": "Rien ici pour l'instant",
-      "body": "Nous ajouterons ici des informations utiles à mesure que le jour approche."
-    },
     "goodToKnowSection": {
+      "sections": {
+        "dressCode": "Comment s'habiller",
+        "gift": "Cadeaux",
+        "faq": "Ce qu'on nous a demandé",
+        "contact": "Demandez-nous tout",
+        "dayLine": "La journée en une ligne"
+      },
       "subtitle": "Les détails pratiques du jour.",
       "copy": "Copier",
       "copied": "Copié ✓",

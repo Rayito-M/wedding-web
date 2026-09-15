@@ -3,7 +3,8 @@
     "bride": "Novia",
     "groom": "Novio",
     "guest": "Invitado",
-    "provider": "Proveedor"
+    "provider": "Proveedor",
+    "wedding-planner": "Wedding planner"
   },
   "relation": {
     "side": {
@@ -591,8 +592,6 @@
         "day-line": "El día en una línea",
         "note": "Nota libre"
       },
-      "moveUp": "Subir",
-      "moveDown": "Bajar",
       "removeBlock": "Quitar bloque",
       "showOtherLanguages": "Editar los otros idiomas",
       "hideOtherLanguages": "Ocultar los otros idiomas",
@@ -801,11 +800,14 @@
     "gettingThere": "Cómo llegar",
     "goodToKnow": "Información útil",
     "subnavAriaLabel": "Secciones de inicio",
-    "goodToKnowEmpty": {
-      "title": "Todavía no hay nada aquí",
-      "body": "Iremos añadiendo aquí la información que te pueda resultar útil a medida que se acerque el día."
-    },
     "goodToKnowSection": {
+      "sections": {
+        "dressCode": "Qué ponerse",
+        "gift": "Regalos",
+        "faq": "Lo que nos habéis preguntado",
+        "contact": "Pregúntanos lo que quieras",
+        "dayLine": "El día en una línea"
+      },
       "subtitle": "Los detalles prácticos del día.",
       "copy": "Copiar",
       "copied": "Copiado ✓",

@@ -15,8 +15,6 @@ import { WeddingConfigPublicResponseDtoMainVenue } from './wedding-config-public
 export interface WeddingConfigPublicResponseDto { 
     id: string;
     version: number;
-    brideName: string;
-    groomName: string;
     tagline: string;
     date: string;
     language: MilestoneDtoTitle;
@@ -24,6 +22,8 @@ export interface WeddingConfigPublicResponseDto {
     city: string;
     country: string;
     rsvpDeadline: string;
+    brideName: string;
+    groomName: string;
     mainVenue: WeddingConfigPublicResponseDtoMainVenue;
     socialProviders?: WeddingConfigPublicResponseDtoSocialProviders;
 }

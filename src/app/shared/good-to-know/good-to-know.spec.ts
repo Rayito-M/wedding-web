@@ -2,25 +2,17 @@ import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { provideEffects } from '@ngrx/effects';
 import { provideEntityData, withEffects } from '@ngrx/data';
 import { provideStore } from '@ngrx/store';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 
 import {
-  CreateWeddingConfigDtoGoodToKnowInner,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf1,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf2,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf3,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf4,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf5,
   TranslateLanguageService,
-  UserProfileDto,
   WeddingConfigResponseDto,
   WeddingConfigurationService,
-  WeddingUserProfileService,
+  WeddingGeneralInformationDto,
   entityConfig,
   provideEntityDataServices,
 } from '@app/core';
@@ -30,125 +22,101 @@ import { ThemeId } from '@app/model';
 import { GoodToKnow } from './good-to-know';
 
 /**
- * T375 — Home's "Good to know" renders the couple's own `goodToKnow` blocks
- * (hub ADR-0046). Every string a guest reads inside a block comes from the
- * fixture below, never from a locale file: that is the whole point of the
- * feature and of hard rule 19, and these tests would still pass with the
- * translations stripped.
+ * T383 — Home's "Good to know" renders the couple's own `generalInfo`
+ * sections (hub **ADR-0047 §1/§2**).
+ *
+ * Every string a guest reads *inside* a section comes from the fixture below,
+ * never from a locale file: that is the point of the feature and of hard rule
+ * 19, and these tests would still pass with the translations stripped. The
+ * section **labels** are the deliberate exception — the fixed shape stores no
+ * per-section title, so they are UI chrome and are asserted as keys.
  */
 
 /** Localized triple — the `{es,en,fr}` shape every prose field stores. */
 const L = (text: string) => ({ es: `${text} ES`, en: `${text} EN`, fr: `${text} FR` });
 
-const DRESS: CreateWeddingConfigDtoGoodToKnowInnerOneOf = {
-  id: 'b-dress',
-  type: 'dress-code',
-  title: L('What to wear'),
-  headline: L('Elegant'),
-  body: L('Cocktail dress or a light suit'),
-  note: L('Leave white to the bride'),
-};
-
-const GIFT: CreateWeddingConfigDtoGoodToKnowInnerOneOf1 = {
-  id: 'b-gift',
-  type: 'gift',
-  title: L('Gifts'),
-  intro: L('You being there is the present'),
-  accountHolder: 'Sara & Christophe',
-  iban: 'ES91 2100 0418 4502 0005 1332',
-  bic: 'CAIXESBBXXX',
-  reference: L('Your name'),
-  bizumPhone: '+34 655 012 118',
-  bizumNote: L('Put your name in the message'),
-};
-
-const FAQ: CreateWeddingConfigDtoGoodToKnowInnerOneOf2 = {
-  id: 'b-faq',
-  type: 'faq',
-  title: L('Questions'),
-  entries: [
-    { id: 'q1', question: L('Can we bring the children?'), answer: L('Yes') },
-    { id: 'q2', question: L('Where do we park?'), answer: L('Uphill') },
-    { id: 'q3', question: L('When should we arrive?'), answer: L('16:00') },
-  ],
-};
-
 /**
- * Since `wedding-api` T246 (contract `6eb233e`, hub ADR-0046 Amendment 2 §A)
- * a contacts entry carries the person itself — the couple's own transcription
- * — and `userId` is optional metadata, never a render gate. Three deliberate
- * shapes: `c-lucia` also has an account, `c-rosa` is the third-party case (no
- * account at all), and `c-no-phone` carries no number plus a `userId` no
- * directory resolves, which must not matter either.
+ * The whole shape, every section filled. ULIDs are abbreviated for legibility;
+ * what matters is that `faq` and `note` rows are keyed by **that value** and
+ * never by their index (ADR-0047 §1).
  */
-const CONTACTS: CreateWeddingConfigDtoGoodToKnowInnerOneOf3 = {
-  id: 'b-contacts',
-  type: 'contacts',
-  title: L('Ask us'),
-  entries: [
-    {
-      id: 'c-lucia',
-      firstName: 'Lucía',
-      lastName: 'Ferrer',
-      phoneNumber: '+34 691 776 402',
-      purpose: L('Maid of honour'),
-      userId: 'u-lucia',
-    },
-    {
-      id: 'c-rosa',
-      firstName: 'Rosa',
-      lastName: 'Delgado',
-      phoneNumber: '+34 600 111 222',
-      purpose: L('Venue coordinator'),
-    },
-    {
-      id: 'c-no-phone',
-      firstName: 'Christophe',
-      lastName: 'Groom',
-      purpose: L('Travel and transfers'),
-      userId: 'u-nobody',
-    },
-  ],
-};
-
-/**
- * A deliberately CONFLICTING people directory — the provenance trap (T382,
- * hub ADR-0046 Amendment 2 §D). The component no longer reads
- * `GET /v1/profile` at all; this mock stays wired so that if anyone ever
- * re-points the renderer at profiles, `u-lucia`'s stale copy leaks into the
- * DOM and the provenance test below fails loudly instead of passing by
- * coincidence. The block's copy is the accepted, staleable truth: a profile
- * edit must NOT update the card.
- */
-const STALE_PROFILES: UserProfileDto[] = [
-  {
-    id: 'u-lucia',
-    firstName: 'Lucía-Renamed',
-    lastName: 'Profile-Copy',
-    preferredLang: 'es',
-    role: 'guest',
-    phoneNumber: '+34 600 000 000',
+const FULL: WeddingGeneralInformationDto = {
+  dressCode: {
+    headline: L('Elegant'),
+    body: L('Cocktail dress or a light suit'),
+    note: L('Leave white to the bride'),
   },
-];
-
-const DAY_LINE: CreateWeddingConfigDtoGoodToKnowInnerOneOf4 = {
-  id: 'b-day',
-  type: 'day-line',
-  title: L('The day in one line'),
-  rsvpOpen: L('Please reply by 1 May'),
-  rsvpClosed: L('Replies are closed, see you soon'),
-  afterWedding: L('Thank you for coming'),
+  gift: {
+    intro: L('You being there is the present'),
+    accountHolder: 'Sara & Christophe',
+    iban: 'ES91 2100 0418 4502 0005 1332',
+    bic: 'CAIXESBBXXX',
+    reference: L('Your name'),
+    bizumPhone: '+34 655 012 118',
+    bizumNote: L('Put your name in the message'),
+  },
+  contact: {
+    couple: {
+      bride: {
+        id: 'u-sara',
+        firstName: 'Sara',
+        lastName: 'Bride',
+        email: 'sara@example.com',
+        phoneNumber: '+34 600 000 001',
+      },
+      groom: {
+        id: 'u-christophe',
+        firstName: 'Christophe',
+        lastName: 'Groom',
+        email: 'christophe@example.com',
+        phoneNumber: '+34 600 000 002',
+      },
+    },
+    weddingPlanner: [
+      {
+        id: 'u-marta',
+        role: 'wedding-planner',
+        firstName: 'Marta',
+        lastName: 'Ruiz',
+        email: 'marta@example.com',
+        phoneNumber: '+34 600 333 444',
+      },
+    ],
+    guest: [
+      {
+        id: 'u-lucia',
+        role: 'guest',
+        firstName: 'Lucía',
+        lastName: 'Ferrer',
+        email: 'lucia@example.com',
+        phoneNumber: '+34 691 776 402',
+        purpose: L('Anything about the ceremony'),
+      },
+    ],
+  },
+  faq: [
+    { id: '01JQ0000000000000000000001', question: L('Can we bring the children?'), answer: L('Yes') },
+    { id: '01JQ0000000000000000000002', question: L('Where do we park?'), answer: L('Uphill') },
+  ],
+  dayLine: {
+    rsvpOpen: L('Please reply by 1 May'),
+    rsvpClosed: L('Replies are closed, see you soon'),
+    afterWedding: L('Thank you for coming'),
+  },
+  note: [
+    { id: '01JQ000000000000000000000N', title: L('One more thing'), body: L('Free-form prose') },
+  ],
 };
 
-const NOTE: CreateWeddingConfigDtoGoodToKnowInnerOneOf5 = {
-  id: 'b-note',
-  type: 'note',
-  title: L('One more thing'),
-  body: L('Free-form prose'),
+/** The minimum the route can return: `contact` and `contact.couple` are the
+ *  only required fields on the response (ADR-0047 §4, Amendment 2). */
+const COUPLE_ONLY: WeddingGeneralInformationDto = {
+  contact: FULL.contact,
 };
 
-/** Wedding date 2027-06-05, RSVP deadline 2027-05-01 — the two dates the
- *  `day-line` variant is chosen against (hub ADR-0046 §4). */
+/** Wedding date 2027-06-05, RSVP deadline 2027-05-01 — the two fields the
+ *  `dayLine` variant is chosen against, and the only two this component reads
+ *  off the wedding configuration (ADR-0046 §4). */
 const BASE_CONFIG: WeddingConfigResponseDto = {
   id: 'config',
   version: 1,
@@ -169,18 +137,18 @@ const BASE_CONFIG: WeddingConfigResponseDto = {
   menus: [],
 };
 
-describe('GoodToKnow — couple-authored blocks (T375, hub ADR-0046)', () => {
+describe('GoodToKnow — the couple-authored sections (T383, hub ADR-0047)', () => {
   let fixture: ComponentFixture<GoodToKnow>;
-  let currentConfig: WeddingConfigResponseDto;
   let lang: ReturnType<typeof signal<'es' | 'en' | 'fr'>>;
   let theme: ReturnType<typeof signal<ThemeId>>;
 
   async function create(
-    goodToKnow?: CreateWeddingConfigDtoGoodToKnowInner[],
-    overrides: Partial<WeddingConfigResponseDto> = {},
+    info: WeddingGeneralInformationDto | 'fails',
+    configOverrides: Partial<WeddingConfigResponseDto> = {},
+    initialLang: 'es' | 'en' | 'fr' = 'en',
   ): Promise<void> {
-    currentConfig = { ...BASE_CONFIG, ...overrides, goodToKnow };
-    lang = signal<'es' | 'en' | 'fr'>('en');
+    const config = { ...BASE_CONFIG, ...configOverrides };
+    lang = signal<'es' | 'en' | 'fr'>(initialLang);
     theme = signal<ThemeId>('terracotta');
 
     await TestBed.configureTestingModule({
@@ -195,12 +163,10 @@ describe('GoodToKnow — couple-authored blocks (T375, hub ADR-0046)', () => {
         provideEntityDataServices(),
         {
           provide: WeddingConfigurationService,
-          useValue: { weddingConfigControllerGetV1: () => of(currentConfig) },
-        },
-        {
-          provide: WeddingUserProfileService,
           useValue: {
-            profileControllerGetAllV1: () => of({ items: STALE_PROFILES, nextCursor: null }),
+            weddingConfigControllerGetV1: () => of(config),
+            weddingConfigControllerGetGeneralInformationV1: () =>
+              info === 'fails' ? throwError(() => new Error('502')) : of(info),
           },
         },
         { provide: TranslateLanguageService, useValue: { currentLang: lang } },
@@ -208,6 +174,8 @@ describe('GoodToKnow — couple-authored blocks (T375, hub ADR-0046)', () => {
       ],
     }).compileComponents();
 
+    // Keys resolve to themselves — so anything a test reads out of the DOM is
+    // authored content unless it is visibly a key.
     TestBed.inject(TranslateService).setTranslation('en', {}, true);
 
     fixture = TestBed.createComponent(GoodToKnow);
@@ -229,205 +197,241 @@ describe('GoodToKnow — couple-authored blocks (T375, hub ADR-0046)', () => {
     return (fixture.nativeElement.querySelector(selector)?.textContent ?? '').trim();
   }
 
-  /** The rendered blocks, in the order a reader scans them — the two column
-   *  wrappers are read left-to-right, and below 900px they nest as one flow,
-   *  so DOM order is reading order either way. */
-  function renderedLabels(): string[] {
-    return queryAll('.block').map((block) =>
-      (block.querySelector('.label')?.textContent ?? '').trim(),
-    );
+  function slots(): (string | undefined)[] {
+    return queryAll<HTMLElement>('.block').map((block) => block.dataset['slot']);
   }
 
-  it('renders the stored order, never a sort or a grouping by type', async () => {
-    // Deliberately not the DS mock's own order: the couple's array is the
-    // only ordering there is (hub ADR-0046 §3).
-    await create([NOTE, CONTACTS, DRESS, FAQ, GIFT]);
+  // ── ordering is structural ─────────────────────────────────────────────
 
-    expect(renderedLabels()).toEqual([
-      'One more thing EN',
-      'Ask us EN',
-      'What to wear EN',
-      'Questions EN',
-      'Gifts EN',
+  it("renders the design system's fixed order — nothing about it is authored", async () => {
+    await create(FULL);
+
+    // Left column then right, as `ScreenInfo.jsx:169-186` lays them out. There
+    // is no stored order to honour and no sort to apply: each section has its
+    // own field (ADR-0047 §1).
+    expect(slots()).toEqual(['dress-code', 'contact', 'gift', 'faq', 'day-line', 'note']);
+  });
+
+  it('renders nothing for a section the couple did not write', async () => {
+    await create(COUPLE_ONLY);
+
+    // Presence of the field is the whole mechanism — no empty card, no
+    // placeholder, no per-section toggle.
+    expect(slots()).toEqual(['contact']);
+    expect(fixture.nativeElement.querySelector('.dress-card')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.gift-card')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.faq-card')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.day-card')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.note-card')).toBeNull();
+  });
+
+  it('renders no section at all when the read route fails', async () => {
+    await create('fails');
+
+    // The HTTP error interceptor owns what the guest is told (hard rule 17b);
+    // this section degrades to nothing rather than breaking Home around it.
+    expect(queryAll('.block').length).toBe(0);
+  });
+
+  // ── contacts (ADR-0047 §2/§3) ──────────────────────────────────────────
+
+  it('renders the couple, then the planners, then the guests', async () => {
+    await create(FULL);
+
+    expect(queryAll('.contact-name').map((el) => el.textContent?.trim())).toEqual([
+      'Sara Bride',
+      'Christophe Groom',
+      'Marta Ruiz',
+      'Lucía Ferrer',
     ]);
   });
 
-  it('renders nothing for a block type that is not in the array', async () => {
-    await create([DRESS]);
+  it('gives a guest their authored purpose line and a planner their role', async () => {
+    await create(FULL);
 
-    expect(queryAll('.block').length).toBe(1);
-    // Presence is the entire mechanism: no empty card, no placeholder for
-    // the five block types the couple did not write.
-    expect(fixture.nativeElement.querySelector('.gift-card')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.faq-card')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.contacts-card')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.day-card')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.note-card')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.empty-state')).toBeNull();
+    const meta = queryAll('.contact-meta').map((el) => el.textContent?.trim());
+    // `purpose` is what makes the section "who to call **about what**"
+    // (ADR-0047 §2) and it exists on guest entries only; a planner's role
+    // already states what to ask them.
+    expect(meta).toEqual([
+      'roles.bride',
+      'roles.groom',
+      'roles.wedding-planner',
+      'Anything about the ceremony EN',
+    ]);
   });
 
-  it('keeps the shipped empty state when the array is empty', async () => {
-    await create([]);
+  it('shows each listed person their email and number (ADR-0047 §3)', async () => {
+    await create(FULL);
 
-    expect(fixture.nativeElement.querySelector('.empty-state')).not.toBeNull();
-    expect(queryAll('.block').length).toBe(0);
+    const rows = queryAll('.contact-row');
+    const ids = (i: number) =>
+      Array.from(rows[i].querySelectorAll('.contact-id')).map((el) => el.textContent?.trim());
+
+    expect(ids(0)).toEqual(['+34 600 000 001', 'sara@example.com']);
+    expect(ids(3)).toEqual(['+34 691 776 402', 'lucia@example.com']);
   });
 
-  it('keeps the shipped empty state when the field is absent altogether', async () => {
-    await create(undefined);
+  it('renders no call button for a person with no phone number — absent, not disabled', async () => {
+    await create({
+      ...COUPLE_ONLY,
+      contact: {
+        ...FULL.contact,
+        couple: {
+          bride: { id: 'u-sara', firstName: 'Sara', lastName: 'Bride', email: 'sara@example.com' },
+          groom: FULL.contact.couple.groom,
+        },
+        weddingPlanner: undefined,
+        guest: undefined,
+      },
+    });
 
-    expect(fixture.nativeElement.querySelector('.empty-state')).not.toBeNull();
-    expect(queryAll('.block').length).toBe(0);
+    const rows = queryAll('.contact-row');
+    expect(rows.length).toBe(2);
+    // Not a disabled button, not a `tel:` with an empty target: no element.
+    expect(rows[0].querySelector('.call-btn')).toBeNull();
+    expect(rows[0].querySelectorAll('button').length).toBe(0);
+    // The row still renders — name, role and email are reason enough for it.
+    expect(rows[0].querySelector('.contact-name')?.textContent?.trim()).toBe('Sara Bride');
+    expect(rows[1].querySelector('.call-btn')?.getAttribute('href')).toBe('tel:+34600000002');
   });
 
-  describe('day-line — the variant is computed, never stored (§4)', () => {
-    /** Each boundary is asserted in `Europe/Madrid`, the reference timezone:
-     *  the instants below are chosen so UTC and Madrid agree on the calendar
-     *  date, and the two that do not (the 23:30 UTC cases) are the point. */
-    async function renderAt(instant: string): Promise<string> {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date(instant));
-      await create([DAY_LINE]);
-      return text('.day-line');
-    }
+  // ── faq and note: ULID-keyed, and note carries its own label ───────────
 
-    it('shows rsvpOpen the day before the deadline', async () => {
-      expect(await renderAt('2027-04-30T10:00:00Z')).toBe('Please reply by 1 May EN');
-    });
+  it('keys the FAQ rows by their stored id, not by index', async () => {
+    await create(FULL);
 
-    it('shows rsvpOpen ON the deadline itself (on or before)', async () => {
-      expect(await renderAt('2027-05-01T21:00:00Z')).toBe('Please reply by 1 May EN');
-    });
-
-    it('shows rsvpClosed the day after the deadline', async () => {
-      expect(await renderAt('2027-05-02T10:00:00Z')).toBe('Replies are closed, see you soon EN');
-    });
-
-    it('shows rsvpClosed ON the wedding day itself (through the wedding day)', async () => {
-      expect(await renderAt('2027-06-05T15:00:00Z')).toBe('Replies are closed, see you soon EN');
-    });
-
-    it('shows afterWedding the day after the wedding', async () => {
-      expect(await renderAt('2027-06-06T08:00:00Z')).toBe('Thank you for coming EN');
-    });
-
-    it('reckons the boundary in Europe/Madrid, not UTC', async () => {
-      // 23:30 UTC on the deadline is already 01:30 the NEXT day in Madrid
-      // (CEST, UTC+2) — the RSVP is closed there, which is the timezone the
-      // whole system reckons in (`SPEC.md` Constants).
-      expect(await renderAt('2027-05-01T23:30:00Z')).toBe('Replies are closed, see you soon EN');
-    });
+    // `aria-controls`/`id` are built from the ULID, so a reorder moves the
+    // row's identity with it (ADR-0047 §1's reason for keeping ids).
+    expect(queryAll('.faq-q').map((el) => el.getAttribute('aria-controls'))).toEqual([
+      'gtk-faq-01JQ0000000000000000000001',
+      'gtk-faq-01JQ0000000000000000000002',
+    ]);
   });
 
-  describe('gift — identifiers, and a copy button that cannot lie', () => {
-    /** Replaces `navigator.clipboard` for one test; `configurable` so the
-     *  next test can replace it again. */
-    function stubClipboard(writeText: (value: string) => Promise<void>): void {
-      Object.defineProperty(navigator, 'clipboard', {
-        value: { writeText },
-        configurable: true,
-      });
-    }
+  it("renders a note's authored title as its section label", async () => {
+    await create(FULL);
 
-    it('renders only the fields the couple filled, and the value exactly as stored', async () => {
-      await create([{ ...GIFT, bic: undefined, reference: undefined }]);
-
-      const rows = queryAll('.gift-row');
-      expect(rows.length).toBe(2); // accountHolder + iban; no BIC row, no reference row
-      // Byte-identical: spacing preserved, no `Intl` grouping, no re-casing.
-      expect(rows[1].querySelector('.value')?.textContent).toBe(
-        'ES91 2100 0418 4502 0005 1332',
-      );
-    });
-
-    it('renders identifiers byte-identically in every locale (§5)', async () => {
-      await create([GIFT, CONTACTS]);
-
-      const identifiers = () => ({
-        iban: queryAll('.gift-row')[1].querySelector('.value')?.textContent,
-        bizum: text('.bizum .value'),
-        contact: text('.contact-name'),
-        meta: text('.contact-meta'),
-      });
-      const inEnglish = identifiers();
-
-      lang.set('fr');
-      fixture.detectChanges();
-      const inFrench = identifiers();
-
-      expect(inFrench.iban).toBe(inEnglish.iban);
-      expect(inFrench.bizum).toBe(inEnglish.bizum);
-      expect(inFrench.contact).toBe('Lucía Ferrer');
-      expect(inFrench.contact).toBe(inEnglish.contact);
-      // The purpose line IS prose and does follow the locale — the phone in
-      // it does not.
-      expect(inFrench.meta).toContain('+34 691 776 402');
-      expect(inFrench.meta).toContain('Maid of honour FR');
-    });
-
-    it('confirms a copy only when the clipboard call actually succeeded', async () => {
-      const written: string[] = [];
-      stubClipboard(async (value) => {
-        written.push(value);
-      });
-      await create([GIFT]);
-
-      const copyButton = queryAll<HTMLButtonElement>('.copy-btn')[0];
-      copyButton.click();
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      // Whitespace-stripped on the way to the clipboard; still spaced on screen.
-      expect(written).toEqual(['ES9121000418450200051332']);
-      expect(copyButton.classList.contains('ok')).toBe(true);
-    });
-
-    it('shows NO confirmation when the clipboard call fails or is refused', async () => {
-      stubClipboard(() => Promise.reject(new Error('denied')));
-      await create([GIFT]);
-
-      const copyButton = queryAll<HTMLButtonElement>('.copy-btn')[0];
-      copyButton.click();
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      // The DS mock flips to "Copied ✓" either way (`ScreenInfo.jsx:50-52`);
-      // a guest who believes a wrong IBAN is on their clipboard is worse off
-      // than one told it failed (hard rule 19b).
-      expect(copyButton.classList.contains('ok')).toBe(false);
-      // The value stays on screen, selectable by hand.
-      expect(queryAll('.gift-row')[1].querySelector('.value')?.textContent).toBe(
-        'ES91 2100 0418 4502 0005 1332',
-      );
-    });
+    const note = queryAll('.block').find((block) => block.dataset['slot'] === 'note');
+    // Never unlabelled prose (ADR-0047 §1): the title is the label, and it is
+    // authored — not a locale key like every other section label here.
+    expect(note?.querySelector('.label')?.textContent?.trim()).toBe('One more thing EN');
+    expect(note?.querySelector('.note-card')?.textContent?.trim()).toBe('Free-form prose EN');
   });
 
-  it('opens the FAQ with every entry closed, then one at a time', async () => {
-    await create([FAQ]);
+  it('renders every note, each under its own title', async () => {
+    await create({
+      ...FULL,
+      note: [
+        FULL.note![0],
+        { id: '01JQ000000000000000000000M', title: L('And another'), body: L('More prose') },
+      ],
+    });
 
-    const questions = queryAll<HTMLButtonElement>('.faq-q');
-    expect(questions.length).toBe(3);
-    expect(questions.every((q) => q.getAttribute('aria-expanded') === 'false')).toBe(true);
-    expect(queryAll('.faq-a').length).toBe(0);
+    const labels = queryAll('.block')
+      .filter((block) => block.dataset['slot'] === 'note')
+      .map((block) => block.querySelector('.label')?.textContent?.trim());
+    expect(labels).toEqual(['One more thing EN', 'And another EN']);
+  });
 
-    questions[1].click();
+  // ── dayLine: derived client-side, at the boundaries (ADR-0046 §4) ──────
+
+  async function dayLineAt(instant: string): Promise<string> {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(instant));
+    await create(FULL);
+    return text('.day-line');
+  }
+
+  it('picks rsvpOpen on the deadline itself', async () => {
+    // On or before `rsvpDeadline` (2027-05-01) — the boundary is inclusive.
+    expect(await dayLineAt('2027-05-01T12:00:00Z')).toBe('Please reply by 1 May EN');
+  });
+
+  it('picks rsvpClosed the day after the deadline', async () => {
+    expect(await dayLineAt('2027-05-02T12:00:00Z')).toBe('Replies are closed, see you soon EN');
+  });
+
+  it('picks rsvpClosed on the wedding day itself', async () => {
+    // After the deadline and on or before `date` (2027-06-05).
+    expect(await dayLineAt('2027-06-05T12:00:00Z')).toBe('Replies are closed, see you soon EN');
+  });
+
+  it('picks afterWedding the day after the wedding', async () => {
+    expect(await dayLineAt('2027-06-06T12:00:00Z')).toBe('Thank you for coming EN');
+  });
+
+  it('crosses the boundary on the Europe/Madrid calendar day, not UTC', async () => {
+    // 22:30 UTC on the deadline is already 00:30 on the 2nd in Madrid
+    // (CEST, UTC+2), so the RSVP window has closed. Reckoning this in UTC
+    // would still say "reply by 1 May" for two more hours.
+    expect(await dayLineAt('2027-05-01T22:30:00Z')).toBe('Replies are closed, see you soon EN');
+  });
+
+  it('falls back to rsvpOpen when the configuration has not arrived', async () => {
+    // Nothing renders a section the couple wrote away: `rsvpOpen` is the state
+    // the document is in for most of its life.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2027-06-06T12:00:00Z'));
+    await create(FULL, { rsvpDeadline: 'not-a-date', date: 'not-a-date' });
+    expect(text('.day-line')).toBe('Please reply by 1 May EN');
+  });
+
+  // ── identifiers are transcribed, never formatted (hard rule 19a) ───────
+
+  it('renders identifiers byte-identically in every locale', async () => {
+    await create(FULL, {}, 'es');
+    const esValues = queryAll('.value').map((el) => el.textContent?.trim());
+    const esIds = queryAll('.contact-id').map((el) => el.textContent?.trim());
+
+    lang.set('fr');
     fixture.detectChanges();
-    expect(questions[1].getAttribute('aria-expanded')).toBe('true');
-    expect(queryAll('.faq-a').length).toBe(1);
+    const frValues = queryAll('.value').map((el) => el.textContent?.trim());
+    const frIds = queryAll('.contact-id').map((el) => el.textContent?.trim());
 
-    questions[2].click();
-    fixture.detectChanges();
-    expect(questions[1].getAttribute('aria-expanded')).toBe('false');
-    expect(questions[2].getAttribute('aria-expanded')).toBe('true');
-    expect(queryAll('.faq-a').length).toBe(1);
+    // `reference` is prose and *does* change; the IBAN, BIC, account holder
+    // and Bizum number do not — no `Intl`, no grouping, no re-casing.
+    expect(esValues).toContain('ES91 2100 0418 4502 0005 1332');
+    expect(esValues).toContain('CAIXESBBXXX');
+    expect(esValues).toContain('Sara & Christophe');
+    expect(esValues).toContain('+34 655 012 118');
+    expect(frValues.filter((v) => v !== 'Your name FR')).toEqual(
+      esValues.filter((v) => v !== 'Your name ES'),
+    );
+    expect(frIds).toEqual(esIds);
   });
 
-  it('derives the dress-code swatches from the active theme, never from the block', async () => {
-    await create([DRESS]);
+  it('picks the guest locale for authored prose', async () => {
+    await create(FULL, {}, 'fr');
+    expect(text('.headline')).toBe('Elegant FR');
+    expect(text('.day-line')).toContain('FR');
+  });
 
-    expect(queryAll('.swatch').length).toBe(5);
-    const names = () => queryAll('.chip-name').map((n) => n.textContent?.trim());
-    expect(names()).toEqual([
+  // ── the clipboard confirmation is conditional (hard rule 19b) ──────────
+
+  it('confirms a copy only when the clipboard call actually resolved', async () => {
+    await create(FULL);
+    const copyButtons = queryAll<HTMLButtonElement>('.copy-btn');
+    // IBAN and BIC only — copyability is the DS's decision, not a stored one.
+    expect(copyButtons.length).toBe(2);
+
+    vi.stubGlobal('navigator', {
+      clipboard: { writeText: () => Promise.reject(new Error('denied')) },
+    });
+    copyButtons[0].click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(copyButtons[0].textContent?.trim()).toBe('home.goodToKnowSection.copyFailed');
+    expect(copyButtons[0].classList.contains('ok')).toBe(false);
+    vi.unstubAllGlobals();
+  });
+
+  // ── swatches stay derived (ADR-0046 Amendment 3 / ADR-0047 §6) ─────────
+
+  it('derives the swatch row from the active theme, never from stored content', async () => {
+    await create(FULL);
+    expect(queryAll('.chip-name').map((el) => el.textContent?.trim())).toEqual([
       'home.goodToKnowSection.palette.terracotta.accent',
       'home.goodToKnowSection.palette.terracotta.accent2',
       'home.goodToKnowSection.palette.terracotta.accent3',
@@ -437,72 +441,6 @@ describe('GoodToKnow — couple-authored blocks (T375, hub ADR-0046)', () => {
 
     theme.set('verdeagua');
     fixture.detectChanges();
-    expect(names()[0]).toBe('home.goodToKnowSection.palette.verdeagua.accent');
-  });
-
-  it('offers exactly one contact affordance: a tel: link (hub ADR-0014)', async () => {
-    await create([CONTACTS]);
-
-    const call = fixture.nativeElement.querySelector('.call-btn') as HTMLAnchorElement;
-    expect(call.getAttribute('href')).toBe('tel:+34691776402');
-    expect(fixture.nativeElement.querySelectorAll('a[href^="mailto:"]').length).toBe(0);
-    expect(fixture.nativeElement.querySelectorAll('a[href*="wa.me"]').length).toBe(0);
-  });
-
-  it('reads a contact name and number off the block itself, never from a profile (Amendment 2 §D)', async () => {
-    await create([CONTACTS]);
-
-    // The mocked directory deliberately carries a conflicting copy for
-    // `u-lucia` ('Lucía-Renamed', '+34 600 000 000'). The block wins: the
-    // stored contact is an accepted, staleable second copy, and re-resolving
-    // it from the profile is exactly the drift this assertion exists to
-    // catch. Its other half is the privacy notice — `e2e/public-surface.spec.ts`
-    // pins `privacyPolicy.goodToKnow.body` to this same block provenance
-    // (T382) — so flipping either side alone fails a test.
-    const names = queryAll('.contact-name').map((n) => n.textContent?.trim());
-    expect(names).toEqual(['Lucía Ferrer', 'Rosa Delgado', 'Christophe Groom']);
-    expect(text('.contact-row .contact-meta')).toBe('Maid of honour EN · +34 691 776 402');
-    const dom = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(dom).not.toContain('Lucía-Renamed');
-    expect(dom).not.toContain('+34 600 000 000');
-  });
-
-  it('renders an entry with no userId in full — a person with no account (Amendment 2 §A)', async () => {
-    await create([CONTACTS]);
-
-    const rosa = queryAll('.contact-row')[1];
-    expect(rosa.querySelector('.contact-name')?.textContent?.trim()).toBe('Rosa Delgado');
-    expect(rosa.querySelector('.contact-meta')?.textContent?.trim()).toBe(
-      'Venue coordinator EN · +34 600 111 222',
-    );
-    expect(rosa.querySelector('.call-btn')?.getAttribute('href')).toBe('tel:+34600111222');
-  });
-
-  it('renders no call button, and no number, for an entry carrying no phone', async () => {
-    await create([CONTACTS]);
-
-    const rows = queryAll('.contact-row');
-    // No number means no line and no button — absent, never disabled. The
-    // entry's dangling `userId` ('u-nobody') must not matter either way: it
-    // is metadata, not a render gate.
-    expect(rows[2].querySelector('.call-btn')).toBeNull();
-    expect(rows[2].querySelector('.contact-meta')?.textContent?.trim()).toBe(
-      'Travel and transfers EN',
-    );
-  });
-
-  it('renders no card for a contacts block with no entries', async () => {
-    await create([{ ...CONTACTS, entries: [] }]);
-
-    expect(fixture.nativeElement.querySelector('.contacts-card')).toBeNull();
-    expect(queryAll('.block').length).toBe(0);
-  });
-
-  it('renders prose as plain text, never as markup', async () => {
-    await create([{ ...NOTE, body: L('<b>bold</b> & <script>x</script>') }]);
-
-    const prose = fixture.nativeElement.querySelector('.note-card .prose') as HTMLElement;
-    expect(prose.querySelector('b')).toBeNull();
-    expect(prose.textContent).toBe('<b>bold</b> & <script>x</script> EN');
+    expect(text('.chip-name')).toBe('home.goodToKnowSection.palette.verdeagua.accent');
   });
 });

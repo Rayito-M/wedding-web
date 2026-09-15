@@ -9,7 +9,7 @@
  */
 
 
-export interface CreateWeddingConfigDtoGoodToKnowInnerOneOfTitle { 
+export interface CreateWeddingConfigDtoGeneralInfoFaqInnerQuestion { 
     es: string;
     en: string;
     fr: string;

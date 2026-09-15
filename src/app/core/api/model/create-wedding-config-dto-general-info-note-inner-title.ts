@@ -9,7 +9,7 @@
  */
 
 
-export interface CreateWeddingConfigDtoGoodToKnowInnerOneOfNote { 
+export interface CreateWeddingConfigDtoGeneralInfoNoteInnerTitle { 
     es: string;
     en: string;
     fr: string;

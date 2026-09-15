@@ -3,7 +3,8 @@
     "bride": "Bride",
     "groom": "Groom",
     "guest": "Guest",
-    "provider": "Provider"
+    "provider": "Provider",
+    "wedding-planner": "Wedding planner"
   },
   "relation": {
     "side": {
@@ -591,8 +592,6 @@
         "day-line": "The day in one line",
         "note": "Free note"
       },
-      "moveUp": "Move up",
-      "moveDown": "Move down",
       "removeBlock": "Remove block",
       "showOtherLanguages": "Edit the other languages",
       "hideOtherLanguages": "Hide the other languages",
@@ -801,11 +800,14 @@
     "gettingThere": "Getting there",
     "goodToKnow": "Good to know",
     "subnavAriaLabel": "Home sections",
-    "goodToKnowEmpty": {
-      "title": "Nothing here yet",
-      "body": "We'll add helpful details here as the day gets closer."
-    },
     "goodToKnowSection": {
+      "sections": {
+        "dressCode": "What to wear",
+        "gift": "Gifts",
+        "faq": "Questions we have been asked",
+        "contact": "Ask us anything",
+        "dayLine": "The day in one line"
+      },
       "subtitle": "The practical details of the day.",
       "copy": "Copy",
       "copied": "Copied ✓",

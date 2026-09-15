@@ -30,6 +30,7 @@ export namespace UserListResponseDtoItemsInner {
         BRIDE: 'bride',
         GROOM: 'groom',
         GUEST: 'guest',
+        WEDDING_PLANNER: 'wedding-planner',
         PROVIDER: 'provider'
     } as const;
     export type RoleEnum = typeof RoleEnum[keyof typeof RoleEnum];

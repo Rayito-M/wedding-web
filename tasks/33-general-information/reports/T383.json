@@ -1,0 +1,269 @@
+{
+  "task": "T383",
+  "status": "complete_with_deviation",
+  "summary": "Regenerated the client from the hub contract (d836e3c) and rewrote shared/good-to-know against ADR-0047's fixed-shape `generalInfo`. Every trace of the block array is gone: no iteration over `blocks`, no sort, no per-type dispatch, no id-keyed slot map — the six sections are six computed signals and the template writes the DS's fixed order out once. The section reads GET /v1/config/general-information (rationale in the deviations and in the component header): it is the only place `contact.couple` exists, composed server-side, and riding the config read would mean re-deciding T249's couple fallback client-side. The wedding configuration is still read, for `rsvpDeadline` and `date` alone, which the dayLine variant is derived against. The hard-rule-11 gate is RED and T383 cannot close it alone: `pnpm gen:api` deletes the 14 good-to-know models that `config-manager` at HEAD still depends on, so typecheck, unit tests, build and e2e all fail on that one file (T384's). Per the Product Owner's instruction the stale hand-written work in the tree was left untouched; its byte-identical restoration after a local verification stub is proven by checksum.",
+  "acceptance": [
+    {
+      "criterion": "`pnpm gen:api` first; `pnpm gen:api:check` green. Never hand-write the models — hard rule 15.",
+      "met": true,
+      "evidence": "`pnpm gen:api` ran before any edit; `pnpm gen:api:check` -> \"gen-api: committed client matches the contract (no drift)\". 14 `create-wedding-config-dto-good-to-know-inner*` models deleted, 22 `*general-info*` / `wedding-general-information-dto*` models added. Every type used by the component is imported from `@app/core`; zero local redeclarations.",
+      "notes": "The regenerated client also adds AppJwtClaimsDto.RoleEnum.WEDDING_PLANNER (ADR-0047 §7). `login.service.ts`'s LANDING_BY_ROLE row for it was already present in the pre-existing uncommitted tree, so no edit was needed there — I did not touch that file."
+    },
+    {
+      "criterion": "`shared/good-to-know` renders the named sections dressCode, gift, contact, faq, dayLine, note in the DS's fixed order, with every trace of the block-array logic deleted.",
+      "met": true,
+      "evidence": "good-to-know.ts is six `computed()` reads off `generalInfo()?.<field>`; good-to-know.html writes the DS arrangement out literally (left: dress-code, contact; right: gift, faq, day-line, note). Test \"renders the design system's fixed order — nothing about it is authored\" asserts data-slot order ['dress-code','contact','gift','faq','day-line','note']. grep of good-to-know.ts and .html for `config.goodToKnow`/`.goodToKnow`, `GoodToKnowInner`, `GoodToKnowBlock`, `RenderedBlock`, `blocksOf`, `byType`, `asDressCode`/`asGift`/`asFaq`/`asContacts`/`asDayLine`/`asNote`, `leftColumn`/`rightColumn`, `block.id`, `block.type`, `.slice(`, `.sort(` and `NgTemplateOutlet` matches exactly one line: the `home.goodToKnow` i18n key on the section's own <h1>, which is the screen title and not block logic.",
+      "notes": "The `.slot` wrapper and its six `order` rules moved onto `.block[data-slot=…]` in the SCSS; the mobile sequence (ScreenInfo.jsx:191-196) is unchanged."
+    },
+    {
+      "criterion": "`contact` renders two groups: weddingPlanner (name, phone, email) and guest (the same plus the `purpose` line). A person with no `phoneNumber` renders with no call button — absent, not disabled.",
+      "met": true,
+      "evidence": "Tests \"renders the couple, then the planners, then the guests\" (4 rows in that order), \"gives a guest their authored purpose line and a planner their role\" (meta lines ['roles.bride','roles.groom','roles.wedding-planner','Anything about the ceremony EN']), \"shows each listed person their email and number (ADR-0047 §3)\", and \"renders no call button for a person with no phone number — absent, not disabled\" (asserts `.call-btn` is null AND the row contains zero buttons, while the row itself still renders).",
+      "notes": "A third group — `couple` — renders first; see deviation 2. On today's contract only a couple member can reach the no-phone state: `phoneNumber` is required on CreateWeddingConfigDtoGeneralInfoContactGuestInner and …WeddingPlannerInner and optional on WeddingGeneralInformationDtoContactCoupleBride. The row is built for the absence on all three anyway, because which of them grows an optional number is the API's call and this bundle outlives any one version of it (hard rule 17)."
+    },
+    {
+      "criterion": "`faq` and `note` are arrays with ULID ids; key the rendered rows by `id`, not by index. `note` carries a `title` — render it as the section label, never unlabelled prose.",
+      "met": true,
+      "evidence": "Tests \"keys the FAQ rows by their stored id, not by index\" (asserts aria-controls == 'gtk-faq-01JQ0000000000000000000001'/'…02'), \"renders a note's authored title as its section label\" (label == 'One more thing EN', body == 'Free-form prose EN'), and \"renders every note, each under its own title\" (two notes, two labels). Templates use `track entry.id` / `track note.id`.",
+      "notes": "A note is its own `<section class=\"block\" data-slot=\"note\">`, so N notes render as N labelled sections — the only section whose label is authored rather than chrome."
+    },
+    {
+      "criterion": "`dayLine` still picks one of three variants client-side, by comparing today's Europe/Madrid date against `rsvpDeadline` and `date`. No stored field says which phase is current and none may be requested.",
+      "met": true,
+      "evidence": "Five boundary tests with vi.setSystemTime against deadline 2027-05-01 / wedding 2027-06-05: on the deadline -> rsvpOpen; 05-02 -> rsvpClosed; on the wedding day -> rsvpClosed; 06-06 -> afterWedding; and 2027-05-01T22:30:00Z -> rsvpClosed, which is the Madrid calendar day (CEST, UTC+2) and would still read rsvpOpen if reckoned in UTC. Plus \"falls back to rsvpOpen when the configuration has not arrived\".",
+      "notes": "The two dates come from the wedding-configuration entity collection, not from the read route — the route carries no dates and should not, they are not Good-to-know content."
+    },
+    {
+      "criterion": "Decide, and state the trade-off in the report: does the section read GET /v1/config/general-information, or ride the config read Home already makes?",
+      "met": true,
+      "evidence": "Decision: the read route. Recorded in deviations[0] and in good-to-know.ts's header comment under \"Where the content comes from, and what that costs\". Measured basis: WeddingGeneralInformationDtoContact.couple is non-optional in the regenerated client, while WeddingConfigResponseDto.couple is `couple?` and CreateWeddingConfigDtoGeneralInfoContact has no couple field at all.",
+      "notes": "Cost: one HTTP call the old design deliberately avoided. Not a second new call — the configuration read is the EntityNamesEnum.WEDDING_CONFIG singleton Travel and HomeToday already fetch, so it is a cache hit."
+    },
+    {
+      "criterion": "Swatches stay derived from `themeId`. Build nothing for naming them (ADR-0047 §6).",
+      "met": true,
+      "evidence": "PALETTES is unchanged and still keyed by ThemeId, read off ThemeService. Test \"derives the swatch row from the active theme, never from stored content\" flips the theme signal to verdeagua and asserts the chip labels follow. No swatch field is read from `generalInfo`, and none exists on it.",
+      "notes": ""
+    },
+    {
+      "criterion": "Identifiers render byte-identically across locales — no Intl formatting, grouping or re-casing on IBAN, BIC, account holder, Bizum number, or a contact's name or number (hard rule 19a).",
+      "met": true,
+      "evidence": "Test \"renders identifiers byte-identically in every locale\" renders in es, switches the lang signal to fr, and asserts every `.value` except the localized `reference` and every `.contact-id` is identical between the two. The only Intl use in the file is madridCalendarDate's en-CA formatter, which produces a comparison key and is never rendered.",
+      "notes": "Email joins phone as an identifier under the same rule (ADR-0047 §3)."
+    },
+    {
+      "criterion": "Unit tests: a contact with no `phoneNumber` renders without a call button; an absent section renders nothing; the three `dayLine` branches at their boundaries; a `note` renders its title.",
+      "met": true,
+      "evidence": "All four covered, plus 16 more. 20 tests in good-to-know.spec.ts, all passing. \"renders nothing for a section the couple did not write\" asserts slots() == ['contact'] and that each of the other five card selectors is null.",
+      "notes": "Also added: the route-failure path renders no section at all, and the clipboard confirmation appears only on a resolved write (hard rule 19b)."
+    },
+    {
+      "criterion": "Hard rule 11 gate green.",
+      "met": false,
+      "evidence": "pnpm typecheck FAILS: 21 errors, all in src/app/screens/config-manager/config-manager.ts. pnpm lint FAILS: 6 ESLint errors (5 pre-existing at HEAD, 1 from the stale tree's suspended `add()`), 0 mine; stylelint passed (no new violations); ds:verify passed (31/31 clean). pnpm test cannot run: the unit-test builder compiles the whole app and fails on the same file. pnpm test:e2e FAILS: \"Timed out waiting 120000ms from config.webServer\", the dev server never started, same errors.",
+      "notes": "This is not closable by T383. `pnpm gen:api` — the task's own first bullet — deletes the 14 good-to-know models, and `git show HEAD:…/config-manager.ts` has 30 references to them and 18 to `config.goodToKnow`. The red gate is therefore inherent to T383 landing before T384, and is not caused by the stale uncommitted tree. See decisions_needed[0]."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "The acceptance leaves the data source open: read route, or ride the config read Home already makes.",
+      "to": "The section reads GET /v1/config/general-information, and separately keeps the wedding-configuration read for `rsvpDeadline` and `date` only.",
+      "reason": "`contact.couple` exists only on the route. There it is required and composed server-side (ADR-0047 §4), which is T249's resolution of Amendment 2. On GET /v1/config, `generalInfo.contact` has no couple field at all and root `couple?` is optional after T248's expand phase, so riding that read means re-deciding client-side what to show when a CONFIG row predates the backfill — a second copy of a decision the API has already made, in a bundle that (hard rule 17) can be a week older than the API making it. The cost is one HTTP call the old design deliberately avoided.",
+      "authorized_by": "The acceptance bullet: \"Decide, and state the trade-off in the report … Either is defensible — an unexplained choice is not.\" Confirmed with the Product Owner before implementation.",
+      "verified_how": "Read off the regenerated client: WeddingGeneralInformationDtoContact declares `couple: WeddingGeneralInformationDtoContactCouple` (non-optional) while CreateWeddingConfigDtoGeneralInfoContact declares only `weddingPlanner?` and `guest?`, and WeddingConfigResponseDto declares `couple?`."
+    },
+    {
+      "from": "\"`contact` renders two groups: `weddingPlanner` … and `guest` …\"",
+      "to": "Three groups, in this order: the couple (bride, then groom), then weddingPlanner, then guest.",
+      "reason": "ADR-0047 §4 has the route compose the couple digest specifically so it can be rendered here, and §3 names three kinds of listed person — the couple, the wedding planner, or a guest — which T385's notice must repeat. Dropping the couple would render a contacts card that omits the two people a guest is most likely to call, and would leave a required response field unrendered.",
+      "authorized_by": "hub ADR-0047 §4 and §3; the DS builds its own list the same way (ScreenInfo.jsx:61-64, bride and groom first).",
+      "verified_how": "`contact.couple` is non-optional on the response type, so the two rows always exist once the route answers; test \"renders the couple, then the planners, then the guests\" asserts the order."
+    },
+    {
+      "from": "Each section is labelled with the couple's authored block `title` (the ADR-0046 shape, and what the replaced component did).",
+      "to": "Section labels are i18n UI strings (home.goodToKnowSection.sections.dressCode/gift/faq/contact/dayLine). A note is the sole exception: its authored `title` is its label.",
+      "reason": "ADR-0047 §1's table gives no section a `title` field except `note`. There is nothing authored left to label a section with. This does not breach hard rule 19: a section label is chrome, exactly as ScreenInfo.jsx hardcodes 'What to wear' and 'Gifts' — no dress-code line, FAQ question, IBAN or contact detail moved into a locale file, and the tests would still pass with the translations stripped.",
+      "authorized_by": "hub ADR-0047 §1 (the shape table). Not covered by a bullet — recorded here because it changes where a visible string comes from.",
+      "verified_how": "grep of the generated models: `title` appears only on CreateWeddingConfigDtoGeneralInfoNoteInner. The removed home.goodToKnowSection.contacts.title and home.goodToKnowEmpty.* keys have zero remaining references in src/ or e2e/."
+    },
+    {
+      "from": "The DS contact row is a single meta line, `why · phone` (ScreenInfo.jsx).",
+      "to": "A meta line (purpose or role) plus a `.contact-ids` row carrying phone and email.",
+      "reason": "ADR-0047 §3 adds email to what a signed-in guest sees, which the DS never drew. Keeping the DS's single dot-separated line would either drop the email or leave a dangling separator when a number is absent — the exact case the same acceptance bullet requires to render cleanly.",
+      "authorized_by": "hub ADR-0047 §3; ADR-0044 §1 (the DS proposes, SPEC.md decides).",
+      "verified_how": "`pnpm ds:verify` -> \"fidelity: 31/31 clean pairs; 0 drifting values\"; the new row reuses the meta line's own type scale (t.$text-micro, var(--text-muted)) and adds no new token."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "fail",
+      "errors_before": 0,
+      "errors_after": 21,
+      "new_errors": [],
+      "detail": "`pnpm typecheck` -> 21 errors, every one in src/app/screens/config-manager/config-manager.ts (T384's file): 9 imports of deleted good-to-know models, 3 reads/writes of `config.goodToKnow`, 9 implicit-any parameters falling out of them. Zero errors in src/app/shared/good-to-know/ or anywhere else — `npx tsc -p tsconfig.app.json --noEmit | grep -v config-manager` is empty, and `npx tsc -p tsconfig.spec.json --noEmit | grep -v config-manager` is empty. Caused by the task's own first bullet (`pnpm gen:api` deletes the models), not by the stale tree: `git show HEAD:…/config-manager.ts` has 30 references to the deleted models and 18 to `config.goodToKnow`."
+    },
+    "lint": {
+      "result": "fail",
+      "eslint_errors_before": 5,
+      "eslint_errors_after": 6,
+      "new_errors": [],
+      "stylelint": "passed — no new violations (550 pre-existing, baselined)",
+      "ds_fidelity": "passed — 31/31 clean pairs, 0 drifting values",
+      "detail": "Baseline measured this run in a clean HEAD worktree: 5 ESLint errors — 4 in src/app/shared/modal/ (hard rule 11's documented exception) and 1 in guest-manager/modal/guest-profile-modal.ts:25 ('WeddingGuestsService' unused), which is pre-existing at HEAD and NOT covered by that documented exception. After: 6. The one addition is src/app/core/data/wedding-config-data.service.ts:40 \"'config' is defined but never used\", which comes from the stale tree's suspended `add()` (the real call commented out) that the Product Owner instructed me to leave. Zero errors in any file I wrote."
+    },
+    "test": {
+      "before": {
+        "total": 644,
+        "failing": 0,
+        "files": 49
+      },
+      "after": {
+        "total": 630,
+        "failing": 0,
+        "files": 48
+      },
+      "new_failures": [],
+      "detail": "Before measured this run in a clean `git worktree` at HEAD (removed afterwards; the working tree was never touched): 49 files, 644 tests, 0 failing. After cannot be measured in the working tree at all — the unit-test builder compiles the whole app and dies on config-manager.ts — so it was measured behind a reversible local stub: config-manager/ moved to the scratchpad, replaced by an empty component, suite run, then restored and proven byte-identical by shasum (BEFORE.sha == AFTER.sha across all 4 files plus app.routes.ts). 48 files, 630 tests, 0 failing. The 14-test difference is exactly config-manager.spec.ts, which T384 rewrites; no other spec was lost. good-to-know.spec.ts alone: 20 tests, 20 passing."
+    },
+    "build": {
+      "result": "fail",
+      "detail": "`npx ng build --configuration development` fails with the same 21 config-manager.ts errors and nothing else."
+    },
+    "e2e": {
+      "result": "fail",
+      "new_failures": [],
+      "detail": "`pnpm test:e2e` -> \"Error: Timed out waiting 120000ms from config.webServer.\" The dev server never came up; the [WebServer] log shows the same config-manager.ts errors. No spec executed, so no e2e assertion about this task was verified either way.",
+      "note": "T385 owns the e2e assertion that no couple, email or phone reaches an unauthenticated route. Structurally that holds today: WeddingConfigPublicResponseDto carries no `generalInfo` field, and GoodToKnow is mounted only on /me, which sits under PrivateLayout behind rbacGuard with roles ['guest']."
+    },
+    "i18n": {
+      "locales": [
+        "es",
+        "en",
+        "fr"
+      ],
+      "keys_per_locale": 844,
+      "missing": 0,
+      "empty_values": 0,
+      "new_keys": 6,
+      "key_sets_identical": true,
+      "detail": "Measured this run by flattening all three files: 844 keys each, identical key sets (symmetric difference empty), 0 empty values. Added in all three: home.goodToKnowSection.sections.{dressCode,gift,faq,contact,dayLine} and roles.wedding-planner (ADR-0047 §7's fifth role — a loanword, transcribed identically in es/en/fr rather than translated). Removed in all three: home.goodToKnowSection.contacts.title, which belonged to the superseded shape. Zero dangling references: grep for goodToKnowEmpty, goodToKnow.moveUp, goodToKnow.moveDown and goodToKnowSection.contacts across src/ and e2e/ returns nothing.",
+      "note": "home.goodToKnowEmpty.* and configManager.goodToKnow.moveUp/moveDown were already absent from the tree when I started — removed by the stale uncommitted work, not by me. I verified they are unreferenced rather than restoring them."
+    },
+    "openapi_check": {
+      "result": "pass",
+      "detail": "`pnpm gen:api:check` -> \"gen-api: committed client matches the contract (no drift)\", against wedding-architecture/contracts/openapi.json at d836e3c."
+    }
+  },
+  "files": {
+    "added": [
+      "tasks/33-general-information/reports/T383.json",
+      "src/app/core/api/model/create-wedding-config-dto-couple-bride.ts",
+      "src/app/core/api/model/create-wedding-config-dto-couple.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-contact-guest-inner.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-contact-wedding-planner-inner.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-contact.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-day-line.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-dress-code-body.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-dress-code-headline.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-dress-code-note.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-dress-code.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-faq-inner-question.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-faq-inner.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-gift.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-note-inner-title.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info-note-inner.ts",
+      "src/app/core/api/model/create-wedding-config-dto-general-info.ts",
+      "src/app/core/api/model/wedding-general-information-dto-contact-couple-bride.ts",
+      "src/app/core/api/model/wedding-general-information-dto-contact-couple.ts",
+      "src/app/core/api/model/wedding-general-information-dto-contact.ts",
+      "src/app/core/api/model/wedding-general-information-dto-day-line.ts",
+      "src/app/core/api/model/wedding-general-information-dto-dress-code.ts",
+      "src/app/core/api/model/wedding-general-information-dto-gift.ts",
+      "src/app/core/api/model/wedding-general-information-dto.ts"
+    ],
+    "modified": [
+      "src/app/shared/good-to-know/good-to-know.ts",
+      "src/app/shared/good-to-know/good-to-know.html",
+      "src/app/shared/good-to-know/good-to-know.scss",
+      "src/app/shared/good-to-know/good-to-know.spec.ts",
+      "src/app/screens/invitee/invitee.spec.ts",
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "tasks/33-general-information/TASKS.md",
+      "src/app/core/api/.openapi-generator/FILES",
+      "src/app/core/api/api/wedding-configuration.service.ts",
+      "src/app/core/api/model/app-jwt-claims-dto.ts",
+      "src/app/core/api/model/create-user-dto.ts",
+      "src/app/core/api/model/create-wedding-config-dto.ts",
+      "src/app/core/api/model/models.ts",
+      "src/app/core/api/model/update-wedding-config-dto.ts",
+      "src/app/core/api/model/user-dto.ts",
+      "src/app/core/api/model/user-list-response-dto-items-inner.ts",
+      "src/app/core/api/model/user-profile-dto.ts",
+      "src/app/core/api/model/user-profile-list-response-dto-items-inner.ts",
+      "src/app/core/api/model/wedding-config-public-response-dto.ts",
+      "src/app/core/api/model/wedding-config-response-dto.ts"
+    ],
+    "deleted": [
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of-body.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of-headline.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of-note.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of-title.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of1.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of2.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of2-entries-inner.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of2-entries-inner-question.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of3.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of3-entries-inner.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of4.ts",
+      "src/app/core/api/model/create-wedding-config-dto-good-to-know-inner-one-of5.ts"
+    ],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/app/screens/invitee/invitee.spec.ts",
+      "why": "Its WeddingConfigurationService mock stubbed only weddingConfigControllerGetV1, so GoodToKnow's new call to weddingConfigControllerGetGeneralInformationV1 threw at construction and failed the 'renders Good to know for the Good to know pill' test. Added a minimal valid response (couple only). No production code and no other assertion in that spec was touched."
+    },
+    {
+      "path": "tasks/33-general-information/TASKS.md",
+      "why": "T383's Status line, per the task-management contract."
+    }
+  ],
+  "blocked_on": [],
+  "risks": [
+    {
+      "risk": "The stale uncommitted work in the tree was left untouched on the Product Owner's instruction, and one item in it is not cosmetic: src/app/core/data/wedding-config-data.service.ts's `add()` returns throwError('WeddingConfigPublic reaction suspended') with the real weddingConfigControllerCreateV1 call commented out. Creating a wedding configuration is dead while that stands, and it is the source of the one new ESLint error.",
+      "surfaces_at": "Whoever commits this phase — it must not reach a commit as-is. Also src/environments/release.ts carries a hand-edited build stamp, which `pnpm build:prod` overwrites."
+    },
+    {
+      "risk": "guest-manager/modal/guest-profile-modal.ts:25 has an unused-import ESLint error that is pre-existing at HEAD but is NOT one of the 4 modal errors hard rule 11 documents as the known exception. CLAUDE.md's exception clause therefore undercounts by one.",
+      "surfaces_at": "Any task that reads hard rule 11 literally and expects exactly 4 pre-existing errors."
+    },
+    {
+      "risk": "ADR-0047 Amendment 3 §A stands unresolved on the web side: contacts are stored as full digests on the CONFIG row, so a profile edit does not update a contact card and deactivating an account does not remove that person from Good to know. The renderer faithfully shows whatever the route returns and cannot detect either case. `wedding-api` T251 carries the fix.",
+      "surfaces_at": "wedding-api T251, and T385's privacy notice, which describes people the couple lists 'with their agreement' in the present tense."
+    },
+    {
+      "risk": "ADR-0047 §7's wedding-planner role is now rendered by name (roles.wedding-planner) in this section only. login.service.ts maps it to /provider. A stale bundle that predates this deploy still falls back to GUEST for the role — a privilege mis-assignment, per §7 — so creating the first wedding-planner account remains a deploy-ordering constraint.",
+      "surfaces_at": "The first real wedding-planner account."
+    }
+  ],
+  "commits": [],
+  "decisions_needed": [
+    {
+      "question": "T383's work is done and its own tests pass, but the repo does not compile: `pnpm gen:api` deletes the 14 good-to-know models and `config-manager` at HEAD has 30 references to them. How should T383 reach main?",
+      "options": [
+        "Treat T383 + T384 as one merge unit: commit T383 now on a branch, run T384 next, and take the hard-rule-11 gate green across both. Honest history, one red commit in the middle, nothing ships half-built because neither is deployed alone.",
+        "Extend T383 to include a minimal compile-only gutting of config-manager's Good-to-know editor (delete the block builder, leave the other seven Settings sections). Gets the gate green now, but writes into T384's file before its design is decided — and T384's acceptance explicitly warns against re-creating the block machinery, which a hasty stub could smuggle back in.",
+        "Reorder the phase so T384 runs first. Not actually available: T384 edits an editor for a shape T383's contract regeneration must already have landed."
+      ],
+      "recommendation": "Option 1. The breakage is inherent to the contract replacement, not to how T383 was built — the same 21 errors appear from `pnpm gen:api` alone, before any of my edits. T384 is the task that owns that file and already has a designed replacement for it; gutting it twice is wasted work and risks exactly what its acceptance warns about. A branch with one intermediate red commit costs nothing here, since nothing deploys per-commit.",
+      "blocking": true,
+      "needed_by": "Before merge — and before T384 starts, since it decides whether T383 is committed first or the two are squashed."
+    }
+  ]
+}

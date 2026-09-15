@@ -66,7 +66,22 @@ describe('Invitee — Home pill-row composition (T372)', () => {
         provideEntityDataServices(),
         {
           provide: WeddingConfigurationService,
-          useValue: { weddingConfigControllerGetV1: () => of(BASE_CONFIG) },
+          useValue: {
+            weddingConfigControllerGetV1: () => of(BASE_CONFIG),
+            // `GoodToKnow` reads the sections off their own route (hub
+            // ADR-0047 §4, T383). This spec only asserts which pill mounts
+            // which section, so an empty-but-valid response is enough — the
+            // section's own rendering is `good-to-know.spec.ts`'s subject.
+            weddingConfigControllerGetGeneralInformationV1: () =>
+              of({
+                contact: {
+                  couple: {
+                    bride: { firstName: 'Sara' },
+                    groom: { firstName: 'Christophe' },
+                  },
+                },
+              }),
+          },
         },
         {
           provide: LoginService,

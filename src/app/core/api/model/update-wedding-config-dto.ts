@@ -10,15 +10,25 @@
 import { CreateWeddingConfigDtoVenuesInner } from './create-wedding-config-dto-venues-inner';
 import { CreateWeddingConfigDtoDietaryPreferencesInner } from './create-wedding-config-dto-dietary-preferences-inner';
 import { CreateWeddingConfigDtoMenusInner } from './create-wedding-config-dto-menus-inner';
+import { CreateWeddingConfigDtoGeneralInfo } from './create-wedding-config-dto-general-info';
 import { UpdateMilestoneDtoTitle } from './update-milestone-dto-title';
+import { CreateWeddingConfigDtoCouple } from './create-wedding-config-dto-couple';
 import { UpdateWeddingConfigDtoAgenda } from './update-wedding-config-dto-agenda';
-import { CreateWeddingConfigDtoGoodToKnowInner } from './create-wedding-config-dto-good-to-know-inner';
 import { CreateWeddingConfigDtoHotelsInner } from './create-wedding-config-dto-hotels-inner';
 
 
 export interface UpdateWeddingConfigDto { 
     version: number;
+    couple?: CreateWeddingConfigDtoCouple;
+    /**
+     * Use `couple.bride` instead
+     * @deprecated
+     */
     brideName?: string;
+    /**
+     * Use `couple.groom` instead
+     * @deprecated
+     */
     groomName?: string;
     tagline?: string;
     date?: string;
@@ -33,7 +43,7 @@ export interface UpdateWeddingConfigDto {
     dietaryPreferences?: Array<CreateWeddingConfigDtoDietaryPreferencesInner>;
     allergies?: Array<CreateWeddingConfigDtoDietaryPreferencesInner>;
     menus?: Array<CreateWeddingConfigDtoMenusInner>;
-    goodToKnow?: Array<CreateWeddingConfigDtoGoodToKnowInner>;
+    generalInfo?: CreateWeddingConfigDtoGeneralInfo;
 }
 export namespace UpdateWeddingConfigDto {
     export const ThemeIdEnum = {

@@ -9,9 +9,11 @@
  */
 
 
-export interface CreateWeddingConfigDtoGoodToKnowInnerOneOfHeadline { 
-    es: string;
-    en: string;
-    fr: string;
+export interface WeddingGeneralInformationDtoContactCoupleBride { 
+    id?: string;
+    firstName: string;
+    lastName?: string;
+    email?: string;
+    phoneNumber?: string;
 }
 

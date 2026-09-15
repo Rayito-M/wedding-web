@@ -3,7 +3,7 @@
 @use '../../../styles/primitives';
 @use '../../../styles/recipes' as r;
 
-// Home's "Good to know" section (DS `ScreenInfo.jsx`, hub ADR-0046 · T375).
+// Home's "Good to know" section (DS `ScreenInfo.jsx`, hub ADR-0047 · T383).
 // Sizes that sit off the token scale are written in `rem` rather than raw
 // `px` — this file's stylelint baseline starts at zero, so a literal `px` on
 // a spacing/size property is an error (see `stylelint.config.mjs`). Each one
@@ -33,36 +33,10 @@
   }
 }
 
-// Same `.empty-state` shape as `milestones.scss`/`guest-manager.scss` (h2 +
-// p, centered, capped width) — T364's, unchanged: it is still what a guest
-// sees until the couple writes their first block (hub ADR-0046 §3).
-.empty-state {
-  padding: var(--space-7) var(--space-6);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  // 420px in rem, same cap `milestones.scss`'s own `.empty-state` uses.
-  max-width: 26.25rem;
-  margin: 0 auto;
-
-  h2 {
-    font-family: var(--font-serif);
-    font-weight: 400;
-    font-size: var(--text-display-sm);
-    color: var(--text-body-color);
-  }
-
-  p {
-    color: var(--text-muted);
-    font-size: var(--text-body);
-  }
-}
-
-// Below 900px the two columns nest as plain flex columns and read as one
-// continuous list in stored order; the identical gap on both means the seam
-// between them is invisible.
+// Below 900px the column wrappers dissolve (`display: contents`) so every
+// section is a direct child of the one flow, and `order` puts them in the
+// kit's mobile sequence (`ScreenInfo.jsx:191-196`). The free notes have no
+// slot in the kit and close the flow.
 .layout {
   display: flex;
   flex-direction: column;
@@ -71,12 +45,31 @@
 }
 
 .column {
-  display: flex;
-  flex-direction: column;
-  gap: 1.375rem;
+  display: contents;
 }
 
-// One block: the couple's own section label, then the card.
+// Mobile sequence (`ScreenInfo.jsx:191-196`). At `lg` the two columns take
+// over and these values only keep the relative order inside each of them.
+.block[data-slot='dress-code'] {
+  order: 1;
+}
+.block[data-slot='gift'] {
+  order: 2;
+}
+.block[data-slot='faq'] {
+  order: 3;
+}
+.block[data-slot='contact'] {
+  order: 4;
+}
+.block[data-slot='day-line'] {
+  order: 5;
+}
+.block[data-slot='note'] {
+  order: 6;
+}
+
+// One section: its label, then the card.
 .block {
   display: block;
 }
@@ -339,6 +332,22 @@
   margin-top: 0.125rem;
 }
 
+// Email joined the phone number on the card with hub ADR-0047 §3, which the
+// DS's single `why · phone` meta line never drew. Same type scale as that
+// line; a separate row so an absent number leaves no dangling separator.
+.contact-ids {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 t.$space-2;
+  font-size: t.$text-micro;
+  color: var(--text-muted);
+  margin-top: 0.125rem;
+}
+
+.contact-id {
+  word-break: break-word;
+}
+
 // The only contact affordance there is: a dial link. No WhatsApp, no email,
 // no messaging of any kind (hub ADR-0014).
 .call-btn {
@@ -391,7 +400,11 @@
     gap: t.$space-6;
   }
 
+  // The wrappers become the kit's two independent flex columns; the `order`
+  // values above keep the same relative sequence inside each of them.
   .column {
+    display: flex;
+    flex-direction: column;
     gap: t.$space-6;
   }
 }
