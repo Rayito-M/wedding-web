@@ -1,0 +1,128 @@
+{
+  "task": "T388",
+  "status": "complete_with_deviation",
+  "summary": "The e2e fixtures now serve `generalInfo` in the ADR-0047 shape and stub `GET /v1/config/general-information` with `contact.couple` present, and `design-parity-info.spec.ts` measures the six named sections by `data-slot` instead of a block array. Counts are measured this run, never inherited: the baseline was 405 tests / 32 failed / 343 passed / 30 skipped — 30 in this spec plus 2 the task text did not know about; the after is 420 tests / 384 passed / 6 failed / 30 skipped on a plain run, and 387 passed / 0 failed / 3 flaky with `--retries=2`. Every one of those 6, and both of the 2 in the baseline, is the same DS-kit-harness timeout (`e2e/helpers/ds-kit.ts` starts one `python3 -m http.server` per project and the parity specs navigate it concurrently), spread across four parity specs T388 never touched. `design-parity-info.spec.ts` itself is 45/45 green. Two deviations, both forced by the contract rather than chosen: the app renders six sections against the kit's five, and the no-number contact has to be the groom.",
+  "acceptance": [
+    {
+      "criterion": "`api-mocks.ts` serves `generalInfo` in the ADR-0047 shape on the config response, and mocks `GET /v1/config/general-information` with `contact.couple` present — it is required on that route and composed server-side (ADR-0047 §4, Amendment 2), so a mock that omits it tests a response the API cannot produce.",
+      "met": true,
+      "evidence": "`e2e/support/api-mocks.ts`: `generalInfoSections()` (six named fields, no `type`, no block `id`, no stored order) is served as `generalInfo` on `weddingConfigAdmin()`; `GENERAL_INFORMATION` spreads it and adds `contact.couple.{bride,groom}`, registered at `page.route('**/v1/config/general-information', ...)`. `goodToKnowBlocks()` is gone — `grep -rn goodToKnow e2e/support/` returns nothing.",
+      "notes": "`contact.couple` is on the read-route fixture only, never on the `GET /v1/config` one: `CreateWeddingConfigDtoGeneralInfoContact` has no `couple` field, because the digest is not stored inside `generalInfo` — the service composes it (§4). Putting it on both would have modelled a response the API does not return either."
+    },
+    {
+      "criterion": "The fixture exercises the cases the render actually branches on: a contact with and without a `phoneNumber`, at least one `faq` and one `note` entry with ULID ids and a note `title`, and a `dayLine` with all three variants.",
+      "met": true,
+      "evidence": "Four contacts, three with a number and one (the groom) without — asserted by `the contacts card opens with the composed couple, and a person with no number gets no call button`: 4 `.contact-row`, 3 `.call-btn`, row 1 has 0 `.call-btn` and one `.contact-id` (email only). Six ULID `faq` entries (`FAQ_ULID_PREFIX`), asserted through the rendered `id=\"gtk-faq-01JBBBBBBBBBBBBBBBBBBBBBB2\"`. One `note` with `NOTE_ULID` and a `title`, asserted as the section label. All three `dayLine` variants stored and distinct, with the rendered one asserted against the variant the Europe/Madrid rule selects and the other two asserted absent.",
+      "notes": "Which contact can lack a number is not free: `phoneNumber` is REQUIRED on `CreateWeddingConfigDtoGeneralInfoContactWeddingPlannerInner` and `...ContactGuestInner`, and optional only on `WeddingGeneralInformationDtoContactCoupleBride`. A planner or guest without one would have been an impossible response. See deviations[1]."
+    },
+    {
+      "criterion": "`design-parity-info.spec.ts` measures the new section against the kit — six named sections in the DS's fixed order, not blocks. Deviations that are the kit's own go to `../wedding-ui-design/contract/FINDINGS.md`, never reported as app defects (ADR-0044).",
+      "met": true,
+      "evidence": "The spec is rewritten: `DS_DESKTOP_COLUMNS` / `DS_MOBILE_ORDER` name the six `data-slot`s, `renderedSlots()` reads them in reading order (CSS `order` decides the mobile sequence, so DOM order is not what a guest scans), and the desktop test asserts each slot's grid column from `blockOutline`. The kit side is still measured with the same harness (`blockOutline` on `KIT_DESKTOP_ROOT`/`KIT_MOBILE_ROOT`, pinned to 5). New kit finding recorded at `../wedding-ui-design/contract/FINDINGS.md` (commit `3139bfd`, 2026-09-15 ds-missing-spec) for the two things the kit cannot measure: the `note` section and the reshaped contacts card. The two older `ScreenInfo.jsx` findings (9px gift-row label, gift headline / empty state) still stand and are cross-referenced in the spec header rather than re-filed.",
+      "notes": "The spec header enumerates six structural differences and says for each whether it is the app's, the kit's, or the ADR's — the predecessor's own convention, kept."
+    },
+    {
+      "criterion": "`pnpm test:e2e` green, or every remaining failure named with its owner. Report the counts you measure, and do not inherit T384's — it measured a tree that could not run this spec.",
+      "met": "partial",
+      "evidence": "Measured this run. BEFORE (`pnpm test:e2e`, at HEAD before this commit): `32 failed, 30 skipped, 343 passed (5.0m)`, 405 tests. AFTER (same command): `6 failed, 30 skipped, 384 passed (4.7m)`, 420 tests. AFTER with `--retries=2`: `3 flaky, 30 skipped, 387 passed (4.8m)`, 0 failed, exit 0. `design-parity-info.spec.ts` alone, all five projects: `45 passed (55.3s)`.",
+      "notes": "Not claimed green on the plain command, because it is not. All 6 plain-run failures are one owner and one cause, named here: the DS-kit harness, `e2e/helpers/ds-kit.ts`. Each is a `page.goto`/first-`click` exceeding the 30s test timeout against the per-project `python3 -m http.server`, in design-parity-overview (×2, iPhone SE), design-parity-dashboard (iPhone 14), design-parity-home (Desktop Chrome) and design-parity-info (×2, Desktop Chrome) — four spec files, three of which T388 does not touch. The same flake accounts for the 2 non-info failures already present in the BEFORE run (overview iPhone SE, config iPhone 14), which is why the task text's '30 failures' was 32. `--retries=2` resolves all of them and leaves 3 flaky, none in `design-parity-info.spec.ts`. The 30 skipped are unchanged: six `test.skip`/`test.fixme` declarations × five projects, all pre-existing (seating-plan ×3, design-parity-overview, design-parity-milestones, design-parity-guests)."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "\"six named sections in the DS's fixed order\" measured against the kit, i.e. both sides compared section for section.",
+      "to": "Five sections compared to the kit; the sixth (`note`) asserted on the app side alone, with the gap recorded as a kit finding.",
+      "reason": "`ScreenInfo.jsx` was drawn against ADR-0046's block array and has no `note` slot at all — it draws five. There is nothing on the kit side to measure the sixth against, and inventing a counterpart would have made the parity spec assert the app against itself.",
+      "authorized_by": "T388 acceptance bullet 3 (\"Deviations that are the kit's own go to FINDINGS.md, never reported as app defects\") and hub ADR-0044 §1 (the DS proposes, SPEC.md decides).",
+      "verified_how": "`blockOutline(kitPage, KIT_DESKTOP_ROOT).length` is 5 on every run and the spec pins it to the literal 5, so the day the kit grows a sixth section this assertion fails loudly instead of drifting. Read `ScreenInfo.jsx:187-218`: the wide branch renders dressCode, contacts, gift, faq, venueNote and nothing else. Recorded at `wedding-ui-design/contract/FINDINGS.md` (commit `3139bfd`)."
+    },
+    {
+      "from": "\"a contact with and without a `phoneNumber`\" read as free choice of which contact.",
+      "to": "The groom is the contact without one; the wedding planner and the guest both have one.",
+      "reason": "The contract does not allow the alternative. `phoneNumber` is required on a `weddingPlanner` entry and on a `guest` entry and optional only on the composed couple digest, so a planner or guest without a number is a response `wedding-api` cannot produce — the same class of untestable fixture the `contact.couple` bullet exists to prevent.",
+      "authorized_by": "T388 acceptance bullet 1's own reasoning (\"a mock that omits it tests a response the API cannot produce\"), applied to the same field one level down.",
+      "verified_how": "Read the generated models: `create-wedding-config-dto-general-info-contact-wedding-planner-inner.ts` and `...-guest-inner.ts` declare `phoneNumber: string`; `wedding-general-information-dto-contact-couple-bride.ts` declares `phoneNumber?: string`. The render's own doc comment (`good-to-know.ts`, the `ContactRow` interface) had already reached the same conclusion independently."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "`pnpm typecheck` (tsc -p tsconfig.app.json && tsc -p tsconfig.spec.json): clean, exit 0, before and after. Measured before by restoring `e2e/` to HEAD and re-running, then restoring this task's files — the two are identical because neither tsconfig includes `e2e/**`, which is also why this task could not have broken it."
+    },
+    "lint": {
+      "result": "fail",
+      "eslint_errors_before": 6,
+      "eslint_errors_after": 6,
+      "stylelint_before": "no new violations (550 pre-existing, baselined)",
+      "stylelint_after": "no new violations (550 pre-existing, baselined)",
+      "ds_fidelity": "31/31 clean pairs; 0 drifting values (pass, before and after)",
+      "new_errors": [],
+      "detail": "`pnpm lint` is red and none of it is this task's. The 6 ESLint errors are: 4 in `src/app/shared/modal/` (hard rule 11's documented exception), `guest-profile-modal.ts:25` unused `WeddingGuestsService` (the uncovered one T387 must either fix or name), and `wedding-config-data.service.ts:40` unused `config` (T387's suspended `add()`, in the uncommitted tree). `ng lint` targets the Angular project and does not lint `e2e/**`, so the before and after figures are necessarily equal — measured both ways all the same."
+    },
+    "test": {
+      "before": { "total": 644, "failing": 0, "files": 49 },
+      "after": { "total": 644, "failing": 0, "files": 49 },
+      "new_failures": [],
+      "detail": "`pnpm test` (Vitest via `ng test`). Identical before and after: no file under `src/**` was touched by this task, and `ng test`'s `include` is `src/**/*.spec.ts`, so `e2e/**` is never picked up. The before figure was measured by restoring `e2e/` to HEAD and re-running, not assumed."
+    },
+    "build": {
+      "result": "pass",
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 303.08 kB with a total of 803.08 kB.",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.85 kB with a total of 16.85 kB.",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget. Budget 8.00 kB was not met by 1.58 kB with a total of 9.58 kB.",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.55 kB with a total of 11.55 kB.",
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 3.96 kB with a total of 11.96 kB."
+      ],
+      "detail": "Ran `npx ng build`, NOT `pnpm build`. `pnpm build` runs `scripts/generate-release.mjs` first, which rewrites `src/environments/release.ts` — a file carrying uncommitted work this task does not own (T387's hand-edited build stamp). Overwriting it would have destroyed the very evidence T387 exists to adjudicate. Verified untouched afterwards by diffing against a copy taken before the build. `config-manager.scss` is still 16.85 kB, unchanged from T384's re-measurement, as expected: this task ships no CSS. All five warnings are pre-existing."
+    },
+    "e2e": {
+      "before": { "total": 405, "passed": 343, "failed": 32, "skipped": 30 },
+      "after": { "total": 420, "passed": 384, "failed": 6, "skipped": 30 },
+      "result": "fail",
+      "new_failures": [],
+      "detail": "`pnpm test:e2e`, five Playwright projects. Totals grew 405 -> 420 because this spec went from 6 tests to 9 (x5 projects). `design-parity-info.spec.ts` alone: 45 passed, 0 failed. Re-run with `--retries=2`: 387 passed, 0 failed, 3 flaky, exit 0 — the 3 being design-parity-dashboard x2 and design-parity-guests on Pixel 7, none of them this spec.",
+      "note": "`result` is `fail` because the plain command exits 1, not because an assertion failed — there were none. All 6 are `Test timeout of 30000ms exceeded` on `page.goto`/`locator.click` against the DS-kit static server. Owner: `e2e/helpers/ds-kit.ts`. Pre-existing: the BEFORE run carried 2 of the same, in specs unrelated to this phase."
+    }
+  },
+  "files": {
+    "added": ["tasks/33-general-information/reports/T388.json"],
+    "modified": [
+      "e2e/support/api-mocks.ts",
+      "e2e/layout/design-parity-info.spec.ts",
+      "tasks/33-general-information/TASKS.md",
+      "tasks/README.md",
+      "../wedding-ui-design/contract/FINDINGS.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "../wedding-ui-design/contract/FINDINGS.md",
+      "why": "A different repo, written to deliberately: T388's third acceptance bullet requires kit-side deviations to be recorded there rather than reported as app defects (hub ADR-0044). One entry appended under `## Open`; nothing existing edited or closed. Committed separately in that repo (`3139bfd`)."
+    },
+    {
+      "path": "tasks/README.md",
+      "why": "The global task index. T388's own row updated to done, and T385's row updated from \"run after T388, or its gate is unmeasurable\" to unblocked — T385's blocker was this task by name, so leaving it stale would have kept a resolved blocker on the board."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "`e2e/public-surface.spec.ts` still asserts the PUBLIC config response has no `goodToKnow` key (line 84) and still poisons it with `goodToKnow: POISONED_BLOCKS` (line 103) to prove nothing renders before sign-in. Both still pass, and both now name an attribute that no longer exists: ADR-0047 renamed it `generalInfo`, and the section reads a separate authenticated route rather than the config document, so poisoning `goodToKnow` proves strictly less than it did. Deliberately not fixed here — T385 owns that file's edits and must invert an assertion in it anyway, and touching it from T388 would have hidden T385's change inside a fixture commit.",
+      "surfaces_at": "T385, whose acceptance already requires extending `e2e/public-surface.spec.ts` for `couple`/email/phone on unauthenticated routes."
+    },
+    {
+      "risk": "The DS-kit parity harness is load-sensitive and now flakes visibly. `e2e/helpers/ds-kit.ts` starts one `python3 -m http.server` per project and every parity spec opens a second page against it while Babel-standalone compiles the whole kit in-browser; under five parallel workers a 30s test timeout is reachable. Six timeouts on a plain run, three surviving `--retries=2`, across specs owned by four different tasks. Nothing in `playwright.config.ts` sets retries outside CI, so hard rule 11's gate is a coin-flip on a loaded machine — every future task in this repo inherits an intermittently red gate it did not cause, and will spend time proving that.",
+      "surfaces_at": "Any task that must report hard rule 11 green — T385 next. Candidate fixes: retries outside CI, one shared kit server across projects, or a longer timeout on kit navigation."
+    },
+    {
+      "risk": "`design-parity-info.spec.ts`'s day-line test derives the expected variant from `CONFIG_DATES` with the same Europe/Madrid rule the component uses, so it follows the calendar instead of pinning a string — but it does re-implement that rule in the spec. If ADR-0046 §4's boundary semantics ever change (today the comparison is `<=` on both edges), the component and the spec must change together or the spec will agree with a bug.",
+      "surfaces_at": "Any change to `dayLineVariant()` in `src/app/shared/good-to-know/good-to-know.ts`."
+    }
+  ],
+  "commits": [
+    "dab4936 test(e2e): the fixtures serve generalInfo, and the parity spec measures it (T388)",
+    "wedding-ui-design 3139bfd findings: ScreenInfo.jsx is drawn against the superseded block array (wedding-web T388)"
+  ]
+}

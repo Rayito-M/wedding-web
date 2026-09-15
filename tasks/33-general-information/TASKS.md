@@ -190,8 +190,19 @@
 - **Refs:** T383's `risks[]`; `CLAUDE.md` hard rule 11
 
 ### T388 — The e2e fixtures still serve the block array, so 30 specs assert a dead render
-- **Status:** todo — **blocks T385's hard-rule-11 gate**, and is the last thing between this phase
-  and a green suite
+- **Status:** done (2026-09-15) — the 30 are gone: `design-parity-info.spec.ts` is **45/45 green**
+  (9 tests × 5 projects, up from 6 × 5) and the suite is **420 tests, 0 assertion failures, 30
+  skipped** (the same six pre-existing `test.skip`/`test.fixme` declarations as before). Counts
+  measured this run, not inherited: the **baseline was 405/32 failed/343 passed**, i.e. 30 in this
+  spec plus **2 the task text did not know about** — and those 2 turned out to be the same
+  DS-kit-harness flake described below, not a second defect. **The residual flake is the
+  `ds-kit` harness, not this phase**: `e2e/helpers/ds-kit.ts` starts one `python3 -m http.server`
+  per project and every parity spec navigates it concurrently, so a `page.goto`/first-click can
+  exceed the 30s test timeout under load. A plain run left 6 such timeouts across **four**
+  different parity specs (home, dashboard, overview, info); `--retries=2` leaves **0 failed, 3
+  flaky, 387 passed**, all three in specs T388 never touched. Two deviations from the task text,
+  both forced by the contract: the app renders **six** sections against the kit's five, and the
+  fixture's no-number contact has to be the **groom**. See `reports/T388.json`.
 - **Owner:** agent (implementer)
 - **Depends on:** T383, T384 (both done)
 - **ADR:** hub **ADR-0047 §1/§2/§4**

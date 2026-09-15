@@ -265,7 +265,7 @@ never by its letter alone.
 | **T382** | Consume T246's contract: a contact carries its own details, and may have no account | done | `32-good-to-know-content` |
 | **T383** | Render the `generalInfo` sections | done (`5583e1e`) — one merge unit with T384, which closed it | `33-general-information` |
 | **T384** | The authoring screen becomes a fixed-shape editor | done (`f4f4ec3`) — merge unit closed, typecheck green; lint/e2e red on T387 and T383 | `33-general-information` |
-| **T385** | The privacy notice describes what actually ships | todo — run after **T388**, or its gate is unmeasurable | `33-general-information` |
+| **T385** | The privacy notice describes what actually ships | todo — unblocked: **T388** is done and the gate is measurable | `33-general-information` |
 | **T386** | Mark phase 32's superseded tasks, and say why | todo | `33-general-information` |
 | **T387** | Two things in the tree that must not reach a release | todo — **gates the v1.3.0 tag** | `33-general-information` |
-| **T388** | The e2e fixtures still serve the block array, so 30 specs assert a dead render | todo — **blocks T385's gate** | `33-general-information` |
+| **T388** | The e2e fixtures still serve the block array, so 30 specs assert a dead render | done — info spec 45/45; suite 420, 0 assertion failures; residual flake is the ds-kit harness | `33-general-information` |
