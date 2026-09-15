@@ -280,7 +280,7 @@
   copied from the account the moment the couple adds the person, a later edit to that account does
   not update the card, and if someone's number changes the couple picks them again. One value per
   locale, no key added or removed (843 per locale, key sets identical, 0 empty). It says nothing
-  about `wedding-api` T251. See `reports/T390.json`.
+  about `wedding-api` T251. See `reports/T390.json` (`5b75068`).
 - **Owner:** agent (implementer)
 - **Depends on:** —
 - **ADR:** hub **ADR-0047 Amendment 3 §A**; §2 (struck bullet); §3

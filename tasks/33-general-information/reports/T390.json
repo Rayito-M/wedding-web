@@ -47,8 +47,16 @@
       "detail": "node scripts/lint-all.mjs. ESLint 6 errors both runs, identical list: 4 × src/app/shared/modal/ (CLAUDE.md's named exception) + guest-manager/modal/guest-profile-modal.ts:25 unused import + core/data/wedding-config-data.service.ts:40 unused `config` (uncommitted, T387's). stylelint passed (550 pre-existing, baselined, no new). ds fidelity passed (31/31 clean pairs, 0 drifting values). CLAUDE.md hard rule 11 still says 4 pre-existing errors and there are 6 — raised before by T381, T383 and T385; T387 owns it and it is not widened or fixed here."
     },
     "test": {
-      "before": { "total": 644, "failing": 0, "files": 49 },
-      "after": { "total": 644, "failing": 0, "files": 49 },
+      "before": {
+        "total": 644,
+        "failing": 0,
+        "files": 49
+      },
+      "after": {
+        "total": 644,
+        "failing": 0,
+        "files": 49
+      },
       "new_failures": [],
       "detail": "pnpm test (Vitest via ng test). No unit spec reads configManager.goodToKnow.contact.hint — grepped for the old and new clauses across src/ and e2e/ before editing; the only hit anywhere was the three locale files themselves. This task therefore adds no unit surface and moves no count."
     },
@@ -66,15 +74,29 @@
       "detail": "pnpm build exit 0 before and after; dist/wedding-app/browser/styles-BX7ALXWU.css is 2677 bytes in both, same content hash. No .scss file was opened. The locale JSON ships from public/ as a static asset, so the change does not enter a bundle at all."
     },
     "e2e": {
-      "before": { "total": 425, "passed": 391, "failed": 0, "skipped": 30 },
-      "after": { "total": 425, "passed": 387, "failed": 0, "skipped": 30 },
+      "before": {
+        "total": 425,
+        "passed": 391,
+        "failed": 0,
+        "skipped": 30
+      },
+      "after": {
+        "total": 425,
+        "passed": 387,
+        "failed": 0,
+        "skipped": 30
+      },
       "result": "pass",
       "new_failures": [],
       "detail": "pnpm test:e2e --retries=2, exit 0 both runs. Totals identical (387 + 30 + 8 flaky = 425 = 391 + 30 + 4 flaky); this task adds and removes no test. Flaky 4 → 8, every one passing on retry: 7 are the ds-kit static-server contention T388 measured and T389 owns (design-parity-config ×2, design-parity-dashboard ×2, design-parity-guests ×1, layout/config-manager ×1, all 'locator.click: Test timeout of 30000ms exceeded'), and the 8th is public-surface.spec.ts:324 on Desktop Chrome.",
       "note": "The 8th flake is reported rather than waved through, because it is in the spec nearest this change. Its first attempt failed on `expect(notice).toContain('Contacts and bank details')` with a received string of RAW TRANSLATION KEYS — 'privacyPolicy.title privacyPolicy.intro privacyPolicy.goodToKnow.title …' — i.e. the locale file had not loaded yet, not that any copy was wrong. The assertion that failed is T385's section title, a string this task did not touch, and it passed on retry and on the other four projects in the same run. Re-run in isolation three consecutive times afterwards: 25/25 passed, no retries, exit 0 each time. Called a floor, not a proof of absence — what would falsify it is more runs under full-suite load."
     },
     "i18n": {
-      "locales": ["es", "en", "fr"],
+      "locales": [
+        "es",
+        "en",
+        "fr"
+      ],
       "keys_per_locale": 843,
       "missing": 0,
       "empty_values": 0,
@@ -85,7 +107,9 @@
     }
   },
   "files": {
-    "added": ["tasks/33-general-information/reports/T390.json"],
+    "added": [
+      "tasks/33-general-information/reports/T390.json"
+    ],
     "modified": [
       "public/i18n/es.json",
       "public/i18n/en.json",
@@ -122,6 +146,8 @@
       "surfaces_at": "T389, which owns the ds-kit harness; and any task reporting a hard-rule-11 gate without --retries."
     }
   ],
-  "commits": [],
+  "commits": [
+    "5b75068 — fix(i18n): the contact hint stops promising cards that self-update (T390)"
+  ],
   "decisions_needed": []
 }
