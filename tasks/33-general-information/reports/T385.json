@@ -59,8 +59,16 @@
       "detail": "4 × src/app/shared/modal/ (CLAUDE.md's named exception) + 1 unused import at guest-manager/modal/guest-profile-modal.ts:25 + 1 unused `config` at core/data/wedding-config-data.service.ts:40 (uncommitted, T387's). stylelint and ds:verify both pass."
     },
     "test": {
-      "before": { "total": 644, "failing": 0, "files": 49 },
-      "after": { "total": 644, "failing": 0, "files": 49 },
+      "before": {
+        "total": 644,
+        "failing": 0,
+        "files": 49
+      },
+      "after": {
+        "total": 644,
+        "failing": 0,
+        "files": 49
+      },
       "new_failures": []
     },
     "build": {
@@ -74,15 +82,29 @@
       "detail": "Stylesheet byte count is the built artefact measured after the change; no .scss file was opened, so before is the same figure."
     },
     "e2e": {
-      "before": { "total": 420, "passed": 381, "failed": 0, "skipped": 30 },
-      "after": { "total": 425, "passed": 391, "failed": 0, "skipped": 30 },
+      "before": {
+        "total": 420,
+        "passed": 381,
+        "failed": 0,
+        "skipped": 30
+      },
+      "after": {
+        "total": 425,
+        "passed": 391,
+        "failed": 0,
+        "skipped": 30
+      },
       "result": "pass",
       "new_failures": [],
       "detail": "Both runs `pnpm test:e2e --retries=2`, exit 0. +5 = the new unauthenticated-routes test × 5 projects; public-surface.spec.ts is 25/25 green. Flaky 9 → 4, every one of them in a design-parity spec this task never touched (before: config ×2, dashboard ×3, info ×1, rsvp ×3; after: config ×4) — the ds-kit static-server contention T388 described and T389 owns.",
       "note": "The first baseline attempt was discarded and re-run: the copy had already been written to public/i18n/ while it was in flight, so its numbers described a tree that was neither HEAD nor the finished change. The figures above are from a clean HEAD run and a clean post-change run."
     },
     "i18n": {
-      "locales": ["es", "en", "fr"],
+      "locales": [
+        "es",
+        "en",
+        "fr"
+      ],
       "keys_per_locale": 843,
       "missing": 0,
       "empty_values": 0,
@@ -92,7 +114,9 @@
     }
   },
   "files": {
-    "added": ["tasks/33-general-information/reports/T385.json"],
+    "added": [
+      "tasks/33-general-information/reports/T385.json"
+    ],
     "modified": [
       "public/i18n/es.json",
       "public/i18n/en.json",
@@ -133,6 +157,8 @@
       "surfaces_at": "T389, which owns the ds-kit harness; and any task reporting a hard-rule-11 gate without --retries."
     }
   ],
-  "commits": [],
+  "commits": [
+    "9cfacf5 — feat(privacy): the notice says account-holder, and the leak guard poisons generalInfo (T385)"
+  ],
   "decisions_needed": []
 }
