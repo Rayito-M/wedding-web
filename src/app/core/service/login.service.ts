@@ -27,6 +27,7 @@ const LANDING_BY_ROLE: Record<UserRole, string> = {
   [AppJwtClaimsDto.RoleEnum.GROOM]: '/dashboard',
   [AppJwtClaimsDto.RoleEnum.GUEST]: '/me',
   [AppJwtClaimsDto.RoleEnum.PROVIDER]: '/provider',
+  [AppJwtClaimsDto.RoleEnum.WEDDING_PLANNER]: '/provider',
 };
 
 /** ADR-0013: admins are guests carrying `role: admin`; everyone else is a guest. */
