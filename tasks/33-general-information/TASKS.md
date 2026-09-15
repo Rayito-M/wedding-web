@@ -268,7 +268,16 @@
 
 
 ### T389 — The DS-kit static server loses races under parallel e2e load
-- **Status:** todo — **not release-blocking; it makes every future gate harder to read**
+- **Status:** todo — **promoted 2026-09-15: it now blocks any claim of a green e2e gate.** T388
+  cleared the suite with `--retries=2`; **T387 could not.** Four runs, every failure the same
+  `page.goto`/click against `ds-kit.ts:121-122`, and the failing sets **disjoint each time**:
+  9 failed plain · 5 with `--retries=2` · 4 at `--workers=1` · 2 running
+  `design-parity-info.spec.ts` alone. No spec fails deterministically and the failing call never
+  reaches app code.
+  **Blast radius, measured:** the helper is imported by **10 `design-parity-*` specs out of 24**.
+  Every one is design-fidelity; the 14 functional specs cannot be affected. So this does not
+  invalidate behaviour verification — it invalidates **parity** verification, which is exactly what
+  ADR-0044 requires to stamp a screen `implemented` in the DS ledger
 - **Owner:** agent (implementer)
 - **Depends on:** —
 - **ADR:** none — test infrastructure

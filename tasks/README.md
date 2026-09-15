@@ -267,8 +267,8 @@ never by its letter alone.
 | **T384** | The authoring screen becomes a fixed-shape editor | done (`f4f4ec3`) — merge unit closed, typecheck green; lint/e2e red on T387 and T383 | `33-general-information` |
 | **T385** | The privacy notice describes what actually ships | done (`9cfacf5`) — e2e 0 failed; found T390 | `33-general-information` |
 | **T386** | Mark phase 32's superseded tasks, and say why | todo | `33-general-information` |
-| **T387** | Two things in the tree that must not reach a release | todo — **gates the v1.3.0 tag** | `33-general-information` |
+| **T387** | Two things in the tree that must not reach a release | done (`8da774d`) — lint 6 → 4, matching the documented clause | `33-general-information` |
 | **T388** | The e2e fixtures still serve the block array, so 30 specs assert a dead render | done — info spec 45/45; suite 420, 0 assertion failures; residual flake is the ds-kit harness | `33-general-information` |
-| **T389** | The DS-kit static server loses races under parallel e2e load | todo — not release-blocking | `33-general-information` |
+| **T389** | The DS-kit static server loses races under parallel e2e load | todo — **blocks any green e2e-gate claim** | `33-general-information` |
 | **T391** | The copy that carries a factual claim should be asserted, not just written | todo — not release-blocking | `33-general-information` |
 | **T390** | Settings says contact cards self-update; the notice says they don't | done (`5b75068`) | `33-general-information` |
