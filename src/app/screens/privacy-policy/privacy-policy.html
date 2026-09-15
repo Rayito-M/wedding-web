@@ -11,14 +11,21 @@
     <p class="intro">{{ 'privacyPolicy.intro' | translate }}</p>
 
     <!--
-      What signed-in guests can see about other people (hub ADR-0046 §7, as
-      amended 2026-09-09; ADR-0027 is the notice this extends). Worded for
-      what SHIPS: a Good-to-know contact is today a reference to a user of
-      this system, so this says the couple may show contact details for
-      people they name — and deliberately NOT "including people who are not
-      guests", which Amendment 1 §B records as intended but unbuilt. A notice
-      describing a capability the system lacks is worse than one that is
-      merely narrow; it widens on the day that mechanism ships, not before.
+      What signed-in guests can see about other people (hub ADR-0047 §3,
+      which narrows ADR-0046 §7; ADR-0027 is the notice this extends).
+      Worded for what SHIPS, and rewritten by T385 because two of T381's
+      sentences stopped being true on the same day. A Good-to-know contact is
+      now a person who HOLDS AN ACCOUNT HERE — ADR-0047 §2 dropped the
+      no-account case by decision, and someone without one is added as a
+      guest first — and their name, email and phone number are copied off
+      that account by the couple's editor (`config-manager.ts`'s
+      `contactDigest`) rather than typed in, which is what T382's clause
+      claimed. The notice states the permission is obtained away from this
+      site and deliberately does NOT claim the site records or checks it:
+      there is no consent field and ADR-0047 rejected adding one. A notice
+      describing a capability the system lacks is the defect T381 was written
+      to fix, and that trap points both ways. The per-locale wording is
+      pinned by `e2e/public-surface.spec.ts`.
     -->
     <section>
       <h2>{{ 'privacyPolicy.goodToKnow.title' | translate }}</h2>

@@ -113,7 +113,18 @@
   this replaces — read it for the parts that still apply, not for its data model)
 
 ### T385 — The privacy notice describes what actually ships
-- **Status:** todo — unblocked by T383 (`5583e1e`); run it after T384 so the gate is measurable
+- **Status:** done (2026-09-15) — the notice is rewritten from what ships in es/en/fr, and
+  `e2e/public-surface.spec.ts` changes in the same commit. Three guards, each **proven to bite**
+  rather than asserted: T381's no-account clause is inverted (and **T382's provenance clause went
+  with it** — the editor now *picks* an account and copies its digest, so *"the couple types their
+  name and number in directly"* is as false as the sentence it replaced); the poisoning test poisons
+  **`generalInfo`** plus the `couple` attribute ADR-0047 §5 uses as its worked example; and a new
+  test walks all three unauthenticated routes asserting no `couple`, no email and no phone number,
+  on the wire and in the DOM. **Amendment 3 §A forced a fifth claim the task text could not have
+  known about:** digests are stored verbatim, so the honest notice has to say that closing an
+  account does **not** remove that person — `wedding-api` T251 is the commit that revisits it.
+  Suite 420 → **425** (the new test × 5 projects), 0 failed, 30 skipped; the residual flake is still
+  the ds-kit harness (T389), 9 → 4. See `reports/T385.json`.
 - **Owner:** agent (implementer)
 - **Depends on:** T383
 - **ADR:** hub **ADR-0047 §3**; ADR-0027; ADR-0035 §7/§8

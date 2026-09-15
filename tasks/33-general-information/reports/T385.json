@@ -1,0 +1,138 @@
+{
+  "task": "T385",
+  "status": "complete",
+  "summary": "privacyPolicy.goodToKnow.body is rewritten from what ships in es/en/fr: everyone listed in Good to know holds an account here (couple / wedding planner / guest), the section shows their name, email AND phone number, that number never appears on a profile where it stays couple-only, the agreement is obtained away from the site and nothing here records or checks it, and — forced by ADR-0047 Amendment 3 §A — the stored digest outlives the account, so closing one does not remove that person. e2e/public-surface.spec.ts changes in the same commit: T381's no-account assertion is inverted, T382's 'the couple types their name and number in directly' clause goes with it (the editor picks an account and copies its digest), the poisoning test is re-pointed from the dead goodToKnow attribute to generalInfo plus the couple attribute ADR-0047 §5 names, and a fifth test walks all three unauthenticated routes asserting no couple, no email and no phone reaches them on the wire or in the DOM. Every guard was proven to bite against a deliberate injection, and every injection reverted before the commit.",
+  "acceptance": [
+    {
+      "criterion": "privacyPolicy.goodToKnow.body in es/en/fr says: the people listed hold an account on this site, and states the kind — the couple, the wedding planner, or a guest; their name, email and phone number are shown in that section; and their number is not shown on their profile, where it stays visible to the couple only (ADR-0035 §7/§8 untouched).",
+      "met": true,
+      "evidence": "One string per locale, rewritten whole rather than patched. EN: 'Everyone listed there holds an account on this site — the couple themselves, the wedding planner, or another guest — and for each of them that section shows their name, their email address and their phone number... Those details are shown in that section only: a phone number never appears on anyone's profile, where it stays visible to the couple alone.' ES: '...tienen una cuenta en este sitio —los propios novios, la persona que ejerce de wedding planner o alguien invitado— ... su nombre, su correo electrónico y su número de teléfono ... un número de teléfono nunca aparece en el perfil de nadie, donde sigue siendo visible únicamente para los novios.' FR: '...possèdent un compte sur ce site — les mariés eux-mêmes, la personne qui assure le rôle de wedding planner, ou une autre personne invitée — ... son nom, son adresse e-mail et son numéro de téléphone ... n'apparaît jamais sur le profil de qui que ce soit, où il reste visible des seuls mariés.' Pinned per locale by public-surface.spec.ts's accountClaim / kindsClaim / detailsClaim / notOnProfileClaim / coupleOnlyClaim, and in the rendered DOM by 'the privacy notice discloses what a signed-in guest can see (T385, ADR-0047 §3)'.",
+      "notes": "'wedding planner' is written as a role, not a person, in ES and FR ('la persona que ejerce de wedding planner', 'la personne qui assure le rôle de wedding planner') because nobody's gender is stored and both languages force a choice the data cannot support — the same constraint hard rule 18c records for the delegation tie."
+    },
+    {
+      "criterion": "It says the couple lists people with their agreement, obtained outside the site. It must not say the site enforces or verifies that authorization.",
+      "met": true,
+      "evidence": "EN: 'The couple asks each person first, away from this site, and lists them once they agree — this site does not ask for that agreement, record it or check it, and has no way to.' ES: '...se lo piden antes a cada persona, fuera de este sitio, y solo la añaden cuando acepta: este sitio no pide ese permiso, no lo registra ni lo comprueba, y no tiene forma de hacerlo.' FR: '...demandent d'abord son accord à chaque personne, en dehors de ce site ... ce site ne demande pas cet accord, ne l'enregistre pas et ne le vérifie pas — il n'en a aucun moyen.' Asserted twice per locale (agreementClaim + unenforcedClaim) and once in the DOM. The absence of an enforcement claim is asserted positively — by requiring the explicit denial — rather than by a negative regex over words like 'verify', which would pass on silence.",
+      "notes": "ADR-0047's rejected `contactConsent` flag is named in the spec's comment so the next reader sees why the notice states a negative capability instead of describing a control."
+    },
+    {
+      "criterion": "Invert T381's positive assertion in the same commit as the copy. public-surface.spec.ts currently asserts the notice contains the no-account phrasing; that must become an assertion of the account-holder wording instead.",
+      "met": true,
+      "evidence": "public-surface.spec.ts:145-152 at HEAD asserted /not guests|no account on this site/i and /the couple types their name and number in directly/i. Both are gone; in their place the same test asserts /holds an account on this site/i and /the couple themselves, the wedding planner, or another guest/i, and the per-locale test asserts `retiredNoAccount` and `retiredCoupleTypes` ABSENT in all three. PROVEN TO BITE: with the copy reverted to HEAD (`git stash push -- public/i18n/*.json`) and the new spec in place, Desktop Chrome reported '2 failed, 3 passed' — 'Error: the notice must say the listed people hold accounts' and 'Error: es: the notice must not promise a listed person with no account (ADR-0047 §2)'. `git stash pop` restored the copy; the three locale bodies are byte-identical to the versions committed (cmp against a pre-revert snapshot).",
+      "notes": "T382's provenance clause had to be retired alongside T381's, and the task text names only T381: the couple no longer types anything — `config-manager.ts`'s `contactDigest` copies `{id, role, firstName, lastName, email, phoneNumber}` off the picked account — so the sentence T382 introduced to replace a false claim had itself become false. Both retired claims are asserted absent separately, for the reason T382 gave: they fail for different reasons and a single regex would hide which."
+    },
+    {
+      "criterion": "Extend public-surface.spec.ts to assert no couple, no email and no phone number reaches any unauthenticated route — the client-side half of wedding-api T247.",
+      "met": true,
+      "evidence": "New test 'no couple, no email and no phone number reaches any unauthenticated route (wedding-api T247)'. It walks all three signed-out routes from `app.routes.ts` (/ → app-welcome, /login → app-login, /privacy-policy → app-privacy-policy), asserts EMAIL_RE and PHONE_RE match neither the rendered DOM of any of them nor the body of ANY `/v1/` response read while signed out, asserts no response carries a top-level `couple` key, and asserts the authenticated `GET /v1/config/general-information` route (ADR-0047 §4) is never even requested. The pre-existing wire test additionally asserts `generalInfo`, `goodToKnow` and `couple` absent from the public config's keys. PROVEN TO BITE: a temporary `couple: {bride: {...email, phoneNumber}, groom: {...email}}` on `CONFIG_PUBLIC` in `e2e/support/api-mocks.ts`, plus a temporary probe rendering `JSON.stringify(weddingConfigPublic())` on the welcome page, produced '3 failed, 2 passed' — 'Error: public config keys', 'Error: an email address rendered on /'. Both injections reverted; `diff <(git show HEAD:e2e/support/api-mocks.ts) e2e/support/api-mocks.ts` is empty and `git status` shows welcome.ts/welcome.html clean.",
+      "notes": "Response bodies are collected as promises and awaited after the walk rather than pushed from an `async` listener: the T378 pattern can still be in flight when the assertions run, and a leak guard that silently inspected nothing is worse than none. The email/phone regexes were checked against the legitimate `CONFIG_PUBLIC` first — no false positive, and `login.email.placeholder` ('you@example.com') is a placeholder attribute, which `innerText` does not return."
+    },
+    {
+      "criterion": "The same file still asserts and poisons goodToKnow, an attribute that no longer exists. Re-point the poisoning test at generalInfo — with a real IBAN, a Bizum number and a contact phone in the ADR-0047 shape — and prove it bites.",
+      "met": true,
+      "evidence": "`POISONED_BLOCKS` (the ADR-0046 block array, with `type` discriminators and block ids) is replaced by `POISONED_GENERAL_INFO`, the ADR-0047 §1 fixed-shape object: `dressCode`, `gift` (accountHolder, iban 'ES91 2100 0418 4502 0005 1332', bic, bizumPhone '+34 655 012 118', localized intro/reference/bizumNote), `contact` with a `couple` digest and a ULID-keyed `weddingPlanner` and `guest` entry carrying role, email and phoneNumber (and `purpose` on the guest only, §2), `faq` and `note` with ULID ids, and all three `dayLine` variants. The config response is poisoned with that object AND with the top-level `couple` attribute §5 uses as its worked example, and twelve secrets are asserted absent from each of the three public routes. PROVEN TO BITE: with the welcome-page probe rendering the public config, Desktop Chrome failed with 'Error: \"ES91 2100 0418 4502 0005 1332\" must not reach an unauthenticated visitor on /'; probe reverted, spec re-run, 5/5 green, and 25/25 green across all five projects in the full suite.",
+      "notes": "`goodToKnow` is still asserted absent from the public config keys — a name that must never come back — but it is no longer what the test poisons. The file's header docstring now says why in as many words, so the next reader does not have to reconstruct it."
+    },
+    {
+      "criterion": "No missing-key warnings in any locale; report the resolved privacyPolicy.* count for all three, measured this run.",
+      "met": true,
+      "evidence": "Measured this run over public/i18n/{es,en,fr}.json: 843 flattened keys per locale, key sets identical across all three, 0 empty values. privacyPolicy.* resolves 17/17 in each locale, and all 17 keys privacy-policy.html references are present in all three (0 missing). Body lengths es/en/fr: 1522/1416/1672 chars. The app registers no `missingTranslationHandler` (grepped; `notification-center.service.ts:64` records the same), so a missing key renders as its own name rather than logging — which is why the check is the static key-resolution one above, backed in the browser by `expect(notice).toContain('Contacts and bank details')`, an assertion a fallen-through key could not satisfy.",
+      "notes": "T382 measured 792 flattened keys per locale; the rise to 843 is T384's `configManager.goodToKnow.*` block, not this task — this task adds no key and removes none."
+    },
+    {
+      "criterion": "Hard rule 11 gate green.",
+      "met": true,
+      "evidence": "typecheck exit 0, no output. lint: 6 ESLint errors before and after, all pre-existing and none in a file this task opened (4 in src/app/shared/modal/ per CLAUDE.md, the unused WeddingGuestsService import in guest-manager/modal/guest-profile-modal.ts, and the unused `config` in the uncommitted wedding-config-data.service.ts — T387 owns the last two); `npx eslint e2e/public-surface.spec.ts src/app/screens/privacy-policy/` exits 0; stylelint 'no new violations (550 pre-existing, baselined)'; ds:verify '31/31 clean pairs; 0 drifting values'. unit 644 → 644, 0 failing (this task adds copy and e2e guards, no unit surface). build pass, styles.css 2677 bytes, same four pre-existing budget warnings. e2e 420 → 425 tests, 0 failed both runs, 30 skipped both runs, 381 → 391 passed, flaky 9 → 4.",
+      "notes": "The lint clause in CLAUDE.md hard rule 11 still says 4 pre-existing errors and there are 6. Raised before by T381 and T383 for the 5th; the 6th arrived with the uncommitted working-tree file. T387 owns both — not widened or fixed here, for the reason T387's own text gives."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit — no output, exit 0. Note that neither project includes e2e/**; `pnpm typecheck` has never covered the Playwright specs, so the spec was lint-checked with the repo's own type-aware ESLint config and then actually run on all five projects."
+    },
+    "lint": {
+      "errors_before": 6,
+      "errors_after": 6,
+      "new_errors": [],
+      "detail": "4 × src/app/shared/modal/ (CLAUDE.md's named exception) + 1 unused import at guest-manager/modal/guest-profile-modal.ts:25 + 1 unused `config` at core/data/wedding-config-data.service.ts:40 (uncommitted, T387's). stylelint and ds:verify both pass."
+    },
+    "test": {
+      "before": { "total": 644, "failing": 0, "files": 49 },
+      "after": { "total": 644, "failing": 0, "files": 49 },
+      "new_failures": []
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2677,
+      "global_stylesheet_bytes_after": 2677,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget (803.08 kB vs 500 kB) — pre-existing",
+        "config-manager.scss 16.85 kB / guest-manager.scss 11.96 kB / milestones.scss 11.55 kB / seating-plan.scss 9.58 kB over the 8 kB per-component budget — all pre-existing; this task touched no .scss"
+      ],
+      "detail": "Stylesheet byte count is the built artefact measured after the change; no .scss file was opened, so before is the same figure."
+    },
+    "e2e": {
+      "before": { "total": 420, "passed": 381, "failed": 0, "skipped": 30 },
+      "after": { "total": 425, "passed": 391, "failed": 0, "skipped": 30 },
+      "result": "pass",
+      "new_failures": [],
+      "detail": "Both runs `pnpm test:e2e --retries=2`, exit 0. +5 = the new unauthenticated-routes test × 5 projects; public-surface.spec.ts is 25/25 green. Flaky 9 → 4, every one of them in a design-parity spec this task never touched (before: config ×2, dashboard ×3, info ×1, rsvp ×3; after: config ×4) — the ds-kit static-server contention T388 described and T389 owns.",
+      "note": "The first baseline attempt was discarded and re-run: the copy had already been written to public/i18n/ while it was in flight, so its numbers described a tree that was neither HEAD nor the finished change. The figures above are from a clean HEAD run and a clean post-change run."
+    },
+    "i18n": {
+      "locales": ["es", "en", "fr"],
+      "keys_per_locale": 843,
+      "missing": 0,
+      "empty_values": 0,
+      "new_keys": 0,
+      "key_sets_identical": true,
+      "detail": "privacyPolicy.* resolves 17/17 in each locale and all 17 keys privacy-policy.html references exist in all three. One value changed per locale (privacyPolicy.goodToKnow.body); the title is unchanged. The files round-trip byte-identically through json.dumps(indent=2), so the diff is one line each."
+    }
+  },
+  "files": {
+    "added": ["tasks/33-general-information/reports/T385.json"],
+    "modified": [
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "src/app/screens/privacy-policy/privacy-policy.html",
+      "e2e/public-surface.spec.ts",
+      "tasks/33-general-information/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "public/i18n/es.json, en.json, fr.json (temporarily, to prove the inverted notice assertions fail on the pre-T385 copy; restored with `git stash pop` and verified byte-identical)",
+      "src/app/screens/welcome/welcome.ts and welcome.html (temporary probe rendering the public config JSON on an unauthenticated page, to prove the poisoning test bites; restored to HEAD)",
+      "e2e/support/api-mocks.ts (temporary `couple` attribute on CONFIG_PUBLIC, to prove the new no-couple/no-email/no-phone assertions bite; restored to HEAD and diffed against it)"
+    ]
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/app/screens/privacy-policy/privacy-policy.html",
+      "why": "The HTML comment above the section — not the copy, but the standing explanation of why the copy is worded as it is — argued for the exact sentence this task removes: it said the notice deliberately omits 'including people who are not guests' as intended-but-unbuilt. After ADR-0047 §2 that case is dropped by decision rather than pending, so leaving the comment would have told the next reader the notice is narrower than the system, when it is now exactly as wide. Rewritten to ADR-0047 §3, naming `contactDigest` and the rejected consent flag. No template or binding changed."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "`configManager.goodToKnow.contact.hint` tells the couple, in all three locales, that 'if they change their profile, their card changes too' (EN; ES and FR say the same). Amendment 3 §A establishes that is false: `generalInfoContactSchema` stores full digests verbatim on the CONFIG row and nothing resolves them at read time. So the authoring screen promises the couple a liveness the API does not provide, while the privacy notice this task ships now tells guests the opposite — the two strings in this repo disagree. Deliberately NOT fixed here: it is T384's copy, not the privacy notice, and editing it from this commit would hide a second correction inside one. It needs a task of its own, or the same commit as `wedding-api` T251.",
+      "surfaces_at": "wedding-api T251, which decides whether digests are resolved at read time; whichever way it goes, this hint and the privacy notice's `staleClaim` must move together."
+    },
+    {
+      "risk": "The per-locale guard pins ten exact phrases per locale, including the Amendment 3 §A staleness claim ('closing an account does not remove them from it'). When `wedding-api` T251 lands and deactivation does remove a person, that assertion becomes a guard protecting a false statement — it must be rewritten with the copy in T251's client-side counterpart, and its failure at that point is the tripwire working, not a spurious break.",
+      "surfaces_at": "The wedding-web task that consumes wedding-api T251."
+    },
+    {
+      "risk": "The new unauthenticated-routes test asserts EMAIL_RE and PHONE_RE match nothing in the rendered DOM of /, /login and /privacy-policy. Any future public copy that legitimately shows a contact email — a 'write to us' line on the landing page, say — fails it. That is the intended trade (the guard exists because an omission-built teaser leaks by default), but whoever adds such copy should know the fix is to narrow the route list, not to delete the assertion.",
+      "surfaces_at": "Any task adding an email address or phone number to a signed-out screen."
+    },
+    {
+      "risk": "The suite's residual flake is unchanged and still unowned by this phase: 4 flaky tests this run, all in design-parity-config.spec.ts, all passing on retry. Same ds-kit static-server contention T388 measured (9 flaky at HEAD, across four different parity specs). A plain `pnpm test:e2e` with no --retries can therefore still report failures that are not defects.",
+      "surfaces_at": "T389, which owns the ds-kit harness; and any task reporting a hard-rule-11 gate without --retries."
+    }
+  ],
+  "commits": [],
+  "decisions_needed": []
+}
