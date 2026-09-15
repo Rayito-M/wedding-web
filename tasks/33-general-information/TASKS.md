@@ -13,8 +13,15 @@
 > naming them), and Good to know is Settings section **08** with Appearance at **07**
 > (Amendment 4 §A).
 >
-> Order: **T383 → T384 → T385**; `wedding-api` T249 has landed, so T383 is unblocked. **T386** can
-> run at any point.
+> Order: **T383 → T384 → T385**; **T386** can run at any point.
+>
+> **T383 and T384 are ONE MERGE UNIT, and the tree is red between them.** `pnpm gen:api` — T383's
+> first step — deletes the generated models `config-manager` still uses, so typecheck, unit, build
+> and e2e all fail on that single file from T383's commit until T384 rewrites it. This is inherent
+> to splitting render from authoring across a repo-wide codegen step; it is not a defect in either
+> task. **Do not "fix" it with a compile stub in `config-manager`** — that puts throwaway code in
+> the exact file T384 must write clean, and is how the block machinery gets smuggled back in.
+> **Run T384 immediately after T383**, and do not cut a release between them.
 >
 > **The working tree holds ~30 uncommitted files from an earlier attempt, and they are stale.** The
 > generated client there was regenerated against an *intermediate* API state — it still carries 14
@@ -65,7 +72,8 @@
 - **Refs:** hub ADR-0047 §1/§2; `src/app/shared/good-to-know/`; counterpart `wedding-api` T249
 
 ### T384 — The authoring screen becomes a fixed-shape editor
-- **Status:** blocked — on T383
+- **Status:** todo — **next, and urgent**: T383 landed (`5583e1e`) and the tree is red until this
+  task lands. See the merge-unit note in the phase header
 - **Owner:** agent (implementer)
 - **Depends on:** T383
 - **ADR:** hub **ADR-0047 §1/§2**; ADR-0045 §3 (Settings inside Manage); ADR-0031 (authoring
@@ -94,7 +102,7 @@
   this replaces — read it for the parts that still apply, not for its data model)
 
 ### T385 — The privacy notice describes what actually ships
-- **Status:** blocked — on T383
+- **Status:** todo — unblocked by T383 (`5583e1e`); run it after T384 so the gate is measurable
 - **Owner:** agent (implementer)
 - **Depends on:** T383
 - **ADR:** hub **ADR-0047 §3**; ADR-0027; ADR-0035 §7/§8
@@ -141,3 +149,31 @@
   - Each note is one sentence and names what replaced it, so a reader arriving from an ADR
     cross-reference lands somewhere useful instead of on a task describing a dead shape.
 - **Refs:** `.agent/skills/task-management.md` §1; hub ADR-0047
+
+
+### T387 — Two things in the tree that must not reach a release
+- **Status:** todo — **gates the v1.3.0 tag**, not T384
+- **Owner:** agent (implementer)
+- **Depends on:** —
+- **ADR:** none — both are working-tree debt, surfaced by T383's `risks[]`
+- **Why:** neither is this phase's work, and both would ship silently:
+  - **`wedding-config-data.service.ts:41`** — `add()` returns
+    `throwError(() => new Error('WeddingConfigPublic reaction suspended'))` with the real call
+    commented out. **Config creation is dead code.** It is also the source of the one new lint error
+    T383 measured. Nobody has said whether this was a deliberate hold or a debugging leftover —
+    find out before deleting or restoring it, because the two answers have opposite fixes.
+  - **`src/environments/release.ts`** carries a **hand-edited** build stamp. Its own docstring says
+    the file is written by `pnpm build:prod` and *"any manual edit is overwritten on the next
+    build"* — so this is harmless until someone reads it as the released commit. Restore it to the
+    committed placeholder and let the build own it.
+- **Acceptance:**
+  - Both resolved, each in its own commit with the reason stated.
+  - **`CLAUDE.md` hard rule 11's lint exception says 4 pre-existing errors; there are 5.** The
+    uncovered one is an unused `WeddingGuestsService` import at
+    `src/app/screens/guest-manager/modal/guest-profile-modal.ts:25`, present at HEAD and outside the
+    written clause. Raised twice now (T381, T383) and quoted as sanctioned every time a baseline is
+    reported. Either fix the import or widen the clause to name it — **not both**, and say which and
+    why. A documented exception that does not match the count teaches every future reader to trust
+    the number over the code.
+  - Re-measure the lint baseline afterwards and state the new figure.
+- **Refs:** T383's `risks[]`; `CLAUDE.md` hard rule 11
