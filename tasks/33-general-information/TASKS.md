@@ -188,3 +188,34 @@
     the number over the code.
   - Re-measure the lint baseline afterwards and state the new figure.
 - **Refs:** T383's `risks[]`; `CLAUDE.md` hard rule 11
+
+### T388 — The e2e fixtures still serve the block array, so 30 specs assert a dead render
+- **Status:** todo — **blocks T385's hard-rule-11 gate**, and is the last thing between this phase
+  and a green suite
+- **Owner:** agent (implementer)
+- **Depends on:** T383, T384 (both done)
+- **ADR:** hub **ADR-0047 §1/§2/§4**
+- **Why:** `e2e/support/api-mocks.ts:274` still returns `goodToKnow: goodToKnowBlocks()` on the
+  config response, and **nothing anywhere mocks `GET /v1/config/general-information`** — the route
+  T383 made the section read from. So all 30 e2e failures are
+  `design-parity-info.spec.ts` measuring a render that no longer exists.
+  **This was invisible until the app compiled**: T383 could not run the suite at all (the tree was
+  red until T384), so the gap surfaced only once the merge unit closed. It is nobody's mistake and
+  it is not T385's work — but T385 cannot report a green gate on top of it, which is why it is filed
+  ahead rather than folded in.
+- **Acceptance:**
+  - `api-mocks.ts` serves **`generalInfo`** in the ADR-0047 shape on the config response, and mocks
+    **`GET /v1/config/general-information`** with `contact.couple` **present** — it is required on
+    that route and composed server-side (ADR-0047 §4, Amendment 2), so a mock that omits it tests a
+    response the API cannot produce.
+  - The fixture exercises the cases the render actually branches on: a contact **with** and
+    **without** a `phoneNumber`, at least one `faq` and one `note` entry with ULID ids and a note
+    `title`, and a `dayLine` with all three variants. A fixture that only covers the happy path is
+    how a parity spec passes while the feature is broken.
+  - `design-parity-info.spec.ts` measures the **new** section against the kit — six named sections
+    in the DS's fixed order, not blocks. Deviations that are the kit's own go to
+    `../wedding-ui-design/contract/FINDINGS.md`, never reported as app defects (ADR-0044).
+  - `pnpm test:e2e` green, or every remaining failure named with its owner. **Report the counts you
+    measure**, and do not inherit T384's — it measured a tree that could not run this spec.
+- **Refs:** T383 (the render), T384 (the editor), `e2e/support/api-mocks.ts:141-274`,
+  `e2e/layout/design-parity-info.spec.ts`; hub ADR-0047 §4
