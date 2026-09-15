@@ -181,7 +181,24 @@
 
 
 ### T387 — Two things in the tree that must not reach a release
-- **Status:** todo — **gates the v1.3.0 tag**, not T384
+- **Status:** done (2026-09-15) — all three resolved; lint is **6 → 4**, and the measured count
+  matches hard rule 11's written clause for the first time. **The `add()` question has an answer:
+  debugging leftover**, confirmed with the Product Owner before anything was touched — it lives in
+  no commit (HEAD always had the live call), its message names the *public* entity inside the
+  *admin* service, it uses neither of this repo's documented hold idioms, `wedding-api` still serves
+  `POST /v1/config` to bride/groom, and **nothing anywhere calls `weddingConfigCollection.add()`**,
+  so there was no misbehaviour for a hold to hold back. Restored in place — which is why it has
+  **no commit**: the file is byte-identical to HEAD again. Two things the task text could not have
+  known. **(a)** The "committed placeholder" `release.ts` was to be restored to is itself a stale
+  hash (`f4ee01c`), *not* the `'dev'` placeholder its own docstring and
+  `scripts/generate-release.mjs` both promise — restoring literally would have reinstated the same
+  hazard, so `'dev'` was committed instead. **(b)** The unused import was the last reference to a
+  commented-out `inject(WeddingGuestsService)` whose doc block also claimed, falsely, that no
+  `Guest` entity exists; the dead symbol and its prose went with it. `CLAUDE.md` is deliberately
+  **untouched** — the "not both" constraint. **The e2e gate is red for nothing this task owns:** all
+  9 failures are the T389 ds-kit harness timeout at `e2e/helpers/ds-kit.ts:121-122`, and four runs
+  produced four **disjoint** failing sets — the flake is now heavier than T388 measured it. See
+  `reports/T387.json`.
 - **Owner:** agent (implementer)
 - **Depends on:** —
 - **ADR:** none — both are working-tree debt, surfaced by T383's `risks[]`

@@ -1,0 +1,134 @@
+{
+  "task": "T387",
+  "status": "complete_with_deviation",
+  "summary": "All three items resolved. (1) The suspended add() was a debugging leftover, not a hold — established from artifacts, then confirmed by the Product Owner before touching it: it exists only in the working tree (HEAD has always had the live call), its message names the wrong entity ('WeddingConfigPublic' inside the admin WeddingConfig service — copy-pasted from the sibling), it uses none of this repo's two documented hold idioms (readOnly() with a task ref, notImplemented()), the API still exposes POST /v1/config to bride/groom, and nothing anywhere calls weddingConfigCollection.add(), so there was no misbehaviour to hold back. Restored in place; the file is now byte-identical to HEAD, so there is nothing to commit for it. (2) release.ts: the 'committed placeholder' the task points at is itself a stale hash (f4ee01c), not the 'dev' placeholder the file's docstring and the generator both claim is committed — restoring literally would have reinstated the same misread-as-released-commit hazard. Committed 'dev' instead, with the PO's approval. (3) Fixed the unused WeddingGuestsService import rather than widening rule 11's clause; CLAUDE.md deliberately untouched. Lint 6 -> 4, exactly the documented modal errors. e2e is NOT green: 9 failures, every one the T389 ds-kit harness timeout, in specs nothing here touches.",
+  "acceptance": [
+    {
+      "criterion": "Both resolved, each in its own commit with the reason stated.",
+      "met": "partial",
+      "evidence": "release.ts -> 8da774d. add() produced NO commit: the suspension was uncommitted-only, so restoring the live call returned src/app/core/data/wedding-config-data.service.ts to HEAD byte-for-byte and `git status --porcelain` no longer lists it. A third commit, 8a5e12e, carries the rule-11 item.",
+      "notes": "The bullet assumes both items need a code change. One did not — HEAD was already correct, and the defect lived only in the tree. Reported as partial rather than met so the missing commit is not read as an omission."
+    },
+    {
+      "criterion": "Find out whether the suspended add() was a deliberate hold or a debugging leftover before deleting or restoring it.",
+      "met": true,
+      "evidence": "Six independent artifacts, all pointing to leftover: (a) `git log -- src/app/core/data/wedding-config-data.service.ts` shows only c844b9e and c33420d — the suspension is in no commit; (b) the message 'WeddingConfigPublic reaction suspended' names the public entity inside the admin service, matching wedding-config-public-data.service.ts:55 verbatim in style; (c) no task id, ADR or TODO, while the repo has two documented hold idioms it does not use — readOnly() ('...admin edits go through /v1/config (T213)') and user-profile-data.service.ts:90 notImplemented(); (d) wedding-api src/modules/wedding-config/wedding-config.controller.ts:38 still serves @Post() @Roles('bride','groom') 'Create wedding config (one-time only)', and weddingConfigControllerCreateV1 survives T383's regeneration at src/app/core/api/api/wedding-configuration.service.ts:62; (e) no caller — grep for '.add(' across src/ and e2e/ finds only userCollection, milestoneCollection and Set.add; (f) it was the sole source of the new lint error, which a hold written in the sibling's param-less style would not have produced. No mention of it in the hub, wedding-api, tasks/ or any ADR. Put to the Product Owner with this evidence; answered 'leftover — restore the call'.",
+      "notes": "The whole file's docstring is itself a copy of the public service's (it claims 'WeddingConfigPublic entity', 'GET /v1/config/public' and 'mutations are rejected' while update() mutates), and `name` is a raw string rather than EntityNamesEnum.WEDDING_CONFIG. Not corrected — outside this task. Filed under risks[]."
+    },
+    {
+      "criterion": "src/environments/release.ts: restore it to the committed placeholder and let the build own it.",
+      "met": "partial",
+      "evidence": "Set to 'dev' and committed (8da774d) rather than restored to the committed f4ee01c — see deviations[0]. 'Let the build own it' proven directly: `pnpm build` rewrote the file to 8a5e12e (the then-HEAD, confirmed by `git rev-parse HEAD`), and it was restored to 'dev' afterwards. RELEASE has one consumer, src/main.ts:49.",
+      "notes": "Partial against the literal text, met against its intent."
+    },
+    {
+      "criterion": "CLAUDE.md hard rule 11's lint exception says 4 pre-existing errors; there are 5. Either fix the import or widen the clause — not both, and say which and why.",
+      "met": true,
+      "evidence": "Fixed the import (8a5e12e). CLAUDE.md is untouched — `git status --porcelain` never lists it — so the 'not both' constraint holds. Why the code and not the clause: the symbol is provably dead, not paused. Delegation shipped calling WeddingGuestsService directly (289bd39); c3d8eb8 rewired fetch and save onto EntityCollectionService<GuestDto>; T360's 1406d85 KEPT that rewiring, reconciling the PATCH body and the DataServiceError 409 unwrapping to it rather than reverting. Widening would permanently sanction a one-line deletion the task itself notes is already quoted as sanctioned in every baseline.",
+      "notes": "The commented-out `inject(WeddingGuestsService)` went with the import, and its doc block moved onto guestCollection, which serves that role now; its claim that 'no Guest entity exists yet' was also stale (EntityNamesEnum.GUEST is registered in entity-metadata.ts:36). Two cross-references at lines 177 and 394 retargeted so nothing points at a deleted symbol."
+    },
+    {
+      "criterion": "Re-measure the lint baseline afterwards and state the new figure.",
+      "met": true,
+      "evidence": "ESLint 6 errors before (4 modal + wedding-config-data.service.ts:40 'config' is defined but never used + guest-profile-modal.ts:25 'WeddingGuestsService' is defined but never used) -> 4 after, all in src/app/shared/modal/ (modal.html 2:3 x2, 3:5, modal.ts 34:12). The new figure is 4 and it now matches hard rule 11's written clause exactly. stylelint: no new violations (550 pre-existing, baselined). ds fidelity: 31/31 clean pairs, 0 drifting values.",
+      "notes": "Both runs were `pnpm lint`, which is ESLint + stylelint + ds:verify."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "Restore src/environments/release.ts to the committed placeholder.",
+      "to": "Set RELEASE = 'dev' and commit it.",
+      "reason": "The committed value is not a placeholder. It is f4ee01c ('docs(tasks): T360 report records its own commit hash'), a stale build stamp that entered history in 535428d — while the file's own docstring and scripts/generate-release.mjs:7-10 both state the committed value is a 'dev' placeholder. Restoring literally would have swapped one commit hash for another and reinstated the exact hazard the task names — a hash in a checked-out tree reads as the released commit — while producing a zero diff and therefore no commit for a bullet that asks for one. 'dev' cannot be misread that way, matches what both docstrings promise, and is overwritten on the way to every real build.",
+      "authorized_by": "Product Owner, asked before the edit with both options and their consequences; chose 'commit dev'. The task bullet's own stated intent ('harmless until someone reads it as the released commit') is what the literal instruction fails to deliver.",
+      "verified_how": "Read the committed blob (`git show HEAD:src/environments/release.ts` before the change: f4ee01ce3c24b4326519ad99ae32ada05f7dd42b) and confirmed with `git cat-file -t` that it is a real commit object, not a sentinel. Confirmed the generator never writes 'dev' — scripts/generate-release.mjs:21-23 writes `git rev-parse HEAD` or falls back to 'unknown' — so the 'dev' placeholder only ever exists by being committed. Confirmed overwrite by running `pnpm build`, which rewrote the file to 8a5e12e, then restoring."
+    },
+    {
+      "from": "Fix the import (a one-line deletion).",
+      "to": "Delete the import, the commented-out `inject(WeddingGuestsService)` it was the last reference to, and rewrite the doc block describing it; retarget two cross-references.",
+      "reason": "Deleting only the import leaves `// private readonly guestsApi = inject(WeddingGuestsService);` at line 137 naming a symbol the file no longer imports, plus two doc comments pointing at 'guestsApi's doc'. That is the same dead-code-with-a-dangling-reference shape T387 exists to remove, one line smaller.",
+      "authorized_by": "The acceptance bullet 'Either fix the import or widen the clause'; the clause was not widened, so this is the code half of that either/or.",
+      "verified_how": "`git log -S` located the commenting-out in c3d8eb8 and 1406d85's message confirms T360 consolidated onto guestCollection rather than reverting, so the symbol is dead by decision, not paused. fetchDelegationDoc (line 398) reads this.guestCollection.getByKey. pnpm test 644/644 with guest-profile-modal.spec.ts among them — the spec provides WeddingGuestsService from its own import, so it is unaffected."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit) — no output, exit 0. Restoring add() was proven safe by construction: HEAD already contained the live call and T384 measured HEAD green."
+    },
+    "lint": {
+      "result": "fail",
+      "errors_before": 6,
+      "errors_after": 4,
+      "new_errors": [],
+      "fixed_by_this_task": [
+        "src/app/core/data/wedding-config-data.service.ts:40 'config' is defined but never used (@typescript-eslint/no-unused-vars)",
+        "src/app/screens/guest-manager/modal/guest-profile-modal.ts:25 'WeddingGuestsService' is defined but never used (@typescript-eslint/no-unused-vars)"
+      ],
+      "remaining_all_pre_existing": [
+        "src/app/shared/modal/modal.html:2:3 click-events-have-key-events",
+        "src/app/shared/modal/modal.html:2:3 interactive-supports-focus",
+        "src/app/shared/modal/modal.html:3:5 click-events-have-key-events",
+        "src/app/shared/modal/modal.ts:34:12 no-output-native"
+      ],
+      "detail": "result is 'fail' because `pnpm lint` still exits 1 — the 4 remaining are exactly CLAUDE.md hard rule 11's documented exception, and the documented count and the measured count now agree for the first time. stylelint passed (no new violations; 550 pre-existing, baselined). ds:verify passed (31/31 clean pairs, 0 drifting values; unported: AccountMenu, AlhambraScene, BrideAtTower, Icon, MotorcycleRider, ProfileCard)."
+    },
+    "test": {
+      "before": { "total": 644, "failing": 0, "files": 49 },
+      "after": { "total": 644, "failing": 0, "files": 49 },
+      "new_failures": [],
+      "detail": "Both measured this run with `pnpm test`. The 'before' was measured by temporarily writing the three files back to their as-received state (suspended add(), guest-profile-modal.ts at d197d36, RELEASE = 3bb9adf), running the suite, then restoring all three with `git checkout HEAD -- <paths>` — which never touched the two uncommitted files that are not mine. No test count changed: this task adds and removes no test."
+    },
+    "build": {
+      "result": "pass",
+      "detail": "pnpm build — 'Application bundle generation complete. [14.449 seconds]'. Five pre-existing budget warnings, none new and none from this task: initial bundle 803.09 kB over a 500 kB budget; seating-plan.scss 9.58 kB, guest-manager.scss 11.96 kB, milestones.scss 11.55 kB, config-manager.scss 16.85 kB against 8 kB budgets. config-manager.scss re-measures at exactly the 16.85 kB T384 reported, still under its 17 kB error ceiling. Run also served as the proof that the build owns release.ts: it rewrote RELEASE to 8a5e12e, restored to 'dev' afterwards.",
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 803.09 kB vs 500.00 kB",
+        "src/app/screens/seating-plan/seating-plan.scss 9.58 kB vs 8.00 kB",
+        "src/app/screens/guest-manager/guest-manager.scss 11.96 kB vs 8.00 kB",
+        "src/app/screens/milestones/milestones.scss 11.55 kB vs 8.00 kB",
+        "src/app/screens/config-manager/config-manager.scss 16.85 kB vs 8.00 kB"
+      ]
+    },
+    "e2e": {
+      "after": { "total": 425, "passed": 386, "failed": 9, "skipped": 30 },
+      "result": "fail",
+      "new_failures": [],
+      "detail": "pnpm test:e2e: 9 failed, 30 skipped, 386 passed (5.7m). Every one of the 9 is the same call — page.goto / first locator.click against the DS kit's own `python3 -m http.server` at e2e/helpers/ds-kit.ts:121-122, 'Test timeout of 30000ms exceeded' — which is the T389 harness flake T388 documented and owns. Proven a flake rather than a regression by re-running: --retries=2 gave 5 failed / 30 skipped / 390 passed, in a set DISJOINT from the first 9 (config, dashboard, home vs info, milestones, rsvp). The six affected spec files run serially with --workers=1 gave 4 failed / 131 passed, disjoint again; design-parity-info.spec.ts alone at --workers=1 gave 2 failed / 43 passed. No spec fails deterministically across four runs.",
+      "note": "new_failures is empty and that is a claim, not an omission: the failing call never reaches app code — it is a navigation to a static file server serving ../wedding-ui-design's kit. This task changed a string constant read only by src/main.ts:49 (Sentry release) and removed an unused import from a guest-manager modal; neither is reachable from any of these specs. The flake is heavier on this machine than when T388 measured it (--retries=2 then left 0 failed / 3 flaky; here it leaves 5 failed), which is itself evidence for T389 and is filed under risks[]."
+    }
+  },
+  "files": {
+    "added": ["tasks/33-general-information/reports/T387.json"],
+    "modified": [
+      "src/environments/release.ts",
+      "src/app/screens/guest-manager/modal/guest-profile-modal.ts"
+    ],
+    "deleted": [],
+    "reverted": ["src/app/core/data/wedding-config-data.service.ts"]
+  },
+  "out_of_scope_touched": [],
+  "blocked_on": [],
+  "risks": [
+    {
+      "risk": "The ds-kit e2e harness flake is materially worse than T388 measured. Four runs this session all failed on `openDsKitScreen` timeouts at e2e/helpers/ds-kit.ts:121-122, in a different set of specs each time, and --workers=1 did not fix it — so contention between the per-project `python3 -m http.server` instances is not the whole story, and T389's stated remedy (--retries=2, which left 0 failed for T388) no longer clears the suite here. Any task that reports a green e2e gate from now on is likely reporting a lucky run.",
+      "surfaces_at": "T389, and every hard-rule-11 gate reported between now and it."
+    },
+    {
+      "risk": "src/app/core/data/wedding-config-data.service.ts's class docstring is a verbatim copy of the public sibling's: it says the service is for the 'WeddingConfigPublic' entity, cites 'GET /v1/config/public', and asserts 'mutations are rejected' — while this is the admin service whose update() PATCHes /v1/config. `name` is also the raw string 'WeddingConfig' rather than EntityNamesEnum.WEDDING_CONFIG, unlike every sibling. This copy-paste is what produced the misnamed error string T387 investigated; the rest of it is still there.",
+      "surfaces_at": "The next reader of that file, or any task that believes its docstring about what the service does."
+    },
+    {
+      "risk": "add() is now live again but has no caller and no test — nothing in src/ or e2e/ calls weddingConfigCollection.add(), and there is no wedding-config-data.service.spec.ts. Config creation is reachable only through @ngrx/data, and its first real use will be its first exercise. The API side is one-time-only and bride/groom-gated.",
+      "surfaces_at": "Whoever first creates a wedding configuration through the app rather than by seeding."
+    },
+    {
+      "risk": "Two uncommitted files remain in the tree and were deliberately left alone: src/app/core/service/login.service.ts and src/app/screens/rsvp/rsvp.html, both pure formatting diffs (line re-wrapping only, no semantic change). They are the Product Owner's, per the phase header's instruction not to stash, clean or checkout any of it.",
+      "surfaces_at": "Whoever cuts the v1.3.0 tag — they are still uncommitted."
+    }
+  ],
+  "commits": [
+    "8da774d chore(release): commit the 'dev' placeholder the generator documents (T387)",
+    "8a5e12e fix(guest-manager): drop the dead WeddingGuestsService import (T387)"
+  ],
+  "decisions_needed": []
+}
