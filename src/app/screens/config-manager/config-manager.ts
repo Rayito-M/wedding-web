@@ -21,15 +21,15 @@ import { EntityCollectionService, EntityServices, DataServiceError } from '@ngrx
 import {
   CreateWeddingConfigDtoAgendaItemsInner,
   CreateWeddingConfigDtoDietaryPreferencesInner,
-  CreateWeddingConfigDtoGoodToKnowInner,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf1,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf2,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf2EntriesInner,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf3,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf3EntriesInner,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf4,
-  CreateWeddingConfigDtoGoodToKnowInnerOneOf5,
+  CreateWeddingConfigDtoGeneralInfo,
+  CreateWeddingConfigDtoGeneralInfoContact,
+  CreateWeddingConfigDtoGeneralInfoContactGuestInner,
+  CreateWeddingConfigDtoGeneralInfoContactWeddingPlannerInner,
+  CreateWeddingConfigDtoGeneralInfoDayLine,
+  CreateWeddingConfigDtoGeneralInfoDressCode,
+  CreateWeddingConfigDtoGeneralInfoFaqInner,
+  CreateWeddingConfigDtoGeneralInfoGift,
+  CreateWeddingConfigDtoGeneralInfoNoteInner,
   CreateWeddingConfigDtoHotelsInner,
   CreateWeddingConfigDtoVenuesInner,
   HeaderService,
@@ -75,63 +75,54 @@ type Hotel = CreateWeddingConfigDtoHotelsInner;
 type DietTag = CreateWeddingConfigDtoDietaryPreferencesInner;
 type TagCollection = 'dietaryPreferences' | 'allergies';
 
-// ── Good to know (hub ADR-0046 §2/§8, T376) ─────────────────────────────────
-// Aliases resolve to the generated union and its members (hard rule 15) — a
-// regenerated client that reshapes a block is a compile error here, not drift.
-type GoodToKnowBlock = CreateWeddingConfigDtoGoodToKnowInner;
-type FaqEntry = CreateWeddingConfigDtoGoodToKnowInnerOneOf2EntriesInner;
-type ContactEntry = CreateWeddingConfigDtoGoodToKnowInnerOneOf3EntriesInner;
+// ── Good to know (hub ADR-0047 §1/§2, T384) ─────────────────────────────────
+// `generalInfo` is an **object of named sections**, so this is one editor per
+// section rather than a block builder. Everything the array needed in order
+// to be safe went with the array (ADR-0047 §1): no block ids, no singleton
+// enforcement, no uniqueness refinement, no 12-block ceiling, no closed
+// `type` enum. A seventh kind of content would be a new optional field here,
+// not a new member of anything.
+//
+// Every alias resolves to a generated model (hard rule 15) — a regenerated
+// client that reshapes a section is a compile error in this file, not drift.
+type GeneralInfo = CreateWeddingConfigDtoGeneralInfo;
+type GiDressCode = CreateWeddingConfigDtoGeneralInfoDressCode;
+type GiGift = CreateWeddingConfigDtoGeneralInfoGift;
+type GiContact = CreateWeddingConfigDtoGeneralInfoContact;
+type GiDayLine = CreateWeddingConfigDtoGeneralInfoDayLine;
+type FaqEntry = CreateWeddingConfigDtoGeneralInfoFaqInner;
+type NoteEntry = CreateWeddingConfigDtoGeneralInfoNoteInner;
+type PlannerContact = CreateWeddingConfigDtoGeneralInfoContactWeddingPlannerInner;
+type GuestContact = CreateWeddingConfigDtoGeneralInfoContactGuestInner;
 
 /**
- * The closed block-type set of hub ADR-0046 §2, in the order the add row
- * offers them. Not a type redeclaration: the generator flattens each member's
- * `const`-typed `type` to a plain `string` (see `good-to-know.ts`'s identical
- * workaround), so there is no generated union to import — these are the same
- * string literals the renderer's `switch` already carries, held in one place
- * so the add row can iterate them. Growing this list is a breaking contract
- * change (§1) and never happens client-first.
+ * The field names each fixed section offers, derived from the generated
+ * shapes rather than retyped: `Extract` keeps the list honest, because a
+ * field the contract renames drops out of the union and every template
+ * binding still passing the old name stops compiling.
+ *
+ * Splitting `gift` in two is ADR-0046 §5 (kept by ADR-0047 §6) expressed in
+ * the type system: `intro`/`reference`/`bizumNote` are prose and localized,
+ * while `accountHolder`/`iban`/`bic`/`bizumPhone` are **identifiers** — one
+ * input, one stored value, byte-identical in all three locales.
  */
-const GOOD_TO_KNOW_TYPES = [
-  'dress-code',
-  'gift',
-  'faq',
-  'contacts',
-  'day-line',
-  'note',
-] as const;
+type DressCodeField = keyof GiDressCode;
+type DayLineField = keyof GiDayLine;
+type GiftProseField = Extract<keyof GiGift, 'intro' | 'reference' | 'bizumNote'>;
+type GiftIdField = Extract<keyof GiGift, 'accountHolder' | 'iban' | 'bic' | 'bizumPhone'>;
 
-/** `dress-code`, `gift` and `day-line` are at-most-once (§2); the add row
- *  stops offering one that exists rather than letting the API 400. */
-const SINGLETON_BLOCK_TYPES: ReadonlySet<string> = new Set(['dress-code', 'gift', 'day-line']);
-
-/** §2's bounds: at most 12 blocks; FAQ holds 3–10 entries, contacts 1–10. */
-const GOOD_TO_KNOW_MAX_BLOCKS = 12;
-const FAQ_MIN_ENTRIES = 3;
+/**
+ * §1's only surviving bounds: `faq` and `note` hold 1-10 entries each. The
+ * floor needs no control — an emptied array is dropped from the payload
+ * rather than sent as `[]` — so only the ceiling has one, and it withholds
+ * the add button instead of letting the API 400.
+ */
 const FAQ_MAX_ENTRIES = 10;
-const CONTACTS_MIN_ENTRIES = 1;
-const CONTACTS_MAX_ENTRIES = 10;
-
-/**
- * The block-type discriminants cannot narrow the generated union (the
- * generator flattens each `type` to `string`), so these casts *within* the
- * union — the same one-place workaround `good-to-know.ts` documents — are how
- * the template reaches a member's fields without a local copy of its shape.
- */
-const asDressCode = (b: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf =>
-  b as CreateWeddingConfigDtoGoodToKnowInnerOneOf;
-const asGift = (b: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf1 =>
-  b as CreateWeddingConfigDtoGoodToKnowInnerOneOf1;
-const asFaq = (b: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf2 =>
-  b as CreateWeddingConfigDtoGoodToKnowInnerOneOf2;
-const asContacts = (b: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf3 =>
-  b as CreateWeddingConfigDtoGoodToKnowInnerOneOf3;
-const asDayLine = (b: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf4 =>
-  b as CreateWeddingConfigDtoGoodToKnowInnerOneOf4;
-const asNote = (b: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf5 =>
-  b as CreateWeddingConfigDtoGoodToKnowInnerOneOf5;
+const NOTE_MAX_ENTRIES = 10;
 
 /** All three locales carry non-blank text — what "complete" means for a
- *  required localized field (§5: all three required, not three *distinct*). */
+ *  required localized field (ADR-0031: three values, not three *distinct*
+ *  values, which is what makes the pre-fill below legitimate). */
 const allFilled = (value: LangDescriptionType | undefined): boolean =>
   !!value && ['es', 'en', 'fr'].every((lang) => value[lang as LangCode].trim() !== '');
 
@@ -140,12 +131,38 @@ const allFilled = (value: LangDescriptionType | undefined): boolean =>
 const allBlank = (value: LangDescriptionType | undefined): boolean =>
   !value || ['es', 'en', 'fr'].every((lang) => value[lang as LangCode].trim() === '');
 
-/** One row of the section's "cannot save yet" message list: which block (its
- *  1-based position and type, so the message can name it) and why. */
+/** An identifier the couple never wrote. Absence only: the value itself is
+ *  never trimmed or reformatted on its way to the API (hard rule 19a). */
+const blankIdentifier = (value: string | undefined): boolean => (value ?? '').trim() === '';
+
+/**
+ * The USER digest ADR-0047 §2 stores for a contact: picked off the account,
+ * never typed here. `role` comes from the account too — the API narrows it to
+ * a literal per list (`weddingPlannerDigestSchema` / `guestDigestSchema`), so
+ * the group a person is added to and the role stored for them are one fact
+ * read once rather than two that can disagree.
+ */
+const contactDigest = (account: UserDto): PlannerContact => ({
+  id: account.id,
+  role: account.role,
+  firstName: account.firstName,
+  lastName: account.lastName,
+  email: account.email,
+  phoneNumber: account.phoneNumber,
+});
+
+/** Deterministic, locale-independent ordering for the two picker lists — a
+ *  sort key, never rendered, and deliberately not `localeCompare`. */
+const byAccountName = (a: UserDto, b: UserDto): number => {
+  const key = (user: UserDto): string => `${user.lastName} ${user.firstName}`;
+  return key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0;
+};
+
+/** One row of the section's "cannot save yet" message list: which section it
+ *  is about (the i18n key of that section's own label) and why. */
 interface GoodToKnowIssue {
   readonly key: string;
-  readonly n: number;
-  readonly type: string;
+  readonly section: string;
 }
 // Agenda filter (T297) — local UI state only, not an API field: "key moments"
 // reads the existing `highlight` boolean (see the phase note above T295 —
@@ -401,9 +418,9 @@ export class ConfigManager implements OnInit {
 
   protected readonly statusKey = computed(() => {
     if (this.savedFlash()) return 'configManager.status.saved';
-    // A half-built Good to know block withholds Save for the whole document
-    // (one PATCH carries every section) — say so instead of showing a mutely
-    // disabled button from another section.
+    // A half-built Good to know section withholds Save for the whole
+    // document (one PATCH carries every section) — say so instead of showing
+    // a mutely disabled button from another section.
     if (this.dirty() && this.saveBlocked()) return 'configManager.status.blocked';
     return this.dirty() ? 'configManager.status.dirty' : 'configManager.status.upToDate';
   });
@@ -443,132 +460,212 @@ export class ConfigManager implements OnInit {
     return { all: items.length, keyMoments, optional: items.length - keyMoments };
   });
 
-  // ── Good to know (hub ADR-0046 §8, T376) ──────────────────────────────────
+  // ── Good to know (hub ADR-0047 §1/§2, T384) ───────────────────────────────
 
   private readonly translateLanguage = inject(TranslateLanguageService);
 
-  /** The one language typed by default; the other two sit behind the
-   *  per-block disclosure (hub ADR-0031's ergonomics, the milestones-form
-   *  precedent). */
+  /** The one language typed by default; the other two sit behind each card's
+   *  disclosure (ADR-0031's ergonomics, kept verbatim through the reshape). */
   protected readonly goodToKnowLang = this.translateLanguage.currentLang;
 
-  protected readonly goodToKnowOtherLangs = computed(() =>
-    EDIT_LANGS.filter((lang) => lang !== this.goodToKnowLang()),
+  /** The draft's `generalInfo`. Never `undefined` for reading — an absent
+   *  section is simply an absent field, which every reader resolves to `''`;
+   *  the attribute itself stays optional on the way out (§1). */
+  protected readonly generalInfo = computed<GeneralInfo>(() => this.cfg().generalInfo ?? {});
+
+  protected readonly faqEntries = computed<readonly FaqEntry[]>(() => this.generalInfo().faq ?? []);
+  protected readonly noteEntries = computed<readonly NoteEntry[]>(
+    () => this.generalInfo().note ?? [],
+  );
+  protected readonly plannerContacts = computed<readonly PlannerContact[]>(
+    () => this.generalInfo().contact?.weddingPlanner ?? [],
+  );
+  protected readonly guestContacts = computed<readonly GuestContact[]>(
+    () => this.generalInfo().contact?.guest ?? [],
   );
 
-  /** Stored order, verbatim — the couple's order is what guests read
-   *  (ADR-0046 §3); never sorted or grouped by type. */
-  protected readonly goodToKnowBlocks = computed<readonly GoodToKnowBlock[]>(
-    () => this.cfg().goodToKnow ?? [],
-  );
+  protected readonly faqMaxEntries = FAQ_MAX_ENTRIES;
+  protected readonly noteMaxEntries = NOTE_MAX_ENTRIES;
 
-  /** What the add row offers: a singleton type already in the array is not
-   *  offered again, and nothing is offered at the 12-block cap — the UI
-   *  withholds the control rather than letting the API 400. */
-  protected readonly addableBlockTypes = computed<readonly string[]>(() => {
-    const blocks = this.goodToKnowBlocks();
-    if (blocks.length >= GOOD_TO_KNOW_MAX_BLOCKS) return [];
-    const present = new Set(blocks.map((block) => block.type));
-    return GOOD_TO_KNOW_TYPES.filter(
-      (type) => !(SINGLETON_BLOCK_TYPES.has(type) && present.has(type)),
-    );
+  /** Field lists for the sections whose editors are a plain repetition of
+   *  one localized row. Typed off the generated shapes, so a contract rename
+   *  breaks the loop rather than silently editing nothing. */
+  protected readonly dressCodeFields: readonly DressCodeField[] = ['headline', 'body', 'note'];
+  protected readonly dayLineFields: readonly DayLineField[] = [
+    'rsvpOpen',
+    'rsvpClosed',
+    'afterWedding',
+  ];
+  protected readonly giftBankFields: readonly GiftIdField[] = ['accountHolder', 'iban', 'bic'];
+
+  /**
+   * Everyone who holds an account, from the `User` collection this screen
+   * already loads for the couple section. **A contact is a person with an
+   * account** (ADR-0047 §2): this screen picks from that list and never
+   * creates one — a person with no account is added as a guest first, in the
+   * guest manager, and appears here on the next read.
+   */
+  private readonly accounts: Signal<readonly UserDto[]> = toSignal(this.userCollection.entities$, {
+    initialValue: [] as UserDto[],
   });
 
-  /** Template-facing copies of §2's entry caps — the add-entry buttons
-   *  disappear at the ceiling instead of letting the API 400. */
-  protected readonly faqMaxEntries = FAQ_MAX_ENTRIES;
-  protected readonly contactsMaxEntries = CONTACTS_MAX_ENTRIES;
+  /** The two pickers' pending selection — draft UI state, committed by the
+   *  add button beside each, and cleared so the select falls back to its
+   *  placeholder once the person has moved into the list. */
+  protected readonly plannerPick = signal('');
+  protected readonly guestPick = signal('');
 
-  /** Blocks whose EN/FR rows are disclosed (per block, not per field). */
-  private readonly openLocaleBlocks = signal<ReadonlySet<string>>(new Set());
-
-  protected isLocalesOpen(blockId: string): boolean {
-    return this.openLocaleBlocks().has(blockId);
+  private addableAccounts(
+    role: UserDto.RoleEnum,
+    picked: readonly { id: string }[],
+  ): readonly UserDto[] {
+    const already = new Set(picked.map((entry) => entry.id));
+    return this.accounts()
+      .filter((account) => account.role === role && !already.has(account.id))
+      .slice()
+      .sort(byAccountName);
   }
 
-  protected toggleBlockLocales(blockId: string): void {
-    this.openLocaleBlocks.update((open) => {
+  protected readonly addablePlanners = computed<readonly UserDto[]>(() =>
+    this.addableAccounts(UserDto.RoleEnum.WEDDING_PLANNER, this.plannerContacts()),
+  );
+  protected readonly addableGuests = computed<readonly UserDto[]>(() =>
+    this.addableAccounts(UserDto.RoleEnum.GUEST, this.guestContacts()),
+  );
+
+  /** Cards whose EN/FR rows are disclosed, keyed by section (`'dressCode'`,
+   *  `'gift'`, `'dayLine'`) or by section and entry id (`'faq:<ulid>'`).
+   *  Not block bookkeeping: nothing is stored, ordered or sent from here —
+   *  it is which disclosure the couple has open, and it dies with the page. */
+  private readonly openLocaleCards = signal<ReadonlySet<string>>(new Set());
+
+  protected isLocalesOpen(card: string): boolean {
+    return this.openLocaleCards().has(card);
+  }
+
+  protected toggleLocales(card: string): void {
+    this.openLocaleCards.update((open) => {
       const next = new Set(open);
-      if (next.has(blockId)) next.delete(blockId);
-      else next.add(blockId);
+      if (next.has(card)) next.delete(card);
+      else next.add(card);
       return next;
     });
   }
 
-  /** The languages a localized field currently shows rows for: just the
-   *  primary until the block's disclosure is open, then all three. */
-  protected visibleLangs(blockId: string): readonly LangCode[] {
-    return this.isLocalesOpen(blockId) ? EDIT_LANGS : [this.goodToKnowLang()];
+  /** The languages a localized field shows rows for: just the primary until
+   *  the card's disclosure is open, then all three. */
+  protected visibleLangs(card: string): readonly LangCode[] {
+    return this.isLocalesOpen(card) ? EDIT_LANGS : [this.goodToKnowLang()];
+  }
+
+  // Readers. Every section is optional and every one of them resolves to the
+  // empty string when absent, so the editor renders the same whether the
+  // couple has written a section or not — which is the whole of the presence
+  // mechanism: a section exists because it has content, and there is no
+  // add/remove control for one.
+
+  protected dressCodeText(field: DressCodeField, lang: LangCode): string {
+    return this.generalInfo().dressCode?.[field]?.[lang] ?? '';
+  }
+
+  protected giftText(field: GiftProseField, lang: LangCode): string {
+    return this.generalInfo().gift?.[field]?.[lang] ?? '';
+  }
+
+  protected giftIdentifier(field: GiftIdField): string {
+    return this.generalInfo().gift?.[field] ?? '';
+  }
+
+  protected dayLineText(field: DayLineField, lang: LangCode): string {
+    return this.generalInfo().dayLine?.[field]?.[lang] ?? '';
   }
 
   /**
-   * Why the draft cannot be saved yet, one row per offending block — the
-   * "message that says what is missing" (T376): a block cannot be saved
-   * half-built (ADR-0046 §2), FAQ holds 3–10 entries, contacts 1–10. Upper
-   * bounds need no row here because the add controls disappear at the cap.
+   * Whether a singleton section has been written at all. An all-blank section
+   * is not "a half-built section" — it is a section the couple does not have,
+   * so it raises no issue and never reaches the payload. This is what lets
+   * the fixed-shape editor drop the array's add/remove controls entirely.
+   */
+  private dressCodeWritten(dressCode: GiDressCode): boolean {
+    return !(allBlank(dressCode.headline) && allBlank(dressCode.body) && allBlank(dressCode.note));
+  }
+
+  private dayLineWritten(dayLine: GiDayLine): boolean {
+    return !this.dayLineFields.every((field) => allBlank(dayLine[field]));
+  }
+
+  private giftWritten(gift: GiGift): boolean {
+    const prose = allBlank(gift.intro) && allBlank(gift.reference) && allBlank(gift.bizumNote);
+    const identifiers =
+      blankIdentifier(gift.accountHolder) &&
+      blankIdentifier(gift.iban) &&
+      blankIdentifier(gift.bic) &&
+      blankIdentifier(gift.bizumPhone);
+    return !(prose && identifiers);
+  }
+
+  /**
+   * Why the draft cannot be saved yet, one row per offending section. What is
+   * checked is per-section completeness, not cardinality: with ordering
+   * structural and presence derived from content, the only ways to be
+   * half-built are a required localized field missing a locale, an optional
+   * one filled in some locales and not others, and a guest contact with no
+   * `purpose` — the field that makes this section "who to call **about
+   * what**" (ADR-0047 §2) rather than a list of names.
    */
   protected readonly goodToKnowIssues = computed<readonly GoodToKnowIssue[]>(() => {
+    const info = this.generalInfo();
     const issues: GoodToKnowIssue[] = [];
-    this.goodToKnowBlocks().forEach((block, index) => {
-      const issue = (key: string): void => {
-        issues.push({ key, n: index + 1, type: block.type });
-      };
-      if (!allFilled(block.title)) issue('configManager.goodToKnow.issue.missingTitle');
-      switch (block.type) {
-        case 'dress-code': {
-          const dressCode = asDressCode(block);
-          const noteOk = allBlank(dressCode.note) || allFilled(dressCode.note);
-          if (!allFilled(dressCode.headline) || !allFilled(dressCode.body) || !noteOk)
-            issue('configManager.goodToKnow.issue.incomplete');
-          break;
-        }
-        case 'gift': {
-          // Every gift field is optional (§2) — only a *partially* localized
-          // prose field blocks the save (all-blank ones are dropped from the
-          // payload instead).
-          const gift = asGift(block);
-          const ok = [gift.intro, gift.reference, gift.bizumNote].every(
-            (field) => allBlank(field) || allFilled(field),
-          );
-          if (!ok) issue('configManager.goodToKnow.issue.incomplete');
-          break;
-        }
-        case 'faq': {
-          const entries = asFaq(block).entries;
-          if (entries.length < FAQ_MIN_ENTRIES)
-            issue('configManager.goodToKnow.issue.faqTooFew');
-          if (!entries.every((entry) => allFilled(entry.question) && allFilled(entry.answer)))
-            issue('configManager.goodToKnow.issue.incomplete');
-          break;
-        }
-        case 'contacts': {
-          const entries = asContacts(block).entries;
-          if (entries.length < CONTACTS_MIN_ENTRIES)
-            issue('configManager.goodToKnow.issue.contactsTooFew');
-          if (!entries.every((entry) => entry.firstName.trim() && allFilled(entry.purpose)))
-            issue('configManager.goodToKnow.issue.incomplete');
-          break;
-        }
-        case 'day-line': {
-          const dayLine = asDayLine(block);
-          if (
-            !allFilled(dayLine.rsvpOpen) ||
-            !allFilled(dayLine.rsvpClosed) ||
-            !allFilled(dayLine.afterWedding)
-          )
-            issue('configManager.goodToKnow.issue.incomplete');
-          break;
-        }
-        default:
-          if (!allFilled(asNote(block).body)) issue('configManager.goodToKnow.issue.incomplete');
-      }
-    });
+    const incomplete = (section: string): void => {
+      issues.push({ key: 'configManager.goodToKnow.issue.incomplete', section });
+    };
+
+    const dressCode = info.dressCode;
+    if (dressCode && this.dressCodeWritten(dressCode)) {
+      const note = dressCode.note;
+      const complete =
+        allFilled(dressCode.headline) &&
+        allFilled(dressCode.body) &&
+        (allBlank(note) || allFilled(note));
+      if (!complete) incomplete('configManager.goodToKnow.dressCode.title');
+    }
+
+    // Every gift field is optional, so only a *partially* localized prose
+    // field is an error — an all-blank one is dropped from the payload.
+    const gift = info.gift;
+    if (gift) {
+      const halfWritten = [gift.intro, gift.reference, gift.bizumNote].some(
+        (field) => !allBlank(field) && !allFilled(field),
+      );
+      if (halfWritten) incomplete('configManager.goodToKnow.gift.title');
+    }
+
+    if (this.guestContacts().some((entry) => !allFilled(entry.purpose)))
+      issues.push({
+        key: 'configManager.goodToKnow.issue.purposeMissing',
+        section: 'configManager.goodToKnow.contact.title',
+      });
+
+    if (this.faqEntries().some((entry) => !allFilled(entry.question) || !allFilled(entry.answer)))
+      incomplete('configManager.goodToKnow.faq.title');
+
+    const dayLine = info.dayLine;
+    if (
+      dayLine &&
+      this.dayLineWritten(dayLine) &&
+      !this.dayLineFields.every((field) => allFilled(dayLine[field]))
+    )
+      incomplete('configManager.goodToKnow.dayLine.title');
+
+    if (this.noteEntries().some((entry) => !allFilled(entry.title) || !allFilled(entry.body)))
+      incomplete('configManager.goodToKnow.note.title');
+
     return issues;
   });
 
-  /** Save is withheld while any block is half-built — the whole document goes
-   *  up in one PATCH, so an invalid block would take every section's edits
-   *  down with it. */
+  /** Save is withheld while any section is half-built — the whole document
+   *  goes up in one PATCH, so an invalid section would take every other
+   *  section's edits down with it. */
   protected readonly saveBlocked = computed(() => this.goodToKnowIssues().length > 0);
 
   /** `agendaItems()` (clock order) narrowed by the selected `agendaFilter`. */
@@ -621,8 +718,8 @@ export class ConfigManager implements OnInit {
   }
 
   protected save(): void {
-    // Defensive twin of the disabled buttons: a half-built Good to know block
-    // must not reach the API (ADR-0046 §2's recorded consequence).
+    // Defensive twin of the disabled buttons: a half-built Good to know
+    // section must not reach the API.
     if (this.saveBlocked()) return;
     this.weddingConfigCollection.update(this.sanitizedConfig()).subscribe({
       next: () => {
@@ -1047,58 +1144,21 @@ export class ConfigManager implements OnInit {
     this.mutate((c) => ({ ...c, themeId: themeId as ConfigState['themeId'] }));
   }
 
-  // ── Good to know mutators (hub ADR-0046 §2/§3, T376) ──────────────────────
+  // ── Good to know mutators (hub ADR-0047 §1/§2, T384) ──────────────────────
 
-  /** Template-facing casts (see the `as*` helpers above): the generated
-   *  union's `type` is a plain `string`, so `@switch (block.type)` narrows
-   *  nothing and each branch reaches its fields through one of these. */
-  protected dressCode(block: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf {
-    return asDressCode(block);
-  }
-  protected gift(block: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf1 {
-    return asGift(block);
-  }
-  protected faqOf(block: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf2 {
-    return asFaq(block);
-  }
-  protected contactsOf(block: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf3 {
-    return asContacts(block);
-  }
-  protected dayLineOf(block: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf4 {
-    return asDayLine(block);
-  }
-  protected noteOf(block: GoodToKnowBlock): CreateWeddingConfigDtoGoodToKnowInnerOneOf5 {
-    return asNote(block);
-  }
-
-  /** A localized value off any block, by field name — the read half of
-   *  `setBlockLocale`, so the template's language rows stay one generic
-   *  chunk instead of a per-field copy. */
-  protected blockLocaleValue(block: GoodToKnowBlock, field: string, lang: LangCode): string {
-    const record = block as unknown as Record<string, LangDescriptionType | undefined>;
-    return record[field]?.[lang] ?? '';
-  }
-
-  private mutateGoodToKnow(
-    updater: (blocks: readonly GoodToKnowBlock[]) => GoodToKnowBlock[],
-  ): void {
-    this.mutate((c) => ({ ...c, goodToKnow: updater(c.goodToKnow ?? []) }));
-  }
-
-  private updateBlock(id: string, updater: (block: GoodToKnowBlock) => GoodToKnowBlock): void {
-    this.mutateGoodToKnow((blocks) =>
-      blocks.map((block) => (block.id === id ? updater(block) : block)),
-    );
+  private mutateGeneralInfo(updater: (info: GeneralInfo) => GeneralInfo): void {
+    this.mutate((c) => ({ ...c, generalInfo: updater(c.generalInfo ?? {}) }));
   }
 
   /**
-   * One typed value pre-fills all three locales (hub ADR-0031's ergonomics,
-   * T376): an edit in the primary language mirrors into every locale that
-   * still tracked the primary's previous value (or was empty) and leaves a
-   * locale the couple customized alone — the stateless equivalent of the
-   * milestones form's `customizedLocales` set, applied to draft state that
-   * lives on the config document itself. An edit in a non-primary language
-   * only ever writes that language (and thereby stops its mirroring).
+   * One typed value pre-fills all three locales (ADR-0031's ergonomics,
+   * unchanged by ADR-0047): an edit in the primary language mirrors into
+   * every locale that still tracked the primary's previous value (or was
+   * empty) and leaves a locale the couple customized alone. An edit in a
+   * non-primary language only ever writes that language, and thereby stops
+   * its mirroring. Stateless — the "has this locale been customized" answer
+   * is read back out of the values themselves, so it survives a reload the
+   * way a component-local `Set` would not.
    */
   private mergeLocalized(
     current: LangDescriptionType | undefined,
@@ -1117,215 +1177,261 @@ export class ConfigManager implements OnInit {
     return next;
   }
 
-  /** Write one locale of a localized field on a block. The record cast stays
-   *  within the block's own shape — same workaround as the `as*` helpers. */
-  protected setBlockLocale(id: string, field: string, lang: LangCode, value: string): void {
-    this.updateBlock(id, (block) => {
-      const record = block as unknown as Record<string, LangDescriptionType | undefined>;
+  protected setDressCodeText(field: DressCodeField, lang: LangCode, value: string): void {
+    this.mutateGeneralInfo((info) => {
+      const current: GiDressCode = info.dressCode ?? {
+        headline: emptyLangText(),
+        body: emptyLangText(),
+      };
       return {
-        ...block,
-        [field]: this.mergeLocalized(record[field], lang, value),
-      } as GoodToKnowBlock;
+        ...info,
+        dressCode: { ...current, [field]: this.mergeLocalized(current[field], lang, value) },
+      };
     });
   }
 
-  /** Identifier fields are single plain strings, byte-identical in every
-   *  locale (ADR-0046 §5 / hard rule 19a) — never localized, never
-   *  reformatted. An emptied input stores `undefined`: a field the couple
-   *  left empty is not a row (§2). */
-  protected setBlockIdentifier(id: string, field: string, value: string): void {
-    this.updateBlock(id, (block) => {
-      return { ...block, [field]: value === '' ? undefined : value } as GoodToKnowBlock;
+  protected setGiftText(field: GiftProseField, lang: LangCode, value: string): void {
+    this.mutateGeneralInfo((info) => {
+      const current: GiGift = info.gift ?? {};
+      return {
+        ...info,
+        gift: { ...current, [field]: this.mergeLocalized(current[field], lang, value) },
+      };
     });
   }
 
-  protected addGoodToKnowBlock(type: string): void {
-    if (!this.addableBlockTypes().includes(type)) return;
-    const base = { id: uid(), type, title: emptyLangText() };
-    let block: GoodToKnowBlock;
-    switch (type) {
-      case 'dress-code':
-        block = { ...base, headline: emptyLangText(), body: emptyLangText() };
-        break;
-      case 'gift':
-        block = base as GoodToKnowBlock;
-        break;
-      case 'faq':
-        // Seeded at the 3-entry floor (§2): the couple fills them rather than
-        // discovering the minimum at save time.
-        block = {
-          ...base,
-          entries: Array.from({ length: FAQ_MIN_ENTRIES }, () => this.emptyFaqEntry()),
-        };
-        break;
-      case 'contacts':
-        block = { ...base, entries: [this.emptyContactEntry()] };
-        break;
-      case 'day-line':
-        block = {
-          ...base,
-          rsvpOpen: emptyLangText(),
-          rsvpClosed: emptyLangText(),
-          afterWedding: emptyLangText(),
-        };
-        break;
-      default:
-        block = { ...base, body: emptyLangText() };
-    }
-    this.mutateGoodToKnow((blocks) => [...blocks, block]);
+  /** Identifiers are single plain strings, byte-identical in every locale
+   *  (ADR-0046 §5 / hard rule 19a) — never localized, never reformatted, and
+   *  stored exactly as typed, spacing and casing included. An emptied input
+   *  stores `undefined`: a field the couple left empty is not a row. */
+  protected setGiftIdentifier(field: GiftIdField, value: string): void {
+    this.mutateGeneralInfo((info) => ({
+      ...info,
+      gift: { ...(info.gift ?? {}), [field]: value === '' ? undefined : value },
+    }));
   }
 
-  protected removeGoodToKnowBlock(id: string): void {
-    this.mutateGoodToKnow((blocks) => blocks.filter((block) => block.id !== id));
-  }
-
-  /** Reorder by one step — the saved order is what guests read (§3). */
-  protected moveGoodToKnowBlock(id: string, delta: -1 | 1): void {
-    this.mutateGoodToKnow((blocks) => {
-      const index = blocks.findIndex((block) => block.id === id);
-      const target = index + delta;
-      if (index < 0 || target < 0 || target >= blocks.length) return [...blocks];
-      const next = [...blocks];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
+  protected setDayLineText(field: DayLineField, lang: LangCode, value: string): void {
+    this.mutateGeneralInfo((info) => {
+      const current: GiDayLine = info.dayLine ?? {
+        rsvpOpen: emptyLangText(),
+        rsvpClosed: emptyLangText(),
+        afterWedding: emptyLangText(),
+      };
+      return {
+        ...info,
+        dayLine: { ...current, [field]: this.mergeLocalized(current[field], lang, value) },
+      };
     });
   }
 
-  private emptyFaqEntry(): FaqEntry {
-    return { id: uid(), question: emptyLangText(), answer: emptyLangText() };
-  }
+  // ── FAQ and notes: the only two arrays left, and the only two ids ─────────
+  // They are arrays because their entries are added and removed one at a
+  // time; the ULID is minted here because `PATCH /v1/config` replaces the
+  // whole array, so the id is the only thing that tracks a row across a
+  // re-render (ADR-0047 §1). Nothing else in this section has one.
 
-  private emptyContactEntry(): ContactEntry {
-    return { id: uid(), firstName: '', purpose: emptyLangText() };
-  }
-
-  protected addFaqEntry(blockId: string): void {
-    this.updateBlock(blockId, (block) => {
-      const faq = asFaq(block);
-      if (faq.entries.length >= FAQ_MAX_ENTRIES) return block;
-      return { ...faq, entries: [...faq.entries, this.emptyFaqEntry()] };
+  protected addFaqEntry(): void {
+    this.mutateGeneralInfo((info) => {
+      const entries = info.faq ?? [];
+      if (entries.length >= FAQ_MAX_ENTRIES) return info;
+      return {
+        ...info,
+        faq: [...entries, { id: uid(), question: emptyLangText(), answer: emptyLangText() }],
+      };
     });
   }
 
-  protected removeFaqEntry(blockId: string, entryId: string): void {
-    this.updateBlock(blockId, (block) => {
-      const faq = asFaq(block);
-      return { ...faq, entries: faq.entries.filter((entry) => entry.id !== entryId) };
-    });
+  protected removeFaqEntry(id: string): void {
+    this.mutateGeneralInfo((info) => ({
+      ...info,
+      faq: (info.faq ?? []).filter((entry) => entry.id !== id),
+    }));
   }
 
-  protected setFaqEntryText(
-    blockId: string,
-    entryId: string,
+  protected setFaqText(
+    id: string,
     field: 'question' | 'answer',
     lang: LangCode,
     value: string,
   ): void {
-    this.updateBlock(blockId, (block) => {
-      const faq = asFaq(block);
+    this.mutateGeneralInfo((info) => ({
+      ...info,
+      faq: (info.faq ?? []).map((entry) =>
+        entry.id === id
+          ? { ...entry, [field]: this.mergeLocalized(entry[field], lang, value) }
+          : entry,
+      ),
+    }));
+  }
+
+  protected addNoteEntry(): void {
+    this.mutateGeneralInfo((info) => {
+      const entries = info.note ?? [];
+      if (entries.length >= NOTE_MAX_ENTRIES) return info;
       return {
-        ...faq,
-        entries: faq.entries.map((entry) =>
-          entry.id === entryId
-            ? { ...entry, [field]: this.mergeLocalized(entry[field], lang, value) }
-            : entry,
-        ),
+        ...info,
+        note: [...entries, { id: uid(), title: emptyLangText(), body: emptyLangText() }],
       };
     });
   }
 
-  protected addContactEntry(blockId: string): void {
-    this.updateBlock(blockId, (block) => {
-      const contacts = asContacts(block);
-      if (contacts.entries.length >= CONTACTS_MAX_ENTRIES) return block;
-      return { ...contacts, entries: [...contacts.entries, this.emptyContactEntry()] };
-    });
+  protected removeNoteEntry(id: string): void {
+    this.mutateGeneralInfo((info) => ({
+      ...info,
+      note: (info.note ?? []).filter((entry) => entry.id !== id),
+    }));
   }
 
-  protected removeContactEntry(blockId: string, entryId: string): void {
-    this.updateBlock(blockId, (block) => {
-      const contacts = asContacts(block);
-      return { ...contacts, entries: contacts.entries.filter((entry) => entry.id !== entryId) };
-    });
+  protected setNoteText(id: string, field: 'title' | 'body', lang: LangCode, value: string): void {
+    this.mutateGeneralInfo((info) => ({
+      ...info,
+      note: (info.note ?? []).map((entry) =>
+        entry.id === id
+          ? { ...entry, [field]: this.mergeLocalized(entry[field], lang, value) }
+          : entry,
+      ),
+    }));
   }
 
-  /** A contact's name and number are identifiers (§5, Amendment 2 §B):
-   *  plain strings, the same in every locale. Optional ones store
-   *  `undefined` when emptied so the renderer's "no number, no call button"
-   *  rule sees a genuinely absent field. */
-  protected setContactField(
-    blockId: string,
-    entryId: string,
-    field: 'firstName' | 'lastName' | 'phoneNumber',
-    value: string,
-  ): void {
-    this.updateBlock(blockId, (block) => {
-      const contacts = asContacts(block);
-      return {
-        ...contacts,
-        entries: contacts.entries.map((entry) =>
-          entry.id === entryId
-            ? { ...entry, [field]: field !== 'firstName' && value === '' ? undefined : value }
-            : entry,
-        ),
-      };
-    });
+  // ── Contact: a picker, not a form (hub ADR-0047 §2) ───────────────────────
+  // The couple chooses people who already hold accounts and types only the
+  // `purpose` line, on guest entries. Names, emails and numbers come from the
+  // account and there is no input for them here; a person with no account is
+  // added as a guest first, and this screen never creates one.
+
+  private mutateContact(updater: (contact: GiContact) => GiContact): void {
+    this.mutateGeneralInfo((info) => ({ ...info, contact: updater(info.contact ?? {}) }));
   }
 
-  protected setContactPurpose(
-    blockId: string,
-    entryId: string,
-    lang: LangCode,
-    value: string,
-  ): void {
-    this.updateBlock(blockId, (block) => {
-      const contacts = asContacts(block);
-      return {
-        ...contacts,
-        entries: contacts.entries.map((entry) =>
-          entry.id === entryId
-            ? { ...entry, purpose: this.mergeLocalized(entry.purpose, lang, value) }
-            : entry,
-        ),
-      };
-    });
+  protected addPlannerContact(): void {
+    const account = this.addablePlanners().find((person) => person.id === this.plannerPick());
+    if (!account) return;
+    this.mutateContact((contact) => ({
+      ...contact,
+      weddingPlanner: [...(contact.weddingPlanner ?? []), contactDigest(account)],
+    }));
+    this.plannerPick.set('');
+  }
+
+  protected removePlannerContact(id: string): void {
+    this.mutateContact((contact) => ({
+      ...contact,
+      weddingPlanner: (contact.weddingPlanner ?? []).filter((entry) => entry.id !== id),
+    }));
+  }
+
+  /** A guest entry is the digest **plus `purpose`** — required by the
+   *  contract and by the point of the section, so a freshly picked guest
+   *  starts with an empty one and the save stays withheld until it is
+   *  written in all three locales (ADR-0047 §2). */
+  protected addGuestContact(): void {
+    const account = this.addableGuests().find((person) => person.id === this.guestPick());
+    if (!account) return;
+    this.mutateContact((contact) => ({
+      ...contact,
+      guest: [...(contact.guest ?? []), { ...contactDigest(account), purpose: emptyLangText() }],
+    }));
+    this.guestPick.set('');
+  }
+
+  protected removeGuestContact(id: string): void {
+    this.mutateContact((contact) => ({
+      ...contact,
+      guest: (contact.guest ?? []).filter((entry) => entry.id !== id),
+    }));
+  }
+
+  protected setGuestPurpose(id: string, lang: LangCode, value: string): void {
+    this.mutateContact((contact) => ({
+      ...contact,
+      guest: (contact.guest ?? []).map((entry) =>
+        entry.id === id
+          ? { ...entry, purpose: this.mergeLocalized(entry.purpose, lang, value) }
+          : entry,
+      ),
+    }));
   }
 
   /**
-   * The save payload: the draft with every never-written optional localized
-   * field dropped (three blank strings are not "a value in all three
-   * locales") and blank identifiers normalized to absent. Required fields are
-   * untouched — a half-built block never gets this far (`saveBlocked`).
+   * The stored contact entry, re-read from the account it names. ADR-0047 §2
+   * chose the digest over inline details so that a profile edit updates the
+   * contact card — but `GET /v1/config/general-information` serves the stored
+   * entry (T249 composes only the `couple` digest at read time), so the
+   * freshest copy this editor can send is the one it re-reads at save. An
+   * entry whose account is not in the list — deactivated, or simply not
+   * loaded yet — travels back verbatim rather than blanked.
    */
-  private sanitizedConfig(): ConfigState {
-    const goodToKnow = this.cfg().goodToKnow;
-    if (!goodToKnow) return this.cfg();
+  private refreshedPlanner(entry: PlannerContact): PlannerContact {
+    const account = this.accounts().find((person) => person.id === entry.id);
+    return account ? contactDigest(account) : entry;
+  }
+
+  /** The guest twin of `refreshedPlanner` — `purpose` is the couple's, not
+   *  the account's, so it survives the refresh untouched. */
+  private refreshedGuest(entry: GuestContact): GuestContact {
+    const account = this.accounts().find((person) => person.id === entry.id);
+    return account ? { ...contactDigest(account), purpose: entry.purpose } : entry;
+  }
+
+  /**
+   * The save payload's `generalInfo`: each section included only if the
+   * couple actually wrote it, with every never-written optional field
+   * dropped rather than sent blank (three empty strings are not "a value in
+   * all three locales", and an empty identifier fails the API's own length
+   * bounds). A half-written section never gets this far — `saveBlocked`
+   * withholds Save — so nothing here repairs content, it only decides
+   * presence.
+   */
+  private sanitizedGeneralInfo(): GeneralInfo | undefined {
+    const info = this.generalInfo();
+    const sanitized: GeneralInfo = {};
     const dropBlank = (value: LangDescriptionType | undefined): LangDescriptionType | undefined =>
       allBlank(value) ? undefined : value;
-    const sanitized = goodToKnow.map((block) => {
-      switch (block.type) {
-        case 'dress-code': {
-          const dressCode = asDressCode(block);
-          return { ...dressCode, note: dropBlank(dressCode.note) };
-        }
-        case 'gift': {
-          const gift = asGift(block);
-          return {
-            ...gift,
-            intro: dropBlank(gift.intro),
-            reference: dropBlank(gift.reference),
-            bizumNote: dropBlank(gift.bizumNote),
-            accountHolder: gift.accountHolder?.trim() === '' ? undefined : gift.accountHolder,
-            iban: gift.iban?.trim() === '' ? undefined : gift.iban,
-            bic: gift.bic?.trim() === '' ? undefined : gift.bic,
-            bizumPhone: gift.bizumPhone?.trim() === '' ? undefined : gift.bizumPhone,
-          };
-        }
-        default:
-          return block;
-      }
-    });
-    return { ...this.cfg(), goodToKnow: sanitized };
+    const dropEmpty = (value: string | undefined): string | undefined =>
+      blankIdentifier(value) ? undefined : value;
+
+    const dressCode = info.dressCode;
+    if (dressCode && this.dressCodeWritten(dressCode)) {
+      sanitized.dressCode = { ...dressCode, note: dropBlank(dressCode.note) };
+    }
+
+    const gift = info.gift;
+    if (gift && this.giftWritten(gift)) {
+      sanitized.gift = {
+        intro: dropBlank(gift.intro),
+        accountHolder: dropEmpty(gift.accountHolder),
+        iban: dropEmpty(gift.iban),
+        bic: dropEmpty(gift.bic),
+        reference: dropBlank(gift.reference),
+        bizumPhone: dropEmpty(gift.bizumPhone),
+        bizumNote: dropBlank(gift.bizumNote),
+      };
+    }
+
+    const weddingPlanner = this.plannerContacts().map((entry) => this.refreshedPlanner(entry));
+    const guest = this.guestContacts().map((entry) => this.refreshedGuest(entry));
+    if (weddingPlanner.length > 0 || guest.length > 0) {
+      sanitized.contact = {
+        weddingPlanner: weddingPlanner.length > 0 ? weddingPlanner : undefined,
+        guest: guest.length > 0 ? guest : undefined,
+      };
+    }
+
+    const faq = this.faqEntries();
+    if (faq.length > 0) sanitized.faq = [...faq];
+
+    const dayLine = info.dayLine;
+    if (dayLine && this.dayLineWritten(dayLine)) sanitized.dayLine = dayLine;
+
+    const note = this.noteEntries();
+    if (note.length > 0) sanitized.note = [...note];
+
+    return Object.keys(sanitized).length > 0 ? sanitized : undefined;
+  }
+
+  private sanitizedConfig(): ConfigState {
+    return { ...this.cfg(), generalInfo: this.sanitizedGeneralInfo() };
   }
 
   protected inputValue(event: Event): string {

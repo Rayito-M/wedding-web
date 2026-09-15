@@ -10,8 +10,9 @@ import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 
 import {
   CreateWeddingConfigDtoAgendaItemsInner,
-  CreateWeddingConfigDtoGoodToKnowInner,
+  CreateWeddingConfigDtoGeneralInfo,
   TranslateLanguageService,
+  UserDto,
   UpdateWeddingConfigDto,
   WeddingConfigResponseDto,
   WeddingConfigurationService,
@@ -322,18 +323,21 @@ describe('ConfigManager — EDIT_LANGS order (T297)', () => {
 });
 
 /**
- * T376 (hub ADR-0046 §2/§3/§8) — the eighth Settings section authors the
- * `goodToKnow` blocks: stored order is the couple's (the move buttons are the
- * only ordering mechanism), singleton block types are withheld from the add
- * row rather than 400ing, the FAQ/contacts cardinality floors withhold Save
- * with a message, one typed value pre-fills all three locales (hub ADR-0031),
- * and Save PATCHes the whole array in order through the existing config path.
+ * T384 (hub ADR-0047 §1/§2) — the eighth Settings section is a **fixed-shape
+ * editor**, not a block builder: one editor per named section, in the design
+ * system's order, with nothing to add, reorder or remove at the section level
+ * and no block ids, no singleton enforcement and no ceiling. `faq` and `note`
+ * stay add/remove arrays (1–10, ULID ids minted here), `contact` is a picker
+ * over people who already hold accounts, one typed value pre-fills all three
+ * locales (ADR-0031), and Save sends the whole `generalInfo` object through
+ * the existing `PATCH /v1/config` path.
  */
-describe('ConfigManager — Good to know authoring (T376)', () => {
+describe('ConfigManager — Good to know authoring (T384)', () => {
   let fixture: ComponentFixture<ConfigManager>;
   let currentConfig: WeddingConfigResponseDto;
   let queryParamMap: BehaviorSubject<ParamMap>;
   let lastUpdate: UpdateWeddingConfigDto | undefined;
+  let accounts: UserDto[];
 
   const localized = (stem: string): LangDescriptionType => ({
     es: `${stem} es`,
@@ -341,22 +345,21 @@ describe('ConfigManager — Good to know authoring (T376)', () => {
     fr: `${stem} fr`,
   });
 
-  const faqBlock = (): CreateWeddingConfigDtoGoodToKnowInner => ({
-    id: 'b-faq',
-    type: 'faq',
-    title: localized('faq title'),
-    entries: [1, 2, 3].map((n) => ({
-      id: `q${n}`,
-      question: localized(`q${n}`),
-      answer: localized(`a${n}`),
-    })),
+  const account = (overrides: Partial<UserDto>): UserDto => ({
+    id: 'u-1',
+    version: 1,
+    firstName: 'Ada',
+    lastName: 'Lovelace',
+    email: 'ada@example.com',
+    phoneNumber: '+34 600 11 22 33',
+    role: UserDto.RoleEnum.GUEST,
+    preferredLang: UserDto.PreferredLangEnum.ES,
+    ...overrides,
   });
 
-  const noteBlock = (): CreateWeddingConfigDtoGoodToKnowInner => ({
-    id: 'b-note',
-    type: 'note',
-    title: localized('note title'),
-    body: localized('note body'),
+  const filledGeneralInfo = (): CreateWeddingConfigDtoGeneralInfo => ({
+    dressCode: { headline: localized('headline'), body: localized('body') },
+    faq: [{ id: 'f-1', question: localized('q1'), answer: localized('a1') }],
   });
 
   async function create(): Promise<void> {
@@ -387,7 +390,7 @@ describe('ConfigManager — Good to know authoring (T376)', () => {
         },
         {
           provide: WeddingUsersService,
-          useValue: { usersControllerListV1: () => of({ items: [] }) },
+          useValue: { usersControllerListV1: () => of({ items: accounts }) },
         },
         // Pinned so the "primary language" of the locale pre-fill is
         // deterministic, not the test browser's `navigator.language`.
@@ -413,6 +416,10 @@ describe('ConfigManager — Good to know authoring (T376)', () => {
     fixture.detectChanges();
   }
 
+  beforeEach(() => {
+    accounts = [];
+  });
+
   function queryAll<T extends HTMLElement>(selector: string): T[] {
     return Array.from(fixture.nativeElement.querySelectorAll(selector)) as T[];
   }
@@ -429,23 +436,23 @@ describe('ConfigManager — Good to know authoring (T376)', () => {
     fixture.detectChanges();
   }
 
-  /** The add row's block-type buttons, by the type key their label resolves
-   *  from (translations are empty in this suite, so the key renders). */
-  function addButton(type: string): HTMLButtonElement {
-    const button = queryAll<HTMLButtonElement>('.add-btn').find((b) =>
-      b.textContent!.includes(`configManager.goodToKnow.type.${type}`),
-    );
-    expect(button, `add button for ${type}`).toBeDefined();
-    return button!;
+  /** The one card of a singleton section, or the nth card of an array one. */
+  function card(section: string, index = 0): HTMLElement {
+    return queryAll<HTMLElement>(`.card[data-section="${section}"]`)[index];
   }
 
-  /** Per-block header actions, in template order: move up · move down · remove. */
-  function blockActions(cardIndex: number): HTMLButtonElement[] {
-    const card = queryAll<HTMLElement>('.card-list > .card')[cardIndex];
-    return Array.from(card.querySelectorAll<HTMLButtonElement>('.card-top .couple-action-btn'));
+  /** A card's localized field, by the order the template writes them out. */
+  function fieldInputs(host: HTMLElement, index: number): HTMLInputElement[] {
+    const field = host.querySelectorAll<HTMLElement>('.field')[index];
+    return Array.from(field.querySelectorAll('input'));
   }
 
-  it('is the eighth rail section and starts as an empty editor offering all six types', async () => {
+  function save(): void {
+    queryAll<HTMLButtonElement>('.mobile-bar button')[0].click();
+    fixture.detectChanges();
+  }
+
+  it('renders one editor per named section and offers nothing to add, reorder or remove', async () => {
     currentConfig = { ...BASE_CONFIG };
     await create();
 
@@ -454,63 +461,106 @@ describe('ConfigManager — Good to know authoring (T376)', () => {
     expect(rail[7].textContent).toContain('08');
 
     openSection();
-    expect(queryAll('.card-list > .card').length).toBe(0);
-    expect(queryAll('.add-btn').length).toBe(6);
+
+    // The four singleton sections are always present — a section exists
+    // because it has content, so there is no control that creates one.
+    expect(queryAll('.card[data-section="dress-code"]').length).toBe(1);
+    expect(queryAll('.card[data-section="gift"]').length).toBe(1);
+    expect(queryAll('.card[data-section="contact"]').length).toBe(1);
+    expect(queryAll('.card[data-section="day-line"]').length).toBe(1);
+    // …in the design system's order, which nothing here authors.
+    expect(queryAll<HTMLElement>('.card-list > .card').map((el) => el.dataset['section'])).toEqual([
+      'dress-code',
+      'gift',
+      'contact',
+      'day-line',
+    ]);
+
+    // The two arrays start empty and each offers exactly one add button.
+    expect(queryAll('.card[data-section="faq"]').length).toBe(0);
+    expect(queryAll('.card[data-section="note"]').length).toBe(0);
+    expect(
+      queryAll<HTMLElement>('.card-list > .add-btn').map((b) => b.textContent!.trim()),
+    ).toEqual(['configManager.goodToKnow.faq.addEntry', 'configManager.goodToKnow.note.addEntry']);
+
+    // Nothing left of the block array: no move buttons, no per-block remove,
+    // no add row of block types (the four singleton cards carry only their
+    // language disclosure).
+    expect(card('dress-code').querySelectorAll('.card-top button').length).toBe(0);
+    expect(card('gift').querySelectorAll('.card-top button').length).toBe(0);
+    expect(card('day-line').querySelectorAll('.card-top button').length).toBe(0);
   });
 
-  it('withholds a singleton type that already exists, and the add row at the 12-block cap', async () => {
+  it('adds and removes FAQ entries between 1 and 10, minting a ULID for each', async () => {
     currentConfig = { ...BASE_CONFIG };
     await create();
     openSection();
 
-    addButton('dress-code').click();
-    fixture.detectChanges();
+    const addFaq = (): HTMLButtonElement | undefined =>
+      queryAll<HTMLButtonElement>('.card-list > .add-btn').find((b) =>
+        b.textContent!.includes('faq.addEntry'),
+      );
 
-    expect(queryAll('.card-list > .card').length).toBe(1);
-    // dress-code is at-most-once and no longer offered; faq stays repeatable.
-    const remaining = queryAll<HTMLButtonElement>('.add-btn')
-      .filter((b) => b.textContent!.includes('configManager.goodToKnow.type.'))
-      .map((b) => b.textContent!.trim());
-    expect(remaining.some((label) => label.includes('type.dress-code'))).toBe(false);
-    expect(remaining.some((label) => label.includes('type.faq'))).toBe(true);
-    expect(remaining.some((label) => label.includes('type.gift'))).toBe(true);
-
-    // Fill to the 12-block cap with repeatable notes: the add row disappears.
-    for (let i = 0; i < 11; i++) {
-      addButton('note').click();
+    for (let i = 0; i < 10; i++) {
+      addFaq()!.click();
       fixture.detectChanges();
     }
-    expect(queryAll('.card-list > .card').length).toBe(12);
-    expect(queryAll('.add-btn').length).toBe(0);
+    expect(queryAll('.card[data-section="faq"]').length).toBe(10);
+    // At the ceiling the control is withheld rather than letting the API 400.
+    expect(addFaq()).toBeUndefined();
+
+    for (let i = 0; i < 9; i++) {
+      card('faq', 0).querySelector<HTMLButtonElement>('.card-top button')!.click();
+      fixture.detectChanges();
+    }
+    expect(queryAll('.card[data-section="faq"]').length).toBe(1);
+    expect(addFaq()).toBeDefined();
+
+    // The id is minted here and is a ULID: `PATCH /v1/config` replaces the
+    // whole array, so it is the only thing that tracks a row across a
+    // re-render (ADR-0047 §1).
+    setValue(fieldInputs(card('faq'), 0)[0], 'Is there parking?');
+    setValue(fieldInputs(card('faq'), 1)[0], 'Yes, behind the church.');
+    save();
+    const entries = lastUpdate!.generalInfo!.faq!;
+    expect(entries.length).toBe(1);
+    expect(entries[0].id).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/);
+    expect(entries[0].question).toEqual({
+      es: 'Is there parking?',
+      en: 'Is there parking?',
+      fr: 'Is there parking?',
+    });
   });
 
-  it('enforces the FAQ 3-entry floor and the contacts 1-entry floor with a message, withholding Save', async () => {
-    currentConfig = { ...BASE_CONFIG, goodToKnow: [faqBlock()] };
+  it('notes are a 1–10 array too, each with the title guests read above its prose', async () => {
+    currentConfig = { ...BASE_CONFIG };
     await create();
     openSection();
 
-    // Seeded valid: three complete entries, no message, Save only waits on dirty.
-    expect(queryAll('.error-message').length).toBe(0);
-
-    // Drop one entry below the floor — the message appears and Save is withheld.
-    const card = queryAll<HTMLElement>('.card-list > .card')[0];
-    card.querySelector<HTMLButtonElement>('.remove-btn')!.click();
+    queryAll<HTMLButtonElement>('.card-list > .add-btn')
+      .find((b) => b.textContent!.includes('note.addEntry'))!
+      .click();
     fixture.detectChanges();
 
-    const message = queryAll<HTMLElement>('.error-message')[0];
-    expect(message).toBeDefined();
-    expect(message.textContent).toContain('configManager.goodToKnow.issue.faqTooFew');
+    const noteCard = card('note');
+    expect(noteCard.querySelectorAll('.field-label')[0].textContent).toContain(
+      'configManager.goodToKnow.note.label',
+    );
+    expect(noteCard.querySelectorAll('.field-label')[1].textContent).toContain(
+      'configManager.goodToKnow.note.body',
+    );
+
+    // Half-built: the title is typed, the body is not — Save stays withheld
+    // and the message names the section rather than a block number.
+    setValue(fieldInputs(noteCard, 0)[0], 'One more thing');
+    expect(queryAll<HTMLElement>('.error-message')[0].textContent).toContain(
+      'configManager.goodToKnow.issue.incomplete',
+    );
     expect(queryAll<HTMLButtonElement>('.mobile-bar button')[0].disabled).toBe(true);
 
-    // A fresh contacts block seeds one entry (the floor); removing it flags too.
-    addButton('contacts').click();
-    fixture.detectChanges();
-    const contactsCard = queryAll<HTMLElement>('.card-list > .card')[1];
-    contactsCard.querySelector<HTMLButtonElement>('.remove-btn')!.click();
-    fixture.detectChanges();
-    expect(queryAll<HTMLElement>('.error-message')[0].textContent).toContain(
-      'configManager.goodToKnow.issue.contactsTooFew',
-    );
+    setValue(fieldInputs(noteCard, 1)[0], 'Free-form prose');
+    expect(queryAll('.error-message').length).toBe(0);
+    expect(queryAll<HTMLButtonElement>('.mobile-bar button')[0].disabled).toBe(false);
   });
 
   it('pre-fills all three locales from the primary language and lets a customized locale stick', async () => {
@@ -518,96 +568,174 @@ describe('ConfigManager — Good to know authoring (T376)', () => {
     await create();
     openSection();
 
-    addButton('note').click();
-    fixture.detectChanges();
-
+    const dressCode = (): HTMLElement => card('dress-code');
     // Closed disclosure: one row (the primary language, pinned to `en`).
-    const titleField = () =>
-      queryAll<HTMLElement>('.card-list > .card')[0].querySelectorAll<HTMLElement>('.field')[0];
-    expect(titleField().querySelectorAll('input').length).toBe(1);
+    expect(fieldInputs(dressCode(), 0).length).toBe(1);
 
-    setValue(titleField().querySelector('input')!, 'Good to know');
+    setValue(fieldInputs(dressCode(), 0)[0], 'Garden formal');
 
-    // Open the disclosure: all three locales carry the typed value.
-    const disclosure = queryAll<HTMLElement>('.card-list > .card')[0].querySelector<
-      HTMLButtonElement
-    >('.couple-actions .couple-action-btn')!;
-    disclosure.click();
+    dressCode().querySelector<HTMLButtonElement>('.couple-actions .couple-action-btn')!.click();
     fixture.detectChanges();
 
-    const rows = () => Array.from(titleField().querySelectorAll('input'));
+    const rows = (): HTMLInputElement[] => fieldInputs(dressCode(), 0);
     expect(rows().length).toBe(3);
     expect(rows().map((input) => input.value)).toEqual([
-      'Good to know',
-      'Good to know',
-      'Good to know',
+      'Garden formal',
+      'Garden formal',
+      'Garden formal',
     ]);
 
     // Customize FR (row order is es/en/fr), then retype the primary: the
     // customized locale sticks, the still-mirroring one follows.
-    setValue(rows()[2] as HTMLInputElement, 'Bon à savoir');
-    const primary = rows()[1] as HTMLInputElement;
-    setValue(primary, 'Good to know!');
+    setValue(rows()[2], 'Tenue de jardin');
+    setValue(rows()[1], 'Garden formal!');
     expect(rows().map((input) => input.value)).toEqual([
-      'Good to know!',
-      'Good to know!',
-      'Bon à savoir',
+      'Garden formal!',
+      'Garden formal!',
+      'Tenue de jardin',
     ]);
   });
 
-  it('reorders blocks with the move buttons and PATCHes the whole array in the couple’s order', async () => {
-    currentConfig = { ...BASE_CONFIG, goodToKnow: [faqBlock(), noteBlock()] };
+  it('contact is a picker: details come from the account and are not editable here', async () => {
+    accounts = [
+      account({
+        id: 'u-planner',
+        firstName: 'Eva',
+        lastName: 'Ruiz',
+        email: 'eva@example.com',
+        role: UserDto.RoleEnum.WEDDING_PLANNER,
+      }),
+      account({ id: 'u-guest', firstName: 'Ada', lastName: 'Lovelace' }),
+    ];
+    currentConfig = { ...BASE_CONFIG };
     await create();
     openSection();
 
-    // Second card's "move up" (actions are up · down · remove).
-    blockActions(1)[0].click();
+    const contact = (): HTMLElement => card('contact');
+    const picks = (): HTMLSelectElement[] =>
+      Array.from(contact().querySelectorAll<HTMLSelectElement>('select'));
+
+    // Two pickers, each offering only accounts of its own kind — this screen
+    // never creates an account, and there is no free-text alternative.
+    expect(picks().length).toBe(2);
+    expect(Array.from(picks()[0].options).map((o) => o.value)).toEqual(['', 'u-planner']);
+    expect(Array.from(picks()[1].options).map((o) => o.value)).toEqual(['', 'u-guest']);
+
+    picks()[0].value = 'u-planner';
+    picks()[0].dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    contact().querySelectorAll<HTMLButtonElement>('.add-btn')[0].click();
     fixture.detectChanges();
 
-    const pills = queryAll<HTMLElement>('.card-list > .card .card-top app-pill');
-    expect(pills[0].textContent).toContain('type.note');
-    expect(pills[1].textContent).toContain('type.faq');
-
-    queryAll<HTMLButtonElement>('.mobile-bar button')[0].click();
-    fixture.detectChanges();
-
-    expect(lastUpdate).toBeDefined();
-    expect(lastUpdate!.goodToKnow?.map((block) => block.id)).toEqual(['b-note', 'b-faq']);
-    // The payload rides the ordinary config PATCH: the rest of the document
-    // travels with the array, version included.
-    expect(lastUpdate!.version).toBe(BASE_CONFIG.version);
-    expect(lastUpdate!.brideName).toBe(BASE_CONFIG.brideName);
+    // The planner's own details render as text, with no input to edit them,
+    // and no `purpose` — the role is its own purpose (ADR-0047 §2).
+    expect(contact().querySelector('.couple-name')!.textContent).toContain('Eva Ruiz');
+    expect(contact().querySelector('.couple-meta')!.textContent).toContain('+34 600 11 22 33');
+    expect(contact().querySelector('.couple-meta')!.textContent).toContain('eva@example.com');
+    expect(contact().querySelectorAll('input').length).toBe(0);
+    // Picked, so no longer on offer — one picker remains for the guests.
+    expect(picks().length).toBe(1);
   });
 
-  it('drops never-written optional gift fields from the payload and keeps identifiers verbatim', async () => {
+  it('a picked guest needs a purpose in all three locales before Save', async () => {
+    accounts = [account({ id: 'u-guest' })];
+    currentConfig = { ...BASE_CONFIG };
+    await create();
+    openSection();
+
+    const contact = (): HTMLElement => card('contact');
+    const pick = contact().querySelector<HTMLSelectElement>('select')!;
+    pick.value = 'u-guest';
+    pick.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    contact().querySelector<HTMLButtonElement>('.add-btn')!.click();
+    fixture.detectChanges();
+
+    // One input on a guest row, and it is the purpose line.
+    const purposeInputs = Array.from(contact().querySelectorAll<HTMLInputElement>('input'));
+    expect(purposeInputs.length).toBe(1);
+    expect(queryAll<HTMLElement>('.error-message')[0].textContent).toContain(
+      'configManager.goodToKnow.issue.purposeMissing',
+    );
+    expect(queryAll<HTMLButtonElement>('.mobile-bar button')[0].disabled).toBe(true);
+
+    setValue(purposeInputs[0], 'Anything about the ceremony');
+    expect(queryAll('.error-message').length).toBe(0);
+
+    save();
+    const contactPayload = lastUpdate!.generalInfo!.contact!;
+    expect(contactPayload.weddingPlanner).toBeUndefined();
+    expect(contactPayload.guest).toEqual([
+      {
+        id: 'u-guest',
+        role: 'guest',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        email: 'ada@example.com',
+        // Byte-identical to the account, spacing and all (hard rule 19a).
+        phoneNumber: '+34 600 11 22 33',
+        purpose: {
+          es: 'Anything about the ceremony',
+          en: 'Anything about the ceremony',
+          fr: 'Anything about the ceremony',
+        },
+      },
+    ]);
+  });
+
+  it('PATCHes the whole generalInfo object, dropping sections and fields the couple never wrote', async () => {
     currentConfig = {
       ...BASE_CONFIG,
-      goodToKnow: [
-        {
-          id: 'b-gift',
-          type: 'gift',
-          title: localized('gift title'),
-          intro: { es: '', en: '', fr: '' },
-          iban: 'ES91 2100 0418 4502 0005 1332',
-        },
-      ],
+      generalInfo: {
+        ...filledGeneralInfo(),
+        gift: { intro: { es: '', en: '', fr: '' }, iban: 'ES91 2100 0418 4502 0005 1332' },
+      },
     };
     await create();
     openSection();
 
-    // Make it dirty without touching the identifier (edit the title).
-    const titleInput = queryAll<HTMLElement>('.card-list > .card')[0]
-      .querySelectorAll<HTMLElement>('.field')[0]
-      .querySelector('input')!;
-    setValue(titleInput as HTMLInputElement, 'Un detalle');
-
-    queryAll<HTMLButtonElement>('.mobile-bar button')[0].click();
-    fixture.detectChanges();
+    // Make it dirty without touching the identifier.
+    setValue(fieldInputs(card('dress-code'), 0)[0], 'Garden formal');
+    save();
 
     expect(lastUpdate).toBeDefined();
-    const gift = lastUpdate!.goodToKnow![0] as { intro?: unknown; iban?: string };
-    expect(gift.intro).toBeUndefined();
-    // Byte-identical, whitespace and all (hard rule 19a) — never reformatted.
-    expect(gift.iban).toBe('ES91 2100 0418 4502 0005 1332');
+    const info = lastUpdate!.generalInfo!;
+    // Written sections travel; the ones the couple never wrote are absent
+    // rather than sent as empty objects.
+    expect(Object.keys(info).sort()).toEqual(['dressCode', 'faq', 'gift']);
+    expect(info.dressCode!.note).toBeUndefined();
+    expect(info.faq!.map((entry) => entry.id)).toEqual(['f-1']);
+    expect(info.gift!.intro).toBeUndefined();
+    expect(info.gift!.bizumPhone).toBeUndefined();
+    // Never reformatted on the way out (hard rule 19a).
+    expect(info.gift!.iban).toBe('ES91 2100 0418 4502 0005 1332');
+    // The payload rides the ordinary config PATCH: the rest of the document
+    // travels with it, version included.
+    expect(lastUpdate!.version).toBe(BASE_CONFIG.version);
+    expect(lastUpdate!.brideName).toBe(BASE_CONFIG.brideName);
+  });
+
+  it('drops a section the couple has emptied rather than sending it blank', async () => {
+    currentConfig = { ...BASE_CONFIG, generalInfo: filledGeneralInfo() };
+    await create();
+    openSection();
+
+    // Clear every locale of both required dress-code fields: the section is
+    // not half-built, it is a section the couple no longer has — no message,
+    // and Save is allowed.
+    card('dress-code')
+      .querySelector<HTMLButtonElement>('.couple-actions .couple-action-btn')!
+      .click();
+    fixture.detectChanges();
+    for (const field of [0, 1]) {
+      for (const row of [0, 1, 2]) {
+        setValue(fieldInputs(card('dress-code'), field)[row], '');
+      }
+    }
+    expect(queryAll('.error-message').length).toBe(0);
+
+    save();
+    expect(lastUpdate!.generalInfo!.dressCode).toBeUndefined();
+    expect(lastUpdate!.generalInfo!.faq).toBeDefined();
   });
 });

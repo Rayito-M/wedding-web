@@ -468,7 +468,7 @@
       "appearance": "La paleta y las etiquetas de idioma que ven los invitados.",
       "weddingDateChanged": "El cronograma de preparativos mantiene sus fechas: los hitos no se mueven con la fecha de la boda.",
       "mapUrlEmbed": "En Google Maps, usa Compartir → Insertar un mapa y pega el enlace del código iframe. Un enlace normal de compartir no se puede mostrar; en su lugar se usa la dirección del lugar.",
-      "good-to-know": "El código de vestimenta, los regalos y las preguntas que leen los invitados. Cada palabra aquí es vuestra y se muestra tal cual, en el orden de esta lista."
+      "good-to-know": "El código de vestimenta, los regalos, a quién llamar y las preguntas que leen vuestros invitados. Cada palabra de aquí es vuestra y se muestra tal cual; el orden en el que la leen es fijo."
     },
     "field": {
       "brideName": "Novia",
@@ -582,29 +582,17 @@
       "verdeagua": "Verde Agua"
     },
     "goodToKnow": {
-      "empty": "Aún no hay bloques. Añadid el primero abajo — los invitados verán exactamente lo que escribáis, en este orden.",
-      "addTitle": "Añadir un bloque",
-      "type": {
-        "dress-code": "Código de vestimenta",
-        "gift": "Regalos",
-        "faq": "Preguntas frecuentes",
-        "contacts": "Contactos",
-        "day-line": "El día en una línea",
-        "note": "Nota libre"
-      },
-      "removeBlock": "Quitar bloque",
       "showOtherLanguages": "Editar los otros idiomas",
       "hideOtherLanguages": "Ocultar los otros idiomas",
-      "field": {
-        "title": "Título del bloque"
-      },
       "dressCode": {
+        "title": "Código de vestimenta",
         "headline": "Titular",
         "body": "Descripción",
         "note": "Nota (opcional)",
         "swatchesHint": "Los colores bajo este texto salen del tema elegido en Apariencia — no se escriben aquí y nunca pueden discrepar de él."
       },
       "gift": {
+        "title": "Regalos",
         "intro": "Introducción (opcional)",
         "bankTitle": "Datos bancarios",
         "identifiersHint": "Idénticos en los tres idiomas: se transcriben, no se traducen.",
@@ -615,35 +603,42 @@
         "bizumPhone": "Número de Bizum",
         "bizumNote": "Nota sobre Bizum (opcional)"
       },
+      "contact": {
+        "title": "A quién llamar",
+        "hint": "Solo personas con cuenta en este sitio. El nombre, el correo y el teléfono vienen de su cuenta y no se editan aquí: si alguien cambia su perfil, su ficha cambia también. Quien no tenga cuenta se añade antes como invitado.",
+        "plannerTitle": "Wedding planner",
+        "plannerEmpty": "Ningún wedding planner en la lista.",
+        "guestTitle": "Invitados",
+        "guestEmpty": "Ningún invitado en la lista.",
+        "choose": "Elegid a una persona…",
+        "addPerson": "+ Añadir",
+        "remove": "Quitar",
+        "purpose": "Para qué contactarle"
+      },
       "faq": {
+        "title": "Pregunta frecuente",
         "question": "Pregunta {{n}}",
         "answer": "Respuesta",
         "addEntry": "+ Añadir pregunta",
         "removeEntry": "Quitar pregunta"
       },
-      "contacts": {
-        "firstName": "Contacto {{n}} · nombre",
-        "lastName": "Apellidos (opcional)",
-        "phoneNumber": "Teléfono (opcional)",
-        "purpose": "Para qué contactarle",
-        "addEntry": "+ Añadir contacto",
-        "removeEntry": "Quitar contacto",
-        "identifiersHint": "Los nombres y teléfonos se muestran igual en los tres idiomas."
-      },
       "dayLine": {
+        "title": "El día en una línea",
         "datesHint": "Fechas actuales: boda el {{date}}, fecha límite del RSVP el {{deadline}}. Si alguna cambia, estas frases no se actualizan solas — revisadlas.",
         "rsvpOpen": "Mientras el RSVP está abierto",
         "rsvpClosed": "Tras la fecha límite, hasta la boda",
         "afterWedding": "Después de la boda"
       },
       "note": {
-        "body": "Texto"
+        "title": "Nota libre",
+        "label": "Título que leen los invitados",
+        "body": "Texto",
+        "addEntry": "+ Añadir nota",
+        "removeEntry": "Quitar nota"
       },
       "issue": {
-        "missingTitle": "Bloque {{n}} ({{type}}): falta el título en alguno de los tres idiomas.",
-        "incomplete": "Bloque {{n}} ({{type}}): completad los campos obligatorios en los tres idiomas.",
-        "faqTooFew": "Bloque {{n}} ({{type}}): necesita al menos tres preguntas.",
-        "contactsTooFew": "Bloque {{n}} ({{type}}): necesita al menos una persona."
+        "incomplete": "{{section}}: completad los campos obligatorios en los tres idiomas.",
+        "purposeMissing": "{{section}}: cada invitado de la lista necesita su “para qué contactarle” en los tres idiomas."
       }
     }
   },

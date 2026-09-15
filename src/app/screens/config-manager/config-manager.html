@@ -1031,18 +1031,19 @@
           </section>
         }
 
-        <!-- Good to know (hub ADR-0046 §2/§3/§8, T376). Every field here is
-             the couple's *content* — stored on the config, read by Home's
-             `shared/good-to-know` renderer — never UI copy. Six block types
-             and nothing else (Amendment 3: swatches stay derived from the
-             theme; Appearance is untouched by this feature). Array order is
-             render order (§3): the move buttons are the only ordering
-             mechanism, and there are no visibility toggles — presence is the
-             whole switch. Prose fields follow hub ADR-0031's ergonomics: the
-             primary language is typed once and pre-fills all three locales;
-             EN/FR sit behind each block's disclosure. Identifier fields
-             (IBAN, BIC, phones, names) are single inputs, visibly not
-             per-locale (§5 / hard rule 19a). -->
+        <!-- Good to know (hub ADR-0047 §1/§2, T384). Every field here is the
+             couple's *content* — stored on the config under `generalInfo`,
+             read by Home's `shared/good-to-know` renderer — never UI copy
+             (hard rule 19). One editor per named section, in the design
+             system's fixed order: there is nothing to add, nothing to
+             reorder and nothing to remove, because ordering is structural
+             and a section exists exactly when it has content. Only `faq` and
+             `note` are arrays, and only they carry ids (§1). Prose fields
+             follow ADR-0031: the primary language is typed once and
+             pre-fills all three locales, EN/FR sit behind each card's
+             disclosure. Identifiers (IBAN, BIC, Bizum number) are single
+             inputs, visibly not per-locale (ADR-0046 §5 / hard rule 19a).
+             Contacts are a picker, not a form (§2). -->
         @case ('good-to-know') {
           <section>
             <div class="section-header">
@@ -1056,596 +1057,431 @@
               @if (goodToKnowIssues().length > 0) {
                 <div class="error-message" role="alert">
                   @for (issue of goodToKnowIssues(); track $index) {
-                    <div>
-                      {{
-                        issue.key
-                          | translate
-                            : {
-                                n: issue.n,
-                                type: 'configManager.goodToKnow.type.' + issue.type | translate,
-                              }
-                      }}
-                    </div>
+                    <div>{{ issue.key | translate: { section: issue.section | translate } }}</div>
                   }
                 </div>
               }
-              @for (block of goodToKnowBlocks(); track block.id) {
-                <div class="card">
-                  <div class="card-top">
-                    <app-pill tone="accent">{{
-                      'configManager.goodToKnow.type.' + block.type | translate
-                    }}</app-pill>
-                    <button
-                      type="button"
-                      class="couple-action-btn muted push-right"
-                      [disabled]="$first"
-                      (click)="moveGoodToKnowBlock(block.id, -1)"
-                    >
-                      {{ 'configManager.goodToKnow.moveUp' | translate }}
-                    </button>
-                    <button
-                      type="button"
-                      class="couple-action-btn muted"
-                      [disabled]="$last"
-                      (click)="moveGoodToKnowBlock(block.id, 1)"
-                    >
-                      {{ 'configManager.goodToKnow.moveDown' | translate }}
-                    </button>
-                    <button
-                      type="button"
-                      class="couple-action-btn muted"
-                      (click)="removeGoodToKnowBlock(block.id)"
-                    >
-                      {{ 'configManager.goodToKnow.removeBlock' | translate }}
-                    </button>
-                  </div>
 
-                  <!-- The authored section label guests read (§2) — the only
-                       labelling mechanism a free-form block has. -->
+              <!-- 01 · What to wear -->
+              <div class="card" data-section="dress-code">
+                <div class="card-top">
+                  <app-pill tone="accent">{{
+                    'configManager.goodToKnow.dressCode.title' | translate
+                  }}</app-pill>
+                </div>
+                @for (field of dressCodeFields; track field) {
                   <div class="field">
                     <span class="field-label">{{
-                      'configManager.goodToKnow.field.title' | translate
+                      'configManager.goodToKnow.dressCode.' + field | translate
                     }}</span>
-                    @for (code of visibleLangs(block.id); track code) {
+                    @for (code of visibleLangs('dressCode'); track code) {
                       <div class="ml-stack-row">
-                        @if (isLocalesOpen(block.id)) {
+                        @if (isLocalesOpen('dressCode')) {
                           <span class="lang-tag">{{ code.toUpperCase() }}</span>
                         }
                         <input
                           app-input
                           type="text"
-                          [value]="blockLocaleValue(block, 'title', code)"
+                          [value]="dressCodeText(field, code)"
                           [attr.aria-label]="
-                            ('configManager.goodToKnow.field.title' | translate) +
+                            ('configManager.goodToKnow.dressCode.' + field | translate) +
                             ' · ' +
                             code.toUpperCase()
                           "
-                          (input)="setBlockLocale(block.id, 'title', code, inputValue($event))"
+                          (input)="setDressCodeText(field, code, inputValue($event))"
                         />
                       </div>
                     }
                   </div>
+                }
+                <!-- Swatches stay derived from the theme (ADR-0046 Amendment
+                     3, re-affirmed by ADR-0047 §6): nothing names them here
+                     and nothing may. -->
+                <p class="field-hint">
+                  {{ 'configManager.goodToKnow.dressCode.swatchesHint' | translate }}
+                </p>
+                <div class="couple-actions">
+                  <button
+                    type="button"
+                    class="couple-action-btn"
+                    (click)="toggleLocales('dressCode')"
+                  >
+                    {{
+                      (isLocalesOpen('dressCode')
+                        ? 'configManager.goodToKnow.hideOtherLanguages'
+                        : 'configManager.goodToKnow.showOtherLanguages'
+                      ) | translate
+                    }}
+                  </button>
+                </div>
+              </div>
 
-                  @switch (block.type) {
-                    @case ('dress-code') {
-                      <div class="field">
-                        <span class="field-label">{{
-                          'configManager.goodToKnow.dressCode.headline' | translate
-                        }}</span>
-                        @for (code of visibleLangs(block.id); track code) {
-                          <div class="ml-stack-row">
-                            @if (isLocalesOpen(block.id)) {
-                              <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                            }
-                            <input
-                              app-input
-                              type="text"
-                              [value]="blockLocaleValue(block, 'headline', code)"
-                              [attr.aria-label]="
-                                ('configManager.goodToKnow.dressCode.headline' | translate) +
-                                ' · ' +
-                                code.toUpperCase()
-                              "
-                              (input)="
-                                setBlockLocale(block.id, 'headline', code, inputValue($event))
-                              "
-                            />
-                          </div>
-                        }
-                      </div>
-                      <div class="field">
-                        <span class="field-label">{{
-                          'configManager.goodToKnow.dressCode.body' | translate
-                        }}</span>
-                        @for (code of visibleLangs(block.id); track code) {
-                          <div class="ml-stack-row">
-                            @if (isLocalesOpen(block.id)) {
-                              <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                            }
-                            <input
-                              app-input
-                              type="text"
-                              [value]="blockLocaleValue(block, 'body', code)"
-                              [attr.aria-label]="
-                                ('configManager.goodToKnow.dressCode.body' | translate) +
-                                ' · ' +
-                                code.toUpperCase()
-                              "
-                              (input)="setBlockLocale(block.id, 'body', code, inputValue($event))"
-                            />
-                          </div>
-                        }
-                      </div>
-                      <div class="field">
-                        <span class="field-label">{{
-                          'configManager.goodToKnow.dressCode.note' | translate
-                        }}</span>
-                        @for (code of visibleLangs(block.id); track code) {
-                          <div class="ml-stack-row">
-                            @if (isLocalesOpen(block.id)) {
-                              <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                            }
-                            <input
-                              app-input
-                              type="text"
-                              [value]="blockLocaleValue(block, 'note', code)"
-                              [attr.aria-label]="
-                                ('configManager.goodToKnow.dressCode.note' | translate) +
-                                ' · ' +
-                                code.toUpperCase()
-                              "
-                              (input)="setBlockLocale(block.id, 'note', code, inputValue($event))"
-                            />
-                          </div>
-                        }
-                      </div>
-                      <!-- Swatches are derived from the active theme and never
-                           authored (§2, Amendment 3) — said here so nobody
-                           goes looking for a colour control. -->
-                      <p class="field-hint">
-                        {{ 'configManager.goodToKnow.dressCode.swatchesHint' | translate }}
-                      </p>
-                    }
+              <!-- 02 · Gifts. Not a registry and not a payment flow — the
+                   couple's own bank details, behind sign-in (ADR-0046 §6). -->
+              <div class="card" data-section="gift">
+                <div class="card-top">
+                  <app-pill tone="accent">{{
+                    'configManager.goodToKnow.gift.title' | translate
+                  }}</app-pill>
+                </div>
+                <div class="field">
+                  <span class="field-label">{{
+                    'configManager.goodToKnow.gift.intro' | translate
+                  }}</span>
+                  @for (code of visibleLangs('gift'); track code) {
+                    <div class="ml-stack-row">
+                      @if (isLocalesOpen('gift')) {
+                        <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                      }
+                      <input
+                        app-input
+                        type="text"
+                        [value]="giftText('intro', code)"
+                        [attr.aria-label]="
+                          ('configManager.goodToKnow.gift.intro' | translate) +
+                          ' · ' +
+                          code.toUpperCase()
+                        "
+                        (input)="setGiftText('intro', code, inputValue($event))"
+                      />
+                    </div>
+                  }
+                </div>
 
-                    @case ('gift') {
-                      <div class="field">
-                        <span class="field-label">{{
-                          'configManager.goodToKnow.gift.intro' | translate
-                        }}</span>
-                        @for (code of visibleLangs(block.id); track code) {
-                          <div class="ml-stack-row">
-                            @if (isLocalesOpen(block.id)) {
-                              <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                            }
-                            <input
-                              app-input
-                              type="text"
-                              [value]="blockLocaleValue(block, 'intro', code)"
-                              [attr.aria-label]="
-                                ('configManager.goodToKnow.gift.intro' | translate) +
-                                ' · ' +
-                                code.toUpperCase()
-                              "
-                              (input)="setBlockLocale(block.id, 'intro', code, inputValue($event))"
-                            />
-                          </div>
-                        }
+                <span class="field-label">{{
+                  'configManager.goodToKnow.gift.bankTitle' | translate
+                }}</span>
+                <p class="field-hint">
+                  {{ 'configManager.goodToKnow.gift.identifiersHint' | translate }}
+                </p>
+                @for (field of giftBankFields; track field) {
+                  <label class="field">
+                    <span class="field-label">{{
+                      'configManager.goodToKnow.gift.' + field | translate
+                    }}</span>
+                    <input
+                      app-input
+                      type="text"
+                      [value]="giftIdentifier(field)"
+                      (input)="setGiftIdentifier(field, inputValue($event))"
+                    />
+                  </label>
+                }
+
+                <div class="field">
+                  <span class="field-label">{{
+                    'configManager.goodToKnow.gift.reference' | translate
+                  }}</span>
+                  @for (code of visibleLangs('gift'); track code) {
+                    <div class="ml-stack-row">
+                      @if (isLocalesOpen('gift')) {
+                        <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                      }
+                      <input
+                        app-input
+                        type="text"
+                        [value]="giftText('reference', code)"
+                        [attr.aria-label]="
+                          ('configManager.goodToKnow.gift.reference' | translate) +
+                          ' · ' +
+                          code.toUpperCase()
+                        "
+                        (input)="setGiftText('reference', code, inputValue($event))"
+                      />
+                    </div>
+                  }
+                </div>
+
+                <label class="field">
+                  <span class="field-label">{{
+                    'configManager.goodToKnow.gift.bizumPhone' | translate
+                  }}</span>
+                  <input
+                    app-input
+                    type="tel"
+                    [value]="giftIdentifier('bizumPhone')"
+                    (input)="setGiftIdentifier('bizumPhone', inputValue($event))"
+                  />
+                </label>
+
+                <div class="field">
+                  <span class="field-label">{{
+                    'configManager.goodToKnow.gift.bizumNote' | translate
+                  }}</span>
+                  @for (code of visibleLangs('gift'); track code) {
+                    <div class="ml-stack-row">
+                      @if (isLocalesOpen('gift')) {
+                        <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                      }
+                      <input
+                        app-input
+                        type="text"
+                        [value]="giftText('bizumNote', code)"
+                        [attr.aria-label]="
+                          ('configManager.goodToKnow.gift.bizumNote' | translate) +
+                          ' · ' +
+                          code.toUpperCase()
+                        "
+                        (input)="setGiftText('bizumNote', code, inputValue($event))"
+                      />
+                    </div>
+                  }
+                </div>
+                <div class="couple-actions">
+                  <button type="button" class="couple-action-btn" (click)="toggleLocales('gift')">
+                    {{
+                      (isLocalesOpen('gift')
+                        ? 'configManager.goodToKnow.hideOtherLanguages'
+                        : 'configManager.goodToKnow.showOtherLanguages'
+                      ) | translate
+                    }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- 03 · Who to call. A picker over people who already hold
+                   accounts (§2): names, emails and numbers come from the
+                   account and there is no input for them here. A person with
+                   no account is added as a guest first — this screen does not
+                   create one. -->
+              <div class="card" data-section="contact">
+                <div class="card-top">
+                  <app-pill tone="accent">{{
+                    'configManager.goodToKnow.contact.title' | translate
+                  }}</app-pill>
+                </div>
+                <p class="field-hint">{{ 'configManager.goodToKnow.contact.hint' | translate }}</p>
+
+                <div class="field">
+                  <span class="field-label">{{
+                    'configManager.goodToKnow.contact.plannerTitle' | translate
+                  }}</span>
+                  @for (person of plannerContacts(); track person.id) {
+                    <div class="row-top">
+                      <div class="field-grow">
+                        <div class="couple-name">{{ person.firstName }} {{ person.lastName }}</div>
+                        <div class="couple-meta">
+                          {{ person.phoneNumber }}
+                          @if (person.email) {
+                            · {{ person.email }}
+                          }
+                        </div>
                       </div>
-                      <!-- Identifiers: single inputs, byte-identical in every
-                           locale (§5 / hard rule 19a) — transcribed, never
-                           translated, never reformatted. -->
-                      <span class="field-label">{{
-                        'configManager.goodToKnow.gift.bankTitle' | translate
-                      }}</span>
-                      <p class="field-hint">
-                        {{ 'configManager.goodToKnow.gift.identifiersHint' | translate }}
-                      </p>
-                      <label class="field">
-                        <span class="field-label">{{
-                          'configManager.goodToKnow.gift.accountHolder' | translate
-                        }}</span>
+                      <button
+                        type="button"
+                        class="couple-action-btn muted"
+                        (click)="removePlannerContact(person.id)"
+                      >
+                        {{ 'configManager.goodToKnow.contact.remove' | translate }}
+                      </button>
+                    </div>
+                  } @empty {
+                    <p class="field-hint">
+                      {{ 'configManager.goodToKnow.contact.plannerEmpty' | translate }}
+                    </p>
+                  }
+                  @if (addablePlanners().length > 0) {
+                    <div class="row-top">
+                      <select
+                        class="select-native field-grow"
+                        [value]="plannerPick()"
+                        [attr.aria-label]="
+                          'configManager.goodToKnow.contact.plannerTitle' | translate
+                        "
+                        (change)="plannerPick.set(selectValue($event))"
+                      >
+                        <option value="">
+                          {{ 'configManager.goodToKnow.contact.choose' | translate }}
+                        </option>
+                        @for (account of addablePlanners(); track account.id) {
+                          <option [value]="account.id">
+                            {{ account.firstName }} {{ account.lastName }}
+                          </option>
+                        }
+                      </select>
+                      <button
+                        type="button"
+                        class="add-btn"
+                        [disabled]="plannerPick() === ''"
+                        (click)="addPlannerContact()"
+                      >
+                        {{ 'configManager.goodToKnow.contact.addPerson' | translate }}
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                <div class="field">
+                  <span class="field-label">{{
+                    'configManager.goodToKnow.contact.guestTitle' | translate
+                  }}</span>
+                  @for (person of guestContacts(); track person.id) {
+                    <div class="row-top">
+                      <div class="field-grow">
+                        <div class="couple-name">{{ person.firstName }} {{ person.lastName }}</div>
+                        <div class="couple-meta">
+                          {{ person.phoneNumber }}
+                          @if (person.email) {
+                            · {{ person.email }}
+                          }
+                        </div>
+                        <!-- The one thing the couple types about a contact —
+                             and the field that makes this section "who to
+                             call about what" (§2). Required. -->
+                        <div class="field">
+                          <span class="field-label">{{
+                            'configManager.goodToKnow.contact.purpose' | translate
+                          }}</span>
+                          @for (code of visibleLangs('guest:' + person.id); track code) {
+                            <div class="ml-stack-row">
+                              @if (isLocalesOpen('guest:' + person.id)) {
+                                <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                              }
+                              <input
+                                app-input
+                                type="text"
+                                [value]="person.purpose[code]"
+                                [attr.aria-label]="
+                                  ('configManager.goodToKnow.contact.purpose' | translate) +
+                                  ' · ' +
+                                  code.toUpperCase()
+                                "
+                                (input)="setGuestPurpose(person.id, code, inputValue($event))"
+                              />
+                            </div>
+                          }
+                        </div>
+                        <div class="couple-actions">
+                          <button
+                            type="button"
+                            class="couple-action-btn"
+                            (click)="toggleLocales('guest:' + person.id)"
+                          >
+                            {{
+                              (isLocalesOpen('guest:' + person.id)
+                                ? 'configManager.goodToKnow.hideOtherLanguages'
+                                : 'configManager.goodToKnow.showOtherLanguages'
+                              ) | translate
+                            }}
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        class="couple-action-btn muted"
+                        (click)="removeGuestContact(person.id)"
+                      >
+                        {{ 'configManager.goodToKnow.contact.remove' | translate }}
+                      </button>
+                    </div>
+                  } @empty {
+                    <p class="field-hint">
+                      {{ 'configManager.goodToKnow.contact.guestEmpty' | translate }}
+                    </p>
+                  }
+                  @if (addableGuests().length > 0) {
+                    <div class="row-top">
+                      <select
+                        class="select-native field-grow"
+                        [value]="guestPick()"
+                        [attr.aria-label]="
+                          'configManager.goodToKnow.contact.guestTitle' | translate
+                        "
+                        (change)="guestPick.set(selectValue($event))"
+                      >
+                        <option value="">
+                          {{ 'configManager.goodToKnow.contact.choose' | translate }}
+                        </option>
+                        @for (account of addableGuests(); track account.id) {
+                          <option [value]="account.id">
+                            {{ account.firstName }} {{ account.lastName }}
+                          </option>
+                        }
+                      </select>
+                      <button
+                        type="button"
+                        class="add-btn"
+                        [disabled]="guestPick() === ''"
+                        (click)="addGuestContact()"
+                      >
+                        {{ 'configManager.goodToKnow.contact.addPerson' | translate }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- 04 · Questions we have been asked. 1–10 entries, each
+                   keyed by the ULID this editor mints (§1). -->
+              @for (entry of faqEntries(); track entry.id) {
+                <div class="card" data-section="faq">
+                  <div class="card-top">
+                    <app-pill tone="accent">{{
+                      'configManager.goodToKnow.faq.title' | translate
+                    }}</app-pill>
+                    <button
+                      type="button"
+                      class="couple-action-btn muted push-right"
+                      (click)="removeFaqEntry(entry.id)"
+                    >
+                      {{ 'configManager.goodToKnow.faq.removeEntry' | translate }}
+                    </button>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">{{
+                      'configManager.goodToKnow.faq.question' | translate: { n: $index + 1 }
+                    }}</span>
+                    @for (code of visibleLangs('faq:' + entry.id); track code) {
+                      <div class="ml-stack-row">
+                        @if (isLocalesOpen('faq:' + entry.id)) {
+                          <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                        }
                         <input
                           app-input
                           type="text"
-                          [value]="gift(block).accountHolder ?? ''"
-                          (input)="setBlockIdentifier(block.id, 'accountHolder', inputValue($event))"
+                          [value]="entry.question[code]"
+                          [attr.aria-label]="
+                            ('configManager.goodToKnow.faq.question'
+                              | translate: { n: $index + 1 }) +
+                            ' · ' +
+                            code.toUpperCase()
+                          "
+                          (input)="setFaqText(entry.id, 'question', code, inputValue($event))"
                         />
-                      </label>
-                      <div class="grid-2fr-1fr">
-                        <label class="field">
-                          <span class="field-label">{{
-                            'configManager.goodToKnow.gift.iban' | translate
-                          }}</span>
-                          <input
-                            app-input
-                            type="text"
-                            [value]="gift(block).iban ?? ''"
-                            (input)="setBlockIdentifier(block.id, 'iban', inputValue($event))"
-                          />
-                        </label>
-                        <label class="field">
-                          <span class="field-label">{{
-                            'configManager.goodToKnow.gift.bic' | translate
-                          }}</span>
-                          <input
-                            app-input
-                            type="text"
-                            [value]="gift(block).bic ?? ''"
-                            (input)="setBlockIdentifier(block.id, 'bic', inputValue($event))"
-                          />
-                        </label>
                       </div>
-                      <div class="field">
-                        <span class="field-label">{{
-                          'configManager.goodToKnow.gift.reference' | translate
-                        }}</span>
-                        @for (code of visibleLangs(block.id); track code) {
-                          <div class="ml-stack-row">
-                            @if (isLocalesOpen(block.id)) {
-                              <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                            }
-                            <input
-                              app-input
-                              type="text"
-                              [value]="blockLocaleValue(block, 'reference', code)"
-                              [attr.aria-label]="
-                                ('configManager.goodToKnow.gift.reference' | translate) +
-                                ' · ' +
-                                code.toUpperCase()
-                              "
-                              (input)="
-                                setBlockLocale(block.id, 'reference', code, inputValue($event))
-                              "
-                            />
-                          </div>
+                    }
+                  </div>
+                  <div class="field">
+                    <span class="field-label">{{
+                      'configManager.goodToKnow.faq.answer' | translate
+                    }}</span>
+                    @for (code of visibleLangs('faq:' + entry.id); track code) {
+                      <div class="ml-stack-row">
+                        @if (isLocalesOpen('faq:' + entry.id)) {
+                          <span class="lang-tag">{{ code.toUpperCase() }}</span>
                         }
-                      </div>
-                      <label class="field">
-                        <span class="field-label">{{
-                          'configManager.goodToKnow.gift.bizumPhone' | translate
-                        }}</span>
                         <input
                           app-input
-                          type="tel"
-                          placeholder="+34 600 00 00 00"
-                          [value]="gift(block).bizumPhone ?? ''"
-                          (input)="setBlockIdentifier(block.id, 'bizumPhone', inputValue($event))"
+                          type="text"
+                          [value]="entry.answer[code]"
+                          [attr.aria-label]="
+                            ('configManager.goodToKnow.faq.answer' | translate) +
+                            ' · ' +
+                            code.toUpperCase()
+                          "
+                          (input)="setFaqText(entry.id, 'answer', code, inputValue($event))"
                         />
-                      </label>
-                      <div class="field">
-                        <span class="field-label">{{
-                          'configManager.goodToKnow.gift.bizumNote' | translate
-                        }}</span>
-                        @for (code of visibleLangs(block.id); track code) {
-                          <div class="ml-stack-row">
-                            @if (isLocalesOpen(block.id)) {
-                              <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                            }
-                            <input
-                              app-input
-                              type="text"
-                              [value]="blockLocaleValue(block, 'bizumNote', code)"
-                              [attr.aria-label]="
-                                ('configManager.goodToKnow.gift.bizumNote' | translate) +
-                                ' · ' +
-                                code.toUpperCase()
-                              "
-                              (input)="
-                                setBlockLocale(block.id, 'bizumNote', code, inputValue($event))
-                              "
-                            />
-                          </div>
-                        }
                       </div>
                     }
-
-                    @case ('faq') {
-                      @for (entry of faqOf(block).entries; track entry.id; let n = $index) {
-                        <div class="row-top">
-                          <div class="field field-grow">
-                            <span class="field-label">{{
-                              'configManager.goodToKnow.faq.question' | translate: { n: n + 1 }
-                            }}</span>
-                            @for (code of visibleLangs(block.id); track code) {
-                              <div class="ml-stack-row">
-                                @if (isLocalesOpen(block.id)) {
-                                  <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                                }
-                                <input
-                                  app-input
-                                  type="text"
-                                  [value]="entry.question[code]"
-                                  [attr.aria-label]="
-                                    ('configManager.goodToKnow.faq.question'
-                                      | translate: { n: n + 1 }) +
-                                    ' · ' +
-                                    code.toUpperCase()
-                                  "
-                                  (input)="
-                                    setFaqEntryText(
-                                      block.id,
-                                      entry.id,
-                                      'question',
-                                      code,
-                                      inputValue($event)
-                                    )
-                                  "
-                                />
-                              </div>
-                            }
-                          </div>
-                          <button
-                            type="button"
-                            class="remove-btn"
-                            [attr.aria-label]="'configManager.goodToKnow.faq.removeEntry' | translate"
-                            (click)="removeFaqEntry(block.id, entry.id)"
-                          >
-                            ×
-                          </button>
-                        </div>
-                        <div class="field">
-                          <span class="field-label">{{
-                            'configManager.goodToKnow.faq.answer' | translate
-                          }}</span>
-                          @for (code of visibleLangs(block.id); track code) {
-                            <div class="ml-stack-row">
-                              @if (isLocalesOpen(block.id)) {
-                                <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                              }
-                              <input
-                                app-input
-                                type="text"
-                                [value]="entry.answer[code]"
-                                [attr.aria-label]="
-                                  ('configManager.goodToKnow.faq.answer' | translate) +
-                                  ' · ' +
-                                  code.toUpperCase()
-                                "
-                                (input)="
-                                  setFaqEntryText(
-                                    block.id,
-                                    entry.id,
-                                    'answer',
-                                    code,
-                                    inputValue($event)
-                                  )
-                                "
-                              />
-                            </div>
-                          }
-                        </div>
-                      }
-                      @if (faqOf(block).entries.length < faqMaxEntries) {
-                        <button type="button" class="add-btn" (click)="addFaqEntry(block.id)">
-                          {{ 'configManager.goodToKnow.faq.addEntry' | translate }}
-                        </button>
-                      }
-                    }
-
-                    @case ('contacts') {
-                      @for (entry of contactsOf(block).entries; track entry.id; let n = $index) {
-                        <div class="row-top">
-                          <label class="field field-grow">
-                            <span class="field-label">{{
-                              'configManager.goodToKnow.contacts.firstName'
-                                | translate: { n: n + 1 }
-                            }}</span>
-                            <input
-                              app-input
-                              type="text"
-                              [value]="entry.firstName"
-                              (input)="
-                                setContactField(
-                                  block.id,
-                                  entry.id,
-                                  'firstName',
-                                  inputValue($event)
-                                )
-                              "
-                            />
-                          </label>
-                          <label class="field field-grow">
-                            <span class="field-label">{{
-                              'configManager.goodToKnow.contacts.lastName' | translate
-                            }}</span>
-                            <input
-                              app-input
-                              type="text"
-                              [value]="entry.lastName ?? ''"
-                              (input)="
-                                setContactField(block.id, entry.id, 'lastName', inputValue($event))
-                              "
-                            />
-                          </label>
-                          <button
-                            type="button"
-                            class="remove-btn"
-                            [attr.aria-label]="
-                              'configManager.goodToKnow.contacts.removeEntry' | translate
-                            "
-                            (click)="removeContactEntry(block.id, entry.id)"
-                          >
-                            ×
-                          </button>
-                        </div>
-                        <label class="field">
-                          <span class="field-label">{{
-                            'configManager.goodToKnow.contacts.phoneNumber' | translate
-                          }}</span>
-                          <input
-                            app-input
-                            type="tel"
-                            placeholder="+34 600 00 00 00"
-                            [value]="entry.phoneNumber ?? ''"
-                            (input)="
-                              setContactField(block.id, entry.id, 'phoneNumber', inputValue($event))
-                            "
-                          />
-                        </label>
-                        <div class="field">
-                          <span class="field-label">{{
-                            'configManager.goodToKnow.contacts.purpose' | translate
-                          }}</span>
-                          @for (code of visibleLangs(block.id); track code) {
-                            <div class="ml-stack-row">
-                              @if (isLocalesOpen(block.id)) {
-                                <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                              }
-                              <input
-                                app-input
-                                type="text"
-                                [value]="entry.purpose[code]"
-                                [attr.aria-label]="
-                                  ('configManager.goodToKnow.contacts.purpose' | translate) +
-                                  ' · ' +
-                                  code.toUpperCase()
-                                "
-                                (input)="
-                                  setContactPurpose(block.id, entry.id, code, inputValue($event))
-                                "
-                              />
-                            </div>
-                          }
-                        </div>
-                      }
-                      <p class="field-hint">
-                        {{ 'configManager.goodToKnow.contacts.identifiersHint' | translate }}
-                      </p>
-                      @if (contactsOf(block).entries.length < contactsMaxEntries) {
-                        <button type="button" class="add-btn" (click)="addContactEntry(block.id)">
-                          {{ 'configManager.goodToKnow.contacts.addEntry' | translate }}
-                        </button>
-                      }
-                    }
-
-                    @case ('day-line') {
-                      <!-- The authored sentences drift silently when a date
-                           moves (§4's recorded cost) — showing the live dates
-                           beside the fields is the mitigation the ADR names. -->
-                      <p class="field-hint">
-                        {{
-                          'configManager.goodToKnow.dayLine.datesHint'
-                            | translate
-                              : {
-                                  date: dateInputValue(cfg().date),
-                                  deadline: dateInputValue(cfg().rsvpDeadline),
-                                }
-                        }}
-                      </p>
-                      <div class="field">
-                        <span class="field-label">{{
-                          'configManager.goodToKnow.dayLine.rsvpOpen' | translate
-                        }}</span>
-                        @for (code of visibleLangs(block.id); track code) {
-                          <div class="ml-stack-row">
-                            @if (isLocalesOpen(block.id)) {
-                              <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                            }
-                            <input
-                              app-input
-                              type="text"
-                              [value]="blockLocaleValue(block, 'rsvpOpen', code)"
-                              [attr.aria-label]="
-                                ('configManager.goodToKnow.dayLine.rsvpOpen' | translate) +
-                                ' · ' +
-                                code.toUpperCase()
-                              "
-                              (input)="
-                                setBlockLocale(block.id, 'rsvpOpen', code, inputValue($event))
-                              "
-                            />
-                          </div>
-                        }
-                      </div>
-                      <div class="field">
-                        <span class="field-label">{{
-                          'configManager.goodToKnow.dayLine.rsvpClosed' | translate
-                        }}</span>
-                        @for (code of visibleLangs(block.id); track code) {
-                          <div class="ml-stack-row">
-                            @if (isLocalesOpen(block.id)) {
-                              <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                            }
-                            <input
-                              app-input
-                              type="text"
-                              [value]="blockLocaleValue(block, 'rsvpClosed', code)"
-                              [attr.aria-label]="
-                                ('configManager.goodToKnow.dayLine.rsvpClosed' | translate) +
-                                ' · ' +
-                                code.toUpperCase()
-                              "
-                              (input)="
-                                setBlockLocale(block.id, 'rsvpClosed', code, inputValue($event))
-                              "
-                            />
-                          </div>
-                        }
-                      </div>
-                      <div class="field">
-                        <span class="field-label">{{
-                          'configManager.goodToKnow.dayLine.afterWedding' | translate
-                        }}</span>
-                        @for (code of visibleLangs(block.id); track code) {
-                          <div class="ml-stack-row">
-                            @if (isLocalesOpen(block.id)) {
-                              <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                            }
-                            <input
-                              app-input
-                              type="text"
-                              [value]="blockLocaleValue(block, 'afterWedding', code)"
-                              [attr.aria-label]="
-                                ('configManager.goodToKnow.dayLine.afterWedding' | translate) +
-                                ' · ' +
-                                code.toUpperCase()
-                              "
-                              (input)="
-                                setBlockLocale(block.id, 'afterWedding', code, inputValue($event))
-                              "
-                            />
-                          </div>
-                        }
-                      </div>
-                    }
-
-                    @default {
-                      <!-- `note` — the couple's free-form block (§1). Plain
-                           prose: no Markdown, nothing renders markup. -->
-                      <div class="field">
-                        <span class="field-label">{{
-                          'configManager.goodToKnow.note.body' | translate
-                        }}</span>
-                        @for (code of visibleLangs(block.id); track code) {
-                          <div class="ml-stack-row">
-                            @if (isLocalesOpen(block.id)) {
-                              <span class="lang-tag">{{ code.toUpperCase() }}</span>
-                            }
-                            <input
-                              app-input
-                              type="text"
-                              [value]="blockLocaleValue(block, 'body', code)"
-                              [attr.aria-label]="
-                                ('configManager.goodToKnow.note.body' | translate) +
-                                ' · ' +
-                                code.toUpperCase()
-                              "
-                              (input)="setBlockLocale(block.id, 'body', code, inputValue($event))"
-                            />
-                          </div>
-                        }
-                      </div>
-                    }
-                  }
-
+                  </div>
                   <div class="couple-actions">
                     <button
                       type="button"
                       class="couple-action-btn"
-                      (click)="toggleBlockLocales(block.id)"
+                      (click)="toggleLocales('faq:' + entry.id)"
                     >
                       {{
-                        (isLocalesOpen(block.id)
+                        (isLocalesOpen('faq:' + entry.id)
                           ? 'configManager.goodToKnow.hideOtherLanguages'
                           : 'configManager.goodToKnow.showOtherLanguages'
                         ) | translate
@@ -1653,20 +1489,157 @@
                     </button>
                   </div>
                 </div>
-              } @empty {
-                <p class="couple-footnote">{{ 'configManager.goodToKnow.empty' | translate }}</p>
               }
-              @if (addableBlockTypes().length > 0) {
-                <div class="couple-actions">
-                  <span class="field-label">{{
-                    'configManager.goodToKnow.addTitle' | translate
-                  }}</span>
-                  @for (type of addableBlockTypes(); track type) {
-                    <button type="button" class="add-btn" (click)="addGoodToKnowBlock(type)">
-                      + {{ 'configManager.goodToKnow.type.' + type | translate }}
-                    </button>
-                  }
+              @if (faqEntries().length < faqMaxEntries) {
+                <button type="button" class="add-btn" (click)="addFaqEntry()">
+                  {{ 'configManager.goodToKnow.faq.addEntry' | translate }}
+                </button>
+              }
+
+              <!-- 05 · The day in one line. Which of the three a guest reads
+                   is derived client-side from today's Madrid date against
+                   the two dates below (ADR-0046 §4) — no stored field says
+                   which phase is current, and none may be requested. -->
+              <div class="card" data-section="day-line">
+                <div class="card-top">
+                  <app-pill tone="accent">{{
+                    'configManager.goodToKnow.dayLine.title' | translate
+                  }}</app-pill>
                 </div>
+                <p class="field-hint">
+                  {{
+                    'configManager.goodToKnow.dayLine.datesHint'
+                      | translate
+                        : {
+                            date: dateInputValue(cfg().date),
+                            deadline: dateInputValue(cfg().rsvpDeadline),
+                          }
+                  }}
+                </p>
+                @for (field of dayLineFields; track field) {
+                  <div class="field">
+                    <span class="field-label">{{
+                      'configManager.goodToKnow.dayLine.' + field | translate
+                    }}</span>
+                    @for (code of visibleLangs('dayLine'); track code) {
+                      <div class="ml-stack-row">
+                        @if (isLocalesOpen('dayLine')) {
+                          <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                        }
+                        <input
+                          app-input
+                          type="text"
+                          [value]="dayLineText(field, code)"
+                          [attr.aria-label]="
+                            ('configManager.goodToKnow.dayLine.' + field | translate) +
+                            ' · ' +
+                            code.toUpperCase()
+                          "
+                          (input)="setDayLineText(field, code, inputValue($event))"
+                        />
+                      </div>
+                    }
+                  </div>
+                }
+                <div class="couple-actions">
+                  <button
+                    type="button"
+                    class="couple-action-btn"
+                    (click)="toggleLocales('dayLine')"
+                  >
+                    {{
+                      (isLocalesOpen('dayLine')
+                        ? 'configManager.goodToKnow.hideOtherLanguages'
+                        : 'configManager.goodToKnow.showOtherLanguages'
+                      ) | translate
+                    }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- 06 · Free-form notes. The section that keeps the model open
+                   without an enum to widen (§1); its `title` is the label a
+                   guest reads above the prose, never unlabelled text. -->
+              @for (entry of noteEntries(); track entry.id) {
+                <div class="card" data-section="note">
+                  <div class="card-top">
+                    <app-pill tone="accent">{{
+                      'configManager.goodToKnow.note.title' | translate
+                    }}</app-pill>
+                    <button
+                      type="button"
+                      class="couple-action-btn muted push-right"
+                      (click)="removeNoteEntry(entry.id)"
+                    >
+                      {{ 'configManager.goodToKnow.note.removeEntry' | translate }}
+                    </button>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">{{
+                      'configManager.goodToKnow.note.label' | translate
+                    }}</span>
+                    @for (code of visibleLangs('note:' + entry.id); track code) {
+                      <div class="ml-stack-row">
+                        @if (isLocalesOpen('note:' + entry.id)) {
+                          <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                        }
+                        <input
+                          app-input
+                          type="text"
+                          [value]="entry.title[code]"
+                          [attr.aria-label]="
+                            ('configManager.goodToKnow.note.label' | translate) +
+                            ' · ' +
+                            code.toUpperCase()
+                          "
+                          (input)="setNoteText(entry.id, 'title', code, inputValue($event))"
+                        />
+                      </div>
+                    }
+                  </div>
+                  <div class="field">
+                    <span class="field-label">{{
+                      'configManager.goodToKnow.note.body' | translate
+                    }}</span>
+                    @for (code of visibleLangs('note:' + entry.id); track code) {
+                      <div class="ml-stack-row">
+                        @if (isLocalesOpen('note:' + entry.id)) {
+                          <span class="lang-tag">{{ code.toUpperCase() }}</span>
+                        }
+                        <input
+                          app-input
+                          type="text"
+                          [value]="entry.body[code]"
+                          [attr.aria-label]="
+                            ('configManager.goodToKnow.note.body' | translate) +
+                            ' · ' +
+                            code.toUpperCase()
+                          "
+                          (input)="setNoteText(entry.id, 'body', code, inputValue($event))"
+                        />
+                      </div>
+                    }
+                  </div>
+                  <div class="couple-actions">
+                    <button
+                      type="button"
+                      class="couple-action-btn"
+                      (click)="toggleLocales('note:' + entry.id)"
+                    >
+                      {{
+                        (isLocalesOpen('note:' + entry.id)
+                          ? 'configManager.goodToKnow.hideOtherLanguages'
+                          : 'configManager.goodToKnow.showOtherLanguages'
+                        ) | translate
+                      }}
+                    </button>
+                  </div>
+                </div>
+              }
+              @if (noteEntries().length < noteMaxEntries) {
+                <button type="button" class="add-btn" (click)="addNoteEntry()">
+                  {{ 'configManager.goodToKnow.note.addEntry' | translate }}
+                </button>
               }
             </div>
           </section>
@@ -1680,7 +1653,13 @@
   <span class="status" [class.dirty]="dirty()" [class.saved]="savedFlash()">
     {{ statusKey() | translate }}
   </span>
-  <button app-btn [full]="true" type="button" [disabled]="!dirty() || saveBlocked()" (click)="save()">
+  <button
+    app-btn
+    [full]="true"
+    type="button"
+    [disabled]="!dirty() || saveBlocked()"
+    (click)="save()"
+  >
     {{ saveLabelKey() | translate }}
   </button>
 </div>

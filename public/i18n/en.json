@@ -468,7 +468,7 @@
       "appearance": "The palette and language labels guests experience.",
       "weddingDateChanged": "The preparation timeline keeps its existing dates — milestones don't move with the wedding date.",
       "mapUrlEmbed": "In Google Maps, use Share → Embed a map and paste the link from the iframe code. A plain share link cannot be displayed; the venue address is used instead.",
-      "good-to-know": "The dress code, gifts and questions your guests read. Every word here is yours and is shown exactly as written, in this list's order."
+      "good-to-know": "The dress code, the gifts, who to call and the questions your guests read. Every word here is yours and is shown exactly as written; the order they read it in is fixed."
     },
     "field": {
       "brideName": "Bride",
@@ -582,29 +582,17 @@
       "verdeagua": "Verde Agua"
     },
     "goodToKnow": {
-      "empty": "No blocks yet. Add the first one below — guests will read exactly what you write, in this order.",
-      "addTitle": "Add a block",
-      "type": {
-        "dress-code": "Dress code",
-        "gift": "Gifts",
-        "faq": "FAQ",
-        "contacts": "Contacts",
-        "day-line": "The day in one line",
-        "note": "Free note"
-      },
-      "removeBlock": "Remove block",
       "showOtherLanguages": "Edit the other languages",
       "hideOtherLanguages": "Hide the other languages",
-      "field": {
-        "title": "Block title"
-      },
       "dressCode": {
+        "title": "Dress code",
         "headline": "Headline",
         "body": "Guidance",
         "note": "Note (optional)",
         "swatchesHint": "The colour swatches under this text come from the theme picked in Appearance — they are not written here and can never disagree with it."
       },
       "gift": {
+        "title": "Gifts",
         "intro": "Introduction (optional)",
         "bankTitle": "Bank details",
         "identifiersHint": "Identical in all three languages: transcribed, never translated.",
@@ -615,35 +603,42 @@
         "bizumPhone": "Bizum number",
         "bizumNote": "Bizum note (optional)"
       },
+      "contact": {
+        "title": "Who to call",
+        "hint": "Only people who hold an account on this site. Their name, email and phone number come from that account and are not edited here — if they change their profile, their card changes too. Someone without an account is added as a guest first.",
+        "plannerTitle": "Wedding planner",
+        "plannerEmpty": "No wedding planner listed.",
+        "guestTitle": "Guests",
+        "guestEmpty": "No guest listed.",
+        "choose": "Choose a person…",
+        "addPerson": "+ Add",
+        "remove": "Remove",
+        "purpose": "What to ask them about"
+      },
       "faq": {
+        "title": "FAQ",
         "question": "Question {{n}}",
         "answer": "Answer",
         "addEntry": "+ Add a question",
         "removeEntry": "Remove question"
       },
-      "contacts": {
-        "firstName": "Contact {{n}} · first name",
-        "lastName": "Last name (optional)",
-        "phoneNumber": "Phone (optional)",
-        "purpose": "What to ask them about",
-        "addEntry": "+ Add a contact",
-        "removeEntry": "Remove contact",
-        "identifiersHint": "Names and phone numbers render the same in all three languages."
-      },
       "dayLine": {
+        "title": "The day in one line",
         "datesHint": "Current dates: wedding on {{date}}, RSVP deadline {{deadline}}. If either moves, these sentences do not update themselves — reread them.",
         "rsvpOpen": "While the RSVP is open",
         "rsvpClosed": "After the deadline, until the wedding",
         "afterWedding": "After the wedding"
       },
       "note": {
-        "body": "Text"
+        "title": "Free note",
+        "label": "Title guests read",
+        "body": "Text",
+        "addEntry": "+ Add a note",
+        "removeEntry": "Remove note"
       },
       "issue": {
-        "missingTitle": "Block {{n}} ({{type}}): the title is missing in one of the three languages.",
-        "incomplete": "Block {{n}} ({{type}}): fill in the required fields in all three languages.",
-        "faqTooFew": "Block {{n}} ({{type}}): needs at least three questions.",
-        "contactsTooFew": "Block {{n}} ({{type}}): needs at least one person."
+        "incomplete": "{{section}}: fill in the required fields in all three languages.",
+        "purposeMissing": "{{section}}: every listed guest needs their “what to ask them about” in all three languages."
       }
     }
   },
