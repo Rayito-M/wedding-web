@@ -273,7 +273,18 @@
     and the next person still cannot tell a real failure from this one.
   - Report the number of consecutive full runs you achieved and **call it a floor, not a fix**
     (§4). Say what would falsify it — here, more runs under load.
-- **Refs:** `e2e/helpers/ds-kit.ts`; T388's report (the 6/4-spec measurement); `.agent/skills/task-management.md` §4
+- **A second, distinct cause lives in the same bucket — do not conflate them.** T390 measured flaky
+  4 → 8: seven are the ds-kit contention above, and the **eighth is different**. In
+  `public-surface.spec.ts` the first attempt rendered **raw translation keys** — the locale file had
+  not loaded — and the assertion that failed was T385's section title, which T390 never touched.
+  Isolated three consecutive times: 25/25, no retries, which its own report correctly calls a floor
+  rather than proof of absence.
+  **Ask the question the flake raises before fixing the test:** if the app can paint before
+  translations resolve under a test harness, can a guest on a slow connection see raw keys on first
+  load? If the answer is no, say what makes it impossible; if it is yes, that is an app defect and
+  belongs in its own task, not in a retry.
+- **Refs:** `e2e/helpers/ds-kit.ts`; T388's report (the 6/4-spec measurement); T390's report (the
+  eighth flake); `.agent/skills/task-management.md` §4
 
 ### T390 — Settings tells the couple their contact cards self-update; the privacy notice says they don't
 - **Status:** done (2026-09-15) — the hint now says what Amendment 3 §A establishes: the details are
@@ -315,3 +326,33 @@
   - Hard rule 11 gate green.
 - **Refs:** T384 (which shipped the hint), T385 (which found it and shipped the correct notice);
   hub ADR-0047 Amendment 3 §A; `wedding-api` T251
+
+
+### T391 — The copy that carries a factual claim should be asserted, not just written
+- **Status:** todo — **not release-blocking**; it is the reason the last four defects were possible
+- **Owner:** agent (implementer)
+- **Depends on:** T385, T390 (both done — they are the reference for what "true" currently is)
+- **ADR:** hub **ADR-0047 §3**, Amendment 3 §A
+- **Why:** the same false claim — *contact details update themselves* — shipped in **four** places
+  before anyone caught it: ADR-0047 §2, `SPEC.md`/`GLOSSARY.md`, `wedding-api`'s
+  `wedding-config.ts:199-202`, and finally `configManager.goodToKnow.contact.hint`, which a **user
+  reads**. T385's implementer found the fourth; T390 fixed it; and T390's report ends with the point
+  that matters: **the hint is covered by no test at all.** Its correctness rests on the copy alone,
+  so the next false claim in that string ships exactly the way this one did.
+  The pattern that *does* work already exists in this repo. T381 added a **negative** assertion —
+  the notice must not promise the unbuilt third-party case — and it did its job: it failed loudly
+  when ADR-0047 made the opposite true, forcing T385 to invert it deliberately rather than drift.
+- **Acceptance:**
+  - Assert the **factual claims** of `configManager.goodToKnow.contact.hint` the way
+    `public-surface.spec.ts` asserts the privacy notice's: that it does **not** promise cards update
+    themselves, and that it **does** say details are copied when the person is added.
+  - **Assert meaning, not prose.** Match on the load-bearing clause, not the whole sentence — a test
+    that breaks when someone improves the wording will be deleted by the third person who hits it,
+    and then there is no test at all. Do it in all three locales.
+  - **Prove it bites**, the standard T378, T382 and T385 all met: restore the pre-T390 wording, watch
+    the assertion fail, restore, re-run.
+  - Say in the report whether any **other** user-facing string carries a factual claim about how the
+    system behaves and is likewise unasserted. **Report the list; do not fix it** — the size of that
+    list is the finding, and it decides whether this is a one-off or a habit.
+- **Refs:** T390's report (the observation); T381 (the negative assertion that worked); T385
+  (`e2e/public-surface.spec.ts`); hub ADR-0047 Amendment 3 §A

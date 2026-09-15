@@ -73,7 +73,7 @@ never by its letter alone.
 | `30-phase-n-navigation-five-cap` | Phase N (second use of the letter) — Navigation five-cap and the Manage door (hub ADR-0045) | 13 |
 | `31-phase-o-hygiene` | Phase O (second use of the letter) — Hygiene batch (no ADR) | 1 |
 | `32-good-to-know-content` | Good to know content (hub ADR-0046, accepted; amended 2026-09-09) — unlettered; the alphabet ran out | 8 |
-| `33-general-information` | `generalInfo` replaces the block array (hub ADR-0047); phase 32's shape tasks are superseded, not deleted | 8 |
+| `33-general-information` | `generalInfo` replaces the block array (hub ADR-0047); phase 32's shape tasks are superseded, not deleted | 9 |
 
 ---
 
@@ -270,4 +270,5 @@ never by its letter alone.
 | **T387** | Two things in the tree that must not reach a release | todo — **gates the v1.3.0 tag** | `33-general-information` |
 | **T388** | The e2e fixtures still serve the block array, so 30 specs assert a dead render | done — info spec 45/45; suite 420, 0 assertion failures; residual flake is the ds-kit harness | `33-general-information` |
 | **T389** | The DS-kit static server loses races under parallel e2e load | todo — not release-blocking | `33-general-information` |
-| **T390** | Settings says contact cards self-update; the notice says they don't | done — the hint matches the notice in es/en/fr; 843 keys/locale, 0 missing | `33-general-information` |
+| **T391** | The copy that carries a factual claim should be asserted, not just written | todo — not release-blocking | `33-general-information` |
+| **T390** | Settings says contact cards self-update; the notice says they don't | done (`5b75068`) | `33-general-information` |
