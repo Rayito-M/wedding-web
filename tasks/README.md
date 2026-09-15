@@ -255,18 +255,18 @@ never by its letter alone.
 | **T372** | The couple shares the guest Home; planning only in Manage · Overview | done | `30-phase-n-navigation-five-cap` |
 | **T373** | Overview 1.15/0.85 grid + block-outline parity in the harness | done — Guests/Milestones fixme'd, see T373 report | `30-phase-n-navigation-five-cap` |
 | **T374** | Guest manager: filter toolbar joins the pinned head | done | `30-phase-n-navigation-five-cap` |
-| **T375** | Home's Good to know section renders the couple's blocks | done | `32-good-to-know-content` |
-| **T376** | Settings grows an eighth section: authoring Good to know | done | `32-good-to-know-content` |
+| **T375** | Home's Good to know section renders the couple's blocks | done, then **superseded by ADR-0047** (see T383) | `32-good-to-know-content` |
+| **T376** | Settings grows an eighth section: authoring Good to know | done, then **superseded by ADR-0047** (see T384) | `32-good-to-know-content` |
 | **T377** | Good to know strings in es/en/fr | done (guest half; authoring half split to T379) | `32-good-to-know-content` |
 | **T378** | The privacy notice covers couple-entered contact details, and nothing leaks pre-sign-in | done | `32-good-to-know-content` |
-| **T379** | The authoring form's strings, in es/en/fr | done — verification/voice pass over T376's 50 keys; 15 values retouched, parity re-measured at 865/locale | `32-good-to-know-content` |
+| **T379** | The authoring form's strings, in es/en/fr | done, then **partly superseded** — the voice pass stands, its 50 keys did not (see T384) | `32-good-to-know-content` |
 | **T380** | The privacy notice still does not say a delegate reads someone else's whole reply | todo | `32-good-to-know-content` |
 | **T381** | The privacy notice widens: the third-party case now ships | done | `32-good-to-know-content` |
-| **T382** | Consume T246's contract: a contact carries its own details, and may have no account | done | `32-good-to-know-content` |
+| **T382** | Consume T246's contract: a contact carries its own details, and may have no account | done, then **superseded by ADR-0047 §2** (see T383) | `32-good-to-know-content` |
 | **T383** | Render the `generalInfo` sections | done (`5583e1e`) — one merge unit with T384, which closed it | `33-general-information` |
 | **T384** | The authoring screen becomes a fixed-shape editor | done (`f4f4ec3`) — merge unit closed, typecheck green; lint/e2e red on T387 and T383 | `33-general-information` |
 | **T385** | The privacy notice describes what actually ships | done (`9cfacf5`) — e2e 0 failed; found T390 | `33-general-information` |
-| **T386** | Mark phase 32's superseded tasks, and say why | todo | `33-general-information` |
+| **T386** | Mark phase 32's superseded tasks, and say why | done (hub session, 2026-09-15) | `33-general-information` |
 | **T387** | Two things in the tree that must not reach a release | done (`8da774d`) — lint 6 → 4, matching the documented clause | `33-general-information` |
 | **T388** | The e2e fixtures still serve the block array, so 30 specs assert a dead render | done — info spec 45/45; suite 420, 0 assertion failures; residual flake is the ds-kit harness | `33-general-information` |
 | **T389** | The DS-kit static server loses races under parallel e2e load | todo — **blocks any green e2e-gate claim** | `33-general-information` |

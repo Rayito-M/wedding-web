@@ -1,5 +1,16 @@
 # Phase — Good to know content (hub ADR-0046)
 
+> **⚠️ This phase's shape tasks were superseded before v1.3.0 shipped.** Hub **ADR-0047** (2026-09-09)
+> replaced `goodToKnow` — the ordered array of typed blocks these tasks build — with `generalInfo`,
+> an object of named sections. **T375, T376, T379 and T382 are superseded**; their work was real,
+> their reports stand, and the shape they describe no longer exists. Phase **33-general-information**
+> is what shipped.
+>
+> **T377, T378, T380 and T381 are NOT superseded.** T377/T378's work survives in the product,
+> T381's copy was rewritten by T385 rather than voided, and **T380 is still open** — a pre-existing
+> gap in the privacy notice that has nothing to do with the shape. Do not read the banner as
+> retiring the whole phase.
+
 > T364 shipped Home's "Good to know" section as an honest empty state and said why in
 > `src/app/shared/good-to-know/good-to-know.ts:4-17`: no dress-code / FAQ / gift concept existed
 > anywhere in the product to render. Hub **ADR-0046** creates one — `goodToKnow` on the wedding
@@ -25,7 +36,9 @@
 > not evidence of design fidelity).
 
 ### T375 — Home's Good to know section renders the couple's blocks
-- **Status:** done
+- **Status:** **done, then SUPERSEDED by hub ADR-0047** (2026-09-15). The render it shipped was the ordered
+  block array; `wedding-web` **T383** replaced it with the six named `generalInfo` sections. The work
+  was real and the report stands — the *shape* it rendered no longer exists.
 - **Owner:** agent (implementer)
 - **Depends on:** `wedding-api` **T244** (the field must be in `contracts/openapi.json` first —
   `pnpm gen:api` is the first step of this task, not an assumption)
@@ -101,7 +114,9 @@
   (reference, with the two corrections above); counterpart `wedding-api` **T244**
 
 ### T376 — Settings grows an eighth section: authoring Good to know
-- **Status:** done (2026-09-09) — built as decided: six block types, ordered array, no swatch
+- **Status:** **done, then SUPERSEDED by hub ADR-0047** (2026-09-15) — **T384** rebuilt this screen as a
+  fixed-shape editor. Everything below describes the block builder: add/reorder/remove, singleton
+  enforcement, the 12-block ceiling. None of that survives. Originally: done (2026-09-09) — built as decided: six block types, ordered array, no swatch
   naming, Appearance untouched. Report: `reports/T376.json`. The DS kit was synced first
   (`wedding-ui-design` b6ae7a0/aefd4fb): the eighth-section design is on disk, its one gate
   violation fixed, and both ConfigManager screens sit `outdated` in the DS ledger awaiting a
@@ -219,7 +234,9 @@
   hub `GLOSSARY.md` → *Public wedding info*, *Good-to-know contact*
 
 ### T379 — The authoring form's strings, in es/en/fr
-- **Status:** **done (2026-09-09)** — the verification and voice pass ran and it was not a no-op:
+- **Status:** **done, then PARTLY SUPERSEDED** (2026-09-15) — the voice pass itself stands, but the 50 keys it
+  reviewed were T376's block-editor strings, which **T384** replaced. The method and the
+  corrections it found are the durable part. Originally: **done (2026-09-09)** — the verification and voice pass ran and it was not a no-op:
   15 values changed across 10 of the 50 keys (es 7, fr 6, en 2 — vosotros alignment, de-jargoned
   section notes, the ADR-0014 messaging-verb fix in `contacts.purpose`, the fr headline/title label
   collision, punctuation/numeral consistency). Re-measured parity: **865** keys per locale (the 842
@@ -339,7 +356,9 @@
   `src/app/screens/privacy-policy/`; T378 (the narrow version and why it was narrow); T380
 
 ### T382 — Consume T246's contract: a contact carries its own details, and may have no account
-- **Status:** done (2026-09-09) — unblocks T376; the gap T381's report found is closed
+- **Status:** **done, then SUPERSEDED by hub ADR-0047** (2026-09-15). It consumed T246's `{firstName, lastName,
+  phoneNumber, purpose, userId?}` contacts shape; ADR-0047 §2 replaced it with user-digest
+  references, and **T383** consumed that. Originally: done (2026-09-09) — unblocks T376; the gap T381's report found is closed
 - **Owner:** agent (implementer)
 - **Depends on:** `wedding-api` **T246** (landed, `de5385b`; contract `6eb233e`)
 - **ADR:** hub **ADR-0046 Amendment 2 §A/§B/§D**
