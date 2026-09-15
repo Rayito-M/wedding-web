@@ -137,6 +137,13 @@
     until you have done it** — the suite is asserting the previous requirement.
   - Extend `e2e/public-surface.spec.ts` to assert **no `couple`, no email and no phone number**
     reaches any unauthenticated route — the client-side half of `wedding-api` T247.
+  - **The same file still asserts and poisons `goodToKnow`, an attribute that no longer exists**
+    (found by T388, which left it deliberately because you own this file). It **passes**, which is
+    the problem: a leak guard aimed at a field the API cannot return proves nothing. Re-point the
+    poisoning test at **`generalInfo`** — with a real IBAN, a Bizum number and a contact phone in the
+    ADR-0047 shape — so it is testing the attribute that actually carries the PII. Prove it bites
+    the way T378 and T382 did: inject the value into an unauthenticated surface, watch it fail,
+    restore, re-run.
   - No missing-key warnings in any locale; report the resolved `privacyPolicy.*` count for all three,
     **measured this run**.
   - Hard rule 11 gate green.
@@ -230,3 +237,29 @@
     measure**, and do not inherit T384's — it measured a tree that could not run this spec.
 - **Refs:** T383 (the render), T384 (the editor), `e2e/support/api-mocks.ts:141-274`,
   `e2e/layout/design-parity-info.spec.ts`; hub ADR-0047 §4
+
+
+### T389 — The DS-kit static server loses races under parallel e2e load
+- **Status:** todo — **not release-blocking; it makes every future gate harder to read**
+- **Owner:** agent (implementer)
+- **Depends on:** —
+- **ADR:** none — test infrastructure
+- **Why:** `e2e/helpers/ds-kit.ts` spawns one `python3 -m http.server` per Playwright project, and
+  five workers navigate it. T388 measured **6 failures across four parity specs — three of which it
+  never touched** — all `page.goto`/first-click timeouts against that server, and all green under
+  `--retries=2` (387 passed, 0 failed, 3 flaky). It also explains why T388's baseline was 32 and not
+  the 30 the task text predicted: the extra two were the same flake.
+  Every implementer now pays for this twice — once measuring a baseline that includes it, once
+  explaining which failures are theirs. `.agent/skills/task-management.md` §4 already warns that a
+  clean-run count is a floor; this is the thing that makes it one.
+- **Acceptance:**
+  - Find the actual cause before changing anything: a single-threaded `http.server` serving five
+    concurrent workers is the obvious suspect, but **reproduce it** (§5 — a failing run with the
+    error, not a hypothesis). Worth checking whether one server shared across projects, a
+    `--workers` bound for parity specs only, or a readiness probe before the first `goto` is the
+    real fix.
+  - The fix is in the harness, **not in `--retries`**. Retries hide a race; they do not remove it,
+    and the next person still cannot tell a real failure from this one.
+  - Report the number of consecutive full runs you achieved and **call it a floor, not a fix**
+    (§4). Say what would falsify it — here, more runs under load.
+- **Refs:** `e2e/helpers/ds-kit.ts`; T388's report (the 6/4-spec measurement); `.agent/skills/task-management.md` §4
