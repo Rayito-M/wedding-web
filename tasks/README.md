@@ -263,8 +263,8 @@ never by its letter alone.
 | **T380** | The privacy notice still does not say a delegate reads someone else's whole reply | todo | `32-good-to-know-content` |
 | **T381** | The privacy notice widens: the third-party case now ships | done | `32-good-to-know-content` |
 | **T382** | Consume T246's contract: a contact carries its own details, and may have no account | done | `32-good-to-know-content` |
-| **T383** | Render the `generalInfo` sections | done (`5583e1e`) — **tree red until T384**; one merge unit | `33-general-information` |
-| **T384** | The authoring screen becomes a fixed-shape editor | todo — **next, and the tree is red until it lands** | `33-general-information` |
+| **T383** | Render the `generalInfo` sections | done (`5583e1e`) — one merge unit with T384, which closed it | `33-general-information` |
+| **T384** | The authoring screen becomes a fixed-shape editor | done (`f4f4ec3`) — merge unit closed, typecheck green; lint/e2e red on T387 and T383 | `33-general-information` |
 | **T385** | The privacy notice describes what actually ships | todo — unblocked; run after T384 | `33-general-information` |
 | **T386** | Mark phase 32's superseded tasks, and say why | todo | `33-general-information` |
 | **T387** | Two things in the tree that must not reach a release | todo — **gates the v1.3.0 tag** | `33-general-information` |

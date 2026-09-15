@@ -1,0 +1,192 @@
+{
+  "task": "T384",
+  "status": "complete_with_deviation",
+  "summary": "Settings' eighth section is now a fixed-shape editor over `generalInfo`: six named sections in the design system's order, and every piece of the block array's machinery deleted — no block ids outside faq/note, no singleton enforcement, no uniqueness refinement, no 12-block ceiling, no add/reorder/remove of sections, no `type` enum, no `as*` union casts. Presence is derived from content rather than from a control: an all-blank section raises no issue and is dropped from the payload, which is what let the add/remove controls go entirely (deviation 1). `contact` is a picker over the `User` collection this screen already loads, with `purpose` the only thing the couple types and the digest re-read from the account at save time (deviation 2). `faq` and `note` stay 1–10 arrays with ULIDs minted here. ADR-0031's ergonomics are unchanged. The CSS budget was re-measured, not trusted: 16.85 kB against a 17 kB ceiling, unchanged, because the section adds no CSS. Measuring the baseline in a throwaway worktree found 22 typecheck errors at HEAD, not 21: the 22nd is `login.service.ts`'s missing `wedding-planner` landing row, which T383's codegen made mandatory — committed separately, with the Product Owner's approval, since the merge unit does not compile without it. Typecheck is now clean at HEAD alone; lint and e2e stay red for three causes owned by T387 and T383, listed under `risks[]`.",
+  "acceptance": [
+    {
+      "criterion": "Settings' Good-to-know section is one editor per named section, not a block builder. No add/reorder/remove of blocks, no block ids, no singleton enforcement, no 12-block ceiling.",
+      "met": true,
+      "evidence": "`config-manager.html` writes the six sections out literally, tagged `data-section=\"dress-code|gift|contact|faq|day-line|note\"`; test \"renders one editor per named section and offers nothing to add, reorder or remove\" asserts the four singleton cards exist exactly once each, that `.card-list > .card` reads ['dress-code','gift','contact','day-line'] in the DS's order, that the only two `.card-list > .add-btn` are faq.addEntry and note.addEntry, and that the singleton cards' `.card-top` carries zero buttons. grep of `config-manager.ts` and `.html` for `GOOD_TO_KNOW_TYPES`, `SINGLETON_BLOCK_TYPES`, `GOOD_TO_KNOW_MAX_BLOCKS`, `addableBlockTypes`, `addGoodToKnowBlock`, `removeGoodToKnowBlock`, `moveGoodToKnowBlock`, `mutateGoodToKnow`, `updateBlock`, `blockLocaleValue`, `asDressCode|asGift|asFaq|asContacts|asDayLine|asNote`, `block.type`, `block.id` and `goodToKnow` returns zero matches; `@switch` on a block type is gone from the template.",
+      "notes": "The i18n keys that only the block builder could use went with it: `goodToKnow.type.*` (6), `empty`, `addTitle`, `removeBlock`, `field.title`, `contacts.*` (7) and three `issue.*` rows — 20 keys removed, 19 added, in all three locales."
+    },
+    {
+      "criterion": "`faq` and `note` remain add/remove arrays (1–10 each), their entries carrying ULID ids the editor mints.",
+      "met": true,
+      "evidence": "Test \"adds and removes FAQ entries between 1 and 10, minting a ULID for each\" adds ten, asserts the add button is withheld at the ceiling (`expect(addFaq()).toBeUndefined()`), removes nine, asserts it returns, then fills the survivor and saves — `lastUpdate.generalInfo.faq[0].id` matches `/^[0-9A-HJKMNP-TV-Z]{26}$/`. Test \"notes are a 1–10 array too, each with the title guests read above its prose\" covers the note twin plus its required `title`/`body`. The floor needs no control: an emptied array is dropped from the payload rather than sent as `[]`, which the API's `.min(1)` would reject.",
+      "notes": "`FAQ_MAX_ENTRIES`/`NOTE_MAX_ENTRIES` are the only cardinality constants left; the old `FAQ_MIN_ENTRIES = 3` is gone — ADR-0047 §1's floor is 1, and the API schema confirms `.min(1).max(10)` on both arrays."
+    },
+    {
+      "criterion": "`contact` is a picker, not a form. The couple chooses people who already hold accounts and types only the `purpose` line, on guest entries. Names, emails and numbers come from the account and are not editable here. A person with no account is added as a guest first; this screen does not create one.",
+      "met": true,
+      "evidence": "Test \"contact is a picker: details come from the account and are not editable here\" asserts two `<select>`s whose options are exactly ['', 'u-planner'] and ['', 'u-guest'] — each offering only accounts of its own role — and that after picking a planner the card renders `Eva Ruiz` / `+34 600 11 22 33` / `eva@example.com` as text with `querySelectorAll('input').length === 0`. Test \"a picked guest needs a purpose in all three locales before Save\" asserts a guest row has exactly one input, that it is the purpose line, that Save is withheld with `issue.purposeMissing` until it is filled, and that the saved entry is the account's digest verbatim. The source is the `User` collection (`GET /v1/users`, all roles, couple-only) the screen already loads for the couple section; no create path is reachable from this section.",
+      "notes": "`contactDigest()` copies only `id`, `role`, `firstName`, `lastName`, `email`, `phoneNumber` — deliberately NOT `lastSeen`, which `UserDto` carries structurally and hard rule 16 forbids surfacing here. `role` is taken from the account rather than from the group, so the stored literal and the list a person sits in cannot disagree."
+    },
+    {
+      "criterion": "Three-locale authoring keeps ADR-0031's ergonomics: one typed value pre-fills all three locales, the other two behind a disclosure, and a customized locale sticks. Identifiers are single inputs, visibly not per-locale.",
+      "met": true,
+      "evidence": "Test \"pre-fills all three locales from the primary language and lets a customized locale stick\" types into the closed dress-code headline (one row, primary pinned to `en`), opens the disclosure, asserts all three rows carry the typed value, customizes FR, retypes the primary, and asserts ['Garden formal!','Garden formal!','Tenue de jardin']. `mergeLocalized` is carried over unchanged from T376 and is still stateless — customization is read back out of the values, not held in a component-local Set. Identifiers render through `giftIdentifier`/`setGiftIdentifier` as one plain input each, under the `gift.identifiersHint` line, with no `lang-tag` and no per-locale row; `GiftProseField` and `GiftIdField` split the gift shape in the type system so the two cannot be confused at a call site.",
+      "notes": "The disclosure is keyed by section (`'dressCode'`, `'gift'`, `'dayLine'`) or section-and-entry (`'faq:<ulid>'`, `'note:<ulid>'`, `'guest:<id>'`) instead of by block id. Nothing about it is stored, ordered or sent — it is which disclosure is open, and it dies with the page."
+    },
+    {
+      "criterion": "Save rides the existing `PATCH /v1/config` path, sending the whole `generalInfo` object.",
+      "met": true,
+      "evidence": "Test \"PATCHes the whole generalInfo object, dropping sections and fields the couple never wrote\" asserts `Object.keys(lastUpdate.generalInfo).sort()` is ['dressCode','faq','gift'], that `dressCode.note`, `gift.intro` and `gift.bizumPhone` are `undefined`, that `gift.iban` is byte-identical to 'ES91 2100 0418 4502 0005 1332', and that the rest of the document travels with it (`version`, `brideName`). `save()` is untouched: still `weddingConfigCollection.update(this.sanitizedConfig())` through `wedding-config-data.service.ts` to `weddingConfigControllerUpdateV1`. Test \"drops a section the couple has emptied rather than sending it blank\" clears all three locales of both required dress-code fields and asserts no message, Save allowed, and `generalInfo.dressCode` absent from the payload while `faq` survives.",
+      "notes": "`sanitizedGeneralInfo()` returns `undefined` when no section is written, so `generalInfo` is omitted rather than sent as `{}`. See risks[0] for what that cannot do."
+    },
+    {
+      "criterion": "The per-component CSS budget is a hard stop. `config-manager` measured 16.85 kB against a 17 kB error ceiling in T376. If this section pushes it over, stop and say so — and re-measure rather than trusting that figure.",
+      "met": true,
+      "evidence": "Re-measured this run, twice (before and after the prettier pass): `pnpm build` -> \"src/app/screens/config-manager/config-manager.scss exceeded maximum budget. Budget 8.00 kB was not met by 8.85 kB with a total of 16.85 kB.\" Still a warning against the 8 kB warn level, still 0.15 kB under the 17 kB error ceiling, and identical to T376's figure because `config-manager.scss` is byte-for-byte unchanged: `git diff HEAD~2 --stat` lists no `.scss` file.",
+      "notes": "The section was built from the screen's existing classes only — `.card`, `.card-top`, `.card-list`, `.field`, `.field-label`, `.field-hint`, `.field-grow`, `.ml-stack-row`, `.lang-tag`, `.row-top`, `.couple-name`, `.couple-meta`, `.couple-actions`, `.couple-action-btn`, `.add-btn`, `.select-native`, `.error-message`. The `data-section` attributes are markup hooks with no CSS behind them."
+    },
+    {
+      "criterion": "Unit tests for the cardinality rules, the locale pre-fill, and the save payload shape.",
+      "met": true,
+      "evidence": "8 tests in `config-manager.spec.ts`'s new T384 block, all passing, replacing T376's 5: section inventory; FAQ 1–10 with ULIDs; notes 1–10 with the guest-facing title; locale pre-fill and customization; contact as a picker; guest purpose required and its saved digest; the whole-object payload with drops; and the emptied-section drop. Suite: 644 passed, 0 failing, 49 files.",
+      "notes": "Verified the new tests actually execute rather than being silently skipped: an asserted 8 flipped to 999 produced \"1 failed | 643 passed\" pointing at spec line 461, and was restored before the final run."
+    },
+    {
+      "criterion": "Hard rule 11 gate green.",
+      "met": false,
+      "evidence": "typecheck PASSES (0 errors; measured at HEAD alone in a throwaway worktree, both projects exit 0). test PASSES (644/644, 49 files). build PASSES. lint FAILS: 6 ESLint errors in the working tree, 5 at HEAD alone — none of them mine. e2e FAILS: 345 passed, 30 failed, 30 skipped; all 30 failures are `e2e/layout/design-parity-info.spec.ts`, which asserts the block-array render, and none touch config-manager. stylelint passed (no new violations, 550 baselined); ds:verify passed (31/31 clean pairs, 0 drifting values).",
+      "notes": "Three causes, all owned elsewhere and all listed in risks[]: T387's two lint items (the suspended `add()` in the working tree, and `guest-profile-modal.ts:25`), and T383's e2e fallout — `e2e/support/api-mocks.ts` still serves `goodToKnow` blocks on `GET /v1/config` and nothing anywhere in `e2e/` mocks `GET /v1/config/general-information`, so `app-good-to-know .block` never appears and every test in that file times out in `openApp`. `e2e/layout/config-manager.spec.ts` and `design-parity-config.spec.ts` both pass."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "The task names what the editor must NOT have (add/reorder/remove of sections) but does not say how a section comes into existence or goes away, and every section on `generalInfo` is optional.",
+      "to": "Presence is derived from content. The four singleton cards always render; a section is included in the payload exactly when the couple has written something into it, and an all-blank one is dropped rather than sent. There is no enable/disable control, no 'add section' affordance and no delete button.",
+      "reason": "Any explicit presence control is the block builder's add/remove in a thinner disguise — a per-section toggle, a checkbox or a create button would restore exactly the machinery the bullet exists to prevent, and would add a second source of truth for 'does this section exist' alongside its own content. Deriving it also closes a trap: a couple who types into a section and then clears it would otherwise be stuck behind a permanent 'incomplete' message with no way to withdraw the section.",
+      "authorized_by": "hub ADR-0047 §1 (`generalInfo` is optional with no default, and each section is an optional field) and the task's own bullet: \"No add/reorder/remove of blocks … all of that machinery died with the array, and re-creating any of it is the failure mode this bullet exists to prevent.\"",
+      "verified_how": "Test \"drops a section the couple has emptied rather than sending it blank\" clears all three locales of both required dress-code fields and asserts no error message, Save enabled, `generalInfo.dressCode` absent from the payload and `faq` still present. The mirror case — a half-written section — is covered by \"notes are a 1–10 array too\", which asserts the message appears and Save is disabled while a title is typed and a body is not."
+    },
+    {
+      "from": "\"Names, emails and numbers come from the account and are not editable here\" — read naturally as: copy the digest once, at pick time.",
+      "to": "The digest is also re-read from the live account at save time, so a picked person's stored name, email and number are refreshed to whatever the account holds when the couple next saves. `purpose` survives untouched.",
+      "reason": "ADR-0047 §2 justifies the digest with \"details come from the person's own USER document, so a profile edit updates the contact card and deactivating an account removes them\". `wedding-config.service.ts:84-96` (T249) composes only the `couple` digest at read time and serves `generalInfo.contact` exactly as stored, so nothing on the API side re-resolves a planner or guest. Without a refresh the picked snapshot is precisely the staleable inline copy Amendment 2 was superseded to remove. Re-reading at save is the freshest the client can be without inventing a write the API does not have.",
+      "authorized_by": "hub ADR-0047 §2 (the staleability argument the digest exists to satisfy). Not covered by a task bullet — recorded here because it changes what a save writes.",
+      "verified_how": "Read off the API source: `getWeddingGeneralInformation()` spreads `config.generalInfo` and overrides only `contact.couple`. Test \"a picked guest needs a purpose in all three locales before Save\" asserts the saved guest entry equals the account's fields verbatim (id, role, firstName, lastName, email, phoneNumber) with the couple's `purpose` alongside. An entry whose account is absent from the list — deactivated, or not loaded — is sent back verbatim rather than blanked (`refreshedPlanner`/`refreshedGuest`)."
+    },
+    {
+      "from": "The design system's eighth Settings section (`ScreenConfigManager.jsx:389-433`, synced at `b6ae7a0`) draws three cards — dress code, gifts, FAQ — with fields `headline`/`note`/`footnote`, `gift.headline`/`note`/`bank`/`footnote`, and a palette-naming editor in Appearance.",
+      "to": "Six sections with ADR-0047 §1's field names (`headline`/`body`/`note`, `intro`/`accountHolder`/`iban`/`bic`/`reference`/`bizumPhone`/`bizumNote`), plus contact, day-line and note editors the DS does not draw, and no palette editor.",
+      "reason": "ADR-0047 §1's table is the shape that exists; the DS mock predates it and names fields the contract does not have. The DS's own header note — \"Who to ask comes from the accounts themselves\" — agrees with §2's picker, but it draws no picker. The palette editor is separately and explicitly not adopted (ADR-0046 Amendment 3, re-affirmed by ADR-0047 §6: swatches stay derived from `themeId`).",
+      "authorized_by": "hub ADR-0047 §6 and Amendment 3 (swatches stay derived, Appearance untouched); ADR-0044 §1 (the DS proposes, `SPEC.md` decides); ADR-0047 \"Implications per repo\" — \"both `ScreenConfigManager` screens remain `outdated` pending a parity spec\".",
+      "verified_how": "`pnpm ds:verify` -> \"fidelity: 31/31 clean pairs; 0 drifting values\" — the section introduces no new token and no new value to drift. `grep -n 'Good to know' ScreenConfigManager.jsx` shows the mock's three cards and its `dressCode.palettes` editor; `ScreenConfigManagerMobile.jsx` draws no Good-to-know section at all."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "errors_before": 22,
+      "errors_after": 0,
+      "new_errors": [],
+      "detail": "Before, measured this run in a detached worktree at `4cd39eb` with node_modules symlinked: 22 errors — 21 in `src/app/screens/config-manager/config-manager.ts` (T383's `pnpm gen:api` deleted the 14 good-to-know models this file used) and 1 in `src/app/core/service/login.service.ts:25` (`Property '\"wedding-planner\"' is missing … but required in type 'Record<RoleEnum, string>'`, from the same codegen widening the role enum per ADR-0047 §7). T383's report recorded 21 because that file's fix already sat uncommitted in the tree. After, measured the same way at `11189ec` with only the committed state: `tsc -p tsconfig.app.json --noEmit` and `tsc -p tsconfig.spec.json --noEmit` both exit 0."
+    },
+    "lint": {
+      "result": "fail",
+      "eslint_errors_before": 6,
+      "eslint_errors_after": 6,
+      "eslint_errors_at_head_alone": 5,
+      "new_errors": [],
+      "stylelint": "passed — no new violations (550 pre-existing, baselined)",
+      "ds_fidelity": "passed — 31/31 clean pairs, 0 drifting values",
+      "detail": "Unchanged by this task: 6 before, 6 after, zero in any file I wrote. Four are in `src/app/shared/modal/` (hard rule 11's documented exception). One is `guest-manager/modal/guest-profile-modal.ts:25` ('WeddingGuestsService' unused) — present at HEAD and NOT covered by that written exception, which says 4; this is the count mismatch T387's second bullet is about, now raised a third time. The sixth, `core/data/wedding-config-data.service.ts:40` ('config' is defined but never used), exists only in the working tree, from the suspended `add()` the Product Owner asked to be left alone — `npx ng lint` in a clean worktree at HEAD reports 5, not 6."
+    },
+    "test": {
+      "before": { "total": 0, "failing": 0, "files": 0 },
+      "after": { "total": 644, "failing": 0, "files": 49 },
+      "new_failures": [],
+      "detail": "The before figure is 0 by necessity, not by measurement: the unit-test builder compiles the whole app, and at `4cd39eb` the app does not compile, so `pnpm test` produced no suite at all. That is the merge unit's premise, not drift. After: 49 files, 644 tests, 0 failing. `config-manager.spec.ts` went from 5 T376 tests to 8 T384 tests; the net total is unchanged at 644 because the three added here offset three that went with the block builder's fixtures."
+    },
+    "build": {
+      "result": "pass",
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget. Budget 500.00 kB was not met by 303.08 kB with a total of 803.08 kB",
+        "src/app/screens/seating-plan/seating-plan.scss — 9.58 kB against an 8 kB warn level",
+        "src/app/screens/guest-manager/guest-manager.scss — 11.96 kB against an 8 kB warn level",
+        "src/app/screens/milestones/milestones.scss — 11.55 kB against an 8 kB warn level",
+        "src/app/screens/config-manager/config-manager.scss — 16.85 kB against an 8 kB warn level (17 kB error ceiling)"
+      ],
+      "detail": "`pnpm build` completes; every warning above is pre-existing and none is an error. The config-manager lazy chunk is 92.71 kB raw / 16.34 kB transfer. The figure that mattered for this task — `config-manager.scss` at 16.85 kB against the 17 kB error ceiling — is unchanged, because the section adds no CSS: the file is byte-for-byte identical to its committed version."
+    },
+    "e2e": {
+      "before": { "total": 0, "passed": 0, "failed": 0, "skipped": 0 },
+      "after": { "total": 405, "passed": 345, "failed": 30, "skipped": 30 },
+      "result": "fail",
+      "new_failures": [],
+      "detail": "Before is 0 for the same reason as the unit suite: at `4cd39eb` the dev server cannot start, which is how T383 saw it too (\"Timed out waiting 120000ms from config.webServer\"). After: 345 passed, 30 failed, 30 skipped in 4.3m across the four browsers rule 4 names. All 30 failures are in `e2e/layout/design-parity-info.spec.ts` and all fail in the same place — `openApp`, waiting on `app-good-to-know .block`. Cause: `e2e/support/api-mocks.ts:274` still serves a `goodToKnow` block array on `GET /v1/config`, and `grep -rn 'general-information\\|generalInfo' e2e/` returns nothing, so the route the section now reads is unmocked. That is T383's render surface, not this task's. `e2e/layout/config-manager.spec.ts` and `e2e/layout/design-parity-config.spec.ts` both pass."
+    },
+    "i18n": {
+      "locales": ["es", "en", "fr"],
+      "keys_per_locale": 843,
+      "missing": 0,
+      "empty_values": 0,
+      "new_keys": 19,
+      "key_sets_identical": true,
+      "detail": "Measured this run by flattening all three files: 843 keys each, identical key sets, zero empty string values. 19 keys added and 20 removed under `configManager.goodToKnow` (44 keys there now), in all three locales together. Every one of the 33 statically-written `configManager.goodToKnow.*` keys in the template resolves; the two dynamic prefixes (`'…dressCode.' + field`, `'…dayLine.' + field`, `'…gift.' + field`) are covered by the loop field lists, which are typed off the generated shapes.",
+      "note": "`configManager.note.good-to-know` was rewritten in all three locales: it promised guests read the blocks \"in this list's order\", which ADR-0047 §1 made false — ordering is structural and there is no list to order. It now names who-to-call as well, since that section is new to the editor. No couple-authored content moved into a locale file (hard rule 19): every added string is a field label, a picker affordance or a validation message."
+    }
+  },
+  "files": {
+    "added": ["tasks/33-general-information/reports/T384.json"],
+    "modified": [
+      "src/app/screens/config-manager/config-manager.ts",
+      "src/app/screens/config-manager/config-manager.html",
+      "src/app/screens/config-manager/config-manager.spec.ts",
+      "src/app/core/service/login.service.ts",
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "tasks/33-general-information/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/app/core/service/login.service.ts",
+      "why": "One line, committed separately at `11189ec` with the Product Owner's explicit approval after being asked. Hub ADR-0047 §7 adds `wedding-planner` to the role enum, so T383's `pnpm gen:api` made `LANDING_BY_ROLE: Record<UserRole, string>` demand a fifth row; without it the T383+T384 merge unit still does not compile, and it is not config-manager's error to fix. The row and its `/provider` value were already in the Product Owner's working tree — only the hunk the compiler requires was staged, and the unrelated prettier reflow further down the same file was left uncommitted where it was found."
+    },
+    {
+      "path": "src/app/screens/config-manager/config-manager.ts, .html, .spec.ts",
+      "why": "These three carried uncommitted edits from an earlier attempt (move-button removal, the old inline `ContactEntry` shape, a prettier reflow, and a `couple` seed added to `buildEmptyConfig()` and the spec's `BASE_CONFIG`). All of it edits block-array machinery this task deletes, so none of it could survive the rewrite. The Product Owner was asked before anything was overwritten and chose to drop the `couple` seed too — `WeddingConfigResponseDto.couple` is optional after T248, so nothing needed it to compile, and `buildEmptyConfig()` was seeding a placeholder couple with empty ids and phone numbers that T249's own fallback deliberately declines to invent. The full prior diff is preserved outside the repo at `<session scratchpad>/T384-stale-config-manager.patch`; nothing was `git clean`-ed, `stash`-ed or `checkout --`-ed."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "A couple cannot clear `generalInfo` once it has been written. `sanitizedGeneralInfo()` returns `undefined` when every section is empty, but `JSON.stringify` drops an undefined key, so `PATCH /v1/config` receives no `generalInfo` at all and `updateWeddingConfig`'s `{ ...config, ...update }` keeps the stored value. Emptying one section among several works (the object still travels, minus that key); emptying the last one does not. The same hole existed for `goodToKnow` and is inherited, not introduced — closing it needs an API answer about how a client expresses 'remove this attribute', which no task has asked.",
+      "surfaces_at": "The first time a couple writes a Good-to-know section, decides against the whole feature, clears everything and finds it still on their guests' screens."
+    },
+    {
+      "risk": "`e2e/layout/design-parity-info.spec.ts` (30 tests across four browsers) asserts the block-array render and fails against ADR-0047's section render; `e2e/support/api-mocks.ts:152-274` still seeds a `goodToKnow` block array on `GET /v1/config`, and no e2e mock exists for `GET /v1/config/general-information`. This is T383's render surface and was invisible while the app did not compile — T383 could not start the dev server. Rewriting it is not mechanical: the DS's `ScreenInfo.jsx` is the parity target and both `ScreenConfigManager` screens are marked `outdated` pending a parity spec.",
+      "surfaces_at": "`pnpm test:e2e` — every run until the parity suite and its mocks are rewritten against `generalInfo`. It gates hard rule 11 for T385 too, which must extend `e2e/public-surface.spec.ts` in the same suite."
+    },
+    {
+      "risk": "`wedding-config.service.ts`'s `getWeddingGeneralInformation()` composes only the `couple` digest and serves `generalInfo.contact.weddingPlanner`/`guest` exactly as stored, so ADR-0047 §2's promise that \"a profile edit updates the contact card and deactivating an account removes them\" is not what ships. This editor refreshes the digest at save time, which narrows the window to 'since the couple last saved' but cannot close it: a guest who changes their number, or an account that is deactivated, stays wrong on the Good-to-know screen until the couple opens Settings and saves.",
+      "surfaces_at": "`wedding-api`, whenever someone tests §2's staleability claim end to end — or the first guest who calls a number that changed after the couple's last save."
+    },
+    {
+      "risk": "Hard rule 11's lint exception still says 4 pre-existing errors; a clean worktree at HEAD reports 5. The uncovered one is the unused `WeddingGuestsService` import at `guest-manager/modal/guest-profile-modal.ts:25`. This is T387's second bullet and is now reported for the third time (T381, T383, here); each report has had to re-explain the same gap.",
+      "surfaces_at": "Every lint baseline reported from this repo until T387 either fixes the import or widens the clause."
+    }
+  ],
+  "commits": [
+    "f4f4ec3 feat(config-manager): the authoring screen becomes a fixed-shape editor (T384)",
+    "11189ec fix(login): the fifth role needs a landing route to compile (T384)"
+  ],
+  "decisions_needed": [
+    {
+      "question": "Where should a `wedding-planner` account land after sign-in? `login.service.ts` now routes them to `/provider`, which is the value that was sitting in the working tree rather than a decision anyone recorded.",
+      "options": [
+        "Keep `/provider` — a wedding planner sees the provider screen, which is what the tree already assumed; costs nothing now, but quietly settles ADR-0047 §7's 'ahead of giving wedding planners more access than a generic provider' in the provider's favour.",
+        "Route them to `/dashboard` — treats the planner as closer to the couple than to a vendor, which is what the role was added to enable; needs the dashboard's own role gating checked first.",
+        "Leave the row but make the destination an explicit decision in a hub ADR before the first wedding-planner account is created — the enum value emits no response today, so there is time."
+      ],
+      "recommendation": "Keep `/provider` for now and record the question in ADR-0047's follow-up. It is the smallest committed claim, it matches what a planner can actually reach today, and §7 already names account creation — not this commit — as the moment the answer has to be real.",
+      "blocking": false,
+      "needed_by": "Before the first real `wedding-planner` account is created, which ADR-0047 §7 identifies as the moment this needs a deployed client anyway."
+    }
+  ]
+}

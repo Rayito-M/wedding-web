@@ -72,8 +72,19 @@
 - **Refs:** hub ADR-0047 §1/§2; `src/app/shared/good-to-know/`; counterpart `wedding-api` T249
 
 ### T384 — The authoring screen becomes a fixed-shape editor
-- **Status:** todo — **next, and urgent**: T383 landed (`5583e1e`) and the tree is red until this
-  task lands. See the merge-unit note in the phase header
+- **Status:** done (2026-09-15) — the merge unit is closed: `pnpm typecheck` is green at HEAD alone
+  for the first time since `5583e1e`. Two things the task text could not have known. **(a)** HEAD
+  carried **22** typecheck errors, not 21: the 22nd was `login.service.ts`'s missing
+  `wedding-planner` landing row, which T383's `gen:api` made mandatory (ADR-0047 §7) and which
+  lived only in the uncommitted tree — committed separately as `11189ec`, with the owner's
+  approval, because the merge unit does not compile without it. **(b)** Section **presence is
+  derived from content** rather than from a control, which is how the add/remove affordances could
+  go entirely; an all-blank section raises no issue and is dropped from the payload. The CSS budget
+  was re-measured, not trusted: **16.85 kB**, unchanged, because the section adds no CSS.
+  **Hard rule 11 is still red, for nothing this task owns:** lint carries T387's two items, and all
+  30 e2e failures are `design-parity-info.spec.ts` asserting the block-array render against mocks
+  that still serve `goodToKnow` — T383's surface, invisible until the app compiled. See
+  `reports/T384.json`.
 - **Owner:** agent (implementer)
 - **Depends on:** T383
 - **ADR:** hub **ADR-0047 §1/§2**; ADR-0045 §3 (Settings inside Manage); ADR-0031 (authoring
