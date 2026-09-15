@@ -276,8 +276,11 @@
 - **Refs:** `e2e/helpers/ds-kit.ts`; T388's report (the 6/4-spec measurement); `.agent/skills/task-management.md` §4
 
 ### T390 — Settings tells the couple their contact cards self-update; the privacy notice says they don't
-- **Status:** todo — **gates the v1.3.0 tag.** Both strings ship in the same release and contradict
-  each other in the same app
+- **Status:** done (2026-09-15) — the hint now says what Amendment 3 §A establishes: the details are
+  copied from the account the moment the couple adds the person, a later edit to that account does
+  not update the card, and if someone's number changes the couple picks them again. One value per
+  locale, no key added or removed (843 per locale, key sets identical, 0 empty). It says nothing
+  about `wedding-api` T251. See `reports/T390.json`.
 - **Owner:** agent (implementer)
 - **Depends on:** —
 - **ADR:** hub **ADR-0047 Amendment 3 §A**; §2 (struck bullet); §3

@@ -270,4 +270,4 @@ never by its letter alone.
 | **T387** | Two things in the tree that must not reach a release | todo — **gates the v1.3.0 tag** | `33-general-information` |
 | **T388** | The e2e fixtures still serve the block array, so 30 specs assert a dead render | done — info spec 45/45; suite 420, 0 assertion failures; residual flake is the ds-kit harness | `33-general-information` |
 | **T389** | The DS-kit static server loses races under parallel e2e load | todo — not release-blocking | `33-general-information` |
-| **T390** | Settings says contact cards self-update; the notice says they don't | todo — **gates the v1.3.0 tag** | `33-general-information` |
+| **T390** | Settings says contact cards self-update; the notice says they don't | done — the hint matches the notice in es/en/fr; 843 keys/locale, 0 missing | `33-general-information` |

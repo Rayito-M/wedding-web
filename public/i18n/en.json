@@ -605,7 +605,7 @@
       },
       "contact": {
         "title": "Who to call",
-        "hint": "Only people who hold an account on this site. Their name, email and phone number come from that account and are not edited here — if they change their profile, their card changes too. Someone without an account is added as a guest first.",
+        "hint": "Only people who hold an account on this site. Their name, email and phone number are copied from that account the moment you add the person and are not edited here — a later edit to their account does not update the card, so if someone's number changes, pick them again. Someone without an account is added as a guest first.",
         "plannerTitle": "Wedding planner",
         "plannerEmpty": "No wedding planner listed.",
         "guestTitle": "Guests",

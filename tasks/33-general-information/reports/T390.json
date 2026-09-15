@@ -1,0 +1,127 @@
+{
+  "task": "T390",
+  "status": "complete",
+  "summary": "configManager.goodToKnow.contact.hint is rewritten in es/en/fr so the couple reads the same fact the guest reads in privacyPolicy.goodToKnow.body. The false clause — 'if they change their profile, their card changes too' — is replaced with what Amendment 3 §A establishes: the name, email and phone are copied from the account the moment the couple adds the person, a later edit to that account does not update the card, and if someone's number changes the couple picks them again. The three true clauses the old hint carried are kept verbatim in substance: only account holders, the details are not edited here, and someone without an account is added as a guest first. The wording deliberately reuses the privacy notice's own vocabulary per locale ('copied from that account the moment…' / 'se copian de esa cuenta cuando…' / 'sont copiés depuis ce compte au moment où…'; 'a later edit to their account does not update…' / 'un cambio posterior en su cuenta no actualiza…' / 'une modification ultérieure de son compte ne met pas… à jour') so a guest holding the two strings side by side finds no daylight. Nothing is said or implied about wedding-api T251. One string value changed per locale; no key added, renamed or removed; no code, template or style file touched.",
+  "acceptance": [
+    {
+      "criterion": "The hint, in es/en/fr, says what is true: the details are copied from the account when the couple adds the person, and do not update afterwards — so if someone's number changes, the couple re-picks them. Keep the true half (only account holders; not edited here; someone without an account is added as a guest first).",
+      "met": true,
+      "evidence": "public/i18n/{es,en,fr}.json:608, one line changed per file (`git diff --stat public/i18n/` → 3 files, 3 insertions, 3 deletions). EN: 'Only people who hold an account on this site. Their name, email and phone number are copied from that account the moment you add the person and are not edited here — a later edit to their account does not update the card, so if someone's number changes, pick them again. Someone without an account is added as a guest first.' ES: 'Solo personas con cuenta en este sitio. El nombre, el correo y el teléfono se copian de esa cuenta cuando añadís a la persona y no se editan aquí: un cambio posterior en su cuenta no actualiza la ficha, así que si alguien cambia de número, hay que volver a elegir a esa persona. Quien no tenga cuenta se añade antes como invitado.' FR: 'Uniquement des personnes possédant un compte sur ce site. Leur nom, leur e-mail et leur téléphone sont copiés depuis ce compte au moment où vous ajoutez la personne et ne se modifient pas ici : une modification ultérieure de son compte ne met pas la fiche à jour, donc si quelqu'un change de numéro, il faut choisir cette personne à nouveau. Une personne sans compte est d'abord ajoutée comme invitée.' All three keep the original three-sentence shape, so sentence 1 (account holders only) and sentence 3 (added as a guest first) are byte-identical to HEAD; only sentence 2 changed.",
+      "notes": "The re-pick instruction is phrased without a gendered clitic or pronoun in ES and FR ('hay que volver a elegir a esa persona', 'il faut choisir cette personne à nouveau') rather than 'volved a elegirlo/la' / 'choisissez-le/la' — nobody's gender is stored, the same constraint T385 recorded for 'wedding planner' and hard rule 18c records for the delegation tie. EN uses singular 'them'. 'Pick them again' names the control that actually exists: the section's picker is `configManager.goodToKnow.contact.choose` ('Choose a person…'), with `addPerson`/`remove` beside it."
+    },
+    {
+      "criterion": "Match the privacy notice's register and its facts — the two strings are read by different people about the same data, and a guest comparing them should find no daylight. T385's copy is the reference.",
+      "met": true,
+      "evidence": "Clause-by-clause against privacyPolicy.goodToKnow.body at HEAD (9cfacf5). Notice EN: 'The details are copied from that person's account at the moment the couple adds them and then stay as they were copied: a later edit to their account does not update the section, and closing an account does not remove them from it.' Hint EN reuses that verb and that tense — 'are copied from that account the moment you add the person' / 'a later edit to their account does not update the card'. ES notice 'se copian de la cuenta de esa persona en el momento en que los novios la añaden … un cambio posterior en su cuenta no actualiza la sección' ↔ hint 'se copian de esa cuenta cuando añadís a la persona … un cambio posterior en su cuenta no actualiza la ficha'. FR notice 'sont copiées depuis le compte de cette personne au moment où les mariés l'ajoutent … une modification ultérieure de son compte ne met pas la section à jour' ↔ hint 'sont copiés depuis ce compte au moment où vous ajoutez la personne … une modification ultérieure de son compte ne met pas la fiche à jour'. The only two differences are deliberate and are not daylight: the notice says 'the couple' / 'los novios' / 'les mariés' where the hint says 'you' / 'añadís' / 'vous', because the hint's reader IS the couple; and the notice says 'the section' where the hint says 'the card' / 'la ficha' / 'la fiche', because the editor's unit is the individual entry the couple is looking at. Register: second person plural is already the established voice of this screen — `dayLine.datesHint` ('these sentences do not update themselves — reread them' / 'revisadlas' / 'relisez-les'), `contact.choose` ('Elegid a una persona…' / 'Choisissez une personne…'), `issue.incomplete` ('completad' / 'complétez'); the new clause matches it rather than the old hint's impersonal third person.",
+      "notes": "The notice's third fact — closing an account does not remove that person — is NOT repeated in the hint. It is true and it is Amendment 3 §A's second consequence, but it describes what a guest keeps seeing, not what the couple does in this editor; the hint's job is the staleness the couple can act on. Raised as a risk below rather than silently dropped: the two strings must still move together when T251 lands."
+    },
+    {
+      "criterion": "Do not promise a fix that does not exist. If wedding-api T251 later makes details resolve at read time, both strings change again, in that task's commit. Say nothing here about what might change.",
+      "met": true,
+      "evidence": "The three strings are stated in the present indicative throughout and contain no future, conditional or 'for now' construction: `grep -nEi 'por ahora|de momento|pour l\\'instant|for now|soon|pronto|bientôt|will|va a|futur' ` over the three new values returns nothing. No comment naming T251 was added to the locale files (they are JSON and carry none) and none to config-manager.html, which was not opened. T251 is named only in this report's risks, which is where the dependency belongs.",
+      "notes": "The instruction the hint gives — pick the person again — is a real control available today, not a workaround for a pending fix; it stays correct either way, and is the sentence T251 would remove."
+    },
+    {
+      "criterion": "No missing-key warnings; report the resolved counts you measure.",
+      "met": true,
+      "evidence": "Measured this run over public/i18n/{es,en,fr}.json: 843 flattened keys per locale before and after, key sets identical across all three, 0 empty values, 0 keys added or removed. configManager.goodToKnow.* resolves 44/44 in each locale and configManager.goodToKnow.contact.* 10/10. config-manager.html references 33 literal configManager.goodToKnow.* keys plus 3 prefixes built by concatenation (dressCode./gift./dayLine. + `field`, from `dressCodeFields` ['headline','body','note'], `giftBankFields` ['accountHolder','iban','bic'] and `dayLineFields` ['rsvpOpen','rsvpClosed','afterWedding'], config-manager.ts:493-499) — all 42 resolved keys present in all three locales, 0 missing. The app registers no missingTranslationHandler, so a missing key renders as its own name rather than logging; the check was therefore made in the browser as well, by a TEMPORARY probe spec (e2e/t390-probe.spec.ts, deleted before the commit): signed in as the couple, opened /config → Good to know in EN, then ES, then FR, asserted exactly one `p.field-hint` matching the new clause and that its innerText contains no 'configManager.' prefix. 3 passed; the three rendered strings were printed and are byte-identical to the JSON values above. Hint lengths es/en/fr: 330/324/401 chars (was 221/237/264).",
+      "notes": "The three files round-trip byte-identically through json.dumps(ensure_ascii=False, indent=2) + newline, verified before the edit, so the diff is genuinely one line per file and not a reformat."
+    },
+    {
+      "criterion": "Hard rule 11 gate green.",
+      "met": true,
+      "evidence": "typecheck exit 0, no output. lint: 6 ESLint errors before and after, byte-identical sets, none in a file this task opened (4 × src/app/shared/modal/ per CLAUDE.md's named exception, 1 unused WeddingGuestsService import at guest-manager/modal/guest-profile-modal.ts:25, 1 unused `config` at core/data/wedding-config-data.service.ts:40 — the last two are T387's, the second living in the uncommitted tree); stylelint 'no new violations (550 pre-existing, baselined)'; ds:verify '31/31 clean pairs; 0 drifting values'. unit 644 → 644 passing, 0 failing, 49 files. build pass both runs, styles-*.css 2677 bytes before and after, same 5 budget warnings. e2e `pnpm test:e2e --retries=2` exit 0 both runs: before 425 tests (391 passed, 0 failed, 30 skipped, 4 flaky), after 425 tests (387 passed, 0 failed, 30 skipped, 8 flaky).",
+      "notes": "The e2e BASELINE was run twice and the first run discarded: it had been started before the locale edit and the new copy was written to public/i18n/ while it was in flight, so its numbers described neither HEAD nor the finished change — the same contamination T385's report records. The figures above are from a clean HEAD-copy run (the three files restored with `git show HEAD:… >`) and a clean post-change run."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit — no output, exit 0, before and after. This task changes no TypeScript; the gate is run because hard rule 11 requires it, not because a compile outcome was in question."
+    },
+    "lint": {
+      "errors_before": 6,
+      "errors_after": 6,
+      "new_errors": [],
+      "detail": "node scripts/lint-all.mjs. ESLint 6 errors both runs, identical list: 4 × src/app/shared/modal/ (CLAUDE.md's named exception) + guest-manager/modal/guest-profile-modal.ts:25 unused import + core/data/wedding-config-data.service.ts:40 unused `config` (uncommitted, T387's). stylelint passed (550 pre-existing, baselined, no new). ds fidelity passed (31/31 clean pairs, 0 drifting values). CLAUDE.md hard rule 11 still says 4 pre-existing errors and there are 6 — raised before by T381, T383 and T385; T387 owns it and it is not widened or fixed here."
+    },
+    "test": {
+      "before": { "total": 644, "failing": 0, "files": 49 },
+      "after": { "total": 644, "failing": 0, "files": 49 },
+      "new_failures": [],
+      "detail": "pnpm test (Vitest via ng test). No unit spec reads configManager.goodToKnow.contact.hint — grepped for the old and new clauses across src/ and e2e/ before editing; the only hit anywhere was the three locale files themselves. This task therefore adds no unit surface and moves no count."
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2677,
+      "global_stylesheet_bytes_after": 2677,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget (803.08 kB vs 500 kB) — pre-existing",
+        "config-manager.scss 16.85 kB — pre-existing",
+        "guest-manager.scss 11.96 kB — pre-existing",
+        "milestones.scss 11.55 kB — pre-existing",
+        "seating-plan.scss 9.58 kB — pre-existing"
+      ],
+      "detail": "pnpm build exit 0 before and after; dist/wedding-app/browser/styles-BX7ALXWU.css is 2677 bytes in both, same content hash. No .scss file was opened. The locale JSON ships from public/ as a static asset, so the change does not enter a bundle at all."
+    },
+    "e2e": {
+      "before": { "total": 425, "passed": 391, "failed": 0, "skipped": 30 },
+      "after": { "total": 425, "passed": 387, "failed": 0, "skipped": 30 },
+      "result": "pass",
+      "new_failures": [],
+      "detail": "pnpm test:e2e --retries=2, exit 0 both runs. Totals identical (387 + 30 + 8 flaky = 425 = 391 + 30 + 4 flaky); this task adds and removes no test. Flaky 4 → 8, every one passing on retry: 7 are the ds-kit static-server contention T388 measured and T389 owns (design-parity-config ×2, design-parity-dashboard ×2, design-parity-guests ×1, layout/config-manager ×1, all 'locator.click: Test timeout of 30000ms exceeded'), and the 8th is public-surface.spec.ts:324 on Desktop Chrome.",
+      "note": "The 8th flake is reported rather than waved through, because it is in the spec nearest this change. Its first attempt failed on `expect(notice).toContain('Contacts and bank details')` with a received string of RAW TRANSLATION KEYS — 'privacyPolicy.title privacyPolicy.intro privacyPolicy.goodToKnow.title …' — i.e. the locale file had not loaded yet, not that any copy was wrong. The assertion that failed is T385's section title, a string this task did not touch, and it passed on retry and on the other four projects in the same run. Re-run in isolation three consecutive times afterwards: 25/25 passed, no retries, exit 0 each time. Called a floor, not a proof of absence — what would falsify it is more runs under full-suite load."
+    },
+    "i18n": {
+      "locales": ["es", "en", "fr"],
+      "keys_per_locale": 843,
+      "missing": 0,
+      "empty_values": 0,
+      "new_keys": 0,
+      "key_sets_identical": true,
+      "detail": "One value changed per locale (configManager.goodToKnow.contact.hint); every other key and value byte-identical to HEAD. configManager.goodToKnow.* 44/44 and contact.* 10/10 resolved in each locale; all 42 keys config-manager.html resolves (33 literal + 9 built by concatenation from dressCodeFields/giftBankFields/dayLineFields) present in all three, 0 missing. Rendering confirmed in-browser for all three locales by a temporary probe, deleted before the commit — see the fourth acceptance entry.",
+      "note": "843 per locale is unchanged from T385's measurement, as expected: this task edits one value and adds no key."
+    }
+  },
+  "files": {
+    "added": ["tasks/33-general-information/reports/T390.json"],
+    "modified": [
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "tasks/33-general-information/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "public/i18n/es.json, en.json, fr.json (temporarily, to run the e2e baseline against HEAD's copy after a first baseline was contaminated by the edit landing mid-run; restored from a scratchpad snapshot and diffed — 3 files, 3 insertions, 3 deletions, one line each)",
+      "e2e/t390-probe.spec.ts (temporary probe asserting the new hint renders resolved in all three locales; created, run — 3 passed — and deleted before the commit; `git status --short` shows no e2e/ path)"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "This is the fourth of five copies of the same claim and only two are now correct. The hint (this task) and the privacy notice (T385) say digests are stored verbatim; hub ADR-0047 §2's bullet is struck inline but still present, SPEC.md/GLOSSARY.md still carry the old sentence, and wedding-api/src/common/documents/wedding-config.ts:199-202 still does. Nothing in this repo can fix those three, and a reader who finds one of them will believe the self-update story again.",
+      "surfaces_at": "wedding-api T251's first bullet, which owns the API-side comment; and whoever amends SPEC.md/GLOSSARY.md in the hub."
+    },
+    {
+      "risk": "When wedding-api T251 lands and details resolve at read time, THREE strings must change in that task's client-side commit, not two: privacyPolicy.goodToKnow.body's staleness clause (T385 already flagged this, and its per-locale e2e guard `staleClaim` pins it), and configManager.goodToKnow.contact.hint's whole second sentence in all three locales — which no e2e assertion pins, so nothing will fail to remind anyone. A hint telling the couple to re-pick a person after T251 would be the same class of defect as the one this task removed, inverted.",
+      "surfaces_at": "The wedding-web task that consumes wedding-api T251."
+    },
+    {
+      "risk": "The hint is not covered by any test — no unit spec, no e2e spec, and the temporary probe was deleted. Its correctness rests on the copy alone. This was not widened into a permanent guard because the task asks for one string in three locales and nothing else, but it means the next false claim in this string ships the same way this one did: unnoticed until a human reads it.",
+      "surfaces_at": "Any future edit to configManager.goodToKnow.contact.hint, or a task that decides the couple's authoring copy deserves the per-locale pinning T385 gave the privacy notice."
+    },
+    {
+      "risk": "The new hint is roughly 50% longer per locale (es/en/fr 221/237/264 → 330/324/401 chars) and renders in a single `p.field-hint` above the contact picker (config-manager.html:1253). It was seen rendering correctly at the probe's default Desktop Chrome viewport, but no narrow-viewport visual check was made and no design-parity spec covers this section, so the extra two lines on a 390px screen are unverified.",
+      "surfaces_at": "Any mobile pass over Settings → Good to know, or a design-parity spec extended to section 08."
+    },
+    {
+      "risk": "The suite's residual flake is unchanged and still unowned by this phase: 8 flaky this run against 4 at HEAD, all passing on retry, all in specs this task never opened. A plain `pnpm test:e2e` with no --retries can still report failures that are not defects, so a gate reported without --retries is not comparable to this one.",
+      "surfaces_at": "T389, which owns the ds-kit harness; and any task reporting a hard-rule-11 gate without --retries."
+    }
+  ],
+  "commits": [],
+  "decisions_needed": []
+}

@@ -605,7 +605,7 @@
       },
       "contact": {
         "title": "Qui appeler",
-        "hint": "Uniquement des personnes possédant un compte sur ce site. Leur nom, leur e-mail et leur téléphone viennent de ce compte et ne se modifient pas ici : si elles changent leur profil, leur fiche change aussi. Une personne sans compte est d'abord ajoutée comme invitée.",
+        "hint": "Uniquement des personnes possédant un compte sur ce site. Leur nom, leur e-mail et leur téléphone sont copiés depuis ce compte au moment où vous ajoutez la personne et ne se modifient pas ici : une modification ultérieure de son compte ne met pas la fiche à jour, donc si quelqu'un change de numéro, il faut choisir cette personne à nouveau. Une personne sans compte est d'abord ajoutée comme invitée.",
         "plannerTitle": "Wedding planner",
         "plannerEmpty": "Aucun wedding planner dans la liste.",
         "guestTitle": "Invités",

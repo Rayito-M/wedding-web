@@ -605,7 +605,7 @@
       },
       "contact": {
         "title": "A quién llamar",
-        "hint": "Solo personas con cuenta en este sitio. El nombre, el correo y el teléfono vienen de su cuenta y no se editan aquí: si alguien cambia su perfil, su ficha cambia también. Quien no tenga cuenta se añade antes como invitado.",
+        "hint": "Solo personas con cuenta en este sitio. El nombre, el correo y el teléfono se copian de esa cuenta cuando añadís a la persona y no se editan aquí: un cambio posterior en su cuenta no actualiza la ficha, así que si alguien cambia de número, hay que volver a elegir a esa persona. Quien no tenga cuenta se añade antes como invitado.",
         "plannerTitle": "Wedding planner",
         "plannerEmpty": "Ningún wedding planner en la lista.",
         "guestTitle": "Invitados",
