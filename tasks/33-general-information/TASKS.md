@@ -382,3 +382,42 @@
     list is the finding, and it decides whether this is a one-off or a habit.
 - **Refs:** T390's report (the observation); T381 (the negative assertion that worked); T385
   (`e2e/public-surface.spec.ts`); hub ADR-0047 Amendment 3 §A
+
+### T392 — Settings → Basics must write `couple.*.firstName`, not only the deprecated pair
+- **Status:** todo — **the couple's names are currently uneditable end-to-end.** Not a regression:
+  `wedding-api` T252 made both surfaces agree, and this is the other half of that change
+- **Owner:** agent (implementer)
+- **Depends on:** `wedding-api` **T252** (landed, `936d0ec`) — no further API work is needed
+- **ADR:** hub **ADR-0037** (the switch phase T252 completed on the read side); **ADR-0047**
+  Amendment 4 (what is deferred, and must not be attempted here)
+- **Why:** after T252 both response builders derive the displayed names from `couple` when it is
+  present, falling back to `brideName`/`groomName` when it is not. Production has `couple`. So:
+  - **Settings → Basics** still writes only `brideName`/`groomName` — fields **no surface reads any
+    more**. A control that silently does nothing is a defect, not a no-op.
+  - **Settings → "The couple"** writes the USER document, and `config.couple` is a stored copy that
+    nothing refreshes — **deferred** by ADR-0047 Amendment 4, not this task's problem.
+  - Net effect today: **there is no way to change the couple's displayed names from the app.**
+  The alternative — removing the Basics fields — was considered by T252 and is worse for exactly
+  that reason: it leaves the names uneditable until the deferred propagation work lands.
+- **Acceptance:**
+  - Basics' bride/groom name inputs write **`couple.bride.firstName` / `couple.groom.firstName`**
+    *and* keep writing the deprecated `brideName`/`groomName`. Both, until ADR-0037's contract phase
+    drops the pair — which needs its own ADR and is blocked on PITR (`wedding-api` T225).
+  - **The PATCH must carry the complete `couple` object.** `updateWeddingConfig` merges shallowly
+    (`{...config, ...update}`), so sending a partial `couple` **replaces** it and drops `id`,
+    `lastName`, `email` and `phoneNumber`. Read the current value, change the one field, send the
+    whole thing.
+  - **If the config row has no `couple`, write only the deprecated pair.** `coupleSchema` requires
+    `id`, `lastName` and `phoneNumber`, so a valid `couple` cannot be constructed from a first name
+    alone and the PATCH would 400. Production has one; a fresh or seeded environment may not.
+  - **Do not refresh `couple` from the USER documents** — that is the deferred work (ADR-0047
+    Amendment 4), and no task may fix staleness in one field alone. Editing a name under
+    "The couple" continuing to change nothing is the accepted cost, not a bug to fix here.
+  - Unit test: editing the bride's name sends a complete `couple` **and** the deprecated field, and
+    a config without `couple` sends only the deprecated field.
+  - Hard rule 11 gate green.
+- **Verification beyond the suite:** after this lands, rename one of the couple in Basics and run
+  `../wedding-api/scripts/migration/check-config-row.sh <api-url>` — it asserts
+  `couple.bride.firstName == brideName`, and that is the invariant this task has to preserve.
+- **Refs:** `wedding-api` T252 (the read side, and the decision this implements); `wedding-api`
+  T251 + hub ADR-0047 Amendment 4 (what is deferred); `src/app/screens/config-manager/`
