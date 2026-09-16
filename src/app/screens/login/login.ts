@@ -5,6 +5,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 import {
   LoginService,
+  MAGIC_LINK_TTL_MINUTES,
+  OTP_CODE_TTL_MINUTES,
   SocialLoginDto,
   TranslateLanguageService,
   ConfigurationService,
@@ -99,6 +101,12 @@ export class Login {
 
   /** The email submitted in step 1 (magic link), shown back to the user in step 2. */
   protected readonly submittedEmail = signal('');
+
+  /** The TTLs the step-2 copy states — the client copies of the API's own
+   *  constants, interpolated so a locale file can never carry a stale
+   *  literal again (T396; the guard is `e2e/login-ttl.spec.ts`). */
+  protected readonly otpTtlMinutes = OTP_CODE_TTL_MINUTES;
+  protected readonly magicLinkTtlMinutes = MAGIC_LINK_TTL_MINUTES;
 
   private fullPhoneNumber(): string {
     return this.country().dialCode + this.phoneForm.controls.phoneNumber.value.replace(/\s/g, '');

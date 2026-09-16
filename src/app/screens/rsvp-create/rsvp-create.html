@@ -168,7 +168,7 @@
     <div class="step confirmation">
       <app-decor-fish-pair [size]="120" />
       @if (draft().attending === 'yes') {
-        <h2>{{ 'rsvp.create.confirm.yesTitle' | translate }}</h2>
+        <h2>{{ 'rsvp.create.confirm.yesTitle' | translate: { month: weddingMonth() } }}</h2>
         <p class="sub outro">
           {{ 'rsvp.create.confirm.yesMessage' | translate: { deadline: deadline() } }}
         </p>

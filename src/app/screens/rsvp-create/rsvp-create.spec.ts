@@ -61,7 +61,7 @@ const TRANSLATIONS = {
       },
       party: { title: 'Your party', firstName: 'First name', lastName: 'Last name' },
       confirm: {
-        yesTitle: 'See you in June',
+        yesTitle: 'See you in {{month}}',
         noTitle: "You'll be missed",
         yesMessage:
           'Your reply is in. Next, tell us what everyone eats — you can come back to it until {{deadline}}.',
@@ -75,8 +75,9 @@ const TRANSLATIONS = {
 
 /** T393: the public config the deadline is interpolated from — writable so a
  *  test can prove the copy follows the CONFIGURED value, not a constant. */
-const publicConfig = signal<Pick<WeddingConfigPublicResponseDto, 'rsvpDeadline'> | undefined>({
+const publicConfig = signal<Pick<WeddingConfigPublicResponseDto, 'rsvpDeadline' | 'date'> | undefined>({
   rsvpDeadline: '2027-05-01',
+  date: '2027-06-05',
 });
 
 /** The `pending` record the orchestrator has already provisioned — a guest
@@ -135,7 +136,7 @@ describe('RsvpCreate', () => {
   }
 
   beforeEach(async () => {
-    publicConfig.set({ rsvpDeadline: '2027-05-01' });
+    publicConfig.set({ rsvpDeadline: '2027-05-01', date: '2027-06-05' });
     await TestBed.configureTestingModule({
       imports: [RsvpCreate],
       providers: [
@@ -169,10 +170,21 @@ describe('RsvpCreate', () => {
     await create();
     expect(text()).toContain("Please reply by 1 May. We can't wait.");
 
-    publicConfig.set({ rsvpDeadline: '2027-03-15' });
+    publicConfig.set({ rsvpDeadline: '2027-03-15', date: '2027-06-05' });
     await fixture.whenStable();
     fixture.detectChanges();
     expect(text()).toContain("Please reply by 15 March. We can't wait.");
+  });
+
+  it('the confirmation month comes from the CONFIGURED wedding date, not a locale file (T396)', async () => {
+    publicConfig.set({ rsvpDeadline: '2027-05-01', date: '2027-09-11' });
+    await create();
+
+    await click('button[app-choice-card]', 0);
+    await clickPrimary();
+
+    expect(text()).toContain('See you in September');
+    expect(text()).not.toContain('June');
   });
 
   it('interpolates the CONFIGURED deadline into the attending hint and the confirmation — never "any time" (T397)', async () => {

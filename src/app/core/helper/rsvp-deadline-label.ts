@@ -33,7 +33,7 @@ import { LangCode } from '../../model';
  * An unparseable value returns the raw string rather than empty prose — a
  * visible degradation instead of a sentence with a hole in it.
  */
-const INTL_LOCALE: Record<LangCode, string> = {
+export const INTL_LOCALE: Record<LangCode, string> = {
   en: 'en-GB',
   es: 'es-ES',
   fr: 'fr-FR',

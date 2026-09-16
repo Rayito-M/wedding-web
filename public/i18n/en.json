@@ -101,7 +101,7 @@
     "code": {
       "eyebrow": "Text code · Sent",
       "title": "Enter the code",
-      "sub": "Texted to {{value}}. It expires in 10 minutes.",
+      "sub": "Texted to {{value}}. It expires in {{minutes}} minutes.",
       "label": "Verification code",
       "placeholder": "123456",
       "cta": "Verify",
@@ -118,7 +118,7 @@
     "magicLink": {
       "eyebrow": "Magic link · Sent",
       "title": "Check your inbox",
-      "sub": "We emailed a sign-in link to {{value}}. It works once and expires in 15 minutes.",
+      "sub": "We emailed a sign-in link to {{value}}. It works once and expires in {{minutes}} minutes.",
       "changeEmail": "Use a different email",
       "resend": "Resend link"
     },
@@ -151,7 +151,6 @@
   "schedule": {
     "title": "The day",
     "subtitle": "From afternoon into the small hours.",
-    "header": "SAT · 5 JUN",
     "status": {
       "final": "Final schedule"
     },
@@ -160,45 +159,7 @@
       "provisional": "Times may still shift — planned moments aren't confirmed yet.",
       "counts": "{{confirmed}} confirmed · {{planned}} planned",
       "countsWithCancelled": "{{confirmed}} confirmed · {{planned}} planned · {{cancelled}} cancelled"
-    },
-    "timeline": [
-      {
-        "time": "15:30",
-        "title": "Welcome",
-        "subtitle": "Drinks under the olive trees",
-        "tag": "Arrival"
-      },
-      {
-        "time": "16:30",
-        "title": "Ceremony",
-        "subtitle": "In the courtyard",
-        "tag": "Main"
-      },
-      {
-        "time": "17:30",
-        "title": "Aperitivo",
-        "subtitle": "Vermouth & jamón",
-        "tag": "Bites"
-      },
-      {
-        "time": "19:00",
-        "title": "Dinner",
-        "subtitle": "Long table, candlelit",
-        "tag": "Seated"
-      },
-      {
-        "time": "22:00",
-        "title": "Dancing",
-        "subtitle": "Until the morning",
-        "tag": "Open"
-      },
-      {
-        "time": "03:00",
-        "title": "Late bites",
-        "subtitle": "Tortilla & coffee",
-        "tag": "Snack"
-      }
-    ]
+    }
   },
   "rsvp": {
     "loading": "Loading your RSVP…",
@@ -236,7 +197,7 @@
         "childrenHint": "Ages help us with the kids' menu and the babysitter."
       },
       "confirm": {
-        "yesTitle": "See you in June",
+        "yesTitle": "See you in {{month}}",
         "noTitle": "You'll be missed",
         "yesMessage": "Your reply is in. Next, tell us what everyone eats — you can come back to it until {{deadline}}.",
         "noMessage": "Thank you for letting us know. We'll be thinking of you on the day."
@@ -408,7 +369,7 @@
         "left": "Left",
         "overdue": "Overdue"
       },
-      "caption": "{{reached}} of {{total}} milestones reached · next 3 coming up"
+      "caption": "{{reached}} of {{total}} milestones reached · next up"
     },
     "manage": {
       "title": "Manage",
@@ -647,7 +608,6 @@
     "greeting": "Hola",
     "seeYouIn": "See you in",
     "countdown": {
-      "date": "5 June 2027 · Granada",
       "venue": "Palacio de los Córdova",
       "days_singular": "{{count}} day",
       "days_plural": "{{count}} days",
@@ -676,8 +636,6 @@
     "yourSeat": "Your seat",
     "stay": "Stay",
     "from": "From S&C",
-    "busNote": "Bus from Plaza Nueva at 15:00 — don't be late, we'll be the ones smiling!",
-    "busNoteDate": "3 days ago",
     "schedule": {
       "title": "The day · highlights",
       "all": "All",

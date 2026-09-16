@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject, Signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { map } from 'rxjs';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import {
   AgendaTimePipe,
@@ -12,6 +12,7 @@ import {
   HeaderService,
   TranslateLanguageService,
   WeddingConfigResponseDto,
+  weddingDayLabel,
 } from '@app/core';
 import { StatusPill } from '@app/shared/status-pill/status-pill';
 import { TimelineItem } from '@app/shared/timeline-item/timeline-item';
@@ -30,7 +31,6 @@ interface AgendaCounts {
   styleUrl: './schedule.scss',
 })
 export class Schedule {
-  private readonly translateService = inject(TranslateService);
   private readonly translate = inject(TranslateLanguageService);
 
   private readonly weddingConfigCollection: EntityCollectionService<WeddingConfigResponseDto> =
@@ -44,8 +44,27 @@ export class Schedule {
     { initialValue: undefined },
   );
 
+  /** The date badge, from the configured `date` (T396) — the template used
+   *  to hardcode "SAT · 5 JUN 2027" untranslated. Empty until config lands. */
+  protected readonly dateBadge = computed(() =>
+    weddingDayLabel(this.weddingConfig()?.date ?? '', this.translate.currentLang()),
+  );
+  protected readonly dateBadgeFull = computed(() =>
+    weddingDayLabel(this.weddingConfig()?.date ?? '', this.translate.currentLang(), true),
+  );
+
   constructor() {
-    inject(HeaderService).set(this.translateService.instant('schedule.header'));
+    // The header is the wedding date — configuration, not copy (T396). The
+    // locale files used to spell it ("SAT · 5 JUN"), which was right only
+    // while the configured date happened to be 2027-06-05; it now derives
+    // from `date`, per locale, and follows a language switch. Empty until
+    // the config lands — the header bar has no room for a placeholder.
+    const header = inject(HeaderService);
+    effect(() => {
+      header.set(
+        weddingDayLabel(this.weddingConfig()?.date ?? '', this.translate.currentLang()),
+      );
+    });
     this.weddingConfigCollection.getByKey(''); // Singleton resource, always fetches the same document
   }
 

@@ -101,7 +101,7 @@
     "code": {
       "eyebrow": "Code SMS · Envoyé",
       "title": "Saisissez le code",
-      "sub": "Envoyé par SMS au {{value}}. Expire dans 10 minutes.",
+      "sub": "Envoyé par SMS au {{value}}. Expire dans {{minutes}} minutes.",
       "label": "Code de vérification",
       "placeholder": "123456",
       "cta": "Vérifier",
@@ -118,7 +118,7 @@
     "magicLink": {
       "eyebrow": "Lien magique · Envoyé",
       "title": "Consultez votre boîte de réception",
-      "sub": "Nous avons envoyé un lien de connexion à {{value}}. Il fonctionne une seule fois et expire dans 15 minutes.",
+      "sub": "Nous avons envoyé un lien de connexion à {{value}}. Il fonctionne une seule fois et expire dans {{minutes}} minutes.",
       "changeEmail": "Utiliser une autre adresse e-mail",
       "resend": "Renvoyer le lien"
     },
@@ -151,7 +151,6 @@
   "schedule": {
     "title": "Le jour J",
     "subtitle": "De l'après-midi jusqu'aux petites heures.",
-    "header": "SAM · 5 JUI",
     "status": {
       "final": "Agenda définitif"
     },
@@ -160,45 +159,7 @@
       "provisional": "Les horaires peuvent encore changer — les moments prévus ne sont pas encore confirmés.",
       "counts": "{{confirmed}} confirmés · {{planned}} prévus",
       "countsWithCancelled": "{{confirmed}} confirmés · {{planned}} prévus · {{cancelled}} annulés"
-    },
-    "timeline": [
-      {
-        "time": "15:30",
-        "title": "Bienvenue",
-        "subtitle": "Apéritifs sous les oliviers",
-        "tag": "Arrivée"
-      },
-      {
-        "time": "16:30",
-        "title": "Cérémonie",
-        "subtitle": "Dans la cour",
-        "tag": "Principal"
-      },
-      {
-        "time": "17:30",
-        "title": "Apéritivo",
-        "subtitle": "Vermouth & jamón",
-        "tag": "Bouchées"
-      },
-      {
-        "time": "19:00",
-        "title": "Dîner",
-        "subtitle": "Table longue, à la chandelle",
-        "tag": "Assis"
-      },
-      {
-        "time": "22:00",
-        "title": "Danse",
-        "subtitle": "Jusqu'au matin",
-        "tag": "Libre"
-      },
-      {
-        "time": "03:00",
-        "title": "Petits encas",
-        "subtitle": "Tortilla & café",
-        "tag": "Snack"
-      }
-    ]
+    }
   },
   "rsvp": {
     "loading": "Chargement de votre RSVP…",
@@ -236,7 +197,7 @@
         "childrenHint": "Les âges nous aident pour le menu enfant et la baby-sitter."
       },
       "confirm": {
-        "yesTitle": "À bientôt en juin",
+        "yesTitle": "À bientôt en {{month}}",
         "noTitle": "Vous nous manquerez",
         "yesMessage": "Votre réponse est enregistrée. Dites-nous maintenant ce que chacun mange — vous pourrez y revenir jusqu'au {{deadline}}.",
         "noMessage": "Merci de nous le faire savoir. Nous penserons à vous ce jour-là."
@@ -408,7 +369,7 @@
         "left": "Restantes",
         "overdue": "En retard"
       },
-      "caption": "{{reached}} sur {{total}} étapes atteintes · les 3 prochaines"
+      "caption": "{{reached}} sur {{total}} étapes atteintes · les prochaines"
     },
     "manage": {
       "title": "Gérer",
@@ -647,7 +608,6 @@
     "greeting": "Hello,",
     "seeYouIn": "On se voit dans",
     "countdown": {
-      "date": "5 juin 2027 · Grenade",
       "venue": "Palais des Córdova",
       "days_singular": "{{count}} jour",
       "days_plural": "{{count}} jours",
@@ -676,8 +636,6 @@
     "yourSeat": "Votre place",
     "stay": "Logement",
     "from": "De S&C",
-    "busNote": "Bus de Plaza Nueva à 15:00 — ne soyez pas en retard, ce seront nous qui sourirons !",
-    "busNoteDate": "il y a 3 jours",
     "schedule": {
       "title": "Le jour J · moments clés",
       "all": "Tout",

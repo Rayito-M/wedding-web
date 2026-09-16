@@ -5,8 +5,8 @@
   </div>
   <div class="status-col">
     <span class="date-badge">
-      <span class="date-badge-full">SAT &middot; 5 JUN 2027</span>
-      <span class="date-badge-short">SAT &middot; 5 JUN</span>
+      <span class="date-badge-full">{{ dateBadgeFull() }}</span>
+      <span class="date-badge-short">{{ dateBadge() }}</span>
     </span>
     <app-status-pill [variant]="isFinal() ? 'final' : 'provisional'">
       {{ (isFinal() ? 'schedule.status.final' : 'shared.scheduleStatus.provisional') | translate }}

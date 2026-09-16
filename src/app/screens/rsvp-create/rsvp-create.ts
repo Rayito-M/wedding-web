@@ -23,6 +23,7 @@ import {
   RsvpDtoChildrenInner,
   TranslateLanguageService,
   rsvpDeadlineLabel,
+  weddingMonthLabel,
 } from '@app/core';
 import { Btn } from '@app/shared/button/button';
 import { ChoiceCard } from '@app/shared/choice-card/choice-card';
@@ -138,6 +139,15 @@ export class RsvpCreate {
   protected readonly deadline = computed(() =>
     rsvpDeadlineLabel(
       this.configurationService.weddingConfigPublic()?.rsvpDeadline ?? '',
+      this.translateLanguage.currentLang(),
+    ),
+  );
+
+  /** The wedding month for the confirmation heading (T396) — from the same
+   *  configured `date` as everything else, never spelled in a locale file. */
+  protected readonly weddingMonth = computed(() =>
+    weddingMonthLabel(
+      this.configurationService.weddingConfigPublic()?.date ?? '',
       this.translateLanguage.currentLang(),
     ),
   );

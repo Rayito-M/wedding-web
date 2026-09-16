@@ -120,7 +120,7 @@
           eyebrowKey="login.code.eyebrow"
           titleKey="login.code.title"
           subKey="login.code.sub"
-          [subParams]="{ value: submittedPhone() }"
+          [subParams]="{ value: submittedPhone(), minutes: otpTtlMinutes }"
         />
 
         <label class="field">
@@ -159,7 +159,7 @@
           eyebrowKey="login.magicLink.eyebrow"
           titleKey="login.magicLink.title"
           subKey="login.magicLink.sub"
-          [subParams]="{ value: submittedEmail() }"
+          [subParams]="{ value: submittedEmail(), minutes: magicLinkTtlMinutes }"
         />
 
         @if (error()) {
