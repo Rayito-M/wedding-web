@@ -276,6 +276,6 @@ never by its letter alone.
 | **T393** | Six strings hardcode the RSVP deadline the couple can change | done (`a82c29f`) | `33-general-information` |
 | **T394** | Triage T391's list: 40 unasserted behavioural claims, 7 apparently false | done (`f1f807a`) — **found 3 more false**; two clusters → T396, T397 | `33-general-information` |
 | **T395** | The app paints raw translation keys on its first frame, on every route | done (`755e42d`) — all three locales inlined; FCP unchanged | `33-general-information` |
-| **T396** | Cluster A: server-owned values transcribed into locale files | todo — **the OTP screen contradicts the SMS in hand** | `33-general-information` |
+| **T396** | Cluster A: server-owned values transcribed into locale files | done (`476c419`+`9f3c87f`) — TTLs from one constant, cross-repo guarded; the wedding date un-transcribed too; month sweep now global | `33-general-information` |
 | **T397** | Cluster B: absolutes invalidated by a later visibility widening | done (`3b70a20`+`39b64c0`) — modal agrees with the notice again; 36-entry absolutes inventory guards the class; six more overclaims found and fixed | `33-general-information` |
 | **T390** | Settings says contact cards self-update; the notice says they don't | done (`5b75068`) | `33-general-information` |

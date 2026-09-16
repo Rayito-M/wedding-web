@@ -580,7 +580,13 @@
 - **Refs:** T389's report (`decisions_needed[]`, with the measurements and the harness); hub ADR-0009
 
 ### T396 — Cluster A: server-owned values transcribed into locale files
-- **Status:** todo — **one of the two is user-facing at sign-in, today**
+- **Status:** done — see `reports/T396.json`. Both TTLs interpolate a single client constant
+  (`auth-ttl.ts`), cross-checked against the API's own source by `e2e/login-ttl.spec.ts` — a real
+  cross-repo comparison, not the tautology the acceptance warned about; skips visibly where the
+  sibling checkout is absent. The month sweep also un-transcribed the wedding date
+  (`schedule.header`, the template's hardcoded badge, `yesTitle`) and shipped GUARD B: no month
+  name anywhere in a locale file, empty allowlist. `WEDDING_DATE`-in-code is the reported
+  remainder (decisions_needed).
 - **Owner:** agent (implementer)
 - **Depends on:** T394 (which found them and named the cluster)
 - **ADR:** hub **ADR-0009** (UI strings); ADR-0013 (the OTP flow)

@@ -1,0 +1,148 @@
+{
+  "task": "T396",
+  "status": "complete",
+  "summary": "Cluster A closed. login.code.sub no longer contradicts the SMS in the guest's hand: the TTL is interpolated as {{minutes}} from auth-ttl.ts — the client's single copy of the API's CODE_TTL_MINUTES (5), defined once, because no response DTO carries the value (OtpRequestedDto/MagicLinkRequestedDto are {ok} only). login.magicLink.sub (15) gets the identical treatment. The drift guard is NOT a tautology: e2e/login-ttl.spec.ts parses the API's own constants off the sibling wedding-api checkout and compares them to the imported client constants — two numbers in two repos, either can move alone — skipping VISIBLY if the sibling is absent (the suite is local-only per rule 11, so it is present wherever the suite runs). Bite proven: client constant set back to 10 → 'wedding-api's CODE_TTL_MINUTES and the client's copy disagree'. The month sweep then found the same defect wearing dates: schedule.header spelled 'SAT · 5 JUN' ×3, the schedule template hardcoded 'SAT · 5 JUN 2027' untranslated in HTML, and yesTitle spelled 'See you in June' — all now derived from the configured date via new helpers (T393's conventions); dashboard.plan.caption drops its transcribed 'next 3'; four dead DS-mock keys hardcoding date/city deleted (845→840 keys/locale, sets identical). GUARD B ships: no month name anywhere in any locale file, empty allowlist. Nothing in cluster B was touched: T397 (run first) had already closed the absolutes the sweep crossed. Unit 663→672; e2e 485/455→505/475 passed, 0 failed; transfer 195.77 kB unchanged.",
+  "acceptance": [
+    {
+      "criterion": "login.code.sub states the real TTL, and takes it from a single source rather than a second literal. If the value cannot reach the client today, interpolate a constant defined once and say in the report where the client's copy of it lives and what keeps it honest.",
+      "met": true,
+      "evidence": "The value cannot reach the client today: the generated client's OtpRequestedDto and MagicLinkRequestedDto carry only {ok: boolean} — no response in the OTP flow exposes the TTL. The client's copy therefore lives in src/app/core/helper/auth-ttl.ts (OTP_CODE_TTL_MINUTES = 5, MAGIC_LINK_TTL_MINUTES = 15), the only place either numeral exists client-side; login.ts exposes them and login.html passes minutes into both auth-heading subParams; all six locale strings say '{{minutes}} minutes/minutos' with no literal. What keeps it honest: e2e/login-ttl.spec.ts imports the client constants and parses the API's (wedding-api sms-verification.service.ts CODE_TTL_MINUTES; magic-link.service.ts TOKEN_TTL_MINUTES) off the sibling checkout, asserting equality — the exact pattern the SMS template already uses server-side ({{TTL_MINUTES}} interpolated from the constant), applied across the repo boundary. A missing sibling checkout skips with a message that names itself as the whole point of the test, never a silent pass."
+    },
+    {
+      "criterion": "Run the month-name/duration sweep across all three locales; fix what is in this cluster and report anything that belongs to cluster B without touching it — that is T397's.",
+      "met": true,
+      "evidence": "Swept all three locales for month names (accent-aware), '<n> <unit>' durations, and bare numerals, plus templates. FIXED, all cluster A: [1] login.code.sub + login.magicLink.sub (above). [2] schedule.header — 'SAT · 5 JUN'/'SÁB · 5 JUN'/'SAM · 5 JUI' — the wedding date, a config field, spelled ×3 (fr's 'JUI' was also ambiguous with juillet); now weddingDayLabel(config.date, lang) via a HeaderService effect, key deleted. [3] schedule.html hardcoded 'SAT · 5 JUN 2027' as untranslated template text — worse than a locale literal (violates rule 8 too); now bound to the same helper with year. [4] rsvp.create.confirm.yesTitle 'See you in June'/'Hasta junio'/'À bientôt en juin' → 'See you in {{month}}' via weddingMonthLabel(config.date); unit test proves a moved date renders its own month. [5] dashboard.plan.caption 'next 3 coming up' — 3 is dashboard.ts's slice(0,3), and the copy was false whenever fewer than 3 milestones remained; the numeral is dropped, no plumbing. [6] Four dead DS-mock keys hardcoding date/city, referenced nowhere (grepped src + e2e): invitee.countdown.date ('5 June 2027 · Granada'), invitee.busNote, invitee.busNoteDate, schedule.timeline — deleted ×3 locales rather than allowlisted as unused. CLUSTER B: nothing to hand over — T397 ran first in this session and the sweep crossed no absolute it had not already fixed. REPORTED, NOT TOUCHED (neither cluster, see risks/decisions): WEDDING_DATE hardcoded in wedding-date.ts duplicating config.date (code, not copy — drives the countdowns); travel.subtitle's '20 min to City Center' (authored prose, the number is nobody's constant); shared.nickname.hint 'Max 30 characters' (the clamp is client code and unit-tested at 30)."
+    },
+    {
+      "criterion": "A drift guard, per T391's method. For the TTL specifically: a test that fails if the rendered string and the API's value disagree. If the client cannot see the API value, say so plainly — an honest 'this cannot be checked from here' is worth more than a test that re-asserts the literal it is supposed to be guarding.",
+      "met": true,
+      "evidence": "The client cannot see the API value at runtime — said plainly above and in both files' headers. But 'from here' is a local e2e suite in a documented four-repo checkout, and from HERE the API's source is readable: login-ttl.spec.ts is a genuine cross-repo comparison, not the tautology the task warns about — no test re-asserts '5'; the client side is the imported constant, the API side is parsed from wedding-api's source, and the live half renders the code screen and asserts the constant's own value reaches it (no literal re-typed even there). Bite proven by reproducing the original defect: OTP_CODE_TTL_MINUTES set to 10 → the cross-repo test fails naming both files; reverted, green. The honest limit is stated in the spec header and risks[]: where the sibling checkout is absent the check skips visibly instead of lying either way. Plus T394's GUARD B for the date-shaped subset: rsvp-deadline.spec.ts now sweeps EVERY locale value for month names (en case-sensitive — 'May' month vs 'may' verb; es/fr insensitive), allowlist empty today, so the next transcribed date fails the suite at authoring time."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc app + spec configs, clean after all edits."
+    },
+    "lint": {
+      "errors_before": 4,
+      "errors_after": 4,
+      "new_errors": [],
+      "detail": "The documented src/app/shared/modal/ exception, unchanged; stylelint and ds:verify pass."
+    },
+    "test": {
+      "before": {
+        "total": 663,
+        "failing": 0
+      },
+      "after": {
+        "total": 672,
+        "failing": 0
+      },
+      "new_failures": [],
+      "detail": "Before = after T397, measured. +9: wedding-day-label.spec.ts (8: header form ×3 locales, follows configuration, Madrid calendar date, year form, visible degradation ×2 groups) and rsvp-create's 'confirmation month comes from the CONFIGURED wedding date' (a 2027-09-11 fixture renders 'See you in September', never 'June')."
+    },
+    "build": {
+      "result": "pass",
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 809.24 kB vs 500 kB raw (was 808.59 kB — +0.65 kB, auth-ttl + login wiring in the initial bundle); pre-existing warning, T393's report has its history",
+        "four screen .scss budgets — pre-existing, unchanged"
+      ],
+      "detail": "Initial total 809.24 kB raw / 195.77 kB estimated transfer, vs 808.59 kB / 195.77 kB before this task (and 195.70 kB at the session baseline) — the gzip figure the session was asked to watch is unchanged by T396, still ~4.2 kB under the hub's 200 kB target. The lazy rsvp chunk is 47.69 kB (was 47.55 kB). release.ts restored to its committed 'dev' placeholder after each build."
+    },
+    "e2e": {
+      "before": {
+        "total": 485,
+        "passed": 455,
+        "failed": 0,
+        "skipped": 30
+      },
+      "after": {
+        "total": 505,
+        "passed": 475,
+        "failed": 0,
+        "skipped": 30
+      },
+      "result": "pass",
+      "new_failures": [],
+      "detail": "Before = T397's after, measured this session; after is a full plain run (4.1m). +20 = 4 new tests × 5 projects: login-ttl's three (cross-repo constants, locale-shape, live code screen) and rsvp-deadline's global month sweep. One earlier flake of the live login test in a partial 4-spec parallel run (timeout at the submit click under worker contention) did not reproduce standalone or in either full run.",
+      "note": "An in-flight full run was killed and restarted after a late fix (the schedule template's hardcoded date badge) landed mid-run — results of the killed run were discarded as unreliable, not reported."
+    },
+    "i18n": {
+      "locales": ["es", "en", "fr"],
+      "keys_per_locale": 840,
+      "missing": 0,
+      "empty_values": 0,
+      "new_keys": 0,
+      "key_sets_identical": true,
+      "detail": "845 → 840: five keys deleted per locale (four dead DS-mock keys + schedule.header, now computed); four values reworded per locale; sets identical, measured by flattening all three files this run."
+    }
+  },
+  "files": {
+    "added": [
+      "src/app/core/helper/auth-ttl.ts",
+      "src/app/core/helper/wedding-day-label.ts",
+      "src/app/core/helper/wedding-day-label.spec.ts",
+      "e2e/login-ttl.spec.ts",
+      "tasks/33-general-information/reports/T396.json"
+    ],
+    "modified": [
+      "src/app/core/helper/index.ts",
+      "src/app/core/helper/rsvp-deadline-label.ts",
+      "src/app/screens/login/login.ts",
+      "src/app/screens/login/login.html",
+      "src/app/screens/rsvp-create/rsvp-create.ts",
+      "src/app/screens/rsvp-create/rsvp-create.html",
+      "src/app/screens/rsvp-create/rsvp-create.spec.ts",
+      "src/app/screens/schedule/schedule.ts",
+      "src/app/screens/schedule/schedule.html",
+      "public/i18n/en.json",
+      "public/i18n/es.json",
+      "public/i18n/fr.json",
+      "e2e/rsvp-deadline.spec.ts",
+      "e2e/copy-absolutes.spec.ts",
+      "tasks/33-general-information/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "The cross-repo TTL check is only as good as the four-repo layout: where ../wedding-api is not checked out, it skips. The skip is loud and self-describing, but a permanently-skipped check is no check — if the e2e suite ever moves to CI without the sibling repo, the TTL pair is unguarded again.",
+      "surfaces_at": "The day a .github workflow runs pnpm test:e2e (CLAUDE.md rule 11 notes none does today); that change should either check out wedding-api alongside or replace the file-parse with an exposed-TTL API field."
+    },
+    {
+      "risk": "The schedule header and date badge are now empty until the wedding config lands (they were instant, from the locale file). On a slow connection that is a briefly blank header instead of a wrong date — the trade T393 already made for the deadline, made here for the date. The fr badge also changed 'JUI' → 'JUIN' (the old abbreviation collided with juillet).",
+      "surfaces_at": "Visual review of the schedule screen on a throttled connection; the DS parity specs passed unchanged."
+    },
+    {
+      "risk": "WEDDING_DATE in wedding-date.ts (new Date(2027, 5, 5), venue in the comment) is the config's `date` transcribed into CODE — it drives daysUntilWedding for the dashboard and guest countdowns. Same mechanism as this cluster, but in a .ts file where no locale sweep sees it; if the couple moves the date in Settings, every countdown is silently wrong.",
+      "surfaces_at": "Any change to the configured wedding date; the decision below proposes the fix."
+    },
+    {
+      "risk": "Two transcribed numerals were left by judgement, reported not fixed: travel.subtitle's '20 min to City Center' (authored prose — no system constant owns it, so there is nothing to interpolate from) and shared.nickname.hint's 'Max 30 characters' (the clamp is client code, unit-tested at 30, but the hint and the clamp can still drift).",
+      "surfaces_at": "travel copy edits (the couple's wording to change, ADR-0046 territory); any change to the nickname clamp — worth a shared constant if it ever moves."
+    }
+  ],
+  "decisions_needed": [
+    {
+      "question": "WEDDING_DATE is hardcoded in src/app/core/helper/wedding-date.ts while the API serves the same value as config `date` — the countdowns (dashboard.service, guest.service, home-today) all run off the constant. Derive them from configuration, or keep the constant?",
+      "options": [
+        "Derive daysUntilWedding from ConfigurationService.weddingConfigPublic()?.date (a small task: the helpers become date-taking functions, the services compute from the config signal, undefined-before-load renders the countdown blank briefly) — removes the last transcription of the date and makes a moved wedding correct everywhere at once.",
+        "Keep the constant and accept the transcription (it predates this phase, the wedding date is the least likely config value to move, and the blank-until-loaded trade would now touch the public invitation's countdown) — documented here so the next reader knows it is a decision, not an oversight."
+      ],
+      "recommendation": "Option 1, filed as its own small task — this session did not take it because it touches the public invitation surface beyond T396's locale-file scope, and the countdown-blank trade deserves its own acceptance criteria. Until then the constant is at least named, documented and single.",
+      "blocking": false,
+      "needed_by": "Before any real change to the configured wedding date; practically, the next grooming of phase 33."
+    }
+  ],
+  "commits": [
+    "476c419 tasks(T396): server-owned values come from one source, not a second literal",
+    "9f3c87f tasks(T396): the drift guards — cross-repo TTL check and the global month sweep"
+  ]
+}
