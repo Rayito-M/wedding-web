@@ -67,7 +67,7 @@
       "error": "Could not load this guest's delegations.",
       "retry": "Retry",
       "emptyCouple": "Nobody answers for this RSVP yet.",
-      "emptyGuest": "Nobody answers for you — only you can reply.",
+      "emptyGuest": "Nobody answers for you — the reply is yours.",
       "searchPlaceholder": "Search a guest to delegate to…",
       "noMatches": "No matching guests.",
       "kindPrompt": "What is {{name}} to this guest?",
@@ -219,7 +219,7 @@
         "withLabel": "Who's coming with you?",
         "withPartner": "With my partner",
         "withChildren": "With children",
-        "hint": "Meals, allergies and seating come later — you can edit all of it any time."
+        "hint": "Meals, allergies and seating come later — you can edit all of it until {{deadline}}."
       },
       "party": {
         "title": "Your party",
@@ -238,7 +238,7 @@
       "confirm": {
         "yesTitle": "See you in June",
         "noTitle": "You'll be missed",
-        "yesMessage": "Your reply is in. Next, tell us what everyone eats — you can come back to it any time.",
+        "yesMessage": "Your reply is in. Next, tell us what everyone eats — you can come back to it until {{deadline}}.",
         "noMessage": "Thank you for letting us know. We'll be thinking of you on the day."
       },
       "actions": {
@@ -305,9 +305,9 @@
         "label": "{{name}} will be there",
         "fallbackName": "They",
         "hint": {
-          "coming": "Switch this off if they cannot make it — their account, meal and allergy details stay, so they can be switched back any time.",
-          "comingPlusOne": "Switch this off if they cannot make it — their name, meal and allergy details stay, so they can be switched back any time.",
-          "declined": "They stay on this RSVP and can be switched back to attending right up to the day."
+          "coming": "Switch this off if they cannot make it — their account, meal and allergy details stay, so switching back loses nothing.",
+          "comingPlusOne": "Switch this off if they cannot make it — their name, meal and allergy details stay, so switching back loses nothing.",
+          "declined": "They stay on this RSVP and can be switched back to attending."
         }
       },
       "remove": {
@@ -332,7 +332,7 @@
           "notePlaceholder": "A song to dance to, a memory…",
           "addPartner": "+ Add my partner",
           "addChild": "+ Add a child",
-          "declinedHint": "Your party and meal details are kept — switch back any time and nothing is lost."
+          "declinedHint": "Your party and meal details are kept — nothing is lost if you change your answer back."
         },
         "couple": {
           "party": "The party",
@@ -352,7 +352,7 @@
           "notePlaceholder": "No note left.",
           "addPartner": "+ Add their partner",
           "addChild": "+ Add a child",
-          "declinedHint": "Their party and meal details are kept — switch back any time and nothing is lost."
+          "declinedHint": "Their party and meal details are kept — nothing is lost if you switch back."
         }
       }
     },
@@ -1133,7 +1133,7 @@
     "eyebrow_plural": "{{count}} people going",
     "title": "Find",
     "titleAccent": "each other",
-    "subtitle": "Everyone who has signed in appears here. Your own card opens your profile.",
+    "subtitle": "Everyone who holds an account on this site appears here. Your own card opens your profile.",
     "search": {
       "placeholder": "Search a name…"
     },
@@ -1252,7 +1252,7 @@
     "contactHint": "Contact details are managed by the couple — ask them to change these.",
     "visibility": {
       "prefix": "Your name, role and relation always appear in",
-      "suffix": ". Email and phone are shared with the couple only."
+      "suffix": ". On your profile, email and phone are visible to the couple alone. If the couple lists you in Good to know, that section shows your name, email and phone to every signed-in guest."
     },
     "actions": {
       "editProfile": "Edit profile",

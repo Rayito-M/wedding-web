@@ -67,7 +67,7 @@
       "error": "Impossible de charger les délégations de cet invité.",
       "retry": "Réessayer",
       "emptyCouple": "Personne ne répond encore pour cette invitation.",
-      "emptyGuest": "Personne ne répond pour vous — vous seul(e) pouvez répondre.",
+      "emptyGuest": "Personne ne répond pour vous — la réponse est la vôtre.",
       "searchPlaceholder": "Rechercher un invité à qui déléguer…",
       "noMatches": "Aucun invité correspondant.",
       "kindPrompt": "Qui est {{name}} pour cet invité ?",
@@ -219,7 +219,7 @@
         "withLabel": "Qui vous accompagne ?",
         "withPartner": "Avec mon/ma partenaire",
         "withChildren": "Avec des enfants",
-        "hint": "Les repas, allergies et le plan de table viendront plus tard — vous pouvez tout modifier à tout moment."
+        "hint": "Les repas, allergies et le plan de table viendront plus tard — vous pouvez tout modifier jusqu'au {{deadline}}."
       },
       "party": {
         "title": "Votre groupe",
@@ -238,7 +238,7 @@
       "confirm": {
         "yesTitle": "À bientôt en juin",
         "noTitle": "Vous nous manquerez",
-        "yesMessage": "Votre réponse est enregistrée. Dites-nous maintenant ce que chacun mange — vous pourrez y revenir à tout moment.",
+        "yesMessage": "Votre réponse est enregistrée. Dites-nous maintenant ce que chacun mange — vous pourrez y revenir jusqu'au {{deadline}}.",
         "noMessage": "Merci de nous le faire savoir. Nous penserons à vous ce jour-là."
       },
       "actions": {
@@ -305,9 +305,9 @@
         "label": "{{name}} sera là",
         "fallbackName": "Cette personne",
         "hint": {
-          "coming": "Désactivez ceci si cette personne ne peut pas venir — son compte, son repas et ses allergies restent enregistrés, elle peut être réactivée à tout moment.",
-          "comingPlusOne": "Désactivez ceci si cette personne ne peut pas venir — son nom, son repas et ses allergies restent enregistrés, elle peut être réactivée à tout moment.",
-          "declined": "Elle reste sur cette confirmation et peut redevenir présente jusqu'au jour J."
+          "coming": "Désactivez ceci si cette personne ne peut pas venir — son compte, son repas et ses allergies restent enregistrés : rien n'est perdu si elle est réactivée.",
+          "comingPlusOne": "Désactivez ceci si cette personne ne peut pas venir — son nom, son repas et ses allergies restent enregistrés : rien n'est perdu si elle est réactivée.",
+          "declined": "Elle reste sur cette confirmation et peut redevenir présente."
         }
       },
       "remove": {
@@ -332,7 +332,7 @@
           "notePlaceholder": "Une chanson à danser, un souvenir…",
           "addPartner": "+ Ajouter mon partenaire",
           "addChild": "+ Ajouter un enfant",
-          "declinedHint": "Votre groupe et vos détails de repas sont conservés — revenez en arrière quand vous voulez, rien n'est perdu."
+          "declinedHint": "Votre groupe et vos détails de repas sont conservés — rien n'est perdu si vous changez d'avis."
         },
         "couple": {
           "party": "Le groupe",
@@ -352,7 +352,7 @@
           "notePlaceholder": "Aucune note laissée.",
           "addPartner": "+ Ajouter son/sa partenaire",
           "addChild": "+ Ajouter un enfant",
-          "declinedHint": "Son groupe et ses détails de repas sont conservés — vous pouvez revenir en arrière à tout moment, rien n'est perdu."
+          "declinedHint": "Son groupe et ses détails de repas sont conservés — rien n'est perdu si vous revenez en arrière."
         }
       }
     },
@@ -1133,7 +1133,7 @@
     "eyebrow_plural": "{{count}} personnes présentes",
     "title": "Trouver",
     "titleAccent": "les autres",
-    "subtitle": "Toutes les personnes connectées apparaissent ici. Votre propre carte ouvre votre profil.",
+    "subtitle": "Toutes les personnes possédant un compte sur ce site apparaissent ici. Votre propre carte ouvre votre profil.",
     "search": {
       "placeholder": "Rechercher un nom…"
     },
@@ -1252,7 +1252,7 @@
     "contactHint": "Les coordonnées sont gérées par le couple — demandez-leur de les modifier.",
     "visibility": {
       "prefix": "Votre nom, rôle et relation apparaissent toujours dans",
-      "suffix": ". L'e-mail et le téléphone ne sont partagés qu'avec le couple."
+      "suffix": ". Sur votre profil, l'e-mail et le téléphone ne sont visibles que des mariés. Si les mariés vous inscrivent dans « Bon à savoir », cette section affiche votre nom, votre e-mail et votre téléphone à toute personne invitée connectée."
     },
     "actions": {
       "editProfile": "Modifier le profil",

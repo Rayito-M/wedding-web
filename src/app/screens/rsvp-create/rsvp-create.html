@@ -62,7 +62,7 @@
           >
             {{ 'rsvp.create.attending.withChildren' | translate }}
           </button>
-          <p class="hint">{{ 'rsvp.create.attending.hint' | translate }}</p>
+          <p class="hint">{{ 'rsvp.create.attending.hint' | translate: { deadline: deadline() } }}</p>
         </div>
       }
     </div>
@@ -169,7 +169,9 @@
       <app-decor-fish-pair [size]="120" />
       @if (draft().attending === 'yes') {
         <h2>{{ 'rsvp.create.confirm.yesTitle' | translate }}</h2>
-        <p class="sub outro">{{ 'rsvp.create.confirm.yesMessage' | translate }}</p>
+        <p class="sub outro">
+          {{ 'rsvp.create.confirm.yesMessage' | translate: { deadline: deadline() } }}
+        </p>
       } @else {
         <h2>{{ 'rsvp.create.confirm.noTitle' | translate }}</h2>
         <p class="sub outro">{{ 'rsvp.create.confirm.noMessage' | translate }}</p>

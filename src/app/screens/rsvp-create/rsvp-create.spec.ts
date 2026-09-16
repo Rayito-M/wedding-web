@@ -53,6 +53,7 @@ const TRANSLATIONS = {
       attending: {
         title: 'Will you join us?',
         subtitle: "Please reply by {{deadline}}. We can't wait.",
+        hint: 'Meals, allergies and seating come later — you can edit all of it until {{deadline}}.',
         yes: 'With joy',
         no: 'Sadly no',
         withPartner: 'With my partner',
@@ -62,7 +63,8 @@ const TRANSLATIONS = {
       confirm: {
         yesTitle: 'See you in June',
         noTitle: "You'll be missed",
-        yesMessage: 'Your reply is in.',
+        yesMessage:
+          'Your reply is in. Next, tell us what everyone eats — you can come back to it until {{deadline}}.',
         noMessage: 'Thank you for letting us know.',
       },
       actions: { send: 'Send reply', addMeals: 'Add meals & allergies', done: 'Done' },
@@ -171,6 +173,18 @@ describe('RsvpCreate', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(text()).toContain("Please reply by 15 March. We can't wait.");
+  });
+
+  it('interpolates the CONFIGURED deadline into the attending hint and the confirmation — never "any time" (T397)', async () => {
+    await create();
+
+    // The hint renders with the party toggles, i.e. once "With joy" is picked.
+    await click('button[app-choice-card]', 0);
+    expect(text()).toContain('you can edit all of it until 1 May.');
+
+    await clickPrimary();
+
+    expect(text()).toContain('you can come back to it until 1 May.');
   });
 
   it('sends the reply from "Send reply" for a guest with no partner and no children', async () => {

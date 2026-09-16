@@ -43,10 +43,10 @@ const TRANSLATIONS = {
         fallbackName: 'They',
         hint: {
           coming:
-            'Switch this off if they cannot make it — their account, meal and allergy details stay, so they can be switched back any time.',
+            'Switch this off if they cannot make it — their account, meal and allergy details stay, so switching back loses nothing.',
           comingPlusOne:
-            'Switch this off if they cannot make it — their name, meal and allergy details stay, so they can be switched back any time.',
-          declined: 'They stay on this RSVP and can be switched back to attending right up to the day.',
+            'Switch this off if they cannot make it — their name, meal and allergy details stay, so switching back loses nothing.',
+          declined: 'They stay on this RSVP and can be switched back to attending.',
         },
       },
       person: {
@@ -67,7 +67,7 @@ const TRANSLATIONS = {
         keep: 'Keep',
       },
       perspective: {
-        owner: { party: 'Your party', primaryHint: 'You', partyMeta: 'Party · dietary & allergies', note: 'A note for us (optional)', notePlaceholder: 'A song to dance to, a memory…', addPartner: '+ Add my partner', addChild: '+ Add a child', declinedHint: 'Your party and meal details are kept — switch back any time and nothing is lost.' },
+        owner: { party: 'Your party', primaryHint: 'You', partyMeta: 'Party · dietary & allergies', note: 'A note for us (optional)', notePlaceholder: 'A song to dance to, a memory…', addPartner: '+ Add my partner', addChild: '+ Add a child', declinedHint: 'Your party and meal details are kept — nothing is lost if you change your answer back.' },
         couple: { party: 'The party', primaryHint: 'Main guest', partyMeta: 'Participants · dietary & allergies', note: 'Note from guest', notePlaceholder: 'No note left.', addPartner: '+ Add partner', addChild: '+ Add child', declinedHint: 'Party and meal details are kept — switching back changes nothing else.' },
       },
     },
@@ -508,7 +508,7 @@ describe('RsvpEditor', () => {
       expect(t!.textContent?.trim()).toBe('Grace Hopper will be there');
       // Not the account-holding copy: a plus-one has no account to keep.
       expect(query('.attending-hint')?.textContent?.trim()).toBe(
-        'Switch this off if they cannot make it — their name, meal and allergy details stay, so they can be switched back any time.',
+        'Switch this off if they cannot make it — their name, meal and allergy details stay, so switching back loses nothing.',
       );
     });
 
@@ -525,7 +525,7 @@ describe('RsvpEditor', () => {
       expect(last.partner2?.firstName).toBe('Grace');
       expect(toggle()!.getAttribute('aria-checked')).toBe('false');
       expect(query('.attending-hint')?.textContent?.trim()).toBe(
-        'They stay on this RSVP and can be switched back to attending right up to the day.',
+        'They stay on this RSVP and can be switched back to attending.',
       );
     });
 
@@ -547,7 +547,7 @@ describe('RsvpEditor', () => {
       expect(t!.getAttribute('aria-checked')).toBe('true');
       expect(t!.textContent?.trim()).toBe('Grace Hopper will be there');
       expect(query('.attending-hint')?.textContent?.trim()).toBe(
-        'Switch this off if they cannot make it — their account, meal and allergy details stay, so they can be switched back any time.',
+        'Switch this off if they cannot make it — their account, meal and allergy details stay, so switching back loses nothing.',
       );
     });
 
@@ -562,7 +562,7 @@ describe('RsvpEditor', () => {
       expect(emitted[emitted.length - 1].partner2?.attending).toBe(false);
       expect(toggle()!.getAttribute('aria-checked')).toBe('false');
       expect(query('.attending-hint')?.textContent?.trim()).toBe(
-        'They stay on this RSVP and can be switched back to attending right up to the day.',
+        'They stay on this RSVP and can be switched back to attending.',
       );
 
       toggle()!.click();
@@ -927,7 +927,7 @@ describe('RsvpEditor', () => {
     await create(draftWith({ status: RsvpDto.StatusEnum.DECLINED }), { showStatus: true });
     expect(query('.declined-hint')).not.toBeNull();
     expect(query('.declined-hint')?.textContent?.trim()).toBe(
-      'Your party and meal details are kept — switch back any time and nothing is lost.',
+      'Your party and meal details are kept — nothing is lost if you change your answer back.',
     );
 
     await create(draftWith({ status: RsvpDto.StatusEnum.DECLINED }), {

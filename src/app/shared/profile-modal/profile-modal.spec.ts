@@ -113,7 +113,7 @@ describe('ProfileModal', () => {
           kind: { father: 'Father', mother: 'Mother', brother: 'Brother', sister: 'Sister' },
           field: {
             title: 'RSVP delegation',
-            emptyGuest: 'Nobody answers for you — only you can reply.',
+            emptyGuest: 'Nobody answers for you — the reply is yours.',
           },
         },
       },
@@ -322,7 +322,7 @@ describe('ProfileModal', () => {
       await create({ delegateChips: [] });
 
       expect(query('.chip-empty')?.textContent?.trim()).toBe(
-        'Nobody answers for you — only you can reply.',
+        'Nobody answers for you — the reply is yours.',
       );
     });
 

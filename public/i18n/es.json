@@ -67,7 +67,7 @@
       "error": "No se pudieron cargar las delegaciones de este invitado.",
       "retry": "Reintentar",
       "emptyCouple": "Todavía nadie responde por esta invitación.",
-      "emptyGuest": "Nadie responde por ti — solo tú puedes responder.",
+      "emptyGuest": "Nadie responde por ti — la respuesta es tuya.",
       "searchPlaceholder": "Buscar un invitado para delegar…",
       "noMatches": "No hay invitados que coincidan.",
       "kindPrompt": "¿Qué es {{name}} de este invitado?",
@@ -219,7 +219,7 @@
         "withLabel": "¿Quién te acompaña?",
         "withPartner": "Con mi pareja",
         "withChildren": "Con niños",
-        "hint": "Las comidas, alergias y la mesa vienen después — puedes editarlo todo cuando quieras."
+        "hint": "Las comidas, alergias y la mesa vienen después — puedes editarlo todo hasta el {{deadline}}."
       },
       "party": {
         "title": "Tu grupo",
@@ -238,7 +238,7 @@
       "confirm": {
         "yesTitle": "Hasta junio",
         "noTitle": "Te echaremos de menos",
-        "yesMessage": "Tu respuesta está registrada. Ahora cuéntanos qué come cada uno — puedes volver a esto cuando quieras.",
+        "yesMessage": "Tu respuesta está registrada. Ahora cuéntanos qué come cada uno — puedes volver a esto hasta el {{deadline}}.",
         "noMessage": "Gracias por comunicárnoslo. Estaremos pensando en ti ese día."
       },
       "actions": {
@@ -305,9 +305,9 @@
         "label": "{{name}} estará allí",
         "fallbackName": "Esta persona",
         "hint": {
-          "coming": "Desactiva esto si no puede asistir — su cuenta, comida y detalles de alergias se conservan, así que puede reactivarse en cualquier momento.",
-          "comingPlusOne": "Desactiva esto si no puede asistir — su nombre, comida y detalles de alergias se conservan, así que puede reactivarse en cualquier momento.",
-          "declined": "Sigue formando parte de esta confirmación y puede volver a marcarse como asistente hasta el mismo día."
+          "coming": "Desactiva esto si no puede asistir — su cuenta, comida y detalles de alergias se conservan, y al reactivarse no se pierde nada.",
+          "comingPlusOne": "Desactiva esto si no puede asistir — su nombre, comida y detalles de alergias se conservan, y al reactivarse no se pierde nada.",
+          "declined": "Sigue formando parte de esta confirmación y puede volver a marcarse como asistente."
         }
       },
       "remove": {
@@ -332,7 +332,7 @@
           "notePlaceholder": "Una canción para bailar, un recuerdo…",
           "addPartner": "+ Añadir mi pareja",
           "addChild": "+ Añadir niño",
-          "declinedHint": "Tu grupo y los detalles de comida se conservan — puedes cambiar de opinión cuando quieras y no se pierde nada."
+          "declinedHint": "Tu grupo y los detalles de comida se conservan — si cambias de opinión, no se pierde nada."
         },
         "couple": {
           "party": "El grupo",
@@ -352,7 +352,7 @@
           "notePlaceholder": "No ha dejado ninguna nota.",
           "addPartner": "+ Añadir a su pareja",
           "addChild": "+ Añadir niño",
-          "declinedHint": "Su grupo y los detalles de comida se conservan — puede volver a cambiarlo cuando quiera y no se pierde nada."
+          "declinedHint": "Su grupo y los detalles de comida se conservan — no se pierde nada si se vuelve a cambiar."
         }
       }
     },
@@ -1133,7 +1133,7 @@
     "eyebrow_plural": "{{count}} personas asistiendo",
     "title": "Encuentra",
     "titleAccent": "a los demás",
-    "subtitle": "Todos los que han iniciado sesión aparecen aquí. Tu propia tarjeta abre tu perfil.",
+    "subtitle": "Todos los que tienen cuenta en este sitio aparecen aquí. Tu propia tarjeta abre tu perfil.",
     "search": {
       "placeholder": "Buscar un nombre…"
     },
@@ -1252,7 +1252,7 @@
     "contactHint": "Los datos de contacto los gestiona la pareja — pídeles que los cambien.",
     "visibility": {
       "prefix": "Tu nombre, rol y relación siempre aparecen en",
-      "suffix": ". El correo electrónico y el teléfono solo se comparten con la pareja."
+      "suffix": ". En tu perfil, el correo electrónico y el teléfono solo los ven los novios. Si los novios te incluyen en «Información útil», esa sección muestra tu nombre, tu correo y tu teléfono a todos los invitados que hayan iniciado sesión."
     },
     "actions": {
       "editProfile": "Editar perfil",
