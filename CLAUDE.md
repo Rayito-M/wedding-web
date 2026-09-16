@@ -75,9 +75,9 @@ Angular 22 single-page app. Standalone components, signals-first, zoneless (no c
 9. **Forms validate on blur, submit on Enter or button click.** No real-time validation feedback noise; errors appear on submit or focus-out.
 10. **Authentication state is in a signals-based auth service,** not localStorage. Session tokens are held in memory; reload clears them (acceptable for v1, low-stakes data).
 11. **Before merging:** `pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e` all pass.
-    (Known exception: 4 pre-existing lint errors in `src/app/shared/modal/` — leave them unchanged
-    unless the task is to fix them. `pnpm test:e2e` is local-only — no `.github/` CI workflow
-    runs it yet.)
+    (ESLint is fully clean since T359 — the 4 long-baselined errors in `src/app/shared/modal/`
+    are fixed; do not baseline new ones. `pnpm test:e2e` is local-only — no `.github/` CI
+    workflow runs it yet.)
 12. **No third-party UI libraries** (Material, Bootstrap, etc.) — the design system is the single source; components are hand-built per spec.
 13. **Images:** no raster photography; use `PhotoPlaceholder` component (from design system) or inline SVG illustrations. All images responsive and optimized.
 14. **Accessibility:** WCAG 2.1 AA minimum. Semantic HTML, `aria-label` where needed, keyboard navigation on all interactive elements.

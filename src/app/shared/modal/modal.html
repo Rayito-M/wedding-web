@@ -1,13 +1,30 @@
 @if (open()) {
-  <div class="modal-backdrop" [class.lg]="size() !== 'sm'" (click)="onBackdrop()">
+  <!-- tabindex="-1": the scrim is a pointer target only (Escape is the
+       keyboard path, bound right here so it hears keys from anywhere inside
+       the card) — programmatically focusable satisfies the a11y lint contract
+       without entering the tab order. -->
+  <div
+    class="modal-backdrop"
+    [class.lg]="size() !== 'sm'"
+    tabindex="-1"
+    (click)="onBackdrop()"
+    (keydown.escape)="onEscape($event)"
+  >
+    <!-- tabindex="-1": focus-on-open target (see `Modal`'s constructor
+         effect); the card itself never sits in the tab order. Its (click)
+         only fences the backdrop's click-to-dismiss off from clicks inside
+         the dialog; (keydown) is the focus trap. -->
     <div
+      #card
       class="modal-card"
       [class.lg]="size() !== 'sm'"
       [class.xl]="size() === 'xl'"
       role="dialog"
       aria-modal="true"
+      tabindex="-1"
       [attr.aria-labelledby]="title() ? titleId : null"
       (click)="$event.stopPropagation()"
+      (keydown)="onCardKeydown($event)"
     >
       @if (size() !== 'sm') {
         <div class="modal-drag-handle" aria-hidden="true"></div>
