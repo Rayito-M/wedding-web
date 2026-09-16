@@ -136,7 +136,7 @@ const INVENTORY: Record<string, string> = {
   'guest_manager.lastSeen.never':
     'ALLOWED: empty state for the couple-only lastSeen field (hard rule 16) — describes absent data, promises nothing.',
   'login.magicLink.sub':
-    "ALLOWED: fr 'une seule fois' — single-use and the 15-minute TTL verified against wedding-api magic-link.service.ts TOKEN_TTL_MINUTES (T394); sourcing the numeral is T396's scope.",
+    "ASSERTED: fr 'une seule fois' — single-use verified against wedding-api magic-link.service.ts (T394); the TTL numeral is interpolated from auth-ttl.ts and cross-checked against the API's constant by login-ttl.spec.ts (T396).",
   'milestones.announcement.clearConfirm.message':
     'ALLOWED: verified by T394 against milestones.service — clear removes only the resend block, recalls nothing.',
   'milestones.audience.all': 'ALLOWED: "Everyone" is an audience option label, not a claim.',

@@ -60,12 +60,34 @@ function localeValue(locale: string, dottedKey: string): string {
   return node as string;
 }
 
-/** Month-name detector that respects accented letters (`\b` cannot). */
-function containsMonth(value: string, months: string[]): string | null {
+/**
+ * Month-name detector that respects accented letters (`\b` cannot).
+ * `caseSensitive` exists for the whole-file sweep: English month names are
+ * capitalized in prose, and matching "May" insensitively would flag every
+ * "may still shift" and "may show" in the privacy bodies.
+ */
+function containsMonth(value: string, months: string[], caseSensitive = false): string | null {
   for (const month of months) {
-    if (new RegExp(`(^|[^\\p{L}])${month}($|[^\\p{L}])`, 'iu').test(value)) return month;
+    if (new RegExp(`(^|[^\\p{L}])${month}($|[^\\p{L}])`, caseSensitive ? 'u' : 'iu').test(value))
+      return month;
   }
   return null;
+}
+
+function flattenLocale(locale: string): Record<string, string> {
+  const flat: Record<string, string> = {};
+  const walk = (node: unknown, prefix: string): void => {
+    for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+      const dotted = prefix ? `${prefix}.${key}` : key;
+      if (typeof value === 'object' && value !== null) walk(value, dotted);
+      else flat[dotted] = String(value);
+    }
+  };
+  walk(
+    JSON.parse(readFileSync(path.resolve(__dirname, `../public/i18n/${locale}.json`), 'utf8')),
+    '',
+  );
+  return flat;
 }
 
 /** Same manual sign-in as `design-parity-rsvp.spec.ts`: with a `pending`
@@ -119,4 +141,28 @@ test('the six deadline keys interpolate {{deadline}} and carry no month, in any 
       ).toBeNull();
     }
   }
+});
+
+test('no month name is spelled ANYWHERE in a locale file — every date in copy is configuration (T396, T394\'s GUARD B)', () => {
+  // T393 pinned six keys; T396 found the same defect outside them
+  // (`schedule.header`'s "SAT · 5 JUN", `yesTitle`'s "See you in June") and
+  // generalized the sweep to every value. The allowlist is EMPTY today —
+  // adding a key to it is a decision to ship a date the couple cannot
+  // change, and needs a reason next to it, like copy-absolutes' inventory.
+  const ALLOWLIST: Record<string, string> = {};
+
+  const offenders: string[] = [];
+  for (const locale of LOCALES) {
+    for (const [key, value] of Object.entries(flattenLocale(locale))) {
+      if (key in ALLOWLIST) continue;
+      // English months are matched case-sensitively: "May" the month is
+      // capitalized; "may" the verb is everywhere and legitimate.
+      const month = containsMonth(value, MONTHS[locale], locale === 'en');
+      if (month) offenders.push(`${locale}.json ${key} ("${month}")`);
+    }
+  }
+  expect(
+    offenders,
+    'Month name(s) spelled in locale values — interpolate from the configuration (rsvpDeadlineLabel / weddingDayLabel / weddingMonthLabel), or allowlist with a reason',
+  ).toEqual([]);
 });
