@@ -328,6 +328,23 @@ test.describe('the public surface carries no Good to know content (T378/T385, hu
     await page.goto('/privacy-policy');
     await expect(page.locator('app-privacy-policy')).toBeVisible();
 
+    // Mounted is not the same as translated (T389). `app.config.ts:44-51`
+    // installs no initializer that waits for `/i18n/<lang>.json`, so the app
+    // paints its first frame with raw keys in it and swaps in the copy when
+    // the fetch lands — measured at 31ms locally and, with the locale file
+    // delayed by 1s and 3s, at 987ms and 2988ms, i.e. the window IS the
+    // fetch. Everything below takes a one-shot `innerText()` snapshot, so
+    // without this gate the file intermittently asserts against the keys
+    // rather than the notice. That is exactly how this test failed on
+    // 2026-09-15 (T390's "eighth flake") and again on 2026-09-16.
+    //
+    // Auto-retrying and specific: it waits for the locale and for nothing
+    // else, and it cannot paper over wrong copy — every claim below is
+    // unchanged. The APP-side question this raises (a guest on a slow
+    // connection sees the same raw keys) is answered and filed in T389's
+    // report; it is a defect in its own right and is not fixed from a spec.
+    await expect(page.locator('h1')).not.toHaveText('privacyPolicy.title');
+
     const notice = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
     // Contact details the couple chooses, and the couple's own bank details —
     // the two things hub ADR-0046 §7 requires this notice to cover.
