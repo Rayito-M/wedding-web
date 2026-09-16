@@ -1,0 +1,156 @@
+{
+  "task": "T395",
+  "status": "complete",
+  "summary": "Strategy, named before coding: inline the minimal first-frame set. The only translatable surfaces that can paint before /i18n/<lang>.json arrives are the root-mounted consent banner and the tab title, so those 21 keys are inlined in ALL THREE locales — the active locale is known synchronously from localStorage/navigator, so an es/fr guest gets correct-language copy on frame one for ~1 kB more. The mechanism is a custom MissingTranslationHandler, not a pre-seeded store: use() skips the HTTP load when the store already has an entry, so seeding would have silently suppressed the real file forever. Route content additionally waits for the locale fetch alongside the config fetch it already waits for, and an unresolved key renders as an empty string, never as itself. The trade: ~1.5 kB of UI copy rides the bundle (allowed — ADR-0009 governs UI strings separately from content; an e2e drift guard pins it byte-identical to the locale files). First paint untouched: FCP 136-152 ms after vs 144-160 ms before; real banner copy painted at 116-132 ms where raw consentBanner.* keys painted at 121-142 ms. Proven to bite: fix reverted, both behavioural e2e tests fail on raw keys at the first sampled frame. Gates green: unit 654 (647+7), e2e 460 tests 430/0/30 (445+15).",
+  "acceptance": [
+    {
+      "criterion": "Decide and state the strategy before coding: block first paint, inline a minimal first-frame set, or render nothing for an unresolved key. Name the trade you took.",
+      "met": true,
+      "evidence": "Inlining the minimal set, decided and recorded before any code was written (prompt's own tiebreak, taken with one strengthening — see deviations[]). The trade: 21 UI strings x3 locales (~1.5 kB source, less gzipped) now live in the bundle as well as the locale files. ADR-0009 permits UI strings in the bundle — it governs them separately from stored content — and the duplication risk (two versions of one sentence) is pinned by an e2e drift guard asserting byte-identity against all three public/i18n/*.json files. Blocking first paint was rejected because it spends LCP budget on every fast connection to fix a slow-connection defect; rendering nothing was rejected as the primary strategy because a blank consent banner is a missing legal notice — but it IS the terminal fallback for non-inlined keys, and the route-content gate makes that fallback unreachable in normal operation.",
+      "notes": "A mechanism finding worth keeping: ngx-translate v18's use() consults loadOrExtendLanguage(), which skips the loader whenever store.hasTranslationFor(lang) — so pre-seeding the store with the minimal set would have silently suppressed the full locale file forever. The MissingTranslationHandler is the only inlining mechanism that leaves the load path untouched. A second: @ngx-translate/http-loader swallows a failed fetch into of({}) with only a console.warn, so a FAILED load is indistinguishable from a loaded empty file — 'loaded' therefore means a NON-empty store entry (first-frame-translation.handler.ts), and this exact path leaked raw keys during development until caught by the new spec's abort test."
+    },
+    {
+      "criterion": "Never show a raw key. Whatever the strategy, consentBanner.title must not reach a screen.",
+      "met": true,
+      "evidence": "Three layers. (1) The inlined set answers the banner and title keys with real copy synchronously. (2) app.html holds <router-outlet> behind localeSettled (TranslateLanguageService) alongside weddingConfigPublicLoading, so a screen's own strings cannot render before their file. (3) FirstFrameMissingTranslationHandler returns '' — never the key — for any other key while the active language has no non-empty store entry; once a real file is loaded, a missing key stays visibly raw, because at that point it is a defect and hiding it would remove the signal T385/T390 style sweeps rely on. Measured across delays of 0/1000/3000 ms and an aborted fetch: firstRawKeyAt null in every run (before: 121-142 ms).",
+      "notes": "The empty-string tier also covers the degraded mode where the locale fetch fails outright: previously the guest kept raw keys until reload; now they get the inlined banner plus fallback-language or empty text. Settled-on-error means a dead locale endpoint cannot pin the loading screen forever."
+    },
+    {
+      "criterion": "The fix covers every route, not the banner alone.",
+      "met": true,
+      "evidence": "The banner and title fixes are root-level (app.html / TranslatedTitleStrategy's instant() resolving against the handler), and the localeSettled gate wraps the single <router-outlet> every route renders through — the same choke point the config gate already used, so no route can opt out. The e2e spec asserts the invariant on a deep-linked public route (/privacy-policy) whose own privacyPolicy.*/shared.* keys were painting raw before the fix (captured in the prove-bite run), i.e. the assertion exercises route content, not just the banner.",
+      "notes": "app-loading and app-error, the two components visible while the gate holds, contain hardcoded English ('Loading...', 'Something went wrong') rather than i18n keys — they cannot show a raw key, but they are a pre-existing hard-rule-8 violation now made slightly more visible by the gate. Filed under risks[], not fixed here: localizing them is copy work this task does not own."
+    },
+    {
+      "criterion": "A test that fails on a raw key, with the locale fetch delayed the way T389 delayed it. Prove it bites: revert the fix, watch it fail.",
+      "met": true,
+      "evidence": "e2e/first-frame-i18n.spec.ts, x5 projects. Test 1 delays /i18n/*.json by 2500 ms (T389's harness: page.route interception) and samples body innerText + document.title continuously from waitUntil:'commit'; any sample matching \\b(<namespace>)\\.[A-Za-z0-9_.-]+ — namespaces read live from en.json, so the regex follows the file — fails, the inlined banner copy must be visible DURING the window (the strategy cannot silently degrade into a blank banner), and the route's own copy must arrive after (the gate provably lifts). Test 2 aborts the fetch outright and asserts the same invariant. Test 3 is the drift guard. Proven to bite before the spec was committed: with app.config.ts, app.html, app.ts, core/service/index.ts and translate-language.service.ts checked out from the pre-fix commit (the spec present, the handler files present but unwired), tests 1 and 2 both failed — 'a raw i18n key reached the page', received text opening 'consentBanner.message consentBanner.note consentBanner.privacyLink...' — and only the pure-data drift guard passed. Restored: 3/3 green, then 460/430/0/30 on the full suite.",
+      "notes": "The banner-visibility assertion needed installApiMocks' own consent seed ('declined', which hides the banner in every other spec) removed via a later addInitScript — a first visit has no stored decision, and that first visit is the frame this task is about."
+    },
+    {
+      "criterion": "Measure first paint before and after and report both. If the strategy costs first-paint time, say how much — LCP has a 2.5 s budget.",
+      "met": true,
+      "evidence": "Measured with a Playwright harness replicating T389's (locale delayed 0/1000/3000 ms, /privacy-policy, samples from first paint; harness preserved in the session scratchpad, not committed — it would run x5 in every suite). BEFORE (HEAD, this session): FCP 160/144/148 ms; first text at 142/121/130 ms reading 'Loading... consentBanner.message consentBanner.note...'; real copy at 162/1128/3134 ms — the raw-key window IS the locale fetch, confirming T389's 155-182 ms / 213 ms/1.1 s/3.1 s within run-to-run noise. AFTER: FCP 152/144/136 ms; first text at 132/123/116 ms reading the real banner copy; raw keys never (firstRawKeyAt null at all three delays); full route copy at 153/1129/3124 ms. The strategy costs no first-paint time — FCP deltas are within noise, as predicted, since nothing blocks and nothing new is fetched — and route-copy arrival is unchanged because the config API call was already the gate. What changed is what the guest sees while waiting: real banner copy and a loading state instead of consentBanner.* and half-raw screens.",
+      "notes": "Bundle cost of the inlined set: first-frame-translations.ts is ~4 kB of source including comments, ~1.5 kB of string data, far below anything the 500 kB initial budget or the hub's 200 kB gzip target would notice; the production build completed with only the four pre-existing SCSS budget warnings."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "The prompt's tiebreak: 'inline the minimal set for the default locale'.",
+      "to": "The minimal set inlined for all three locales, plus the localeSettled gate on route content, plus empty-string as the terminal fallback for non-inlined keys.",
+      "reason": "Two reasons, one per widening. (a) Three locales, not one: the active locale is decided synchronously (localStorage, then navigator.language) before the first frame, so the app always knows WHICH language the first frame should be in — inlining only the default would show English to the Spanish and French majority of ~150 guests for exactly the window the task exists to close, and the cost of the other two locales is ~1 kB. (b) The gate and the fallback: the minimal set alone cannot honour 'never show a raw key' on 'every route' — a deep-linked route's own keys are not in the set, and when the locale file loses the race against the config API (or fails, which the http-loader converts into a silent empty success), those keys painted raw. The prompt's tiebreak was conditional on having no strong reason to prefer otherwise; these are the reasons, and the strategy is still the one it named — the inlined set is the load-bearing piece, the gate makes it sufficient.",
+      "authorized_by": "T395 acceptance bullets 2 and 3 ('Never show a raw key', 'The fix covers every route') — the two requirements the single-locale, set-only reading cannot meet; and the prompt's own conditional phrasing ('If you have no strong reason to prefer another').",
+      "verified_how": "The abort-mode e2e test is the direct proof the widenings are load-bearing: during development, with the set inlined but 'loaded' meaning 'store entry exists', the aborted fetch produced a page of raw privacyPolicy.*/shared.* keys around a correctly-rendered banner — the exact failure the single-layer reading ships. The committed spec fails on that state and passes on the layered one; the prove-bite run demonstrates both directions."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck green before and after. T389's standing caveat applies unchanged: the gate covers src/** only, so e2e/first-frame-i18n.spec.ts is type-stripped, not typechecked. Its one src import (first-frame-translations.ts) is deliberately a pure-data module with a type-only import, so it loads under Playwright's node runtime with no Angular machinery."
+    },
+    "lint": {
+      "errors_before": 4,
+      "errors_after": 4,
+      "new_errors": [],
+      "detail": "pnpm lint: 4 ESLint errors before and after, all in src/app/shared/modal/ — exactly the exception CLAUDE.md hard rule 11 names. stylelint: no new violations (550 pre-existing, baselined). ds fidelity: 31/31 clean pairs, 0 drifting values."
+    },
+    "test": {
+      "before": {
+        "total": 647,
+        "failing": 0
+      },
+      "after": {
+        "total": 654,
+        "failing": 0
+      },
+      "new_failures": [],
+      "detail": "pnpm test: 647 -> 654 (the 7 FirstFrameMissingTranslationHandler specs: per-locale inlined copy, full-set coverage so no title can ever resolve raw, default-lang fallback, empty-string during flight, raw-key-after-load, the {}-is-not-loaded http-loader case, and a no-interpolation-placeholder guard on the data). 0 failing before and after; the 647 baseline is the figure T389 and T392 both measured at this HEAD, re-confirmed by 654 - 7."
+    },
+    "build": {
+      "result": "pass",
+      "detail": "pnpm build green. Four SCSS budget warnings, none this task's (it adds no CSS): guest-manager 11.96 kB, milestones 11.55 kB, seating-plan 9.58 kB — the three T389 listed — plus config-manager 16.85 kB against the 8 kB warning threshold, the figure T384 measured and reported against its separate 17 kB error ceiling; present at HEAD, listed here because T389's report named only three.",
+      "budget_warnings": [
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget (11.96 kB)",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget (11.55 kB)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget (9.58 kB)",
+        "src/app/screens/config-manager/config-manager.scss exceeded maximum budget (16.85 kB)"
+      ]
+    },
+    "e2e": {
+      "before": {
+        "total": 445,
+        "passed": 415,
+        "failed": 0,
+        "skipped": 30
+      },
+      "after": {
+        "total": 460,
+        "passed": 430,
+        "failed": 0,
+        "skipped": 30
+      },
+      "result": "pass",
+      "new_failures": [],
+      "detail": "AFTER, measured this run: one full plain pnpm test:e2e, 460 tests, 430 passed / 0 failed / 30 skipped, 4.1 m, no --retries. The +15 are this task's spec x5 projects. BEFORE is inherited from T391's report (445/415/0/30, measured 2026-09-16 at the same HEAD this task branched from) rather than re-run — the tree already carried this task's uncommitted files, so a clean before-run was not available without touching the Product Owner's uncommitted work; flagged per §4 rather than silently quoted. The 30 skipped are the same six pre-existing test.skip/test.fixme declarations x5 projects T388 measured."
+    }
+  },
+  "files": {
+    "added": [
+      "src/app/core/service/first-frame-translations.ts",
+      "src/app/core/service/first-frame-translation.handler.ts",
+      "src/app/core/service/first-frame-translation.handler.spec.ts",
+      "e2e/first-frame-i18n.spec.ts"
+    ],
+    "modified": [
+      "src/app/app.config.ts",
+      "src/app/app.html",
+      "src/app/app.ts",
+      "src/app/core/service/index.ts",
+      "src/app/core/service/translate-language.service.ts",
+      "tasks/33-general-information/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/environments/release.ts",
+      "why": "Restored to HEAD's 'dev' placeholder with git checkout at session start (authorized by the session prompt: HEAD holds the correct placeholder and the build overwrites the file anyway), and restored again after this task's pnpm build regenerated it. Net diff against HEAD: none."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "The inlined set is pinned to the locale files only by e2e (the drift guard in first-frame-i18n.spec.ts), and the e2e suite is local-only — no CI runs it. A copy edit to consentBanner.* or titles.* in public/i18n/*.json that skips pnpm test:e2e ships two versions of the same sentence: the file's after the locale loads, the bundle's on the first frame.",
+      "surfaces_at": "Any copy task touching those 21 keys; hard rule 11 catches it as long as the gate is actually run before merging."
+    },
+    {
+      "risk": "The set covers the pre-locale surfaces that exist today (banner, titles). A new component mounted outside the router-outlet gate — a maintenance banner, an update toast — would render its keys as empty strings during the locale window: never raw, so the invariant holds, but invisibly blank rather than loudly broken, and the e2e guard only asserts the banner's copy is present, not every root surface's.",
+      "surfaces_at": "The next root-mounted translatable component; its author should add its keys to FIRST_FRAME_TRANSLATIONS, which the file's header comment now says."
+    },
+    {
+      "risk": "app-loading and app-error — the two screens the gate shows — are hardcoded English ('Loading...', 'Something went wrong', 'Try again'), a pre-existing hard-rule-8 violation that predates this task but is on screen slightly longer now for guests with slow locale fetches. A Spanish guest on a bad connection reads English chrome while waiting for Spanish copy.",
+      "surfaces_at": "Any i18n sweep; fixing it means adding their strings to the locale files AND to FIRST_FRAME_TRANSLATIONS, since they render precisely when the locale file is absent."
+    },
+    {
+      "risk": "After a totally failed locale fetch, ngx-translate's store holds {} for that lang and hasTranslationFor() is true, so nothing ever refetches it — the guest keeps fallback/empty text until a full reload. Pre-existing library behaviour (the http-loader swallows errors), now visible instead of showing raw keys. No in-app retry exists.",
+      "surfaces_at": "A guest whose network drops exactly between the bundle and the locale file — rare, since both come from the same CloudFront origin; a reload (which such a guest would try anyway) fully recovers."
+    }
+  ],
+  "decisions_needed": [
+    {
+      "question": "Should app-loading and app-error be localized (they are hardcoded English, and the T395 gate can keep them on screen for the length of a slow locale fetch)?",
+      "options": [
+        "Localize them via FIRST_FRAME_TRANSLATIONS + locale files, the mechanism this task built — they render exactly when the locale file is absent, so the inlined set is the only path that works.",
+        "Leave them: a spinner labelled 'Loading...' is near-universal iconography, and the error screen's retry loop is the rarer surface."
+      ],
+      "recommendation": "Option 1, as a small task — hard rule 8 already says all user-facing text is i18n-mandatory, and the mechanism now exists; it is an hour, not a design question.",
+      "blocking": false,
+      "needed_by": "Its own task; nothing in this phase depends on it."
+    }
+  ],
+  "commits": [
+    "755e42d",
+    "8eacd2e"
+  ]
+}

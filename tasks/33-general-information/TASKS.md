@@ -509,7 +509,20 @@
   that works)
 
 ### T395 — The app paints raw translation keys on its first frame, on every route
-- **Status:** todo — **a real user-facing defect, measured, not inferred**
+- **Status:** done (2026-09-16) — strategy: **inline the minimal first-frame set**, in all three
+  locales (the active locale is known synchronously, so es/fr guests get correct-language copy on
+  frame one), served by a custom `MissingTranslationHandler` — the only inlining mechanism that
+  works, because `use()` skips the HTTP load whenever the store already has an entry, so
+  pre-seeding would have silently suppressed the real locale file forever. Route content waits for
+  the locale alongside the config it already waits for; an unresolved key renders as `''`, never as
+  itself — and "loaded" means a **non-empty** store entry, because the http-loader swallows a
+  failed fetch into `{}`. The named trade: ~1.5 kB of UI copy in the bundle (ADR-0009 allows it;
+  an e2e drift guard pins it byte-identical to the locale files). First paint untouched (FCP
+  136–152 ms vs 144–160 ms); real banner copy at 116–132 ms where raw keys painted at 121–142 ms;
+  raw keys never, at locale delays 0/1/3 s **and** with the fetch aborted. Proven to bite: fix
+  reverted, both behavioural tests fail on `consentBanner.*` at the first sampled frame. Gates
+  green: unit 654 (647+7), e2e **460 tests, 430/0/30**. See `reports/T395.json` (`755e42d`,
+  `8eacd2e`).
 - **Owner:** agent (implementer)
 - **Depends on:** — (T389 found it; its spec-side race is already fixed)
 - **ADR:** hub **ADR-0009** (UI strings); ADR-0031 (three locales)
