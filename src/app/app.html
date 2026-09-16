@@ -1,6 +1,6 @@
 @if (weddingConfigPublicError()) {
   <app-error (retry)="retryLoadConfig()"></app-error>
-} @else if (weddingConfigPublicLoading()) {
+} @else if (weddingConfigPublicLoading() || !localeSettled()) {
   <app-loading></app-loading>
 } @else {
   <router-outlet />

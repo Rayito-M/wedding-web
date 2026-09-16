@@ -18,6 +18,19 @@ export class TranslateLanguageService {
 
   readonly currentLang = this._currentLang.asReadonly();
 
+  private readonly _localeSettled = signal(false);
+
+  /**
+   * `true` once the first `use()` of the active locale has either loaded its
+   * file or failed for good (T395). `app.html` holds route content behind
+   * this alongside the config fetch it already waits for, so no screen can
+   * paint keys whose copy has not arrived. Settled-on-error is deliberate:
+   * if `/i18n/<lang>.json` is unreachable the app renders degraded (fallback
+   * language or, per `FirstFrameMissingTranslationHandler`, empty strings)
+   * rather than holding the loading screen forever.
+   */
+  readonly localeSettled = this._localeSettled.asReadonly();
+
   constructor() {
     // React to the wedding configuration (loaded asynchronously): register the
     // available languages and apply the current one once it arrives.
@@ -55,7 +68,10 @@ export class TranslateLanguageService {
   init(): void {
     // Apply the current language immediately; the constructor effect re-applies
     // it (and registers all languages) once the configuration loads.
-    this.translateService.use(this.currentLang());
+    this.translateService.use(this.currentLang()).subscribe({
+      next: () => this._localeSettled.set(true),
+      error: () => this._localeSettled.set(true),
+    });
   }
 
   setLanguage(lang: LangCode): void {

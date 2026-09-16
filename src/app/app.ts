@@ -21,6 +21,11 @@ export class App {
   // Instantiated here to initialize translations on startup
   private translate = inject(TranslateLanguageService);
 
+  // Route content waits for the locale file as well as the config (T395):
+  // the loading frame and the consent banner carry inlined first-frame copy,
+  // but a screen's own strings only exist once /i18n/<lang>.json resolves.
+  protected readonly localeSettled = this.translate.localeSettled;
+
   protected readonly weddingConfigPublicLoading = computed(() =>
     this.configurationService.weddingConfigPublicLoading(),
   );

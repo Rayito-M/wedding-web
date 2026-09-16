@@ -6,7 +6,7 @@ import {
   APP_INITIALIZER,
 } from '@angular/core';
 import { provideRouter, TitleStrategy } from '@angular/router';
-import { provideTranslateService } from '@ngx-translate/core';
+import { provideMissingTranslationHandler, provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideStore } from '@ngrx/store';
@@ -23,6 +23,7 @@ import {
   provideEntityDataServices,
   TokenStorageService,
   Configuration,
+  FirstFrameMissingTranslationHandler,
   RouteConfigService,
   unauthorizedInterceptor,
 } from '@app/core';
@@ -44,6 +45,11 @@ export const appConfig: ApplicationConfig = {
     provideTranslateService({
       lang: 'en',
       fallbackLang: 'en',
+      // T395: never paint a raw key — the first frame renders before
+      // /i18n/<lang>.json arrives, and this handler answers with the inlined
+      // first-frame copy (consent banner, tab titles) or an empty string
+      // until the locale file is in the store.
+      missingTranslationHandler: provideMissingTranslationHandler(FirstFrameMissingTranslationHandler),
     }),
     provideTranslateHttpLoader({
       prefix: '/i18n/',

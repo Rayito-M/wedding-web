@@ -1,5 +1,7 @@
 export * from './configuration.service';
 export * from './consent.service';
+export * from './first-frame-translation.handler';
+export * from './first-frame-translations';
 export * from './header.service';
 export * from './login.service';
 export * from './notification-center.service';
