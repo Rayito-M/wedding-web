@@ -1,0 +1,120 @@
+{
+  "task": "T394",
+  "status": "complete",
+  "summary": "Triage of T391's 40 unasserted claim-bearing keys, each read and checked against the code that honours it, in both repos. NOTHING FIXED. Result: 6 already fixed and asserted by T393 (the deadline cluster); FIVE false now — delegation.field.emptyGuest confirmed, plus THREE that T391 classified as believed-true: login.code.sub says the OTP expires in 10 minutes while the API's CODE_TTL_MINUTES is 5 (and the SMS itself says 5 — screen and text message contradict each other); people.subtitle says 'Everyone who has signed in appears here' while GET /v1/profile returns every provisioned account; profileModal.visibility.suffix says 'Email and phone are shared with the couple only' while ADR-0047 §3 shows a listed contact's email and phone to every signed-in guest — modal and privacy notice now contradict each other, T390's class exactly. Fifth, mildest: rsvp.create.confirm.yesMessage promises 'any time' while the API 410s RSVP writes after the deadline. 2 are not behavioural claims; 27 are true-but-unasserted, several code-verified this pass. THE SHAPE: the false ones cluster — (1) server-owned values transcribed into locale files, (2) absolute quantifiers about who can see or act, invalidated by later visibility widenings. Cluster 1 has a cheap partial guard, cluster 2 an inventory-allowlist guard; truth itself needs reading — proposals in decisions_needed[].",
+  "acceptance": [
+    {
+      "criterion": "Work T391's enumeration and sort each entry into: false now (a defect — file it), true but unasserted (debt — is it worth a test?), or not actually a behavioural claim (drop it, and say why the sweep caught it).",
+      "met": true,
+      "evidence": "All 40 worked; every classification below was made by reading the string AND the code that honours it, not by inheriting T391's beliefs — which matters, because 3 of its 33 believed-true entries turned out false. FIXED SINCE THE LIST (6): the deadline cluster, interpolated and asserted by T393 this session. FALSE NOW (5): [1] login.code.sub — 'It expires in 10 minutes' ×3 locales; wedding-api sms-verification.service.ts:13 CODE_TTL_MINUTES = 5, and the SMS template receives ttlMinutes=5, so the guest's text message and the screen above it disagree by a factor of two. [2] delegation.field.emptyGuest — 'only you can reply' — confirmed false: the couple edits any RSVP by role (ADR-0015; guest-manager's manage-rsvp-modal and the rsvp-editor couple perspective both ship). [3] people.subtitle — 'Everyone who has signed in appears here' — GET /v1/profile is repo.readAll over USER documents with no sign-in filter, and accounts are created when the couple provisions them (guests ARE USER docs, guests.service.ts), so never-signed-in people appear; hard rule 16's own wording ('this admin-visible account never signed in') presumes it. [4] profileModal.visibility.suffix — 'Email and phone are shared with the couple only' ×3 locales, shown to every guest on their own profile — false since ADR-0047 §3: a guest listed in Good to know has name, email AND phone shown to every signed-in guest, which privacyPolicy.goodToKnow.body (T385) correctly discloses; the two strings now contradict each other across audiences, exactly T390's class. [5] rsvp.create.confirm.yesMessage — 'you can come back to it any time' — rsvp.service.ts assertDeadlineOpen() throws 410 Gone on create and update after rsvpDeadline (admins excepted), so 'any time' is an overclaim with a real failure mode (a guest who defers meal details past the deadline cannot enter them); the mildest of the five, and its fix is one interpolation away since T393 ships the formatter. NOT A CLAIM (2): invitee.schedule.provisionalNote ('Times may still shift…' — a hedged prediction about the couple's planning, no system behaviour to be wrong about) and invitee.schedule.noEvents ('will appear here once the agenda is ready' — an empty-state description); the sweep caught both because its verb list keys on 'will/may + appear/shift', which is how futurity reads, not how claims do. TRUE BUT UNASSERTED (27): the remainder — with several VERIFIED against code this pass rather than waved through: login.magicLink.sub (15 min, single-use: magic-link.service.ts TOKEN_TTL_MINUTES=15, 'Tokens are single-use'); rsvp.hub.outstanding.none ('until the deadline' — actually enforced, 410); schedule.note.final's load-bearing clause (cancelled items render unfiltered, schedule.ts items()); configManager.note.mapUrlEmbed (travel.ts's toEmbedUrl returns null for opaque share links and falls back to the address pin map); milestones.form.kind.hint and announcement.clearConfirm.message (milestones.service comments and code: internal milestones have no notifier path; clear removes only the resend block); the five privacyPolicy bodies (the app's ONLY gtag call is a single config with anonymize_ip:true, loaded exclusively from an 'accepted' decision — no custom events, matching analytics/cookies/ipAnonymization claims); configManager.couple.deleteNote's literal claim (deleting the account kills the next magic-link lookup immediately — noting it wisely says nothing about already-issued 30-day JWTs, ADR-0013)."
+    },
+    {
+      "criterion": "Report the shape, not just the list. If the false ones cluster — configurable values typed into locale files, capabilities described that were later cut, promises about propagation — say so. A cluster is an ADR or a lint rule; scattered one-offs are just tasks.",
+      "met": true,
+      "evidence": "The false ones cluster, in two shapes, and neither is the 'capabilities later cut' shape the task guessed. CLUSTER 1 — server-owned values transcribed into locale files: the six deadline keys (a CONFIG field) plus login.code.sub (a named API constant) — 7 of the 11 strings ever found false in this phase. The mechanism is identical each time: a value whose single source of truth is the server was retyped as prose at authoring time, was correct that day, and had no reason to stay correct; nothing can fail a build when a config value or an API constant moves. login.code.sub is the purest specimen: the API passes the REAL value into the SMS template ({{TTL_MINUTES}}), so the system already knew the truth and the locale file overrode it. CLUSTER 2 — absolute quantifiers about visibility or capability: 'only you can reply', 'shared with the couple only', 'Everyone who has signed in', plus T390's original self-updating-card claim. These go false by a different mechanism: a later ADR WIDENS who can see or act (ADR-0015 gave the couple edit rights over any RSVP; ADR-0047 §3 widened contact digests to all signed-in guests), and nobody sweeps existing copy for the old scope — the ADR's own checklist has no 'which shipped strings state the scope this changes?' line. profileModal.visibility.suffix went false the very release T385 made the notice true, producing a cross-audience contradiction that an agreement test (the T391 pattern) would have caught mechanically. The 27 true-but-unasserted do NOT cluster around risk: persistence promises ('details are kept', 'cannot be undone') are behaviour-tested even where the copy is not, and the privacy bodies were verified against code. So the debt is not uniform — it is concentrated in two mechanisms, both of which have named, cheap countermeasures (next criterion), while the long tail is genuinely ordinary."
+    },
+    {
+      "criterion": "Propose the cheapest thing that would have caught the whole class, and be honest if the answer is 'nothing general — they need reading'. A convention nobody can check is worth less than an accurate list.",
+      "met": true,
+      "evidence": "Per cluster, cheapest first, with the honest limits stated. CLUSTER 1 (transcribed server values): no fully general check exists — a bare number in prose ('10 minutes', '12 blocks') is not lintable as false. Two partial guards ARE cheap: (a) T393's off-disk pattern generalized — one e2e test asserting NO month name appears in ANY locale value outside a committed allowlist (accent-aware matcher already written in rsvp-deadline.spec.ts); dates are the highest-consequence transcribed values and month names are cheap to detect; (b) the authoring rule that any numeral naming a system threshold must be interpolated from the thing that enforces it — checkable in review, not by machine, and login.code.sub shows the trap: the client CANNOT interpolate the OTP TTL today because no API response carries it, so the fix task must either expose it or remove the numeral from the copy. CLUSTER 2 (absolute quantifiers): the cheapest real guard is an INVENTORY TEST, not truth-checking — one spec that flattens the locale files, collects every key whose value matches a small absolutes lexicon per language (only/never/nobody/everyone; solo/nunca/nadie/todos; seul/jamais/personne/tous…), and asserts the resulting key set equals a committed allowlist. Writing the 41st absolute claim then FAILS THE SUITE until the author consciously reads it and either asserts it (copy-claims pattern) or allowlists it — moving the reading to authoring time, where this whole phase shows it is cheapest. It does not verify truth; it guarantees the truth question gets asked. CROSS-AUDIENCE PAIRS: already solved once — copy-claims.spec.ts's agreement test; the visibility-suffix/notice pair needs the same one test. And the honest core: TRUTH ITSELF NEEDS READING. This triage found 3 false claims inside a list a competent sweep had just classified as believed-true, at a cost of roughly two hours across both repos. Nothing general replaces that; the cheapest sustainable version is to re-run the read at the moments the clusters identify as dangerous — any ADR that widens visibility or capability (a one-line addition to the hub's ADR template: 'enumerate shipped strings stating the scope this changes'), rather than on a calendar."
+    },
+    {
+      "criterion": "Fix nothing. File what needs filing.",
+      "met": true,
+      "evidence": "Zero code, locale, or spec changes: git status shows only this report and the two task-index files (plus the Product Owner's two held-back files, untouched). The filing list is decisions_needed[0] — per the session instruction, the proposals live in this report and the hub files the tasks, which keeps their provenance readable.",
+      "notes": "The temptation this bullet exists to prevent was real: four of the five false strings are one-line fixes, and fixing them silently here is precisely how T390's false claim got four documents deep. Each needs its own commit with the ADR that makes the new wording true."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck green — trivially, since this task changes no code; re-run anyway rather than asserted."
+    },
+    "lint": {
+      "errors_before": 4,
+      "errors_after": 4,
+      "new_errors": [],
+      "detail": "Unchanged — no code touched. The 4 are the documented src/app/shared/modal/ exception."
+    },
+    "test": {
+      "before": {
+        "total": 662,
+        "failing": 0
+      },
+      "after": {
+        "total": 662,
+        "failing": 0
+      },
+      "new_failures": [],
+      "detail": "662 passing, re-measured this run; identical to T393's after, as it must be for a triage that changes nothing."
+    },
+    "build": {
+      "result": "pass",
+      "detail": "Not re-run: no buildable file changed since T393's green build at this HEAD (its report carries the budget figures, including the pre-existing initial-bundle warning it measured)."
+    },
+    "e2e": {
+      "before": {
+        "total": 470,
+        "passed": 440,
+        "failed": 0,
+        "skipped": 30
+      },
+      "after": {
+        "total": 470,
+        "passed": 440,
+        "failed": 0,
+        "skipped": 30
+      },
+      "result": "pass",
+      "new_failures": [],
+      "detail": "Not re-run: this task adds, edits and removes no spec and no source; the figures are T393's full plain run, measured this session at the same HEAD this report describes. Stated rather than silently inherited."
+    }
+  },
+  "files": {
+    "added": [
+      "tasks/33-general-information/reports/T394.json"
+    ],
+    "modified": [
+      "tasks/33-general-information/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "The believed-true list had a ~10% false rate (3 of 33) on first real reading, and this triage's own 27 true-but-unasserted verdicts carry the same epistemic status T391's did — several were verified against code, but not all, and the verifications themselves are point-in-time. The classification decays exactly the way the copy does.",
+      "surfaces_at": "The next visibility- or capability-widening ADR; the proposals' ADR-checklist line is the countermeasure with the best cost/decay ratio."
+    },
+    {
+      "risk": "Two of the false claims contradict ANOTHER shipped surface, not just the code: login.code.sub disagrees with the SMS the guest is reading at that exact moment, and profileModal.visibility.suffix disagrees with the privacy notice. Cross-surface contradictions are worse than simple falsehood — the guest can SEE the disagreement — and only one of the two surface-pairs is even in this repo's locale files.",
+      "surfaces_at": "Any guest signing in by SMS (the 10-vs-5 pair is on screen and phone simultaneously); any listed contact reading their own profile after reading the privacy notice."
+    },
+    {
+      "risk": "T391's sweep, and therefore this triage, sees only public/i18n/*.json. Claims living in component templates, aria-labels, SMS/email templates (wedding-api owns those), and the four lint-suppressed modal files were never enumerated. The SMS template turning out to carry the CORRECT TTL was luck discovered here, not coverage.",
+      "surfaces_at": "Whoever files the fix tasks — the login.code.sub task should state the SMS template as the source of truth pattern to follow, and a future sweep of wedding-api's guest-facing templates is a separate, smaller list."
+    }
+  ],
+  "decisions_needed": [
+    {
+      "question": "Five false strings, two guard mechanisms and one ADR-process change came out of this triage. The hub files the tasks — this is the list, in the order the consequences argue for.",
+      "options": [
+        "FIX 1 — login.code.sub (×3 locales): the OTP screen says 10 minutes, the API enforces and texts 5. Either expose the TTL to the client (it is in no response today) and interpolate, or remove the numeral and defer to the SMS. The API's sms-template already interpolates {{TTL_MINUTES}} from the constant — that is the pattern. One key, but the guest sees the contradiction live during sign-in.",
+        "FIX 2 — profileModal.visibility.suffix (×3): false since ADR-0047 §3 and in direct contradiction with privacyPolicy.goodToKnow.body. The new wording must carry the Good-to-know exception, and the fix commit should add a copy-claims agreement test pinning the modal and the notice together — the T390/T391 pattern, third instance.",
+        "FIX 3 — people.subtitle (×3): 'Everyone who has signed in' → everyone with an account (or drop the clause). Small, but it misdescribes the privacy model on the directory screen itself.",
+        "FIX 4 — delegation.field.emptyGuest (×3): 'only you can reply' vs ADR-0015/ADR-0039 §5; T391's decisions_needed[0] already scoped it — do it while ADR-0039's facts are fresh.",
+        "FIX 5 — rsvp.create.confirm.yesMessage (×3): 'any time' → 'until {{deadline}}' — one interpolation, and T393 already ships the formatter and the pattern; cheapest of the five.",
+        "GUARD A — the absolutes inventory test: one e2e spec flattening the locale files, matching a small per-language absolutes lexicon, asserting the matched key set equals a committed allowlist. New absolute claims then fail the suite until consciously asserted or allowlisted. Catches cluster 2's 41st instance at authoring time.",
+        "GUARD B — the month-name sweep: generalize rsvp-deadline.spec.ts's accent-aware month matcher from six keys to every locale value outside an allowlist. Catches cluster 1's date-shaped subset; numbers remain uncatchable by machine.",
+        "PROCESS — hub ADR template line: any ADR widening visibility or capability enumerates the shipped strings that state the old scope. ADR-0015 and ADR-0047 §3 each invalidated copy nobody swept; this is the only proposal that catches cluster 2 at its actual source.",
+        "EXPLICITLY NOT PROPOSED: asserting all 27 true-but-unasserted strings. A suite that fails on every copy edit gets its assertions deleted (T391's own warning), and the 27 do not cluster around risk. T391's narrower recommendation — assert the five privacy bodies and the visibility pair — is subsumed by FIX 2 plus one small follow-up, and this triage's code-verification of the privacy bodies lowers its urgency."
+      ],
+      "recommendation": "File FIX 1–5 as five one-key tasks in consequence order (1 and 2 first — both are live cross-surface contradictions), GUARD A and B as one small testing task, and PROCESS as a hub ADR-template amendment. Total cost is a day; the alternative, on this phase's evidence, is one production defect per claim as the discovery mechanism.",
+      "blocking": false,
+      "needed_by": "FIX 1 before the next guest signs in confused about which number is true — practically, whenever the hub next grooms the backlog. Nothing here blocks a release; everything here is how the next T390 doesn't happen."
+    }
+  ],
+  "commits": []
+}

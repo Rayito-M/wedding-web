@@ -502,7 +502,23 @@
 - **Refs:** T391's report (the full enumeration); T390 (the same defect one field over); hub ADR-0024
 
 ### T394 — Triage T391's list: 40 unasserted behavioural claims, 7 of them apparently false
-- **Status:** todo — **triage, not a fix.** Its output is a decision about scope, not a diff
+- **Status:** done (2026-09-16) — triaged by **reading each string against the code that honours
+  it, in both repos** — which mattered, because 3 of the 33 believed-true entries turned out
+  **false**: `login.code.sub` says the OTP expires in **10** minutes while the API enforces and
+  texts **5** (screen and SMS contradict each other live); `people.subtitle` says "everyone who has
+  signed in" while `GET /v1/profile` returns every provisioned account; and
+  `profileModal.visibility.suffix` says "couple only" while ADR-0047 §3 shows a listed contact's
+  email and phone to every signed-in guest — the modal and the privacy notice now contradict each
+  other, T390's class exactly. Final sort: 6 fixed+asserted by T393, **5 false now** (the above,
+  plus `delegation.field.emptyGuest` confirmed and `rsvp.create.confirm.yesMessage`'s "any time"
+  vs the API's 410), 2 not claims, 27 true-but-unasserted (several code-verified). **The shape:**
+  two hard clusters — server-owned values transcribed into locale files, and absolute quantifiers
+  about visibility/capability invalidated by later widenings; "capabilities later cut" is not the
+  shape. Cheapest checks proposed per cluster (a month-name sweep; an absolutes inventory
+  allowlist test; a hub ADR-template line), with the honest core stated: **truth itself needs
+  reading** — this pass found 3 false claims in a freshly-classified believed-true list. **Nothing
+  fixed**; the five fix tasks, two guards and one process change are enumerated for the hub in the
+  report's `decisions_needed[]`. See `reports/T394.json`.
 - **Owner:** agent (implementer)
 - **Depends on:** T391 (done), T393 (which takes the worst item out of the list first)
 - **ADR:** none yet — the point of this task is to find out whether one is owed
