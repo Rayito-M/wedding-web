@@ -2,6 +2,8 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import path from 'node:path';
 import { expect, type Page } from '@playwright/test';
 
+import { installExternalAssetStubs } from '../support/external-assets';
+
 /**
  * Reusable design-system-parity harness (T368) — the template the task asks
  * for future screen-parity specs to reuse rather than re-deriving.
@@ -118,6 +120,14 @@ export async function openDsKitScreen(
   if (opts.device === 'Desktop') {
     await kitPage.setViewportSize({ width: 1280, height: 900 });
   }
+  // The kit is only *mostly* local: its `index.html:11-13` loads React,
+  // ReactDOM and Babel from `unpkg.com`, and `tokens/typography.css:3`
+  // `@import`s a Google Fonts stylesheet. Both are render-blocking, so before
+  // T389 every one of this suite's ~190 kit opens raced the public internet
+  // for the page's `load` event — the whole of the flake this harness was
+  // blamed for. Cached after the first fetch; see `external-assets.ts`.
+  // Idempotent, so a kit page opened on an already-mocked context is fine.
+  await installExternalAssetStubs(kitPage);
   await kitPage.goto(`${baseUrl}/ui_kits/wedding-app/index.html`);
   await kitPage.locator('.controls').getByRole('button', { name: opts.device, exact: true }).click();
   await kitPage.locator('.controls').getByRole('button', { name: opts.role, exact: true }).click();

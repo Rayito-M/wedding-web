@@ -1,5 +1,7 @@
 import type { Page, Route } from '@playwright/test';
 
+import { installExternalAssetStubs } from './external-assets';
+
 /**
  * Network stubs for the Playwright suite (T263). The suite must not depend on
  * a live `wedding-api` (task acceptance) — every endpoint the app calls while
@@ -534,6 +536,19 @@ export async function installApiMocks(
     json(route, { items: milestoneItems(milestoneCount) }),
   );
   await page.route('**/v1/audiences', (route) => json(route, { items: [] }));
+
+  // The THIRD-party half of "this suite stubs the network" (T389).
+  // `src/index.html:40-45` pulls a render-blocking Google Fonts stylesheet and
+  // `src/main.ts:40` initializes Sentry against the PRODUCTION DSN, so every page
+  // load in this suite reached the public internet five times over — and a slow
+  // answer stalled `page.goto`'s `load`, or `waitForLoadState('networkidle')`, for
+  // the whole 30s test budget. That is the flake T389 was filed for; see
+  // `external-assets.ts` for the measurement and the reproduction.
+  //
+  // Registered LAST, so it wins: routes run in the order *opposite* their
+  // registration, and `**/v1/**` above is a glob, not a host match — it would
+  // happily claim a third-party URL that carried that segment.
+  await installExternalAssetStubs(page);
 }
 
 /**
