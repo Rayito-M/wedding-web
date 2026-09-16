@@ -385,7 +385,25 @@
 
 
 ### T391 — The copy that carries a factual claim should be asserted, not just written
-- **Status:** todo — **not release-blocking**; it is the reason the last four defects were possible
+- **Status:** done (2026-09-16) — `e2e/copy-claims.spec.ts`: the hint asserted on the **live**
+  Settings screen (which also proves the key is not orphaned) and then per locale off disk, both
+  ways — it must **not** promise a self-updating card and it **must** say the details are copied
+  when the couple adds the person. A third test asserts the couple-facing hint and the guest-facing
+  notice **agree**, which is the test that would actually have caught T390: neither string was badly
+  written, they simply contradicted each other in one release and nothing asserted the pair. Proven
+  to bite by restoring the pre-T390 wording out of `5b75068^` — all three fail, all three pass on
+  restore, `git diff` clean. T380's delegation copy is covered in `public-surface.spec.ts` and is
+  **deliberately not duplicated**; the new file's header says where it lives.
+  **The finding, and it is a habit rather than a one-off: 43 user-facing strings carry a claim about
+  how the system behaves, 3 are asserted and 40 are not** — 120 strings across three locales. **Seven
+  look false today.** Six hardcode the RSVP deadline (*"until 1 May"*, ×3 locales) while
+  `rsvpDeadline` is configurable and **no RSVP screen reads it** — the correct value is already on
+  the config object the screen has, so this is worse than T390's; and
+  `delegation.field.emptyGuest` tells a guest *"only you can reply"* when the couple can edit any
+  RSVP by role (ADR-0015). **Reported, not fixed**, per this task's own acceptance; the complete list
+  is enumerated in the report so nobody re-derives it. Gates green; e2e 430 → 445 tests, **415
+  passed / 0 failed / 30 skipped**. See `reports/T391.json` (`9230ab3`).
+- **Superseded status line below, kept as written:** todo — **not release-blocking**; it is the reason the last four defects were possible
 - **Owner:** agent (implementer)
 - **Depends on:** T385, T390 (both done — they are the reference for what "true" currently is)
 - **ADR:** hub **ADR-0047 §3**, Amendment 3 §A

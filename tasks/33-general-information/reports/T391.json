@@ -1,0 +1,168 @@
+{
+  "task": "T391",
+  "status": "complete",
+  "summary": "`configManager.goodToKnow.contact.hint` is now asserted the way the privacy notice is: a live render on the couple's Settings screen, then the claims pinned per locale off disk — negatively (it must never promise a self-updating card) and positively (details are copied when the person is added, a later account edit does not update it). A third test asserts the couple-facing hint and the guest-facing notice agree, which is the test that would actually have caught T390's defect: neither string was badly written, they simply contradicted each other in one release and nothing asserted the pair. Proven to bite by restoring the pre-T390 wording out of 5b75068^. T380's delegation copy is covered in public-surface.spec.ts and deliberately not duplicated. THE FINDING: 43 user-facing strings carry a claim about how the system behaves; 3 are asserted (two by T380/T385, one by this task) and 40 are not — 120 strings across three locales. Seven of the 40 look FALSE today, including six that hardcode the RSVP deadline as \"1 May\" while `rsvpDeadline` is configurable and no RSVP screen reads it. Reported, not fixed.",
+  "acceptance": [
+    {
+      "criterion": "Assert the factual claims of `configManager.goodToKnow.contact.hint` the way `public-surface.spec.ts` asserts the privacy notice's: that it does not promise cards update themselves, and that it does say details are copied when the person is added.",
+      "met": true,
+      "evidence": "New `e2e/copy-claims.spec.ts`, three tests x 5 projects. Test 1 signs in as the couple, opens `/config?section=good-to-know`, and asserts against the LIVE render — which also proves the key is not orphaned: `.not.toMatch(forbiddenSelfUpdate)`, `.toMatch(copiedWhenAdded)`, `.toMatch(noSelfUpdate)`. Test 2 pins the same claims per locale off disk for es/en/fr, plus the two true clauses T390 deliberately kept (account holders only; someone without an account is added as a guest first) so a rewrite cannot quietly drop them. `pnpm test:e2e e2e/copy-claims.spec.ts` — 15 passed.",
+      "notes": "Same shape as `public-surface.spec.ts` on purpose — in-browser first, then per-locale off disk — because the two failure modes are different: an orphaned or untranslated key fails the first, a false claim fails the second. The live test also carries T389's locale gate (`.not.toHaveText('configManager.goodToKnow.contact.hint')`) rather than reading the DOM on mount, so it cannot race `/i18n/<lang>.json` the way `public-surface.spec.ts` did twice."
+    },
+    {
+      "criterion": "Assert meaning, not prose. Match on the load-bearing clause, not the whole sentence — a test that breaks when someone improves the wording will be deleted by the third person who hits it. Do it in all three locales.",
+      "met": true,
+      "evidence": "Every assertion is a regex over one clause. The longest is `/copied from that account the moment you add the person/i`, 10 words out of a 62-word hint; the shortest is `/pick them again/i`. No assertion matches a full sentence, none matches punctuation or connectives, and none matches the hint's first or last sentence as a whole. All three locales, with the clause chosen per language rather than translated word-for-word — es `/se copian de esa cuenta cuando añadís a la persona/i`, fr `/copiés depuis ce compte au moment où vous ajoutez la personne/i`.",
+      "notes": "Verified to be a meaning test rather than a prose lock the only way that proves anything: the surrounding wording was changed and the tests still passed — the bite test below replaces the ENTIRE middle of the hint in all three locales, and the two clauses that survive that replacement are exactly the ones whose facts changed. `forbiddenSelfUpdate` is an alternation rather than a literal, so any rewording that still promises a self-updating card trips it."
+    },
+    {
+      "criterion": "Prove it bites: restore the pre-T390 wording, watch the assertion fail, restore, re-run.",
+      "met": true,
+      "evidence": "The pre-T390 wording was read out of git (`git show 5b75068^:public/i18n/<loc>.json`), not retyped, and written back to all three locales. All THREE tests failed: 'the hint must not promise that a contact card updates itself — digests are stored verbatim (ADR-0047 Amendment 3 §A)' (live render), 'es: the hint must not promise a self-updating contact card' (per locale), and 'es: couple-facing — copied on add' (the agreement test). 3 failed, 0 passed. Restored, `git diff --numstat public/i18n/` empty, re-run: 3 passed.",
+      "notes": "Both directions were exercised, not just the negative one: the old wording trips `forbiddenSelfUpdate` AND fails `copiedWhenAdded`, so the pair catches both 'says the false thing' and 'stopped saying the true thing'. A negative assertion alone is satisfied by a string that says nothing at all."
+    },
+    {
+      "criterion": "Because T380 runs before this, its new delegation copy is also a factual claim about system behaviour — cover it too.",
+      "met": true,
+      "evidence": "Covered, and deliberately NOT duplicated here. T380's own commit (082b407) added `public-surface.spec.ts:527`, 'the delegation disclosure states what ships, per locale' — nine positive claims per locale plus two forbidden ones, proven to bite in both directions in that task (deleting the en section fails; appending \"Nous vous préviendrons si les mariés désignent quelqu'un.\" to fr fails on the negative alone). Plus six claims in the in-browser test at `:324`. `privacyPolicy.delegation.body` is therefore one of the three keys in this report's finding that ARE asserted.",
+      "notes": "A second copy in `copy-claims.spec.ts` would have been the third assertion of the same string and the first one anybody deleted. The new file's header says where delegation is asserted instead, so the next reader does not add one. What T391 found that T380's guard does NOT cover is `delegation.field.emptyGuest` — and it is not asserted here either, because it looks false: see decisions_needed[0]."
+    },
+    {
+      "criterion": "Say in the report whether any other user-facing string carries a factual claim about how the system behaves and is likewise unasserted. Report the list; do not fix it — the size of that list is the finding, and it decides whether this is a one-off or a habit.",
+      "met": true,
+      "evidence": "It is a habit, not a one-off. Method: flatten all 845 keys of `public/i18n/en.json`, keep values of >=8 words containing a system-behaviour verb (will / cannot / does not / never / always / automatically / is|are (not) sent|shown|stored|visible|updated|removed / only you|the couple / nobody / expires / immediately / at any time), then hand-classify each hit as a CLAIM (a user could act on it and be wrong if it were false) or not, and check each claim against every `*.spec.ts` in `e2e/` and `src/` for an assertion made against the SHIPPED locale file. Result: 43 claim-bearing keys. 3 asserted — `privacyPolicy.goodToKnow.body` (T385), `privacyPolicy.delegation.body` (T380), `configManager.goodToKnow.contact.hint` (this task). 40 unasserted, x3 locales = 120 strings. The full list is in decisions_needed[1] and nothing in it was fixed.",
+      "notes": "Two traps the sweep caught that a naive grep would report as covered. (a) Six `rsvp.editor.*` claims appear verbatim in `src/app/shared/rsvp-editor/rsvp-editor.spec.ts` — but as FIXTURE data in a fake translations map, which the spec then asserts the component renders. That tests the component, not the claim: the locale file could say the opposite and the test would still pass. (b) `configManager.goodToKnow.contact.hint` matched on the phrase 'an account on this site' — which occurs in `public-surface.spec.ts` as part of the PRIVACY NOTICE's assertion, a different string. T390's report was right that the hint had no coverage at all."
+    },
+    {
+      "criterion": "Hard rule 11 gate green.",
+      "met": true,
+      "evidence": "`pnpm typecheck` pass; `pnpm lint` 4 ESLint errors, all in src/app/shared/modal/ (the documented exception), stylelint no new violations, ds fidelity 31/31 clean pairs / 0 drifting; `pnpm test` 49 files / 647 tests / 0 failing; `pnpm build` pass; `pnpm test:e2e` exit 0, 415 passed / 0 failed / 30 skipped (4.4m), no --retries.",
+      "notes": "Task text says T391 is not release-blocking; the gate is green anyway."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "`pnpm typecheck` green before and after. It covers src/** only — the new spec is not in its scope; see T389's report risks[0]. Checked separately with a throwaway tsconfig over e2e/**: `copy-claims.spec.ts` is clean."
+    },
+    "lint": {
+      "errors_before": 4,
+      "errors_after": 4,
+      "new_errors": [],
+      "detail": "4 ESLint errors before and after, all four in src/app/shared/modal/ — hard rule 11's documented exception. ESLint does cover e2e/**, so the new spec is lint-clean. stylelint: no new violations (550 pre-existing, baselined). ds fidelity: 31/31 clean pairs, 0 drifting values."
+    },
+    "test": {
+      "before": {
+        "total": 647,
+        "failing": 0
+      },
+      "after": {
+        "total": 647,
+        "failing": 0
+      },
+      "new_failures": [],
+      "detail": "49 files, 647 tests, 0 failing, before and after. This task adds no unit test: the claims it guards live in `public/i18n/*.json`, which `ng test` does not see, and asserting them against a fixture rather than the shipped file is the exact defect this task documents in acceptance[4].notes."
+    },
+    "build": {
+      "result": "pass",
+      "detail": "`pnpm build` pass, with the three pre-existing SCSS budget warnings unchanged."
+    },
+    "e2e": {
+      "before": {
+        "total": 430,
+        "passed": 400,
+        "failed": 0,
+        "skipped": 30
+      },
+      "after": {
+        "total": 445,
+        "passed": 415,
+        "failed": 0,
+        "skipped": 30
+      },
+      "result": "pass",
+      "new_failures": [],
+      "detail": "`pnpm test:e2e` exit 0, 4.4m, no --retries. Totals grew 430 -> 445: three new tests x 5 projects. The `before` figure is this session's own measurement after T380 landed.",
+      "note": "Third green plain gate in a row this session. Before T389 landed, 2 of 4 plain runs were red and no task in this phase could report this without a paragraph of explanation."
+    },
+    "i18n": {
+      "locales": [
+        "es",
+        "en",
+        "fr"
+      ],
+      "keys_per_locale": 845,
+      "missing": 0,
+      "empty_values": 0,
+      "new_keys": 0,
+      "key_sets_identical": true,
+      "detail": "845 per locale, unchanged — this task adds and removes no key and edits no value. Measured this run. The pre-T390 wording was written into all three files during the bite test and restored; `git diff --numstat public/i18n/` is empty against the committed state.",
+      "note": "Included because the task's subject is the locale files even though it does not change them — 'nothing changed' is a claim worth measuring rather than implying."
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/copy-claims.spec.ts",
+      "tasks/33-general-information/reports/T391.json"
+    ],
+    "modified": [
+      "tasks/33-general-information/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json"
+    ]
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/environments/release.ts",
+      "why": "One of the three files the prompt held back as the Product Owner's. `pnpm build`, required by hard rule 11, regenerates it unconditionally. Already reported under T389 (where this session's first build overwrote it) and T380; noted again because this task's gate ran the build too. No deliberate edit."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "The three guarded strings are guarded against DRIFT, not against being wrong in the first place. Every assertion added here compares copy to copy — it pins what the hint says against what the notice says, and both against what ADR-0047 Amendment 3 §A states. Nothing compares either to what `wedding-api` actually does. If the stored-digest behaviour changes on the API side without anyone editing the copy, these tests stay green and the copy becomes false again, silently, exactly as before.",
+      "surfaces_at": "`wedding-api` T251, which is the change that would do it. Its client-side commit must edit three strings (T390's report already lists them) and this file's `copiedWhenAdded`/`noSelfUpdate` claims will be what fails first — which is the intended behaviour, provided somebody reads the failure as 'the fact changed' rather than 'the test is stale'."
+    },
+    {
+      "risk": "The finding's 43 is a floor, not a census. The sweep keys on an English verb list over values of >=8 words, so it cannot see a claim made in three words, a claim carried by a `{{value}}` interpolation, or a claim that exists only in es/fr because a translation drifted. It also ignores every non-locale user-facing string — component templates, `aria-label`s, the generated API client's error messages — and this repo has 4 lint-suppressed template files it never reads at all.",
+      "surfaces_at": "Whoever acts on the finding. Treat 40 unasserted as the lower bound it is."
+    },
+    {
+      "risk": "Nothing stops the 41st. There is no mechanism that notices when a new string makes a behavioural claim — no lint rule, no key-naming convention, no review checklist. The three that ARE asserted each got there because a defect shipped first (T381, T385/T390, T380). On current evidence the cost of finding out is one production defect per claim.",
+      "surfaces_at": "The next copy change anywhere in `public/i18n/`, and any decision about whether the list in decisions_needed[1] gets worked or archived."
+    }
+  ],
+  "decisions_needed": [
+    {
+      "question": "Seven user-facing strings appear to make claims the system does not honour TODAY. They are reported and not fixed, per this task's own acceptance. Who fixes them, and in what order?",
+      "options": [
+        "Six keys hardcode the RSVP deadline as a literal date — `rsvp.create.attending.subtitle`, `rsvp.edit.seatsHeld.{none,singular,plural}`, `rsvp.edit.declinedSub`, `rsvp.hub.detail.declinedSub` — '1 May' / '1 de mayo' / '1er mai', 18 strings in all. `rsvpDeadline` is a configurable field the couple edits in Settings, and grep shows exactly one component in the app reads it (`shared/good-to-know/good-to-know.ts`, and only to pick which `dayLine` variant to render). No RSVP screen reads it. So if the couple moves the deadline, every RSVP screen keeps telling guests the old one, in three languages, on the screens where being wrong costs a reply. This is T390's defect class, six times over and larger — and unlike T390's it is not a wording problem: the correct value is already in the config the screen has.",
+        "`delegation.field.emptyGuest` — 'Nobody answers for you — only you can reply.' The second clause looks false: the couple can edit any guest's RSVP by role (ADR-0015, restated in ADR-0039 §5 as the very reason the couple is excluded from `delegateTo`), and this app ships a couple perspective in the RSVP editor (`rsvp.editor.perspective.couple.*`). The string is shown to a guest on their own profile, in the one place the product explains who can answer for them — which is exactly where being wrong matters.",
+        "Do neither now. Both are pre-existing, neither blocks a release, and the deadline one has been shipping since the RSVP screens were written."
+      ],
+      "recommendation": "Split them into two tasks and do the deadline one first. It is six keys, the correct value is already on the config object the screen reads, and it is the only one of the two where a guest can be made to miss a deadline by believing the app. The delegation string is one key and a smaller blast radius, but it is worth doing in the same phase as T380 while the ADR-0039 facts are fresh. I did not fix either, because this task says report and not fix, and because a copy change that silently corrects a false claim is how the T390 defect got four documents deep in the first place.",
+      "blocking": false,
+      "needed_by": "Before the couple next changes `rsvpDeadline` — which is the moment the first one starts lying to 150 guests."
+    },
+    {
+      "question": "33 further strings make a claim about system behaviour that is believed true and asserted nowhere. Work the list, or accept it?",
+      "options": [
+        "Work it, prioritised by consequence. The strongest candidates are the ones a user acts on or that carry a legal weight: `privacyPolicy.{analytics,maps,cookies,ipAnonymization,changeChoice}.body` (five GA/Maps disclosures under ADR-0027, of which 'these cookies are only set after you accept analytics below' is directly testable and legally load-bearing); `profileModal.visibility.{prefix,suffix}` ('Email and phone are shared with the couple only' — ADR-0035 §7/§8, the same rule the notice already pins for Good to know); `milestones.form.kind.hint` ('Internal ones never notify anyone, on any channel'); `milestones.announcement.clearConfirm.message` ('This does not unsend anything'); `configManager.goodToKnow.dressCode.swatchesHint` ('can never disagree with' the theme — ADR-0046 Amendment 3, and the behaviour IS asserted by design-parity-info.spec.ts even though the copy is not); `configManager.note.good-to-know` ('shown exactly as written; the order they read it in is fixed' — ADR-0047's structural ordering).",
+        "Assert only what a defect has already cost. That is the status quo and it is what produced this list: the three asserted strings are the three that shipped false first.",
+        "Accept the list and close it. The claims are believed true today and nothing is known to be wrong with them.",
+        "THE COMPLETE LIST, so it is not re-derived: login.code.sub, login.magicLink.sub, delegation.field.emptyGuest is NOT here (it is in the suspected-false list above), schedule.note.final, invitee.schedule.provisionalNote, invitee.schedule.noEvents, rsvp.create.confirm.yesMessage, rsvp.hub.outstanding.none, rsvp.editor.attending.hint.coming, rsvp.editor.attending.hint.comingPlusOne, rsvp.editor.remove.message, rsvp.editor.perspective.owner.declinedHint, rsvp.editor.perspective.couple.declinedHint, rsvp.editor.perspective.delegate.declinedHint, configManager.note.mapUrlEmbed, configManager.note.good-to-know, configManager.couple.noAccountYet, configManager.couple.deleteNote, configManager.goodToKnow.dressCode.swatchesHint, configManager.goodToKnow.gift.identifiersHint, milestones.subtitle, milestones.form.kind.hint, milestones.delete.message, milestones.announcement.sendConfirm.message, milestones.announcement.clearConfirm.message, people.subtitle, profileModal.visibility.prefix, profileModal.visibility.suffix, privacyPolicy.analytics.body, privacyPolicy.maps.body, privacyPolicy.cookies.body, privacyPolicy.ipAnonymization.body, privacyPolicy.changeChoice.body, notifications.template.menu-selection-reminder.body. That is 33 keys x 3 locales = 99 strings; with the 7 suspected-false keys above it is 40 x 3 = 120. Reproduce with: flatten public/i18n/en.json, keep values of >=8 words containing a system-behaviour verb, hand-classify, then grep every *.spec.ts under e2e/ and src/ for an assertion made against the SHIPPED locale file (not against a fixture — six rsvp.editor.* claims look covered and are not)."
+      ],
+      "recommendation": "Option 1, but scoped to the privacy and visibility claims only — the five `privacyPolicy.*` bodies and the two `profileModal.visibility.*` halves, seven keys. Those are the ones where being wrong is a disclosure failure rather than an inconvenience, they sit beside assertions that already exist in `public-surface.spec.ts`, and the marginal cost is one test. The remaining 26 are real but ordinary, and asserting all of them would produce a suite that fails on every copy edit — which is the failure mode this task's own acceptance warns about. The full 33 are enumerated in the last option above so nobody has to re-derive them, and `e2e/copy-claims.spec.ts`'s header points here.",
+      "blocking": false,
+      "needed_by": "No deadline. It is a habit question rather than a defect: the answer decides whether the 41st claim-bearing string gets a test when it is written, or after it ships wrong."
+    }
+  ],
+  "commits": [
+    "9230ab3"
+  ]
+}
