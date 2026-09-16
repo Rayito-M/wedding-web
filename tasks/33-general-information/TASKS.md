@@ -507,3 +507,30 @@
   - **Fix nothing.** File what needs filing.
 - **Refs:** T391's report; T390, T393 (two instances already fixed); T385/T381 (the assertion pattern
   that works)
+
+### T395 — The app paints raw translation keys on its first frame, on every route
+- **Status:** todo — **a real user-facing defect, measured, not inferred**
+- **Owner:** agent (implementer)
+- **Depends on:** — (T389 found it; its spec-side race is already fixed)
+- **ADR:** hub **ADR-0009** (UI strings); ADR-0031 (three locales)
+- **Why:** T389 was asked, when a flaky test rendered raw keys, whether a guest on a slow connection
+  could see the same thing before assuming it was a test artefact. **It measured the answer: yes.**
+  Raw keys are painted at **155–182 ms**, with real copy arriving at **213 ms / 1.1 s / 3.1 s** for
+  locale-file delays of 0 / 1 s / 3 s. The window is the locale fetch, and it is **every route** —
+  `consentBanner.*` keys come from the root-mounted banner, so the first frame of the app shows
+  `consentBanner.title` to anyone whose locale file has not landed.
+  ~150 guests, many on phones, on Spanish, French and British networks, opening a link at the same
+  time. This is not theoretical.
+- **Acceptance:**
+  - **Decide and state the strategy before coding**: block the first paint until the active locale
+    resolves, inline a minimal set of first-frame strings into the bundle, or render nothing where a
+    key is unresolved. Each trades differently — a blank frame, a bundle that carries copy hard rule
+    19 wants out of locale files, or a flash of missing text. Name the trade you took.
+  - **Never show a raw key.** Whatever the strategy, `consentBanner.title` must not reach a screen.
+  - The fix covers **every route**, not the banner alone — the banner is where it was measured, not
+    the only place it happens.
+  - **A test that fails on a raw key**, with the locale fetch delayed the way T389 delayed it.
+    Prove it bites: revert the fix, watch it fail. T389's report has the harness.
+  - Measure first paint before and after and report both. If the chosen strategy costs first-paint
+    time, say how much — LCP has a 2.5 s budget (`CLAUDE.md`).
+- **Refs:** T389's report (`decisions_needed[]`, with the measurements and the harness); hub ADR-0009
