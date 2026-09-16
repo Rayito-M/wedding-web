@@ -260,7 +260,7 @@ never by its letter alone.
 | **T377** | Good to know strings in es/en/fr | done (guest half; authoring half split to T379) | `32-good-to-know-content` |
 | **T378** | The privacy notice covers couple-entered contact details, and nothing leaks pre-sign-in | done | `32-good-to-know-content` |
 | **T379** | The authoring form's strings, in es/en/fr | done, then **partly superseded** — the voice pass stands, its 50 keys did not (see T384) | `32-good-to-know-content` |
-| **T380** | The privacy notice still does not say a delegate reads someone else's whole reply | done (2026-09-16) — closed before the first production delegation; says nobody is notified and nobody can refuse in-app, because neither exists | `32-good-to-know-content` |
+| **T380** | The privacy notice still does not say a delegate reads someone else's whole reply | done — closed before it came into effect | `32-good-to-know-content` |
 | **T381** | The privacy notice widens: the third-party case now ships | done | `32-good-to-know-content` |
 | **T382** | Consume T246's contract: a contact carries its own details, and may have no account | done, then **superseded by ADR-0047 §2** (see T383) | `32-good-to-know-content` |
 | **T383** | Render the `generalInfo` sections | done (`5583e1e`) — one merge unit with T384, which closed it | `33-general-information` |
@@ -269,7 +269,7 @@ never by its letter alone.
 | **T386** | Mark phase 32's superseded tasks, and say why | done (hub session, 2026-09-15) | `33-general-information` |
 | **T387** | Two things in the tree that must not reach a release | done (`8da774d`) — lint 6 → 4, matching the documented clause | `33-general-information` |
 | **T388** | The e2e fixtures still serve the block array, so 30 specs assert a dead render | done — info spec 45/45; suite 420, 0 assertion failures; residual flake is the ds-kit harness | `33-general-information` |
-| **T389** | The DS-kit static server loses races under parallel e2e load | done (2026-09-16) — **not the server**: the suite was racing Google Fonts / unpkg / Sentry on every page load; 8 consecutive clean runs (a floor) | `33-general-information` |
-| **T391** | The copy that carries a factual claim should be asserted, not just written | done (2026-09-16) — hint pinned live + per locale; **finding: 43 claim-bearing strings, 3 asserted, 40 not, 7 of them apparently false** | `33-general-information` |
+| **T389** | Third-party CDN fetches, not the DS-kit server, were failing the parity specs | done — 8 clean runs; the filed diagnosis was wrong | `33-general-information` |
+| **T391** | The copy that carries a factual claim should be asserted, not just written | done — **it is a habit: 43 claims, 3 asserted** (see T393) | `33-general-information` |
 | **T392** | Settings → Basics must write `couple.*.firstName`, not only the deprecated pair | done — unit 644 → 647, e2e 395/0/30 unchanged; post-deploy `check-config-row.sh` still owed | `33-general-information` |
 | **T390** | Settings says contact cards self-update; the notice says they don't | done (`5b75068`) | `33-general-information` |
