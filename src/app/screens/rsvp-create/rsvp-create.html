@@ -15,7 +15,7 @@
   @if (step() === 0) {
     <div class="step">
       <h2>{{ 'rsvp.create.attending.title' | translate }}</h2>
-      <p class="sub">{{ 'rsvp.create.attending.subtitle' | translate }}</p>
+      <p class="sub">{{ 'rsvp.create.attending.subtitle' | translate: { deadline: deadline() } }}</p>
 
       <div class="field">
         <div class="label">{{ 'rsvp.create.attending.label' | translate }}</div>

@@ -1,5 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { EntityCollectionService, EntityServices } from '@ngrx/data';
@@ -8,7 +9,15 @@ import { provideEntityData, withEffects } from '@ngrx/data';
 import { provideStore } from '@ngrx/store';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 
-import { EntityNamesEnum, RsvpDto, entityConfig, provideEntityDataServices } from '@app/core';
+import {
+  ConfigurationService,
+  EntityNamesEnum,
+  RsvpDto,
+  TranslateLanguageService,
+  WeddingConfigPublicResponseDto,
+  entityConfig,
+  provideEntityDataServices,
+} from '@app/core';
 
 import { RsvpCreate } from './rsvp-create';
 
@@ -43,6 +52,7 @@ const TRANSLATIONS = {
       step: 'STEP {{current}}/{{total}}',
       attending: {
         title: 'Will you join us?',
+        subtitle: "Please reply by {{deadline}}. We can't wait.",
         yes: 'With joy',
         no: 'Sadly no',
         withPartner: 'With my partner',
@@ -60,6 +70,12 @@ const TRANSLATIONS = {
     },
   },
 };
+
+/** T393: the public config the deadline is interpolated from — writable so a
+ *  test can prove the copy follows the CONFIGURED value, not a constant. */
+const publicConfig = signal<Pick<WeddingConfigPublicResponseDto, 'rsvpDeadline'> | undefined>({
+  rsvpDeadline: '2027-05-01',
+});
 
 /** The `pending` record the orchestrator has already provisioned — a guest
  *  with no linked partner and no children, i.e. the case that never reached
@@ -117,6 +133,7 @@ describe('RsvpCreate', () => {
   }
 
   beforeEach(async () => {
+    publicConfig.set({ rsvpDeadline: '2027-05-01' });
     await TestBed.configureTestingModule({
       imports: [RsvpCreate],
       providers: [
@@ -127,6 +144,11 @@ describe('RsvpCreate', () => {
         provideEffects(),
         provideEntityData(entityConfig, withEffects()),
         provideEntityDataServices(),
+        // T393: the deadline the screen interpolates comes from the PUBLIC
+        // config the app loads at the root — stubbed so the assertions can
+        // pin the rendered date to a configured value.
+        { provide: ConfigurationService, useValue: { weddingConfigPublic: publicConfig } },
+        { provide: TranslateLanguageService, useValue: { currentLang: signal('en') } },
       ],
     }).compileComponents();
 
@@ -139,6 +161,16 @@ describe('RsvpCreate', () => {
     update = vi
       .spyOn(collection, 'update')
       .mockReturnValue(of({ ...pendingRsvp(), status: RsvpDto.StatusEnum.ATTENDING }));
+  });
+
+  it('renders the CONFIGURED deadline in the step-1 subtitle, and follows a change to it (T393)', async () => {
+    await create();
+    expect(text()).toContain("Please reply by 1 May. We can't wait.");
+
+    publicConfig.set({ rsvpDeadline: '2027-03-15' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(text()).toContain("Please reply by 15 March. We can't wait.");
   });
 
   it('sends the reply from "Send reply" for a guest with no partner and no children', async () => {

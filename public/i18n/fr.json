@@ -212,7 +212,7 @@
       "step": "ÉTAPE {{current}}/{{total}}",
       "attending": {
         "title": "Nous rejoindrez-vous ?",
-        "subtitle": "Veuillez répondre avant le 1er mai. Nous avons hâte.",
+        "subtitle": "Veuillez répondre avant le {{deadline}}. Nous avons hâte.",
         "label": "Allez-vous venir ?",
         "yes": "Avec joie",
         "no": "Malheureusement non",
@@ -255,11 +255,11 @@
       },
       "title": "Votre réponse",
       "seatsHeld": {
-        "none": "Aucune place réservée pour l'instant. Modifiez tout ce que vous voulez jusqu'au 1er mai.",
-        "singular": "{{count}} place réservée. Modifiez tout ce que vous voulez jusqu'au 1er mai.",
-        "plural": "{{count}} places réservées. Modifiez tout ce que vous voulez jusqu'au 1er mai."
+        "none": "Aucune place réservée pour l'instant. Modifiez tout ce que vous voulez jusqu'au {{deadline}}.",
+        "singular": "{{count}} place réservée. Modifiez tout ce que vous voulez jusqu'au {{deadline}}.",
+        "plural": "{{count}} places réservées. Modifiez tout ce que vous voulez jusqu'au {{deadline}}."
       },
-      "declinedSub": "Vous nous avez dit que vous ne pourrez pas venir. Vous pouvez changer d'avis jusqu'au 1er mai.",
+      "declinedSub": "Vous nous avez dit que vous ne pourrez pas venir. Vous pouvez changer d'avis jusqu'au {{deadline}}.",
       "footer": {
         "saved": "Modifications enregistrées ✓",
         "unsaved": "Modifications non enregistrées"
@@ -359,7 +359,7 @@
     "hub": {
       "title": "Réponses dont vous vous occupez",
       "detail": {
-        "declinedSub": "On nous a dit qu'il ne sera pas possible de venir. Vous pouvez encore modifier la réponse jusqu'au 1er mai."
+        "declinedSub": "On nous a dit qu'il ne sera pas possible de venir. Vous pouvez encore modifier la réponse jusqu'au {{deadline}}."
       },
       "own": {
         "title": "Votre propre réponse"

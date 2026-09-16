@@ -13,6 +13,7 @@ import { EntityCollectionService, EntityServices } from '@ngrx/data';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
+  ConfigurationService,
   EMPTY_RSVP_DRAFT,
   EntityNamesEnum,
   HeaderService,
@@ -20,7 +21,9 @@ import {
   RsvpDraft,
   RsvpDto,
   PluralTranslatePipe,
+  TranslateLanguageService,
   fromRsvpDraft,
+  rsvpDeadlineLabel,
   toRsvpDraft,
   unnamedAdultCount,
 } from '@app/core';
@@ -62,6 +65,18 @@ export class RsvpEdit {
   private readonly translateService = inject(TranslateService);
   private readonly header = inject(HeaderService);
   private readonly profileModal = inject(ProfileModalService);
+  private readonly configurationService = inject(ConfigurationService);
+  private readonly translateLanguage = inject(TranslateLanguageService);
+
+  /** The configured RSVP deadline as prose for the active locale (T393) —
+   *  read from the public config the app already loads at the root, never
+   *  typed into a locale file. */
+  protected readonly deadline = computed(() =>
+    rsvpDeadlineLabel(
+      this.configurationService.weddingConfigPublic()?.rsvpDeadline ?? '',
+      this.translateLanguage.currentLang(),
+    ),
+  );
 
   private readonly rsvpCollection: EntityCollectionService<RsvpDto> = inject(
     EntityServices,

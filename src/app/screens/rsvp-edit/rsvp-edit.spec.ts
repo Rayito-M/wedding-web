@@ -1,5 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideEffects } from '@ngrx/effects';
@@ -8,9 +9,12 @@ import { provideStore } from '@ngrx/store';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 
 import {
+  ConfigurationService,
   EntityNamesEnum,
   ProfileModalService,
   RsvpDto,
+  TranslateLanguageService,
+  WeddingConfigPublicResponseDto,
   WeddingConfigResponseDto,
   entityConfig,
   provideEntityDataServices,
@@ -49,8 +53,11 @@ const TRANSLATIONS = {
     edit: {
       eyebrow: { confirmed: 'CONFIRMED', declined: 'DECLINED' },
       title: 'Your reply',
-      seatsHeld: { singular: '{{count}} seat held.', plural: '{{count}} seats held.' },
-      declinedSub: "You told us you can't make it.",
+      seatsHeld: {
+        singular: '{{count}} seat held. Edit anything until {{deadline}}.',
+        plural: '{{count}} seats held. Edit anything until {{deadline}}.',
+      },
+      declinedSub: "You told us you can't make it. You can change your mind until {{deadline}}.",
       footer: { saved: 'Changes saved ✓', unsaved: 'Unsaved changes' },
       error: "Couldn't save.",
     },
@@ -81,6 +88,12 @@ const TRANSLATIONS = {
     },
   },
 };
+
+/** T393: the public config the deadline is interpolated from — writable so a
+ *  test can prove the copy follows the CONFIGURED value, not a constant. */
+const publicConfig = signal<Pick<WeddingConfigPublicResponseDto, 'rsvpDeadline'> | undefined>({
+  rsvpDeadline: '2027-05-01',
+});
 
 function rsvpWith(status: RsvpDto.StatusEnum, lastName = 'Lovelace'): RsvpDto {
   return {
@@ -141,6 +154,7 @@ describe('RsvpEdit', () => {
   }
 
   beforeEach(async () => {
+    publicConfig.set({ rsvpDeadline: '2027-05-01' });
     await TestBed.configureTestingModule({
       imports: [RsvpEdit],
       providers: [
@@ -151,6 +165,11 @@ describe('RsvpEdit', () => {
         provideEffects(),
         provideEntityData(entityConfig, withEffects()),
         provideEntityDataServices(),
+        // T393: the deadline the screen interpolates comes from the PUBLIC
+        // config the app loads at the root — stubbed so the assertions can
+        // pin the rendered date to a configured value.
+        { provide: ConfigurationService, useValue: { weddingConfigPublic: publicConfig } },
+        { provide: TranslateLanguageService, useValue: { currentLang: signal('en') } },
       ],
     }).compileComponents();
 
@@ -167,18 +186,29 @@ describe('RsvpEdit', () => {
     expect(text('h2')).toBe('Your reply');
     expect(text('app-rsvp-editor .party-title')).toBe('Your party');
     expect(occurrences('Your party')).toBe(1);
-    expect(text('.sub')).toBe('1 seat held.');
+    expect(text('.sub')).toBe('1 seat held. Edit anything until 1 May.');
   });
 
   it('uses the same title when the RSVP is declined, and still renders the editor with the party visible', async () => {
     await create(rsvpWith(RsvpDto.StatusEnum.DECLINED));
 
     expect(text('h2')).toBe('Your reply');
-    expect(text('.sub')).toBe("You told us you can't make it.");
+    expect(text('.sub')).toBe(
+      "You told us you can't make it. You can change your mind until 1 May.",
+    );
     // A declined RSVP no longer hides the editor — the party stays visible
     // (T273; the party itself is never pruned, T274).
     expect(fixture.nativeElement.querySelector('app-rsvp-editor')).not.toBeNull();
     expect(text('app-rsvp-editor .party-title')).toBe('Your party');
+  });
+
+  it('interpolates the CONFIGURED deadline — a changed rsvpDeadline changes the copy (T393)', async () => {
+    publicConfig.set({ rsvpDeadline: '2027-03-15' });
+    await create(rsvpWith(RsvpDto.StatusEnum.DECLINED));
+
+    expect(text('.sub')).toBe(
+      "You told us you can't make it. You can change your mind until 15 March.",
+    );
   });
 
   it('gates the save on the shared unnamed-adult count', async () => {

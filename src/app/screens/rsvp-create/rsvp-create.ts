@@ -14,12 +14,15 @@ import { EntityCollectionService, EntityServices } from '@ngrx/data';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import {
+  ConfigurationService,
   EntityNamesEnum,
   HeaderService,
   partnerHasAccount,
   RsvpDto,
   RsvpDtoAdultsPartner2,
   RsvpDtoChildrenInner,
+  TranslateLanguageService,
+  rsvpDeadlineLabel,
 } from '@app/core';
 import { Btn } from '@app/shared/button/button';
 import { ChoiceCard } from '@app/shared/choice-card/choice-card';
@@ -126,6 +129,18 @@ function toCreateDraft(rsvp: RsvpDto): CreateDraft {
 export class RsvpCreate {
   private readonly translateService = inject(TranslateService);
   private readonly header = inject(HeaderService);
+  private readonly configurationService = inject(ConfigurationService);
+  private readonly translateLanguage = inject(TranslateLanguageService);
+
+  /** The configured RSVP deadline as prose for the active locale (T393) —
+   *  read from the public config the app already loads at the root, never
+   *  typed into a locale file. */
+  protected readonly deadline = computed(() =>
+    rsvpDeadlineLabel(
+      this.configurationService.weddingConfigPublic()?.rsvpDeadline ?? '',
+      this.translateLanguage.currentLang(),
+    ),
+  );
 
   private readonly rsvpCollection: EntityCollectionService<RsvpDto> = inject(
     EntityServices,

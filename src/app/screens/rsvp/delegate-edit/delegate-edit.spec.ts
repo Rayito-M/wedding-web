@@ -1,5 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { provideEffects } from '@ngrx/effects';
@@ -8,8 +9,11 @@ import { provideStore } from '@ngrx/store';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 
 import {
+  ConfigurationService,
   EntityNamesEnum,
   RsvpDto,
+  TranslateLanguageService,
+  WeddingConfigPublicResponseDto,
   WeddingConfigResponseDto,
   WeddingRsvpService,
   entityConfig,
@@ -35,10 +39,16 @@ const TRANSLATIONS = {
   shared: { save: 'Save' },
   rsvp: {
     header: 'RSVP',
-    hub: { back: 'Back to your replies', detail: { declinedSub: "They can't make it." } },
+    hub: {
+      back: 'Back to your replies',
+      detail: { declinedSub: "They can't make it. You can still change that until {{deadline}}." },
+    },
     edit: {
       eyebrow: { confirmed: 'CONFIRMED', declined: 'DECLINED' },
-      seatsHeld: { singular: '{{count}} seat held.', plural: '{{count}} seats held.' },
+      seatsHeld: {
+        singular: '{{count}} seat held. Edit anything until {{deadline}}.',
+        plural: '{{count}} seats held. Edit anything until {{deadline}}.',
+      },
       footer: { saved: 'Changes saved ✓', unsaved: 'Unsaved changes' },
       error: "Couldn't save.",
     },
@@ -66,6 +76,12 @@ const TRANSLATIONS = {
   },
 };
 
+/** T393: the public config the deadline is interpolated from — writable so a
+ *  test can prove the copy follows the CONFIGURED value, not a constant. */
+const publicConfig = signal<Pick<WeddingConfigPublicResponseDto, 'rsvpDeadline'> | undefined>({
+  rsvpDeadline: '2027-05-01',
+});
+
 function rsvpWith(status: RsvpDto.StatusEnum): RsvpDto {
   return {
     id: 'subject-1',
@@ -84,6 +100,7 @@ describe('DelegateEdit (hub ADR-0039 §6, T337)', () => {
   let updateSpy: ReturnType<typeof vi.fn>;
 
   async function create(rsvp: RsvpDto, subjectName = 'Ana Ruiz'): Promise<void> {
+    publicConfig.set({ rsvpDeadline: '2027-05-01' });
     updateSpy = vi.fn((params: { guestId: string; updateRsvpDto: Partial<RsvpDto> }) =>
       of({ ...rsvp, ...params.updateRsvpDto, id: params.guestId } as RsvpDto),
     );
@@ -99,6 +116,11 @@ describe('DelegateEdit (hub ADR-0039 §6, T337)', () => {
         provideEntityData(entityConfig, withEffects()),
         provideEntityDataServices(),
         { provide: WeddingRsvpService, useValue: { rsvpControllerUpdateV1: updateSpy } },
+        // T393: the deadline the screen interpolates comes from the PUBLIC
+        // config the app loads at the root — stubbed so the assertions can
+        // pin the rendered date to a configured value.
+        { provide: ConfigurationService, useValue: { weddingConfigPublic: publicConfig } },
+        { provide: TranslateLanguageService, useValue: { currentLang: signal('en') } },
       ],
     }).compileComponents();
 
@@ -136,7 +158,16 @@ describe('DelegateEdit (hub ADR-0039 §6, T337)', () => {
   it('a declined subject renders third-person copy ("They can\'t make it"), not the guest\'s own first-person copy', async () => {
     await create(rsvpWith(RsvpDto.StatusEnum.DECLINED));
 
-    expect(text('.sub')).toBe("They can't make it.");
+    expect(text('.sub')).toBe("They can't make it. You can still change that until 1 May.");
+  });
+
+  it('interpolates the CONFIGURED deadline — a changed rsvpDeadline changes the copy (T393)', async () => {
+    await create(rsvpWith(RsvpDto.StatusEnum.DECLINED));
+    publicConfig.set({ rsvpDeadline: '2027-03-15' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(text('.sub')).toBe("They can't make it. You can still change that until 15 March.");
   });
 
   it('offers Pending as a status option — a delegate may open a subject who has not answered yet', async () => {

@@ -212,7 +212,7 @@
       "step": "PASO {{current}}/{{total}}",
       "attending": {
         "title": "¿Nos acompañarás?",
-        "subtitle": "Por favor, responde antes del 1 de mayo. No podemos esperar.",
+        "subtitle": "Por favor, responde antes del {{deadline}}. No podemos esperar.",
         "label": "¿Asistirás?",
         "yes": "Sí, con mucho gusto",
         "no": "Lamentablemente no",
@@ -255,11 +255,11 @@
       },
       "title": "Tu respuesta",
       "seatsHeld": {
-        "none": "Aún no hay asientos reservados. Edita lo que quieras hasta el 1 de mayo.",
-        "singular": "{{count}} asiento reservado. Edita lo que quieras hasta el 1 de mayo.",
-        "plural": "{{count}} asientos reservados. Edita lo que quieras hasta el 1 de mayo."
+        "none": "Aún no hay asientos reservados. Edita lo que quieras hasta el {{deadline}}.",
+        "singular": "{{count}} asiento reservado. Edita lo que quieras hasta el {{deadline}}.",
+        "plural": "{{count}} asientos reservados. Edita lo que quieras hasta el {{deadline}}."
       },
-      "declinedSub": "Nos dijiste que no podrás venir. Puedes cambiar de opinión hasta el 1 de mayo.",
+      "declinedSub": "Nos dijiste que no podrás venir. Puedes cambiar de opinión hasta el {{deadline}}.",
       "footer": {
         "saved": "Cambios guardados ✓",
         "unsaved": "Cambios sin guardar"
@@ -359,7 +359,7 @@
     "hub": {
       "title": "Respuestas de las que te ocupas",
       "detail": {
-        "declinedSub": "Nos dijeron que no podrán venir. Aún puedes cambiar la respuesta hasta el 1 de mayo."
+        "declinedSub": "Nos dijeron que no podrán venir. Aún puedes cambiar la respuesta hasta el {{deadline}}."
       },
       "own": {
         "title": "Tu propia respuesta"

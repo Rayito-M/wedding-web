@@ -19,10 +19,14 @@
       </div>
       <h2>{{ 'rsvp.edit.title' | translate }}</h2>
       @if (draft().status === 'declined') {
-        <p class="sub">{{ 'rsvp.edit.declinedSub' | translate }}</p>
+        <p class="sub">{{ 'rsvp.edit.declinedSub' | translate: { deadline: deadline() } }}</p>
       } @else {
         <p class="sub">
-          {{ 'rsvp.edit.seatsHeld' | pluralTranslate: seatsHeld() | translate: { count: seatsHeld() } }}
+          {{
+            'rsvp.edit.seatsHeld'
+              | pluralTranslate: seatsHeld()
+              | translate: { count: seatsHeld(), deadline: deadline() }
+          }}
         </p>
       }
     </div>
