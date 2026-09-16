@@ -55,8 +55,14 @@
       "detail": "`pnpm lint`: 4 ESLint errors before and after, all four in src/app/shared/modal/ — the exception CLAUDE.md hard rule 11 names, and the count now matches it exactly (T387 closed the fifth). ESLint does cover e2e/** ('files: **/*.ts'), so the new file is lint-clean. stylelint: no new violations (550 pre-existing, baselined). ds fidelity: 31/31 clean pairs, 0 drifting values."
     },
     "test": {
-      "before": { "total": 647, "failing": 0 },
-      "after": { "total": 647, "failing": 0 },
+      "before": {
+        "total": 647,
+        "failing": 0
+      },
+      "after": {
+        "total": 647,
+        "failing": 0
+      },
       "new_failures": [],
       "detail": "`pnpm test`: 49 files, 647 tests, 0 failing, before and after. This task adds and removes no unit test — it touches e2e/** only."
     },
@@ -70,8 +76,18 @@
       ]
     },
     "e2e": {
-      "before": { "total": 425, "passed": 393, "failed": 2, "skipped": 30 },
-      "after": { "total": 425, "passed": 395, "failed": 0, "skipped": 30 },
+      "before": {
+        "total": 425,
+        "passed": 393,
+        "failed": 2,
+        "skipped": 30
+      },
+      "after": {
+        "total": 425,
+        "passed": 395,
+        "failed": 0,
+        "skipped": 30
+      },
       "result": "pass",
       "new_failures": [],
       "detail": "BEFORE, four plain runs at HEAD: 395/0/30, 393/2/30, 395/0/30, 394/1/30 — 2 of 4 red; the `before` block quotes the worst of the four rather than the luckiest. Three further runs carrying only read-only instrumentation were green, and an eighth collapsed to 326 passed / 72 failed / 27 skipped in 18.4m. AFTER, eight consecutive plain runs: 395/0/30 every time, 3.8-3.9m, no --retries anywhere. Totals are 425 throughout: this task adds and removes no test.",
@@ -79,7 +95,9 @@
     }
   },
   "files": {
-    "added": ["e2e/support/external-assets.ts"],
+    "added": [
+      "e2e/support/external-assets.ts"
+    ],
     "modified": [
       "e2e/support/api-mocks.ts",
       "e2e/helpers/ds-kit.ts",
@@ -127,5 +145,9 @@
       "needed_by": "Its own task. Nothing in this phase is blocked on it — the spec-side race is closed and proven closed — but it should not be left to be rediscovered as a flake a third time."
     }
   ],
-  "commits": ["9712c14", "5f16708"]
+  "commits": [
+    "9712c14",
+    "5f16708",
+    "92f5b06"
+  ]
 }

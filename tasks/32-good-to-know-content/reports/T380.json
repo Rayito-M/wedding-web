@@ -55,8 +55,14 @@
       "detail": "4 ESLint errors before and after, all in src/app/shared/modal/ — CLAUDE.md hard rule 11's documented exception, and the count matches it exactly. stylelint: no new violations (550 pre-existing, baselined). ds fidelity: 31/31 clean pairs, 0 drifting values."
     },
     "test": {
-      "before": { "total": 647, "failing": 0 },
-      "after": { "total": 647, "failing": 0 },
+      "before": {
+        "total": 647,
+        "failing": 0
+      },
+      "after": {
+        "total": 647,
+        "failing": 0
+      },
       "new_failures": [],
       "detail": "49 files, 647 tests, 0 failing, before and after. This task adds no unit test: the privacy screen is a template of translate pipes with no logic, and the claims that matter are per-locale copy, which is asserted in e2e where the locale files actually are."
     },
@@ -65,15 +71,29 @@
       "detail": "`pnpm build` pass, with the three pre-existing SCSS budget warnings (guest-manager, milestones, seating-plan) unchanged."
     },
     "e2e": {
-      "before": { "total": 425, "passed": 395, "failed": 0, "skipped": 30 },
-      "after": { "total": 430, "passed": 400, "failed": 0, "skipped": 30 },
+      "before": {
+        "total": 425,
+        "passed": 395,
+        "failed": 0,
+        "skipped": 30
+      },
+      "after": {
+        "total": 430,
+        "passed": 400,
+        "failed": 0,
+        "skipped": 30
+      },
       "result": "pass",
       "new_failures": [],
       "detail": "`pnpm test:e2e` exit 0, 4.0m, no --retries. Totals grew 425 -> 430 because this task adds one test x 5 projects. The `before` figure is this session's own measurement of HEAD after T389 landed, not an inherited number.",
       "note": "Both baselines are honest about which HEAD they are from: before T389 a plain run was red 2 times in 4, so a 'before' taken at the start of this session would have been 393/2/30 and would not have been comparable. T389's report carries that history."
     },
     "i18n": {
-      "locales": ["es", "en", "fr"],
+      "locales": [
+        "es",
+        "en",
+        "fr"
+      ],
       "keys_per_locale": 845,
       "missing": 0,
       "empty_values": 0,
@@ -84,7 +104,9 @@
     }
   },
   "files": {
-    "added": ["tasks/32-good-to-know-content/reports/T380.json"],
+    "added": [
+      "tasks/32-good-to-know-content/reports/T380.json"
+    ],
     "modified": [
       "public/i18n/es.json",
       "public/i18n/en.json",
@@ -134,5 +156,8 @@
       "needed_by": "Whenever the notice is next read end to end — there is no defect either way, only a coherence choice that is cheaper to settle now than to rediscover."
     }
   ],
-  "commits": ["082b407"]
+  "commits": [
+    "082b407",
+    "4537f2d"
+  ]
 }
