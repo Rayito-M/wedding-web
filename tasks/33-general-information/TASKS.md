@@ -268,7 +268,37 @@
 
 
 ### T389 — The DS-kit static server loses races under parallel e2e load
-- **Status:** todo — **promoted 2026-09-15: it now blocks any claim of a green e2e gate.** T388
+- **Status:** done (2026-09-16) — **and the title is wrong.** The DS-kit server was measured and
+  cleared on five independent grounds: it is `ThreadingHTTPServer`, not single-threaded (Python
+  3.7+); its own handling time under eight concurrent clients is median **15ms**, max 474ms;
+  `netstat -s -p tcp` reports **0 listen queue overflow** for the machine's whole uptime across
+  every run here; its unread stderr log pipe cannot wedge it; and an A/B of four server
+  configurations under identical load showed no difference. **T387's own `--workers=1` result had
+  already ruled contention out and was not read that way.**
+  **The actual cause is the public internet.** A fresh `BrowserContext` starts with an empty HTTP
+  cache and this suite makes one per test, so *every* page reached out on *every* load — Google
+  Fonts and **Sentry (the production DSN)** on the app page, Google Fonts and **~5.3MB of `unpkg`**
+  on the kit page. One run is several thousand requests and ~1GB from one IP in four minutes, and
+  the two CDN dependencies are **render-blocking**. Reproduced: stalling `fonts.googleapis.com` or
+  `unpkg.com` gives `ds-kit.ts:121`'s own error verbatim; a merely *slow* one spends the 30s budget
+  and the timeout is reported wherever it runs out — which is why the line moved between `:121`,
+  `:122` and `:128` while the cause did not, and why app-only specs (`smoke`, `navigation-five-cap`,
+  `occlusion-guard`, `public-surface`) failed too. Fix: fetch each third-party asset **once**, serve
+  it from a git-ignored on-disk cache, block Sentry. `playwright.config.ts` is untouched and every
+  number below is from a plain run with **no `--retries`**.
+  **Eight consecutive full runs, 395 passed / 0 failed / 30 skipped each** — with the cache file
+  count constant at 40 and zero fallback warnings, i.e. not one third-party request left the
+  machine. **A floor, not a cure**; what falsifies it is more runs, a *cold* cache on a fresh
+  checkout, or a busier machine. Baseline for comparison: **2 of 4 plain runs red at HEAD**, and a
+  fifth collapsed to 326 passed / 72 failed in 18.4m.
+  **The second cause is fixed too, and it raised an app defect that is NOT fixed here.** The answer
+  to the question the task asks is **yes**: `app.config.ts:44-51` waits for nothing before
+  bootstrapping, so the app paints raw translation keys on its first frame — measured at 182ms with
+  the locale file undelayed and 155ms with it delayed 3s, real copy at 213ms and 3143ms, *the window
+  is the fetch* — and it is every route, not one screen (`consentBanner.*` keys, from the banner
+  mounted at the app root). Filed in the report's `decisions_needed[]`. What is fixed is the spec's
+  own race. See `reports/T389.json` (`9712c14`, `5f16708`).
+- **Superseded status line below, kept as written:** todo — **promoted 2026-09-15: it now blocks any claim of a green e2e gate.** T388
   cleared the suite with `--retries=2`; **T387 could not.** Four runs, every failure the same
   `page.goto`/click against `ds-kit.ts:121-122`, and the failing sets **disjoint each time**:
   9 failed plain · 5 with `--retries=2` · 4 at `--workers=1` · 2 running

@@ -269,7 +269,7 @@ never by its letter alone.
 | **T386** | Mark phase 32's superseded tasks, and say why | done (hub session, 2026-09-15) | `33-general-information` |
 | **T387** | Two things in the tree that must not reach a release | done (`8da774d`) — lint 6 → 4, matching the documented clause | `33-general-information` |
 | **T388** | The e2e fixtures still serve the block array, so 30 specs assert a dead render | done — info spec 45/45; suite 420, 0 assertion failures; residual flake is the ds-kit harness | `33-general-information` |
-| **T389** | The DS-kit static server loses races under parallel e2e load | todo — **blocks any green e2e-gate claim** | `33-general-information` |
+| **T389** | The DS-kit static server loses races under parallel e2e load | done (2026-09-16) — **not the server**: the suite was racing Google Fonts / unpkg / Sentry on every page load; 8 consecutive clean runs (a floor) | `33-general-information` |
 | **T391** | The copy that carries a factual claim should be asserted, not just written | todo — not release-blocking | `33-general-information` |
 | **T392** | Settings → Basics must write `couple.*.firstName`, not only the deprecated pair | done — unit 644 → 647, e2e 395/0/30 unchanged; post-deploy `check-config-row.sh` still owed | `33-general-information` |
 | **T390** | Settings says contact cards self-update; the notice says they don't | done (`5b75068`) | `33-general-information` |

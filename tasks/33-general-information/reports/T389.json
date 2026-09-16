@@ -1,0 +1,131 @@
+{
+  "task": "T389",
+  "status": "complete",
+  "summary": "The cause is not the DS-kit server. It is the public internet: every page in this suite reaches it on every load, because a fresh BrowserContext has an empty HTTP cache and the suite makes one per test — Google Fonts and Sentry on the app page, Google Fonts and ~5.3MB of unpkg on the kit page. That is several thousand requests and ~1GB per run from one IP in four minutes, and the two CDN dependencies are render-blocking, so a slow answer spends the 30s test budget and the timeout is reported at whichever line it runs out on (:121, :122 or :128 — the moving line, one cause). The python server was measured and cleared: ThreadingHTTPServer since 3.7, median 15ms handling, zero listen-queue overflows machine-wide, log pipe cannot wedge, 380 opens peaking at 3.3s. Fix: fetch each third-party asset once, serve it from a git-ignored on-disk cache, block Sentry. A second, unrelated cause is also fixed: the app paints raw translation keys before /i18n resolves, and the privacy-notice spec snapshotted the DOM on mount. Eight consecutive full runs clean, 395/0/30, zero third-party requests leaving the machine. A floor, not a cure.",
+  "acceptance": [
+    {
+      "criterion": "Find the actual cause before changing anything — reproduce it (§5, a failing run with the error, not a hypothesis). The single-threaded http.server is the obvious suspect.",
+      "met": true,
+      "evidence": "Four plain runs at HEAD: 395/0/30 (4.3m), 393/2/30 (4.2m), 395/0/30 (4.0m), 394/1/30 (4.0m) — 2 of 4 red, every failure in openDsKitScreen. Actual output, baseline-run2: 'Error: locator.click: Test timeout of 30000ms exceeded. waiting for locator(\\'.controls\\').getByRole(\\'button\\', { name: \\'Desktop\\' }) at helpers/ds-kit.ts:122'; baseline-run4 the same at :128 on locator(\\'[data-overlay-host]\\'). A fifth, instrumented run collapsed to 326 passed / 72 failed / 27 skipped in 18.4m, failing FIRST at page.waitForLoadState('networkidle') on an app page — not a kit page — and the harness dump at the moment of failure read 'STILL IN FLIGHT: 6419ms .../dmsans/v17/...woff2 || 5654ms .../dmserifdisplay/v17/...woff2 || 5654ms .../cormorantgaramond/v21/...woff2'. Causation then isolated by stalling one host at a time against an otherwise untouched harness: fonts.googleapis.com stalled -> 'page.goto: Timeout 30000ms exceeded ... waiting until \"load\"', i.e. ds-kit.ts:121 exactly; unpkg.com stalled -> identical; unpkg delayed 40s -> identical; fonts.gstatic.com alone stalled -> PASSES (2085ms), so the woff2 is not itself blocking.",
+      "notes": "The suspect named in the task is FALSIFIED, with evidence rather than opinion. (a) `python3 -m http.server` has used ThreadingHTTPServer since Python 3.7; this machine runs 3.14. (b) Server-side handling under 8 concurrent browser contexts: median 15.4ms, p95 230ms, max 474ms — never near 3s, let alone 30s. (c) `netstat -s -p tcp` reports '0 listen queue overflow' and '0 embryonic connection dropped' for the machine's entire uptime, across every run in this session, so request_queue_size=5 never overflowed. (d) The unread stderr log pipe cannot wedge the server: both streams report readableFlowing=true after `off('data')`, and 3000 sequential requests completed in 1230ms with a slowest of 27ms. (e) A/B of four server configurations (stock, HTTP/1.1 keep-alive, backlog 128, both) under identical 8-way load showed no difference. (f) 380 instrumented kit opens across two full runs: goto median 550ms/max 1036ms, time-to-.controls median 2373ms, total median 2492ms, MAX 3299ms — a bimodal hard hang, not a tail creeping toward 30s. (g) T387's own measurement already ruled contention out and was not read that way: `--workers=1` still produced 4 failures."
+    },
+    {
+      "criterion": "Worth checking whether one server shared across projects, a --workers bound for parity specs only, or a readiness probe before the first goto is the real fix.",
+      "met": true,
+      "evidence": "All three checked, none adopted, because each addresses the falsified cause. One shared server: tested at 8 workers against a single server — no timeouts, max open 5365ms. A --workers bound: T387 measured --workers=1 still failing 4 times, and design-parity-info.spec.ts alone at --workers=1 failing 2 of 45, so bounding concurrency does not remove it. A readiness probe: there is no window to probe — `http.server`'s banner is printed after `server_bind`/`server_activate`, so the socket is already listening when ds-kit.ts parses the port, and no run ever failed inside startDsKitServer's 10s start timeout. Building for a cause that was measured and cleared would be noise.",
+      "notes": "Recorded as a decision rather than an omission: the harness keeps its per-file python server unchanged. It was never the thing losing the race."
+    },
+    {
+      "criterion": "The fix is in the harness, not in --retries. Retries hide a race; they do not remove it.",
+      "met": true,
+      "evidence": "`playwright.config.ts` is untouched — retries outside CI are still 0, and every number reported here is from a plain `pnpm test:e2e` with no --retries. The fix is e2e/support/external-assets.ts (new), wired into installApiMocks (every spec reaches it) and openDsKitScreen (the only place a kit page is opened), plus one auto-retrying gate in public-surface.spec.ts. Commits 9712c14 and 5f16708.",
+      "notes": "The race is removed rather than hidden: during the eight verification runs the cache file count stayed at 40 and the fallback warning fired 0 times, which is the direct measurement that no third-party request left the machine at all."
+    },
+    {
+      "criterion": "Report the number of consecutive full runs you achieved and call it a floor, not a fix (§4). Say what would falsify it.",
+      "met": true,
+      "evidence": "EIGHT consecutive full `pnpm test:e2e` runs, no --retries, each 395 passed / 0 failed / 30 skipped, 3.8-3.9m. This is a FLOOR, not a fix. What falsifies it: more runs, and specifically runs on a machine where the disk cache is cold (playwright/.cache is git-ignored, so a fresh checkout pays ~40 real fetches on its first run and can still lose one there), or a machine under heavier load than this one. It is also a floor in a second sense — the suite is now hermetic with respect to three hosts I found; a fourth would flake the same way and I have no guard that would catch it, only the fallback warning.",
+      "notes": "For comparison at the same effort: at HEAD, 2 of 4 plain runs were red, and a fifth run collapsed to 72 failures. Across the whole session at HEAD: 10 full runs, 3 red. After the asset fix but before the locale fix: 7 runs, 1 red — and that one was the second cause below, not this one."
+    },
+    {
+      "criterion": "A second, distinct cause lives in the same bucket — do not conflate them. Ask the question the flake raises before fixing the test: if the app can paint before translations resolve under a test harness, can a guest on a slow connection see raw keys on first load?",
+      "met": true,
+      "evidence": "The answer is YES, reproduced and measured, and it is not confined to a test harness. `app.config.ts:44-51` provides ngx-translate with `{lang:'en', fallbackLang:'en'}` and an HTTP loader, and NOTHING waits for `/i18n/<lang>.json` — no APP_INITIALIZER, no route resolver. Loading /privacy-policy with the locale file delayed by 0 / 1000 / 3000ms: raw keys painted at 182 / 158 / 155ms and real copy at 213 / 1145 / 3143ms, i.e. the raw-key window IS the locale fetch latency. Even with NO added delay the first painted frame reads 'Loading... consentBanner.message consentBanner.note consentBanner.privacyLink consentBanner.accept' — the consent banner is mounted eagerly at the app root on every route, so this is every page and every visitor, not one screen.",
+      "notes": "Per the task's own instruction — 'if it is yes, that is an app defect and belongs in its own task, not in a retry' — the app is NOT changed here. It is written up under decisions_needed[] with the measurement, so it can be scoped as its own task. What IS fixed is the spec's race: public-surface.spec.ts:324 asserted the component was visible and then took a one-shot innerText() snapshot, and mounted is not translated. Proven to bite with /i18n delayed 2500ms: 5 passed with the gate, 1 failed / 4 passed without it, on exactly the raw-key received string. Restored afterwards."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "Fix the DS-kit static server, which 'loses races under parallel e2e load'.",
+      "to": "Leave the DS-kit static server exactly as it is, and remove the suite's dependency on three third-party hosts instead — for the DS-kit page AND for every app page.",
+      "reason": "The server was measured and cleared on five independent grounds (threading model, handling latency, listen-queue counters, log-pipe behaviour, A/B of four configurations), and T387's own --workers=1 result already contradicted the contention story. The failures reach app-page-only specs — smoke.spec.ts, navigation-five-cap, occlusion-guard, public-surface — which never open a kit page at all, so no fix confined to ds-kit.ts could have closed the gate.",
+      "authorized_by": "T389 acceptance bullet 1 — 'Find the actual cause before changing anything ... reproduce it (§5 — a failing run with the error, not a hypothesis)'. The bullet makes the cause, not the suspect, the thing to fix.",
+      "verified_how": "Reproduction, both directions. Stalling fonts.googleapis.com or unpkg.com reproduces the suite's own ds-kit.ts:121 error verbatim against an otherwise untouched harness; stalling neither, but caching both, gives eight consecutive clean full runs with the cache file count constant and zero live fetches. The server's own numbers are quoted in acceptance[0].notes."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "`pnpm typecheck` green before and after. NOTE: it does not cover this task's files at all — tsconfig.app.json and tsconfig.spec.json both include only src/**, so e2e/** is never typechecked by the gate. Checked separately with a throwaway tsconfig over e2e/**: e2e/support/external-assets.ts is clean; the only error in the tree is pre-existing, ds-kit.ts:41 'ChildProcessByStdio<null, Readable, Readable> is not assignable to ChildProcessWithoutNullStreams', present at HEAD and untouched. Filed under risks[]."
+    },
+    "lint": {
+      "errors_before": 4,
+      "errors_after": 4,
+      "new_errors": [],
+      "detail": "`pnpm lint`: 4 ESLint errors before and after, all four in src/app/shared/modal/ — the exception CLAUDE.md hard rule 11 names, and the count now matches it exactly (T387 closed the fifth). ESLint does cover e2e/** ('files: **/*.ts'), so the new file is lint-clean. stylelint: no new violations (550 pre-existing, baselined). ds fidelity: 31/31 clean pairs, 0 drifting values."
+    },
+    "test": {
+      "before": { "total": 647, "failing": 0 },
+      "after": { "total": 647, "failing": 0 },
+      "new_failures": [],
+      "detail": "`pnpm test`: 49 files, 647 tests, 0 failing, before and after. This task adds and removes no unit test — it touches e2e/** only."
+    },
+    "build": {
+      "result": "pass",
+      "detail": "`pnpm build` green before and after, with the three pre-existing SCSS budget warnings (guest-manager 11.96kB, milestones 11.55kB, seating-plan 9.58kB against an 8kB budget). Unchanged by this task.",
+      "budget_warnings": [
+        "src/app/screens/guest-manager/guest-manager.scss exceeded maximum budget by 3.96 kB (11.96 kB)",
+        "src/app/screens/milestones/milestones.scss exceeded maximum budget by 3.55 kB (11.55 kB)",
+        "src/app/screens/seating-plan/seating-plan.scss exceeded maximum budget by 1.58 kB (9.58 kB)"
+      ]
+    },
+    "e2e": {
+      "before": { "total": 425, "passed": 393, "failed": 2, "skipped": 30 },
+      "after": { "total": 425, "passed": 395, "failed": 0, "skipped": 30 },
+      "result": "pass",
+      "new_failures": [],
+      "detail": "BEFORE, four plain runs at HEAD: 395/0/30, 393/2/30, 395/0/30, 394/1/30 — 2 of 4 red; the `before` block quotes the worst of the four rather than the luckiest. Three further runs carrying only read-only instrumentation were green, and an eighth collapsed to 326 passed / 72 failed / 27 skipped in 18.4m. AFTER, eight consecutive plain runs: 395/0/30 every time, 3.8-3.9m, no --retries anywhere. Totals are 425 throughout: this task adds and removes no test.",
+      "note": "The skipped count of 30 is the same six pre-existing test.skip/test.fixme declarations x5 projects that T388 measured; none are this task's. The eight clean runs are a floor (see acceptance[3]), and the direct evidence that the race is removed rather than deferred is that the asset cache held at 40 files and the live-fetch fallback warned 0 times across all eight — no third-party request left the machine."
+    }
+  },
+  "files": {
+    "added": ["e2e/support/external-assets.ts"],
+    "modified": [
+      "e2e/support/api-mocks.ts",
+      "e2e/helpers/ds-kit.ts",
+      "e2e/public-surface.spec.ts",
+      "tasks/33-general-information/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/environments/release.ts",
+      "why": "One of the three files the prompt held back as the Product Owner's, and `pnpm build` — required by hard rule 11 — regenerates it unconditionally (`scripts/generate-release.mjs`). It was already modified relative to HEAD when this session started and I did not read it before the first build, so I cannot say what it held; it now carries the hash of HEAD at build time, which is what any build produces. Not recoverable from .angular/cache or dist. Reported rather than papered over. No further edit was made to it."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "`pnpm typecheck` does not cover e2e/** at all — tsconfig.app.json includes src/**/*.ts and tsconfig.spec.json includes src/**/*.spec.ts, and there is no third project. Playwright type-strips rather than typechecks, so a type error in a spec or helper reaches the suite as a runtime failure or, worse, as nothing. One already exists: ds-kit.ts:41 assigns ChildProcessByStdio<null, Readable, Readable> to ChildProcessWithoutNullStreams, which is wrong about stdin and has been at HEAD for as long as the file has.",
+      "surfaces_at": "Any task that edits e2e/** and reports a green typecheck, which is every task with a hard-rule-11 gate. Closing it is a tsconfig.e2e.json plus one line in the typecheck script; @types/node is already present transitively at 20.19.43 but is not a direct devDependency."
+    },
+    {
+      "risk": "The asset cache is git-ignored (playwright/.cache), so a fresh checkout or CI runner pays ~40 real third-party fetches on its first run and can lose a race there exactly as before. Every run after the first needs no network. A run that DOES hit a cold cache says so — one named `e2e: could not cache <url> — falling back to a live fetch` warning per asset — so the condition is visible rather than silent, but it is not prevented.",
+      "surfaces_at": "The first `pnpm test:e2e` on any new machine, and the first run in CI if a workflow is ever added (there is none today)."
+    },
+    {
+      "risk": "The suite is now hermetic with respect to three hosts because those are the three I found. Nothing enforces it. A fourth third-party dependency added to src/index.html, to a component, or to the DS kit would reintroduce the identical flake with no signal beyond a slow suite. A cheap guard exists — fail any request to a host outside the allow-list — but it would be a behaviour change to every spec and belongs in its own task rather than smuggled into this one.",
+      "surfaces_at": "The next time anything adds a CDN link, an embed, or an analytics beacon; Google Maps on the Travel screen (T296) is the obvious candidate already in SPEC."
+    },
+    {
+      "risk": "Until this commit every local `pnpm test:e2e` sent Sentry events and Session Replay data to the PRODUCTION project: src/environments/environment.ts carries the same DSN as environment.prod.ts, and main.ts initializes unconditionally. Roughly 1300 envelope POSTs per run, for months. The e2e side is now blocked, but `pnpm start` and any manual dev session still report to production, and whatever is already in that project includes replay sessions of a test suite.",
+      "surfaces_at": "Anyone reading the Sentry project's data, and any task that touches environment.ts or hub ADR-0026's error-tracking decision. Not fixable from a test harness."
+    }
+  ],
+  "decisions_needed": [
+    {
+      "question": "The app paints raw translation keys on its first frame, on every route and for every visitor, for as long as `/i18n/<lang>.json` takes to arrive. Who fixes it, and how?",
+      "options": [
+        "An APP_INITIALIZER (or router resolver) that awaits the active locale before the app bootstraps — correct copy on the first painted frame, at the cost of adding the locale fetch to time-to-first-render, which on a slow connection delays EVERYTHING rather than just the text.",
+        "Keep the async load but render nothing translatable until it resolves — a shell/skeleton, so a guest sees a loading state instead of `consentBanner.message`. More work, and someone has to decide what the shell looks like; the design system draws no such state.",
+        "Leave it. The window is ~31ms on a fast connection and the text corrects itself. This is the status quo, and it has now cost two separate e2e investigations (T390's eighth flake, and one run in this task) because it also makes the suite race."
+      ],
+      "recommendation": "Option 1, scoped as its own task. It is the smallest change, it is the one ngx-translate is designed for, and the cost it adds is a fetch of a file the app is useless without. Option 3 is not neutral: the measurement above shows the window equals the locale latency, so on a genuinely slow connection a guest reads `consentBanner.privacyLink` for seconds, on the banner that asks for analytics consent — which is a legal notice, not decoration.",
+      "blocking": false,
+      "needed_by": "Its own task. Nothing in this phase is blocked on it — the spec-side race is closed and proven closed — but it should not be left to be rediscovered as a flake a third time."
+    }
+  ],
+  "commits": ["9712c14", "5f16708"]
+}
