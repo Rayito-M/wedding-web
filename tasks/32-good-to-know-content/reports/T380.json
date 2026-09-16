@@ -1,0 +1,138 @@
+{
+  "task": "T380",
+  "status": "complete",
+  "summary": "The privacy notice now says that a delegate reads the whole of someone else's reply — named children with their ages, dietary preferences and allergies — which `SPEC.md` has required since ADR-0039 shipped and which no section has ever said. New `privacyPolicy.delegation` in es/en/fr, placed straight after Good to know, worded for what ships: it states plainly that nobody is notified of a grant and that neither party can refuse or hand one back through this site, because neither capability exists and a notice describing one is the defect T381 was written to fix. The three bounds it does claim all exist as built. Pinned by two e2e guards — the in-browser one extended, and a new per-locale one asserting the claims positively and forbidding the notification promise negatively — both proven to bite. 845 keys per locale, key sets identical, 0 empty. Gates green; e2e 430 tests, 400 passed / 0 failed / 30 skipped.",
+  "acceptance": [
+    {
+      "criterion": "A new `privacyPolicy.delegation` section in es/en/fr, in the same plain voice as `goodToKnow`: the couple can name someone — a parent or sibling — who may answer for you, and that person then sees your whole reply, including any children you name with their ages, dietary preferences and allergies. Say that you can always see who holds it, and that only the couple grants or removes it (ADR-0039's three bounds).",
+      "met": true,
+      "evidence": "`privacyPolicy.delegation.{title,body}` added to public/i18n/{es,en,fr}.json, rendered by src/app/screens/privacy-policy/privacy-policy.html as the second section. EN body: 'The couple can name another guest — your mother, your father, your brother or your sister — who may answer your RSVP for you. If they do, that person sees the whole reply, not only the part they are filling in: who is coming, any children you have named with their ages, and the dietary preferences and allergies recorded against each name. You can always see who it is — it is shown on your own profile, read-only. Only the couple can add or remove someone there, and a removal takes effect immediately.' Read back from the rendered DOM in all three locales via the app's own language switcher; ES heading 'Cuando otra persona responde por ti', FR 'Quand quelqu'un d'autre répond pour vous', each in position 2 of 8.",
+      "notes": "The four kinds are named from the SUBJECT's side ('your mother, your father, your brother or your sister'), which per ADR-0039 §6 is the only side any of them is renderable from at all — the inverse has no ES or FR form because nobody's gender is stored. The third bound is stated too and is easy to drop: delegation adds a writer and never removes one (§8 Q8), so the guest keeps their own reply."
+    },
+    {
+      "criterion": "Say what ships, the T378 rule. Do not describe a notification that does not exist — nobody is told they have been made a delegate — and do not imply the delegate can be refused in-app.",
+      "met": true,
+      "evidence": "The copy says the opposite of both, explicitly rather than by omission. EN: 'Nobody is told they have been made a delegate: the person finds your reply waiting the next time they open the RSVP screen.' and 'Neither of you can refuse the arrangement or hand it back through this site — if you would rather nobody answered for you, tell the couple and they remove it.' ES: 'A nadie se le avisa de que se le ha nombrado' / 'Ni tú ni esa persona podéis rechazar el encargo ni devolverlo desde este sitio'. FR: 'Personne n'est prévenu d'avoir été désigné' / 'Ni vous ni cette personne ne pouvez refuser ce rôle ou le rendre depuis ce site'. Each is pinned positively AND negatively per locale in e2e/public-surface.spec.ts:527.",
+      "notes": "Stated out loud rather than left unsaid on purpose. Silence about a notification reads as 'presumably they are told'; silence about refusal reads as 'presumably I can say no'. Both are the T381 trap — a notice describing a capability the system lacks — pointing in the reassuring direction, which is the easier one to fall into. ADR-0039 §8 Q6 (a grant notifies nobody; it would be a new ADR-0019 type and is explicitly not an announcement) and §8 Q9 (a delegate cannot resign; one write surface, the couple's) are the authorities."
+    },
+    {
+      "criterion": "Extend `public-surface.spec.ts`'s third test (or add one beside it) so the notice is asserted to carry the delegation disclosure, the same way it now asserts the Good-to-know one.",
+      "met": true,
+      "evidence": "Both. The in-browser test (`public-surface.spec.ts:324`) gains six assertions — the section exists, the four kinds, 'sees the whole reply', the named health-adjacent data, the read-only visibility, and the two negative facts. A new test beside it (`:527`, 'the delegation disclosure states what ships, per locale') reads all three locale files off disk and asserts nine claims per locale plus two forbidden ones. Proven to bite in both directions: deleting the en section fails the in-browser test on 'the notice must have a delegation section' (and the per-locale test outright); leaving fr's section intact but appending \"Nous vous préviendrons si les mariés désignent quelqu'un.\" fails on 'fr: the notice must not promise a notification — none exists, and building one would be a new ADR-0019 type' with everything else still passing. Both poisons restored, `git diff --numstat` back to 5/1 per file.",
+      "notes": "A test beside rather than inside, for three reasons stated in the file: the two disclosures cover different data, they were written a phase apart, and a failure in one should not read as a failure in the other. Every regex matches a load-bearing clause rather than a sentence, so the copy stays free to be reworded and these fail only when a fact changes — the T391 standard, applied here because this task landed first."
+    },
+    {
+      "criterion": "No missing-key warnings in any locale; report the resolved key count for all three.",
+      "met": true,
+      "evidence": "Measured this run, not quoted: es 845, en 845, fr 845 — 843 before, +2 (`privacyPolicy.delegation.title`, `privacyPolicy.delegation.body`), and those two are the only keys added anywhere. Key sets identical across all three (set comparison, not counts). 0 empty values in any locale. `privacyPolicy.*` resolves to 19 keys in each, up from 17. A sweep of every literal `'<key>' | translate` in src/**/*.{ts,html} against the union of the three files found 0 unresolved.",
+      "notes": "One existing value changed as well as the two added: `privacyPolicy.intro` in all three locales. See deviations[]."
+    },
+    {
+      "criterion": "Hard rule 11 gate green.",
+      "met": true,
+      "evidence": "`pnpm typecheck` pass; `pnpm lint` 4 ESLint errors, all four in src/app/shared/modal/ — the documented exception, unchanged, with stylelint clean (550 pre-existing baselined) and ds fidelity 31/31 clean pairs / 0 drifting; `pnpm test` 49 files / 647 tests / 0 failing; `pnpm build` pass; `pnpm test:e2e` exit 0, 400 passed / 0 failed / 30 skipped (4.0m), no --retries.",
+      "notes": "This is the first task in the phase able to report a plain green e2e gate rather than a gate plus an explanation, because T389 landed first in this same session."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "A new `privacyPolicy.delegation` section — i.e. added strings only.",
+      "to": "One existing string changed as well: `privacyPolicy.intro`, in all three locales, widened by a single clause ('what another guest can see about you' / 'qué puede ver otra persona invitada sobre ti' / 'ce qu'une autre personne invitée peut voir à votre sujet').",
+      "reason": "The intro is the notice's own table of contents and said the page explains 'what you can see here about other people' and how the site uses Google services. The new section is the opposite direction — what one other person can see about YOU — so leaving the intro alone would have shipped a notice whose summary did not cover its own second section. That is a small defect introduced by this task, not one inherited.",
+      "authorized_by": "none — needs a decision. No bullet or ADR asks for it; it is a judgement call about not making the page internally inconsistent. Flagged rather than presented as covered.",
+      "verified_how": "Read back from the rendered page in all three locales: the intro now names both directions and the eight section headings follow in the order the intro implies. No test asserted the intro before this change and none does now, so nothing was silently re-baselined to accommodate it."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "`pnpm typecheck` green before and after. Note it covers src/** only, not e2e/** — see T389's report, risks[0]."
+    },
+    "lint": {
+      "errors_before": 4,
+      "errors_after": 4,
+      "new_errors": [],
+      "detail": "4 ESLint errors before and after, all in src/app/shared/modal/ — CLAUDE.md hard rule 11's documented exception, and the count matches it exactly. stylelint: no new violations (550 pre-existing, baselined). ds fidelity: 31/31 clean pairs, 0 drifting values."
+    },
+    "test": {
+      "before": { "total": 647, "failing": 0 },
+      "after": { "total": 647, "failing": 0 },
+      "new_failures": [],
+      "detail": "49 files, 647 tests, 0 failing, before and after. This task adds no unit test: the privacy screen is a template of translate pipes with no logic, and the claims that matter are per-locale copy, which is asserted in e2e where the locale files actually are."
+    },
+    "build": {
+      "result": "pass",
+      "detail": "`pnpm build` pass, with the three pre-existing SCSS budget warnings (guest-manager, milestones, seating-plan) unchanged."
+    },
+    "e2e": {
+      "before": { "total": 425, "passed": 395, "failed": 0, "skipped": 30 },
+      "after": { "total": 430, "passed": 400, "failed": 0, "skipped": 30 },
+      "result": "pass",
+      "new_failures": [],
+      "detail": "`pnpm test:e2e` exit 0, 4.0m, no --retries. Totals grew 425 -> 430 because this task adds one test x 5 projects. The `before` figure is this session's own measurement of HEAD after T389 landed, not an inherited number.",
+      "note": "Both baselines are honest about which HEAD they are from: before T389 a plain run was red 2 times in 4, so a 'before' taken at the start of this session would have been 393/2/30 and would not have been comparable. T389's report carries that history."
+    },
+    "i18n": {
+      "locales": ["es", "en", "fr"],
+      "keys_per_locale": 845,
+      "missing": 0,
+      "empty_values": 0,
+      "new_keys": 2,
+      "key_sets_identical": true,
+      "detail": "843 -> 845; the two new keys are privacyPolicy.delegation.title and .body. privacyPolicy.* = 19 per locale (was 17). One existing value also changed, privacyPolicy.intro, in all three — see deviations[]. 0 literal `| translate` keys unresolved across src/**.",
+      "note": "Counts measured this run by flattening each file and comparing sets, not quoting T390's 843."
+    }
+  },
+  "files": {
+    "added": ["tasks/32-good-to-know-content/reports/T380.json"],
+    "modified": [
+      "public/i18n/es.json",
+      "public/i18n/en.json",
+      "public/i18n/fr.json",
+      "src/app/screens/privacy-policy/privacy-policy.html",
+      "src/app/screens/privacy-policy/privacy-policy.ts",
+      "e2e/public-surface.spec.ts",
+      "tasks/32-good-to-know-content/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/app/screens/privacy-policy/privacy-policy.ts",
+      "why": "No template or logic change — the class doc block recorded this exact gap as open ('no section says so yet, and T378's scope was Good to know'). Leaving it would have left the file asserting the defect this commit removes. Replaced with what now ships and why it is worded that way."
+    },
+    {
+      "path": "src/environments/release.ts",
+      "why": "One of the three files the prompt held back as the Product Owner's. `pnpm build`, required by hard rule 11, regenerates it unconditionally (scripts/generate-release.mjs). Already reported under T389, where the first build of this session overwrote it; noted again here because this task's gate ran the build too. No deliberate edit was made to it in either task."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "The disclosure is now correct and the FEATURE it describes is still only half-visible from the guest's side. ADR-0039 §10 deliberately ships no 'who answered for me' surface — `submittedBy` is stored and nothing renders it — so a guest who reads this notice, sees a delegate listed on their profile, and then wants to know whether that person actually filed the reply has no way to find out. The notice does not claim they can, so it is not wrong; it is a question the notice will now cause people to ask.",
+      "surfaces_at": "The first delegated reply the couple files in production, and any future task that revisits ADR-0039 §10's deferred surfaces."
+    },
+    {
+      "risk": "The notice is only as true as ADR-0039 §8's bounds remain. If `wedding-api` T237's short-TTL user cache lands, 'a removal takes effect immediately' becomes false for up to that TTL, in all three locales, and the per-locale guard added here (`immediateClaim`) is what will fail — which is the point, but the task that lands the cache has to know it owns three strings.",
+      "surfaces_at": "`wedding-api` T237, and the wedding-web task that consumes it."
+    },
+    {
+      "risk": "The privacy notice is now four sections of dense prose about people-data (Good to know, delegation) followed by four about Google, and nothing has been designed for it — `privacy-policy.scss` styles a page that was three short sections when T378 wrote it. No parity spec covers this screen and the DS draws no privacy page, so length and scannability are unmeasured. The content is right; whether a guest reads it is not something this task tested.",
+      "surfaces_at": "Any design pass over the public surfaces, and the DS ledger if `ScreenPrivacy` is ever stamped."
+    }
+  ],
+  "decisions_needed": [
+    {
+      "question": "`privacyPolicy.intro` was widened by one clause so the notice's summary covers its own new section. Should that stand, or should the intro be reverted and the inconsistency accepted?",
+      "options": [
+        "Keep it. The intro reads as a table of contents and now names both directions — what you see about others, what one other person sees about you. Cost: one existing string changed in three locales by a task whose acceptance said 'a new section', which is scope the task text did not grant.",
+        "Revert it. The task's acceptance is then met literally, and the notice keeps an intro that describes only the first half of what follows — a reader looking for the delegation disclosure has no hint from the top of the page that it is there."
+      ],
+      "recommendation": "Keep it. The change is one clause, it is factual rather than editorial, no test asserted the intro before or after, and the alternative is knowingly shipping a summary that does not summarise. Raised rather than assumed because it is the one thing in this commit no bullet authorised.",
+      "blocking": false,
+      "needed_by": "Whenever the notice is next read end to end — there is no defect either way, only a coherence choice that is cheaper to settle now than to rediscover."
+    }
+  ],
+  "commits": ["082b407"]
+}

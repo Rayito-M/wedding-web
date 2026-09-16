@@ -260,7 +260,7 @@ never by its letter alone.
 | **T377** | Good to know strings in es/en/fr | done (guest half; authoring half split to T379) | `32-good-to-know-content` |
 | **T378** | The privacy notice covers couple-entered contact details, and nothing leaks pre-sign-in | done | `32-good-to-know-content` |
 | **T379** | The authoring form's strings, in es/en/fr | done, then **partly superseded** — the voice pass stands, its 50 keys did not (see T384) | `32-good-to-know-content` |
-| **T380** | The privacy notice still does not say a delegate reads someone else's whole reply | todo | `32-good-to-know-content` |
+| **T380** | The privacy notice still does not say a delegate reads someone else's whole reply | done (2026-09-16) — closed before the first production delegation; says nobody is notified and nobody can refuse in-app, because neither exists | `32-good-to-know-content` |
 | **T381** | The privacy notice widens: the third-party case now ships | done | `32-good-to-know-content` |
 | **T382** | Consume T246's contract: a contact carries its own details, and may have no account | done, then **superseded by ADR-0047 §2** (see T383) | `32-good-to-know-content` |
 | **T383** | Render the `generalInfo` sections | done (`5583e1e`) — one merge unit with T384, which closed it | `33-general-information` |

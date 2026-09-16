@@ -7,9 +7,9 @@
 > is what shipped.
 >
 > **T377, T378, T380 and T381 are NOT superseded.** T377/T378's work survives in the product,
-> T381's copy was rewritten by T385 rather than voided, and **T380 is still open** — a pre-existing
-> gap in the privacy notice that has nothing to do with the shape. Do not read the banner as
-> retiring the whole phase.
+> T381's copy was rewritten by T385 rather than voided, and **T380 — a pre-existing gap in the
+> privacy notice that has nothing to do with the shape — was closed on 2026-09-16**, before the
+> couple granted the first delegation. Do not read the banner as retiring the whole phase.
 
 > T364 shipped Home's "Good to know" section as an honest empty state and said why in
 > `src/app/shared/good-to-know/good-to-know.ts:4-17`: no dress-code / FAQ / gift concept existed
@@ -286,7 +286,24 @@
 - **Refs:** T377 (the guest half, done); T365 (key-parity method); hub ADR-0046 Amendment 1
 
 ### T380 — The privacy notice still does not say a delegate reads someone else's whole reply
-- **Status:** todo — **pre-existing gap, found by T378, not caused by it. Does not gate v1.3.0**
+- **Status:** done (2026-09-16) — closed **before** the window expired. `privacyPolicy.delegation`
+  in es/en/fr, rendered second in the notice, straight after Good to know: the couple can name your
+  mother, father, brother or sister to answer your RSVP, and that person then sees the **whole**
+  reply — named children with their ages, dietary preferences and **allergies**. It says the three
+  bounds that exist (only the couple grants or removes, removal is immediate, you always see who
+  holds it read-only on your own profile) and the fourth that is easy to drop (you keep your own
+  reply — §8 Q8). Worded for what ships, so it states out loud the two things a reassuring notice
+  would get backwards: **nobody is told they have been made a delegate** (§8 Q6) and **neither side
+  can refuse or hand it back through this site** (§8 Q9). Silence on either reads as the opposite.
+  Two guards: the in-browser test extended, plus a new per-locale one asserting the claims
+  **and forbidding** a notification promise — proven to bite both ways (deleting the `en` section
+  fails; appending *"Nous vous préviendrons…"* to `fr` fails on the negative alone). 845 keys per
+  locale (843 + 2), key sets identical, 0 empty, `privacyPolicy.*` 17 → 19. Gates green; e2e 425 →
+  430 tests, **400 passed / 0 failed / 30 skipped**. **One deviation:** `privacyPolicy.intro` was
+  widened by a clause in all three locales so the notice's summary covers its own new section —
+  the one thing here no bullet authorised, and it is in `decisions_needed[]`. See
+  `reports/T380.json` (`082b407`).
+- **Superseded status line below, kept as written:** todo — **pre-existing gap, found by T378, not caused by it. Does not gate v1.3.0**
   (Product Owner, 2026-09-09): **no delegation has been created in production yet**, so no guest's
   reply is currently readable by anyone the notice failed to warn about. That is what makes this a
   bug to fix after the release rather than a disclosure failure already in effect — and it is also
