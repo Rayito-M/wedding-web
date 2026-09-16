@@ -646,9 +646,11 @@
 - **Refs:** hub ADR-0039 (RSVP delegation); `289bd39`; every Phase X report's `checks.test` block
 
 ### T359 — `app-modal` claims `aria-modal` and traps nothing: audit the seven surfaces
-- **Status:** todo
-- **Target release:** 1.2.0
-- **Owner:** unassigned
+- **Status:** todo — **scheduled into v1.4.0** (Product Owner, 2026-09-16). Carried unshipped
+  through 1.2.0 and 1.3.0, each time determined not to gate; it is in this one because the release
+  is waiting on the last of the queue anyway, not because the assessment changed
+- **Target release:** **1.4.0** *(was 1.2.0; corrected 2026-09-16 after two releases passed it)*
+- **Owner:** agent (implementer)
 - **Depends on:** nothing
 - **Not a Phase X task.** Filed here only because T354 surfaced it. It is a production
   accessibility concern on a live app, not a layout one, and it does not belong to the layout phase.
