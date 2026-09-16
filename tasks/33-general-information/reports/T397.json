@@ -1,0 +1,143 @@
+{
+  "task": "T397",
+  "status": "complete_with_deviation",
+  "summary": "Cluster B closed, and the guard that keeps it closed is in. The four false absolutes reworded in es/en/fr, each re-verified against the code first: profileModal.visibility.suffix now carries the Good-to-know exception and agrees with privacyPolicy.goodToKnow.body fact-for-fact (ADR-0047 §3); people.subtitle says 'holds an account' (GET /v1/profile is repo.readAll, no sign-in filter); delegation.field.emptyGuest drops 'only you can reply' (ADR-0015); yesMessage says 'until {{deadline}}' (assertDeadlineOpen 410s create AND update). The guard is e2e/copy-absolutes.spec.ts: a per-language absolutes lexicon over the flattened locale files, whose matched key set must equal a committed 36-entry inventory — every entry ASSERTED (naming its test) or ALLOWED (with the reason a person wrote after reading it). Building the inventory forced a verdict on every matched key, and six more deadline-bound overclaims could be neither asserted nor allowlisted — 'edit all of it any time', 'switch back any time' ×3, 'right up to the day' — so they were reworded with the four (the deviation). Bite proven live: restoring the old suffix failed copy-absolutes AND the new modal↔notice agreement test in copy-claims.spec.ts. Unit 662→663; e2e 440→455 passed, 0 failed; initial bundle raw byte-identical (808.59 kB), transfer 195.70→195.77 kB (estimate jitter; the touched template is a lazy chunk).",
+  "acceptance": [
+    {
+      "criterion": "Each of the four states what is true now, in es/en/fr. For the visibility one, match privacyPolicy.goodToKnow.body's facts — two strings about the same data, read by the same person, should have no daylight between them (T390's rule).",
+      "met": true,
+      "evidence": "Each claim re-verified against code before rewording, per the session instruction. [1] visibility.suffix: ADR-0047 §3 re-read ('a signed-in guest reading Good to know receives, for each listed person, their name, email and phone number'; ADR-0035 §7/§8 untouched — profile phone stays couple-gated). New wording states both halves: 'On your profile, email and phone are visible to the couple alone. If the couple lists you in Good to know, that section shows your name, email and phone to every signed-in guest.' — the notice's exact facts ('stays visible to the couple alone' / 'shows their name, their email address and their phone number'), and the no-daylight rule is now a TEST: copy-claims.spec.ts pins modal and notice together per locale on both facts (the third instance of the T390 agreement pattern, as T394's FIX 2 prescribed). [2] people.subtitle: profile.service.ts getAllProfiles → repo.readAll(pagination), no sign-in filter, re-read this session — 'Everyone who holds an account on this site appears here.' (es 'tienen cuenta en este sitio', fr 'possédant un compte sur ce site' — the contact hint's own vocabulary). [3] delegation.field.emptyGuest: 'Nobody answers for you — the reply is yours.' — keeps the true delegation fact, drops the exclusivity ADR-0015 falsified. [4] yesMessage: rsvp.service.ts:48-63,213-220 re-read — assertDeadlineOpen throws GoneException on create and update for non-admins — 'you can come back to it until {{deadline}}', interpolated from the same deadline computed T393 added to rsvp-create.ts, rendered via the T393 formatter. All ×3 locales; key parity 845/845/845 identical, 0 empty."
+    },
+    {
+      "criterion": "The allowlist test T394 proposed: an inventory of strings containing an absolute — only, everyone, never, always, any time and their es/fr equivalents — each either asserted or explicitly allowlisted with a reason. New absolutes then have to be justified rather than merely typed.",
+      "met": true,
+      "evidence": "e2e/copy-absolutes.spec.ts. Lexicon per language (en: only/everyone/never/always/any time/nobody/no one; es: solo-sólo/solamente/únicamente/todos-todas/nunca/jamás/siempre/cuando quiera(s)/en cualquier momento/nadie; fr: seul(e)(s)/seulement/uniquement/jamais/toujours/à tout moment/n'importe quand/quand vous voulez/tous-toutes/tout le monde/personne-ne-as-pronoun), accent-aware boundaries because \\b breaks on accented letters — the rsvp-deadline.spec.ts matcher's lesson. Matched union across locales = 36 keys; the test asserts set equality with the committed INVENTORY in both directions (a new absolute fails with 'read it, then assert or allowlist it'; a removed one fails as stale until its entry is deleted, so the inventory cannot drift). 8 entries are ASSERTED naming their spec (copy-claims, public-surface, copy-absolutes' own REWORDED block, rsvp-deadline); 28 ALLOWED with the reason from reading each against the code — several citing T394's verifications, two re-verified fresh this session (milestones role-gate in app.routes.ts; dress-code swatches read off PALETTES[theme()]). The REWORDED block additionally pins all ten rewordings per locale, positively (the true clause must stay — 'not false' is also satisfied by saying nothing) and negatively (the shipped-false shapes cannot return). Fr noun/pronoun collision handled with a determiner lookbehind ('cette personne ne peut pas venir' is a person, not nobody) — found because the reworded fr hint tripped it, which is the guard working on its own author."
+    },
+    {
+      "criterion": "Prove the guard bites: restore one of the false strings, watch it fail.",
+      "met": true,
+      "evidence": "Restored en profileModal.visibility.suffix to '. Email and phone are shared with the couple only.' and ran copy-absolutes + copy-claims on Desktop Chrome: 2 failed, 4 passed — copy-absolutes: 'en.json profileModal.visibility.suffix restores a claim T394 confirmed false (/shared with the couple only/i)'; copy-claims: 'en: modal — on the profile, couple alone' (the agreement test, failing because the modal lost the fact the notice still carries). Reverted; suite green again. So the false string is now caught twice, by two different mechanisms — the claim pin and the cross-surface agreement."
+    }
+  ],
+  "deviations": [
+    {
+      "from": "Reword exactly the four strings the task names.",
+      "to": "Reworded ten: the four, plus rsvp.create.attending.hint ('edit all of it any time' → 'until {{deadline}}', same screen and same computed as yesMessage), rsvp.editor.attending.hint.coming/.comingPlusOne and rsvp.editor.perspective.{owner,delegate}.declinedHint ('switch back any time' → the data-preservation half only), and rsvp.editor.attending.hint.declined ('right up to the day' → no time clause).",
+      "reason": "The acceptance's own inventory forces a verdict on every matched key, and these were false the same way rsvp.yesMessage is: a guest CAN reach the editor after the deadline (no client-side gate — delegate-edit.ts:52 documents that the 410 surfaces as a generic error) and the write is refused, so 'any time' promises a write the API answers 410 to. A known-false string can be neither ASSERTED nor honestly ALLOWED, and shipping the guard with false entries marked 'allowed' would falsify the guard itself on day one. hint.declined carries no lexicon word — it was found by reading its siblings — and was fixed with them because it is the identical defect one key over.",
+      "authorized_by": "T397 acceptance bullet 2 ('each either asserted or explicitly allowlisted with a reason' — impossible for a known-false claim), plus the session instruction that the guard is the point of the task and the rewordings are its calibration. The one absolute NOT fixed under this reasoning is in privacyPolicy.delegation.body — Product-Owner-owned notice text, pinned per locale by public-surface.spec.ts — filed in decisions_needed instead.",
+      "verified_how": "Each of the six read against rsvp.service.ts assertDeadlineOpen (410 on create and update, admins excepted) and rsvp-editor's perspective wiring (the hints render for the guest-facing owner/delegate perspectives, not only the couple's). The rewordings drop only the time clause; every data-preservation fact they carried is retained and pinned in copy-absolutes' REWORDED block."
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "tsc app + spec configs, clean, re-run after all edits."
+    },
+    "lint": {
+      "errors_before": 4,
+      "errors_after": 4,
+      "new_errors": [],
+      "detail": "The documented src/app/shared/modal/ exception, unchanged. stylelint and ds:verify (31/31 clean pairs) pass."
+    },
+    "test": {
+      "before": {
+        "total": 662,
+        "failing": 0
+      },
+      "after": {
+        "total": 663,
+        "failing": 0
+      },
+      "new_failures": [],
+      "detail": "Both counts measured this session. +1: rsvp-create.spec.ts's T397 test — the attending hint and the confirmation interpolate the CONFIGURED deadline ('until 1 May' from the writable fixture config). Stub translations in three spec files updated to the new wording so fixtures stay honest."
+    },
+    "build": {
+      "result": "pass",
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 808.59 kB vs 500 kB raw — pre-existing (T393 measured the same figure and its pre-session history); raw size byte-identical before and after this task",
+        "four screen .scss budgets — pre-existing, unchanged"
+      ],
+      "detail": "Initial total 808.59 kB raw / 195.77 kB estimated transfer after, vs 808.59 kB / 195.70 kB measured before this task at the same HEAD. Raw is byte-identical — locale JSONs are static assets, not bundle input — so the 0.07 kB transfer delta is estimate jitter, not growth; the only template change (rsvp-create.html) lives in the lazy rsvp chunk (47.45 kB → 47.55 kB raw). Still under the hub's 200 kB gzip target, headroom now ~4.2 kB. Note: pnpm build stamps src/environments/release.ts with the commit hash; restored to the committed 'dev' placeholder after each build, per that file's own header."
+    },
+    "e2e": {
+      "before": {
+        "total": 470,
+        "passed": 440,
+        "failed": 0,
+        "skipped": 30
+      },
+      "after": {
+        "total": 485,
+        "passed": 455,
+        "failed": 0,
+        "skipped": 30
+      },
+      "result": "pass",
+      "new_failures": [],
+      "detail": "Both full plain runs measured this session (baseline 4.2m, after 3.9m). +15 = 3 new tests × 5 projects: copy-absolutes' inventory test and REWORDED pins, copy-claims' modal↔notice agreement. rsvp-deadline's live test additionally asserts the attending hint renders 'until 1 September' from the fixture config."
+    },
+    "i18n": {
+      "locales": ["es", "en", "fr"],
+      "keys_per_locale": 845,
+      "missing": 0,
+      "empty_values": 0,
+      "new_keys": 0,
+      "key_sets_identical": true,
+      "detail": "10 values changed per locale, 0 keys added or removed; sets identical, measured by flattening all three files this run."
+    }
+  },
+  "files": {
+    "added": [
+      "e2e/copy-absolutes.spec.ts",
+      "tasks/33-general-information/reports/T397.json"
+    ],
+    "modified": [
+      "public/i18n/en.json",
+      "public/i18n/es.json",
+      "public/i18n/fr.json",
+      "src/app/screens/rsvp-create/rsvp-create.html",
+      "src/app/screens/rsvp-create/rsvp-create.spec.ts",
+      "src/app/shared/profile-modal/profile-modal.spec.ts",
+      "src/app/shared/rsvp-editor/rsvp-editor.spec.ts",
+      "e2e/copy-claims.spec.ts",
+      "e2e/rsvp-deadline.spec.ts",
+      "tasks/33-general-information/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [],
+  "risks": [
+    {
+      "risk": "The guard's blind spots are real and documented in its header: numerals carry no lexicon word (T396's cluster), and neither do time-bound phrasings like 'right up to the day' — that one was found only by reading the failing key's siblings, and the next one will need the same reading. The lexicon is deliberately small (T391's warning: a suite that fails on every copy edit gets its assertions deleted), so widening it is a trade to make consciously, not a free win.",
+      "surfaces_at": "The next copy edit that promises a capability with a clock on it but no absolute in it; and any ADR that widens visibility — T394's proposed ADR-template line ('enumerate shipped strings stating the scope this changes') is still the countermeasure at the source."
+    },
+    {
+      "risk": "The fr lexicon distinguishes pronoun 'personne ne' (nobody) from noun 'cette/une/la/chaque/toute/autre personne ne' by determiner lookbehind. A determiner outside that list ('aucune personne ne…') would be matched as the pronoun and demand an inventory entry — noisy but fail-safe (it fails toward reading, never toward silence).",
+      "surfaces_at": "Future fr copy using an unlisted determiner before 'personne ne'; the fix is one word in the lookbehind."
+    },
+    {
+      "risk": "copy-claims.spec.ts now pins the modal and the notice together on the Good-to-know facts. When wedding-api T251 makes contact digests resolve at read time, that file already predicts both T390-era strings change together — the new visibility pair is a third string set in the same blast radius.",
+      "surfaces_at": "wedding-api T251's landing; the failing tests name every string that must move in that commit."
+    }
+  ],
+  "decisions_needed": [
+    {
+      "question": "privacyPolicy.delegation.body still says 'You can still answer yourself at any time' — and the API answers 410 to any guest write after the RSVP deadline, delegate and subject alike. The inventory carries it as ASSERTED (public-surface.spec.ts pins the notice per locale) with this flag in the reason. Reword the notice clause, or accept the reading that 'at any time' contrasts your standing right with the delegate's, not with the deadline?",
+      "options": [
+        "Reword to '…answer yourself at any time until the RSVP deadline, like any reply' (×3 locales, plus the public-surface.spec.ts pins in the same commit) — removes the overclaim, at the cost of editing Product-Owner-reviewed privacy-notice text and its three locale pins for a clause whose point is delegation, not deadlines.",
+        "Leave it, keeping the inventory's documented reading: the sentence's load-bearing claim is that delegation never removes the subject's own right (true — the deadline binds both parties equally, and the deadline is disclosed on every RSVP surface since T393/T397); the cost is one absolute in the notice that a literal reader can still falsify after the deadline."
+      ],
+      "recommendation": "Option 1, folded into the NEXT Product-Owner edit of the privacy notice rather than a dedicated task — the overclaim is real but mild (the deadline is disclosed two taps away), and notice wording is the PO's voice; T385/T380 both went through deliberate wording passes and this should too.",
+      "blocking": false,
+      "needed_by": "The next edit touching privacyPolicy.* or any delegation ADR amendment — whichever comes first."
+    }
+  ],
+  "commits": [
+    "3b70a20 tasks(T397): the absolutes state what is true now — ten strings, three locales",
+    "39b64c0 tasks(T397): the absolutes inventory — asserted or allowlisted, never merely typed"
+  ]
+}

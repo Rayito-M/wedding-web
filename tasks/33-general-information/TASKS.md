@@ -607,7 +607,11 @@
   `wedding-api/src/modules/auth/sms-verification.service.ts:13`
 
 ### T397 — Cluster B: absolutes invalidated by a later visibility widening
-- **Status:** todo — **one of these contradicts the privacy notice the app already ships**
+- **Status:** done — see `reports/T397.json`. The four reworded ×3 locales; the modal now matches the
+  privacy notice and `copy-claims.spec.ts` pins the pair. The inventory guard
+  (`e2e/copy-absolutes.spec.ts`, 36 entries) surfaced six MORE deadline-bound overclaims
+  ("switch back any time", "right up to the day"), reworded with it — the deviation is in the
+  report. Bite proven: restoring the old suffix fails two specs.
 - **Owner:** agent (implementer)
 - **Depends on:** T394
 - **ADR:** hub **ADR-0047 §3** (the widening that falsified them); ADR-0035 §7/§8; ADR-0039
