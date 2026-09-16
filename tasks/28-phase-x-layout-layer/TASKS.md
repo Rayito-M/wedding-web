@@ -646,9 +646,20 @@
 - **Refs:** hub ADR-0039 (RSVP delegation); `289bd39`; every Phase X report's `checks.test` block
 
 ### T359 — `app-modal` claims `aria-modal` and traps nothing: audit the seven surfaces
-- **Status:** todo — **scheduled into v1.4.0** (Product Owner, 2026-09-16). Carried unshipped
-  through 1.2.0 and 1.3.0, each time determined not to gate; it is in this one because the release
-  is waiting on the last of the queue anyway, not because the assessment changed
+- **Status:** done (2026-09-16) — all seven consumers audited (table in `reports/T359.json`):
+  `confirm-dialog` and `notification-dialog` fully compensate (own Escape + focus-on-open + manual
+  trap, with specs); `profile-modal` has Escape only; `login`, `guest-create-modal`,
+  `guest-profile-modal` and `manage-rsvp-modal` inherited total silence. Fix landed **once in
+  `app-modal`** — Escape (backdrop-scoped, gated on `dismissable`, stops propagation), card
+  focus-on-open + restore-on-close, and an edge-wrapping Tab trap — each guarded to defer to the
+  two consumers' hand-rolled versions (skip when focus already placed inside the card; skip any
+  Tab a projected handler `preventDefault()`ed; restore only when teardown dropped focus to
+  `body`), so their spec'd semantics (confirm-first focus, restore-on-cancel-only, Enter-repeat
+  guard) keep winning and no trap fights another. The 4 ESLint errors in `shared/modal/` are
+  cleared (repo lint fully green; CLAUDE.md rule 11's exception removed). 13 new unit specs in
+  `modal.spec.ts`; `confirm-dialog`'s existing Escape/focus/trap specs pass unchanged. Was
+  **scheduled into v1.4.0** (Product Owner, 2026-09-16) after being carried unshipped
+  through 1.2.0 and 1.3.0, each time determined not to gate
 - **Target release:** **1.4.0** *(was 1.2.0; corrected 2026-09-16 after two releases passed it)*
 - **Owner:** agent (implementer)
 - **Depends on:** nothing

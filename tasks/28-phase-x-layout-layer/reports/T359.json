@@ -1,0 +1,132 @@
+{
+  "task": "T359",
+  "status": "complete",
+  "summary": "Audited all seven app-modal consumers (table in acceptance[0].evidence; login first). Result: confirm-dialog and notification-dialog fully compensate with their own Escape + focus-on-open + manual trap (both spec'd); profile-modal supplies Escape only; login, guest-create-modal, guest-profile-modal and manage-rsvp-modal inherit app-modal's silence entirely. Fix landed once in app-modal: Escape on the backdrop element (gated on dismissable, stopPropagation -- Phase M decision 5 scoping), focus-on-open onto the tabindex=\"-1\" card with restore-on-close, and an edge-wrapping Tab trap over the card's tabbables. Every behaviour defers to the two hand-rolled implementations: focus-on-open skips when focus is already inside the card, the trap skips any Tab a projected handler preventDefault()ed, restore fires only when teardown dropped focus to body, and Escape stops propagating before consumers' host-level handlers can double-emit. confirm-dialog's and notification-dialog's own implementations and specs are untouched and still pass. The 4 ESLint errors in shared/modal are cleared (repo ESLint fully green; CLAUDE.md rule 11's exception note removed in the same commit). 13 new unit specs in modal.spec.ts. Unit 672->685 all green; lint 4->0 errors; initial-bundle gzip transfer 195.76 kB -> 196.14 kB (target 200 kB); e2e: same single pre-existing failure before and after (design-parity-schedule pixel gap), no new failures.",
+  "acceptance": [
+    {
+      "criterion": "Audit all seven consumers: for each, does it supply Escape, focus-on-open, and a focus trap, or does it inherit app-modal's silence? A table in the report. login first -- it is the highest traffic and the only one an unauthenticated guest meets",
+      "met": true,
+      "evidence": "Audited first: login. Table (Escape / focus-on-open / focus trap): [login: NO / NO / NO -- callback-error dialog at login.html:182-191 binds only open/title/(close); grep of login.ts+login.html for keydown|escape|focus: no hits] [confirm-dialog: OWN / OWN / OWN -- host (keydown.escape) confirm-dialog.ts:40; afterRenderEffect focuses confirm + captures restore target :97-103; two-button Tab/Shift+Tab wrap :137-158 plus Enter-auto-repeat guard :128-141; specs 'Escape emits cancel', 'focuses the confirm button on open', 'Tab from confirm wraps to cancel' in confirm-dialog.spec.ts] [notification-dialog: OWN / OWN / OWN -- host escape notification-dialog.ts:56, focus Close on open + restore :126-141, manual wrap handling both the 1-button and 2-button cases :153-172] [profile-modal: OWN Escape only -- profile-modal.ts:108 host binding, :254-258 onEscape (emits close, byte-identical effect to onClose); no focus-on-open, no trap] [guest-profile-modal: NO / NO / NO] [guest-create-modal: NO / NO / NO] [manage-rsvp-modal: NO / NO / NO -- grep of all three guest-manager modal .ts/.html for keydown|escape|focus|tabindex: zero hits outside an unrelated Enter-submit spec]. So before this task, a keyboard/SR guest met a fully silent aria-modal claim on the one unauthenticated surface (login) and on all three couple guest-management modals.",
+      "notes": "The task's premise held exactly: some do, some don't. Two full compensations, one partial (Escape only), four fully silent."
+    },
+    {
+      "criterion": "Then decide where the fix belongs, and say why: in app-modal once (so every consumer inherits it and confirm-dialog's hand-rolled version can go), or per-consumer. Do not assume the shared component is the right home just because it is shared -- confirm-dialog may have had a reason",
+      "met": true,
+      "evidence": "Decision: once in app-modal -- but WITHOUT retiring confirm-dialog's or notification-dialog's hand-rolled versions. Why app-modal: (a) five of seven consumers lack some or all of the contract, and the four silent ones include three large form modals ('lg'/'xl', dozens of focusables) where the hand-rolled pattern the two dialogs use -- explicit per-button (keydown) wiring between a known closed set of two buttons -- cannot scale; a generic edge-wrapping trap over querySelectorAll(FOCUSABLE_SELECTOR) is the only per-consumer alternative, i.e. the same generic code five times. (b) The false aria-modal claim lives in modal.html itself, so the component making the claim should keep it. Why confirm-dialog's version stays (its reasons were real and are preserved): its Escape scoping ('scoped to this component's own host, not window', confirm-dialog.ts:34-41) is matched, not fought -- app-modal's Escape is element-scoped on the backdrop and stops propagation, so nested dialogs and document-level listeners (notification-bell.ts:216, tab-bar.ts:93) behave exactly as before; and its component-specific semantics (confirm-button-first focus, restore-on-cancel-only per Phase M decision 8, held-Enter auto-repeat guard) are things a generic Modal cannot know, so they must stay where they are. Two-traps-fighting was checked concretely: app-modal's trap ignores any Tab already preventDefault()ed (confirm-dialog's wrap wins), its focus-on-open skips when a consumer already placed focus inside the card (parent effects register first; guard makes it order-independent), its restore only fires when focus fell to document.body (never when ConfirmDialog restored to its trigger or a host placed focus after confirm), and its Escape stopPropagation prevents the double cancel-emission that naive stacking would cause. Proof: confirm-dialog.spec.ts and notification-dialog.spec.ts pass unchanged (685/685), including 'focuses the confirm button on open', 'Tab from confirm wraps to cancel', 'Escape emits cancel' (exactly once), and modal.spec.ts adds 'respects a Tab keydown a projected handler already prevented' and 'does not fight a host that already moved focus during close'."
+    },
+    {
+      "criterion": "The four ESLint errors are cleared as part of whatever fix lands, not baselined",
+      "met": true,
+      "evidence": "pnpm lint before: 4 errors, all in src/app/shared/modal/ (modal.html 2:3 click-events-have-key-events + interactive-supports-focus on the backdrop, 3:5 click-events-have-key-events on the card, modal.ts:34 no-output-native on `close`). After: 'ESLint (ng lint) passed (exit 0)' -- the repo's ESLint is now fully clean, and CLAUDE.md rule 11's 'known exception' note was removed in the same commit. How each cleared: the backdrop's click-to-dismiss gained its real keyboard equivalent, (keydown.escape)=\"onEscape($event)\" on the same element, plus tabindex=\"-1\" (the two rules check for a keydown* output and a tabindex attribute -- verified in @angular-eslint 22.1.0 rule sources); the card's propagation-fencing (click) is now accompanied by (keydown)=\"onCardKeydown($event)\" (the focus trap) and the card carries tabindex=\"-1\" as the focus-on-open target -- i.e. all three template errors are cleared by the actual a11y feature, not by suppression. no-output-native on `close` is cleared via the repo's established reasoned-disable pattern for this exact situation: notification-dialog.ts:66-69 and profile-modal.ts's close output both already carry '// reason: ... no native close event to shadow' disables that cite Modal's `close` as their precedent; renaming the output would churn all seven consumers' templates for zero accessibility gain.",
+      "notes": "Not baselined anywhere: no eslint config change, no baseline file touched; the single inline disable carries the repo-mandated // reason: line."
+    },
+    {
+      "criterion": "Do not widen this into a general a11y sweep. Seven modal surfaces, three questions each. Anything else found gets reported, not fixed",
+      "met": true,
+      "evidence": "git diff --stat: the only application-code files touched are src/app/shared/modal/modal.ts, modal.html and the new modal.spec.ts. No consumer file was edited; config-manager's local modal (T354's question) untouched; no other screen touched. Findings outside scope reported, not fixed: (1) Escape now dismisses unsaved-edit form modals silently -- see risks[0]; (2) the three consumer-side host Escape handlers are now unreachable for keypresses originating inside the card -- see risks[1]; (3) whether confirm-dialog/notification-dialog should eventually shed their now-redundant wrap code -- see decisions_needed[0]."
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck (tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit) clean before and after."
+    },
+    "lint": {
+      "errors_before": 4,
+      "errors_after": 0,
+      "new_errors": [],
+      "detail": "Before (measured this session): modal.html 2:3 click-events-have-key-events, 2:3 interactive-supports-focus, 3:5 click-events-have-key-events; modal.ts 34:12 no-output-native. After: ESLint exit 0, stylelint no new violations (550 pre-existing baselined, untouched), ds fidelity 31/31 clean."
+    },
+    "test": {
+      "before": {
+        "total": 672,
+        "failing": 0
+      },
+      "after": {
+        "total": 685,
+        "failing": 0
+      },
+      "new_failures": [],
+      "detail": "13 new specs in src/app/shared/modal/modal.spec.ts (T359 contract: Escape once/gated/contained, focus-on-open + deference, edge-wrapping trap + deference, restore + deference, backdrop-vs-card click). All 53 spec files green."
+    },
+    "build": {
+      "result": "pass",
+      "global_stylesheet_bytes_before": 2677,
+      "global_stylesheet_bytes_after": 2677,
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 810.24 kB vs 500.00 kB (809.24 kB before this task -- the +1.00 kB raw is this task's modal.ts/modal.html growth; warning itself pre-existing)",
+        "src/app/screens/seating-plan/seating-plan.scss 9.58 kB vs 8.00 kB (pre-existing, unchanged)",
+        "src/app/screens/milestones/milestones.scss 11.55 kB vs 8.00 kB (pre-existing, unchanged)",
+        "src/app/screens/guest-manager/guest-manager.scss 11.96 kB vs 8.00 kB (pre-existing, unchanged)",
+        "src/app/screens/config-manager/config-manager.scss 16.85 kB vs 8.00 kB (pre-existing, T354 territory, unchanged)"
+      ],
+      "detail": "Initial-total estimated gzip transfer, measured from ng build output this session: 195.76 kB before -> 196.14 kB after (+0.38 kB), against the 200 kB target the prompt names (its 195.62 kB figure predates a1fedee-era drift; both baselines self-measured). styles-BX7ALXWU.css byte-identical before/after."
+    },
+    "e2e": {
+      "before": {
+        "passed": 474,
+        "failed": 1,
+        "skipped": 30
+      },
+      "after": {
+        "passed": 474,
+        "failed": 1,
+        "skipped": 30
+      },
+      "result": "pass",
+      "new_failures": [],
+      "detail": "One failure in each full run, and it is a different spec each time -- the worker-contention flake class prior reports (T349/T357/T358) already name, not a modal regression. Before: [Desktop Chrome] design-parity-schedule.spec.ts:229 (schedule header-to-title pixel gap). After: [Pixel 7 (Chrome Android)] milestones.spec.ts:229 (centerTodayMarker scroll centering). Neither screen renders app-modal; neither file is in this diff. Both specs re-run in isolation after the change: 55/55 passed, including both previously-failed cases. No e2e spec drives Escape or the shared dialogs directly (grep of e2e/ for Escape: no hits), so e2e's role here is regression detection on flows that open/close modals: none regressed."
+    }
+  },
+  "files": {
+    "added": [
+      "src/app/shared/modal/modal.spec.ts"
+    ],
+    "modified": [
+      "src/app/shared/modal/modal.ts",
+      "src/app/shared/modal/modal.html",
+      "CLAUDE.md",
+      "tasks/28-phase-x-layout-layer/TASKS.md"
+    ],
+    "deleted": [],
+    "reverted": [
+      "src/environments/release.ts"
+    ]
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "CLAUDE.md",
+      "why": "Rule 11 carried 'Known exception: 4 pre-existing lint errors in src/app/shared/modal/'; this task removes those errors, and CLAUDE.md's own header requires updating it in the same commit as the convention change. Only that parenthetical was edited."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "Escape is a new dismissal path on the five consumers that had none (or Escape only): on profile-modal and the three guest-manager form modals it silently discards unsaved edits, exactly as a backdrop click already did before this task -- same gate (dismissable), same (close) path, so it is an addition consistent with existing semantics, not a new class of data loss. But it is a key a keyboard user can hit by reflex mid-edit. If the Product Owner wants confirm-before-discard on dirty forms, that is a per-consumer feature, deliberately not built here (no-widening rule).",
+      "surfaces_at": "Any guest editing their profile or the couple editing a guest/RSVP who presses Escape with unsaved changes -- from this change's deploy onward."
+    },
+    {
+      "risk": "confirm-dialog's, notification-dialog's and profile-modal's host-level (keydown.escape) handlers are now unreachable in a real browser for keypresses originating inside the card: app-modal's backdrop-level handler fires first (it is deeper in the bubble path) and stops propagation, emitting the same single close/cancel through the consumer's existing (close) binding (verified equivalent: profile-modal.ts:254-258's onEscape body is close.emit(), the same as onClose; confirm-dialog routes to onCancel -> emitCancel either way). The handlers were kept deliberately -- their specs dispatch Escape on the host element (a path that bypasses the backdrop) and they are harmless, spec'd fallbacks -- but a future reader may mistake them for the primary path.",
+      "surfaces_at": "The next task refactoring any of the three dialogs' keyboard handling; see decisions_needed[0]."
+    },
+    {
+      "risk": "The focus trap enumerates tabbables with a static selector (a[href], enabled form controls, positive-or-zero tabindex) and does not filter CSS-hidden elements -- fine for the seven current consumers (none hides focusable content with CSS while open; conditional content is @if-removed, not display:none), but a future consumer that hides projected focusables with CSS could see the trap wrap to an invisible element.",
+      "surfaces_at": "A future modal consumer using CSS visibility to hide projected interactive content; nothing today."
+    }
+  ],
+  "commits": [
+    "84090e2779473b5d30db48b39bb73ef2a388582b"
+  ],
+  "decisions_needed": [
+    {
+      "question": "Now that app-modal itself traps focus, handles Escape and manages focus, should confirm-dialog's and notification-dialog's hand-rolled Escape/trap/focus-on-open code eventually be removed in their favour of the inherited behaviour?",
+      "options": [
+        "Keep both (as shipped): the consumers' versions carry semantics the generic Modal cannot know (confirm-button-first focus, restore-on-cancel-only per Phase M decision 8, the held-Enter auto-repeat guard, Close-first focus for the notification dialog) and both are spec'd; app-modal acts as a deferential safety net. Cost: two redundant wrap implementations that a reader must understand as layered, ~40 lines of now-shadowed code.",
+        "Strip the consumers down to what is genuinely theirs (focus target choice, restore-on-cancel-only, Enter-repeat guard) and delete their Tab-wrap and Escape handlers, relying on app-modal: less layering, but it deletes working spec'd behaviour on two live production dialogs for a purely internal cleanup -- the exact class of change the task's stop-rule forbids doing unilaterally, and it would require app-modal to grow an input for 'which element takes focus on open' first."
+      ],
+      "recommendation": "Keep both for now (option 1) -- the redundancy is provably non-conflicting (685/685 specs green including both dialogs' own) and removal is a cleanup with regression risk on guest-facing screens, not a defect. Revisit only when a task next touches either dialog, with the focus-target input added to app-modal first.",
+      "blocking": false,
+      "needed_by": "The next task that touches confirm-dialog or notification-dialog internals, or T354's config-manager reuse decision (whichever comes first)."
+    }
+  ]
+}
