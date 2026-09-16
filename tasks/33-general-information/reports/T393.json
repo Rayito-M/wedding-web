@@ -1,0 +1,116 @@
+{
+  "task": "T393",
+  "status": "complete",
+  "summary": "Verified first: no RSVP screen read rsvpDeadline — only good-to-know's day-line, the Settings editor and spec fixtures did — so the six strings were right by coincidence alone. They now interpolate {{deadline}}, computed by the three consuming screens (rsvp-create, rsvp-edit, delegate-edit) from the PUBLIC config the app already loads at the root — no fetch added — via a new rsvpDeadlineLabel(deadline, lang) helper, reactive to both a config change and a runtime locale switch. Formatter: Intl.DateTimeFormat (day numeric + month long), safe in all three locales because every hard-rule-4 target ships full en/es/fr CLDR data and it needs none of Angular's registerLocaleData machinery (the app registers no locale data, so DatePipe would throw for es/fr). en maps to en-GB ('1 May', the day-first form the shipped copy used), es-ES gives '1 de mayo', fr-FR gives '1 mai' with one documented exception — French writes the first of a month as an ordinal and Intl has no ordinal-day support, so day '1' renders '1er', exactly the shipped form. Calendar date taken in Europe/Madrid (ADR-0029 §4.2). Asserted per T391's method: live (the create screen must render the FIXTURE's date, '1 September' — a date no locale file ever carried) and off disk (six keys x3 locales carry {{deadline}} and no month name). Proven to bite: fixture set to 2026-10-15, live test fails on the rendered '15 October'; restored, green. Scope fence held: six keys, nothing else. Gates: unit 654 → 662, e2e 460 → 470, 440/0/30.",
+  "acceptance": [
+    {
+      "criterion": "The six strings take the deadline as an interpolated parameter from the wedding configuration, formatted for the active locale — not typed into a locale file. The RSVP screens read rsvpDeadline from the config they already load; do not add a fetch.",
+      "met": true,
+      "evidence": "The task's premise was verified before any change: grep over src/** shows rsvpDeadline read only by shared/good-to-know (the day-line, ADR-0046 §4), config-manager (the Settings editor) and spec fixtures — no RSVP screen. The six keys (rsvp.create.attending.subtitle, rsvp.edit.seatsHeld.none/.singular/.plural, rsvp.edit.declinedSub, rsvp.hub.detail.declinedSub) now carry {{deadline}} in es/en/fr — 6 replacements per locale file, nothing else touched (git diff: 12 changed lines per file, all six keys). The three consuming screens compute it as `rsvpDeadlineLabel(configurationService.weddingConfigPublic()?.rsvpDeadline ?? '', translateLanguage.currentLang())` — ConfigurationService is the root singleton whose constructor already loads GET /v1/config/public for every visitor (the same signal app.html gates route content on), so injecting it adds zero HTTP calls; rsvpDeadline is a required field of WeddingConfigPublicResponseDto.",
+      "notes": "The computed reads two signals, so the rendered date follows both a config refresh and a runtime language switch — the delegate-edit and rsvp-create specs assert the config half by writing a new deadline into the stubbed signal and watching the rendered copy change without recreating the component."
+    },
+    {
+      "criterion": "Locale-correct formatting, and nothing else locale-dependent. Say in the report which formatter you used and why it is safe in all three locales.",
+      "met": true,
+      "evidence": "Formatter: Intl.DateTimeFormat with { day: 'numeric', month: 'long', timeZone: 'Europe/Madrid' }, locale-mapped en→en-GB, es→es-ES, fr→fr-FR (src/app/core/helper/rsvp-deadline-label.ts). Why it is safe in all three: (a) every browser hard rule 4 names — iOS Safari and Chrome Android current — ships complete CLDR month/day data for en, es and fr as part of ECMA-402, so there is nothing to load or polyfill; (b) it bypasses Angular's DatePipe deliberately, because DatePipe requires registerLocaleData for es/fr and this app registers none — DatePipe would throw for two of the three locales; (c) the mapped locales reproduce the shipped forms exactly: en-GB '1 May' (day-first, matching the copy and the British guests; bare 'en' resolves en-US and flips to 'May 1'), es-ES '1 de mayo', fr-FR '1 mai'. One documented exception: French typography writes the FIRST of a month as an ordinal ('1er mai') and Intl has no ordinal-day support, so a day-part of '1' is mapped to '1er' via formatToParts — only ever the first, since other French dates carry no ordinal ('15 mai', asserted). The calendar date is taken in Europe/Madrid, the timezone every other date judgement in the app uses (hub ADR-0029 §4.2, todayInMadrid), so the stored UTC-midnight deadline cannot render as the previous day for a guest abroad — unit-tested at the boundary (2027-04-30T23:00Z → '1 May'). An unparseable value returns the raw string rather than leaving a hole in the sentence.",
+      "notes": "Nothing else became locale-dependent: the change interpolates one date into six existing sentences; identifiers remain untouched (hard rule 19a governs a different class and no identifier is involved here)."
+    },
+    {
+      "criterion": "Assert it, per T391's method: a test that the rendered string carries the configured deadline and not a hardcoded month. Prove it bites by changing the fixture's deadline and watching it fail.",
+      "met": true,
+      "evidence": "e2e/rsvp-deadline.spec.ts, two halves per T391's live+off-disk pattern. LIVE: sign in as a guest with a pending RSVP (the same manual flow design-parity-rsvp.spec.ts uses — the post-login redirect lands on /rsvp), assert the create-step subtitle contains 'Please reply by 1 September.' — the interpolation of the fixture's CONFIG_PUBLIC.rsvpDeadline (2026-09-01), a date no locale file ever carried, so it can only have come from the configuration — and does NOT contain 'May'. OFF DISK: all six keys in all three locales must contain {{deadline}} and no month name, with an accent-aware matcher (\\b cannot bound 'août'), so the date cannot be typed back into a locale file without failing the suite. PROVEN TO BITE exactly as the bullet specifies: api-mocks.ts rsvpDeadline changed to 2026-10-15T00:00:00.000Z → the live test fails ('Please reply by 1 September.' not found; the screen renders '15 October'); fixture restored → 2/2 green. Unit layer additionally asserts the rendered copy in all three screens and that a changed configured value changes it (rsvp-edit, rsvp-create, delegate-edit specs).",
+      "notes": "The three screen specs' local copy fixtures were updated to the shipped {{deadline}} shape — those fixtures exist precisely to mirror the shipped keys' structure, and the pre-existing assertions ('1 seat held.') now assert the full deadline-bearing sentences against a stubbed public config."
+    },
+    {
+      "criterion": "Scope fence: fix these six and nothing else. The rest of T391's list is T394's to triage.",
+      "met": true,
+      "evidence": "git diff of the two commits touches: the new helper + its spec + the helper barrel, the three consuming screens (component + template + spec each), the three locale files (exactly the six keys each, 6 replacements per file, verified by count and by re-parsing), and the new e2e spec. delegation.field.emptyGuest — T391's other apparently-false string — and the remaining 33 unasserted entries are untouched; they are triaged (not fixed) by T394 in this same session.",
+      "notes": ""
+    }
+  ],
+  "deviations": [],
+  "checks": {
+    "typecheck": {
+      "result": "pass",
+      "detail": "pnpm typecheck green before and after. The e2e spec is type-stripped, not typechecked (T389's standing gap); it imports nothing from src."
+    },
+    "lint": {
+      "errors_before": 4,
+      "errors_after": 4,
+      "new_errors": [],
+      "detail": "pnpm lint: 4 ESLint errors before and after, all in src/app/shared/modal/ — the documented hard-rule-11 exception. stylelint baselined (550), ds fidelity 31/31 clean."
+    },
+    "test": {
+      "before": { "total": 654, "failing": 0 },
+      "after": { "total": 662, "failing": 0 },
+      "new_failures": [],
+      "detail": "654 (measured at the end of T395, this session) → 662: +5 rsvpDeadlineLabel specs (three locales at 2027-05-01; a different date follows the config; French ordinal only on the 1st; the Europe/Madrid boundary; unparseable fallback) and +3 screen-level interpolation tests. Two pre-existing rsvp-edit assertions were extended to the full deadline-bearing sentences, both passing."
+    },
+    "build": {
+      "result": "pass",
+      "detail": "pnpm build green. The four pre-existing SCSS budget warnings are unchanged. A FIFTH warning — 'bundle initial exceeded maximum budget: 808.59 kB vs 500 kB' — looked new, so it was measured rather than assumed: a clean worktree at pre-session HEAD (0586ff1) builds to 803.05 kB raw / 194.45 kB transfer with the SAME warning, so it pre-dates this session; the session's two tasks (T395 + T393) added 5.54 kB raw / 1.17 kB transfer. Neither T389's nor T392's report mentions it. Filed under risks[]: the transfer size (195.62 kB) is 4.4 kB under the hub's < 200 kB gzipped initial-JS budget.",
+      "budget_warnings": [
+        "bundle initial exceeded maximum budget: 808.59 kB vs 500 kB raw (pre-existing at 803.05 kB before this session; transfer 195.62 kB vs the hub's 200 kB gzip target)",
+        "src/app/screens/config-manager/config-manager.scss 16.85 kB (8 kB warn budget)",
+        "src/app/screens/guest-manager/guest-manager.scss 11.96 kB",
+        "src/app/screens/milestones/milestones.scss 11.55 kB",
+        "src/app/screens/seating-plan/seating-plan.scss 9.58 kB"
+      ]
+    },
+    "e2e": {
+      "before": { "total": 460, "passed": 430, "failed": 0, "skipped": 30 },
+      "after": { "total": 470, "passed": 440, "failed": 0, "skipped": 30 },
+      "result": "pass",
+      "new_failures": [],
+      "detail": "Before: measured this session at the end of T395 (full plain run, 460/430/0/30). After: one full plain pnpm test:e2e, 470 tests, 440 passed / 0 failed / 30 skipped, 3.9 m, no --retries. The +10 are rsvp-deadline.spec.ts's two tests x5 projects."
+    }
+  },
+  "files": {
+    "added": [
+      "src/app/core/helper/rsvp-deadline-label.ts",
+      "src/app/core/helper/rsvp-deadline-label.spec.ts",
+      "e2e/rsvp-deadline.spec.ts"
+    ],
+    "modified": [
+      "src/app/core/helper/index.ts",
+      "src/app/screens/rsvp-create/rsvp-create.ts",
+      "src/app/screens/rsvp-create/rsvp-create.html",
+      "src/app/screens/rsvp-create/rsvp-create.spec.ts",
+      "src/app/screens/rsvp-edit/rsvp-edit.ts",
+      "src/app/screens/rsvp-edit/rsvp-edit.html",
+      "src/app/screens/rsvp-edit/rsvp-edit.spec.ts",
+      "src/app/screens/rsvp/delegate-edit/delegate-edit.ts",
+      "src/app/screens/rsvp/delegate-edit/delegate-edit.html",
+      "src/app/screens/rsvp/delegate-edit/delegate-edit.spec.ts",
+      "public/i18n/en.json",
+      "public/i18n/es.json",
+      "public/i18n/fr.json",
+      "tasks/33-general-information/TASKS.md",
+      "tasks/README.md"
+    ],
+    "deleted": [],
+    "reverted": []
+  },
+  "out_of_scope_touched": [
+    {
+      "path": "src/environments/release.ts",
+      "why": "Regenerated by this task's pnpm build runs (twice, including the baseline-measurement build) and restored to HEAD's 'dev' placeholder each time, per the session prompt's authorization. Net diff against HEAD: none."
+    }
+  ],
+  "risks": [
+    {
+      "risk": "The initial bundle's transfer size is 195.62 kB against the hub's < 200 kB gzipped budget — 4.4 kB of headroom — and the raw-byte warning (808.59 kB vs 500 kB) has been firing unremarked for some time (already 803.05 kB before this session; the consent-service comment records 494.84 kB in 2026-08). Every task that touches the root bundle eats the margin invisibly because the raw-byte warning has become noise nobody reads.",
+      "surfaces_at": "The next few kB of root-bundle growth crosses the hub budget silently; angular.json's raw-byte thresholds measure a different thing than the hub's gzip target (a mismatch the consent-service comment already flagged in T252). Worth its own small task: align the budget config, or at least reset the raw threshold so the warning means something again."
+    },
+    {
+      "risk": "The French '1er' ordinal is a hand-mapped exception on top of Intl (formatToParts day '1' → '1er'). If the deadline is ever displayed elsewhere with a bare Intl call, the two renderings diverge on the one date French treats specially.",
+      "surfaces_at": "Any future surface that formats rsvpDeadline as prose — it should call rsvpDeadlineLabel, which the helper's doc block says."
+    },
+    {
+      "risk": "good-to-know's day-line still renders its own deadline-adjacent copy through a separate path (ADR-0046 §4 variants); this task did not touch it, per the scope fence. If its locale strings ever carry a literal date the same defect returns one surface over — the off-disk e2e guard covers only the six RSVP keys.",
+      "surfaces_at": "T394's triage covers the broader class; a generalized 'no month name in any locale value that also has a configurable-date sibling' rule is one of its candidate proposals."
+    }
+  ],
+  "decisions_needed": [],
+  "commits": ["a82c29f", "e749e66"]
+}

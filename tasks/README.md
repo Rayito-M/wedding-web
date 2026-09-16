@@ -272,7 +272,7 @@ never by its letter alone.
 | **T389** | Third-party CDN fetches, not the DS-kit server, were failing the parity specs | done — 8 clean runs; the filed diagnosis was wrong | `33-general-information` |
 | **T391** | The copy that carries a factual claim should be asserted, not just written | done — **it is a habit: 43 claims, 3 asserted** (see T393) | `33-general-information` |
 | **T392** | Settings → Basics must write `couple.*.firstName`, not only the deprecated pair | done — unit 644 → 647, e2e 395/0/30 unchanged; post-deploy `check-config-row.sh` still owed | `33-general-information` |
-| **T393** | Six strings hardcode the RSVP deadline the couple can change | todo — **true only by coincidence** | `33-general-information` |
+| **T393** | Six strings hardcode the RSVP deadline the couple can change | done — interpolated from config, proven to bite | `33-general-information` |
 | **T394** | Triage T391's list: 40 unasserted behavioural claims, 7 apparently false | todo — triage, not a fix | `33-general-information` |
 | **T395** | The app paints raw translation keys on its first frame, on every route | done — inlined first-frame set, never a raw key | `33-general-information` |
 | **T390** | Settings says contact cards self-update; the notice says they don't | done (`5b75068`) | `33-general-information` |

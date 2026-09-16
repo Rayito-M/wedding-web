@@ -455,7 +455,22 @@
   T251 + hub ADR-0047 Amendment 4 (what is deferred); `src/app/screens/config-manager/`
 
 ### T393 — Six strings hardcode the RSVP deadline the couple can change
-- **Status:** todo — **the highest-consequence item on T391's list, and true only by coincidence**
+- **Status:** done (2026-09-16) — the premise verified first (no RSVP screen read `rsvpDeadline`;
+  only good-to-know's day-line, the Settings editor and spec fixtures did), then the six keys made
+  to interpolate `{{deadline}}` from the **public config the app already loads at the root** — no
+  fetch added. Formatter: `Intl.DateTimeFormat` (`rsvpDeadlineLabel`), en→`en-GB` "1 May",
+  es-ES "1 de mayo", fr-FR "1 mai" **plus the one documented exception** — French writes the first
+  of a month as an ordinal and Intl has no ordinal-day support, so day "1" renders "1er"; calendar
+  date taken in `Europe/Madrid` (ADR-0029 §4.2), boundary unit-tested. Safe in all three locales
+  because every hard-rule-4 target ships full CLDR for en/es/fr and no `registerLocaleData` is
+  needed (the app registers none — `DatePipe` would throw for es/fr). Asserted per T391's method,
+  live + off disk, and **proven to bite**: fixture deadline set to 2026-10-15, the live test fails
+  on the rendered "15 October"; restored, green. Scope fence held: six keys, nothing else. One
+  finding the task could not have known: the **initial-bundle budget warning (808.59 kB vs 500 kB)
+  pre-dates this session** (803.05 kB at `0586ff1`, measured in a clean worktree) and the transfer
+  size is **195.62 kB against the hub's 200 kB gzip target** — filed in the report's `risks[]`.
+  Gates green: unit 654 → 662, e2e 460 → **470, 440/0/30**. See `reports/T393.json` (`a82c29f`,
+  `e749e66`).
 - **Owner:** agent (implementer)
 - **Depends on:** T391 (which enumerated it)
 - **ADR:** hub **ADR-0024** (`rsvpDeadline` on the CONFIG row); ADR-0009 (UI strings vs stored
