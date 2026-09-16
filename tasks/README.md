@@ -240,6 +240,7 @@ never by its letter alone.
 | **T356** | The auto-load sentinel stops firing before the layout settles | done | `28-phase-x-layout-layer` |
 | **T357** | The `.scrolled` guard spec loses a race under parallel load | done | `28-phase-x-layout-layer` |
 | **T358** | `.screen-scroll` becomes a bounded clipping box, and stops being a second scroller | done | `28-phase-x-layout-layer` |
+| **T359** | `app-modal` claims `aria-modal` and traps nothing: audit the seven surfaces | todo — **scheduled into v1.4.0** | `28-phase-x-layout-layer` |
 | **T360** | Two RSVP-delegation tests have been red since the feature shipped | done | `28-phase-x-layout-layer` |
 | **T361** | Port `PlanRail` (the Manage desktop rail) | done | `30-phase-n-navigation-five-cap` |
 | **T362** | Route data carries the five-cap surfaces and the Manage group | done | `30-phase-n-navigation-five-cap` |
