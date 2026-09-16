@@ -216,4 +216,60 @@ test.describe('user-facing copy that makes a factual claim (T391)', () => {
       ).not.toMatch(claim.forbiddenSelfUpdate);
     }
   });
+
+  test('the profile modal and the privacy notice tell the guest the same visibility facts (T397 — the third instance of the T390 pattern)', () => {
+    // `profileModal.visibility.suffix` shipped saying email and phone are
+    // "shared with the couple only" in the SAME release T385 made the notice
+    // say the opposite — ADR-0047 §3 shows a listed Good-to-know contact's
+    // name, email and phone to every signed-in guest. Same data, same
+    // reader, two contradicting strings: exactly the gap the agreement test
+    // above closes for the couple/guest pair, so this is that test for the
+    // modal/notice pair. Both halves of the truth, pinned on both surfaces,
+    // per locale.
+    const VISIBILITY = {
+      es: {
+        modalCoupleAlone: /solo los ven los novios/i,
+        noticeCoupleAlone: /visible únicamente para los novios/i,
+        modalListedShown: /muestra tu nombre, tu correo y tu teléfono/i,
+        noticeListedShown: /se muestran su nombre, su correo electrónico y su número de teléfono/i,
+      },
+      en: {
+        modalCoupleAlone: /visible to the couple alone/i,
+        noticeCoupleAlone: /stays visible to the couple alone/i,
+        modalListedShown: /shows your name, email and phone to every signed-in guest/i,
+        noticeListedShown: /shows their name, their email address and their phone number/i,
+      },
+      fr: {
+        modalCoupleAlone: /visibles que des mariés/i,
+        noticeCoupleAlone: /visible des seuls mariés/i,
+        modalListedShown: /affiche votre nom, votre e-mail et votre téléphone/i,
+        noticeListedShown: /affiche son nom, son adresse e-mail et son numéro de téléphone/i,
+      },
+    } as const;
+
+    function modalSuffix(name: string): string {
+      const file = locale(name) as {
+        profileModal: { visibility: { suffix: string } };
+      };
+      return file.profileModal.visibility.suffix;
+    }
+
+    for (const name of LOCALES) {
+      const modal = modalSuffix(name);
+      const notice = guestNotice(name);
+      const claim = VISIBILITY[name];
+
+      expect(modal, `${name}: modal — on the profile, couple alone`).toMatch(claim.modalCoupleAlone);
+      expect(notice, `${name}: notice — on the profile, couple alone`).toMatch(claim.noticeCoupleAlone);
+
+      expect(
+        modal,
+        `${name}: modal — a Good-to-know listing shows name, email and phone to signed-in guests`,
+      ).toMatch(claim.modalListedShown);
+      expect(
+        notice,
+        `${name}: notice — a Good-to-know listing shows name, email and phone to signed-in guests`,
+      ).toMatch(claim.noticeListedShown);
+    }
+  });
 });

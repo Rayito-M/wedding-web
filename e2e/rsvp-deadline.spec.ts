@@ -36,6 +36,12 @@ const DEADLINE_KEYS = [
   'rsvp.edit.seatsHeld.plural',
   'rsvp.edit.declinedSub',
   'rsvp.hub.detail.declinedSub',
+  // T397: two more joined the pattern — both said "any time" while the API
+  // 410s RSVP writes after the configured deadline (rsvp.service.ts,
+  // assertDeadlineOpen). Their absolutes are pinned in copy-absolutes.spec.ts;
+  // here they take the same no-month, always-interpolated contract as the six.
+  'rsvp.create.attending.hint',
+  'rsvp.create.confirm.yesMessage',
 ];
 
 const MONTHS: Record<(typeof LOCALES)[number], string[]> = {
@@ -89,6 +95,14 @@ test('the RSVP screen renders the deadline the fixture CONFIGURES, not a hardcod
   await expect(subtitle).toContainText('Please reply by 1 September.');
   // And the coincidence the old copy leaned on is gone for good:
   await expect(subtitle).not.toContainText('May');
+
+  // T397: the attending hint interpolates the same value — it used to
+  // promise "any time", which the API has answered with 410 Gone since the
+  // deadline shipped. It renders with the party toggles, so pick "With joy"
+  // first (nothing is submitted by that).
+  await page.locator('button[app-choice-card]').first().click();
+  const hint = page.locator('app-rsvp-create .hint').first();
+  await expect(hint).toContainText('you can edit all of it until 1 September.');
 });
 
 test('the six deadline keys interpolate {{deadline}} and carry no month, in any locale (T393)', () => {
