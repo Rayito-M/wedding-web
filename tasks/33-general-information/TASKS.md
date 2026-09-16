@@ -578,3 +578,60 @@
   - Measure first paint before and after and report both. If the chosen strategy costs first-paint
     time, say how much — LCP has a 2.5 s budget (`CLAUDE.md`).
 - **Refs:** T389's report (`decisions_needed[]`, with the measurements and the harness); hub ADR-0009
+
+### T396 — Cluster A: server-owned values transcribed into locale files
+- **Status:** todo — **one of the two is user-facing at sign-in, today**
+- **Owner:** agent (implementer)
+- **Depends on:** T394 (which found them and named the cluster)
+- **ADR:** hub **ADR-0009** (UI strings); ADR-0013 (the OTP flow)
+- **Why:** T394's first cluster — **a value the server owns, retyped into copy, where nothing
+  re-checks it.** T393 fixed six instances of it; these are the rest.
+  - **`login.code.sub` says the code "expires in 10 minutes". `CODE_TTL_MINUTES = 5`**
+    (`wedding-api/src/modules/auth/sms-verification.service.ts:13`), and the SMS is sent
+    `ttlMinutes: CODE_TTL_MINUTES` — so **the screen and the text message in the guest's hand give
+    different numbers, at the same moment, during sign-in.** Of everything T394 found, this is the
+    one a guest hits first and trusts least.
+  - **The month-name sweep** T394 proposed: any other place a month, duration or count that the
+    server owns is spelled out in a locale file.
+- **Acceptance:**
+  - `login.code.sub` states the real TTL, and takes it from a single source rather than a second
+    literal. If the value cannot reach the client today, interpolate a constant defined **once** and
+    say in the report where the client's copy of it lives and what keeps it honest.
+  - Run the month-name/duration sweep across all three locales; fix what is in this cluster and
+    **report anything that belongs to cluster B without touching it** — that is T397's.
+  - **A drift guard, per T391's method.** For the TTL specifically: a test that fails if the rendered
+    string and the API's value disagree. If the client cannot see the API value, say so plainly —
+    an honest "this cannot be checked from here" is worth more than a test that re-asserts the
+    literal it is supposed to be guarding.
+- **Refs:** T394's report (the enumeration and the cluster); T393 (six instances of the same shape);
+  `wedding-api/src/modules/auth/sms-verification.service.ts:13`
+
+### T397 — Cluster B: absolutes invalidated by a later visibility widening
+- **Status:** todo — **one of these contradicts the privacy notice the app already ships**
+- **Owner:** agent (implementer)
+- **Depends on:** T394
+- **ADR:** hub **ADR-0047 §3** (the widening that falsified them); ADR-0035 §7/§8; ADR-0039
+- **Why:** T394's second cluster — **copy that said "only" or "everyone" when it was written, and
+  was falsified later by a decision that widened who sees what.** Nothing re-read the copy when the
+  decision landed, which is the same failure that produced T390.
+  - **`profileModal.visibility.suffix` — *"Email and phone are shared with the couple only."*** That
+    is **false** for anyone listed as a Good-to-know contact: ADR-0047 §3 shows their name, email and
+    phone to **every signed-in guest**. The modal now contradicts `privacyPolicy.goodToKnow.body`,
+    which T385 wrote to say exactly the opposite. **This is T390's defect, one screen over**, and it
+    is the reason this task exists rather than sitting in a backlog.
+  - **`people.subtitle`** — "everyone who has signed in", while `GET /v1/profile` returns every
+    provisioned account, signed in or not.
+  - **`delegation.field.emptyGuest`** and **`rsvp.yesMessage`'s "any time"** (the API answers 410
+    after the deadline) — both confirmed by T394.
+- **Acceptance:**
+  - Each of the four states what is true now, in es/en/fr. For the visibility one, **match
+    `privacyPolicy.goodToKnow.body`'s facts** — two strings about the same data, read by the same
+    person, should have no daylight between them (T390's rule).
+  - **The allowlist test T394 proposed:** an inventory of strings containing an absolute — *only*,
+    *everyone*, *never*, *always*, *any time* and their es/fr equivalents — each either asserted or
+    explicitly allowlisted with a reason. **New absolutes then have to be justified rather than
+    merely typed.** That is the cheapest thing anyone proposed that would have caught this whole
+    cluster before a guest did.
+  - Prove the guard bites: restore one of the false strings, watch it fail.
+- **Refs:** T394's report; T390 (the same defect, found the same way); T385 (`privacyPolicy.goodToKnow.body`,
+  the reference for what is true); hub ADR-0047 §3
