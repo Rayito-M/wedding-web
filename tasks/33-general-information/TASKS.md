@@ -453,3 +453,57 @@
   `couple.bride.firstName == brideName`, and that is the invariant this task has to preserve.
 - **Refs:** `wedding-api` T252 (the read side, and the decision this implements); `wedding-api`
   T251 + hub ADR-0047 Amendment 4 (what is deferred); `src/app/screens/config-manager/`
+
+### T393 — Six strings hardcode the RSVP deadline the couple can change
+- **Status:** todo — **the highest-consequence item on T391's list, and true only by coincidence**
+- **Owner:** agent (implementer)
+- **Depends on:** T391 (which enumerated it)
+- **ADR:** hub **ADR-0024** (`rsvpDeadline` on the CONFIG row); ADR-0009 (UI strings vs stored
+  content); `wedding-web` hard rule 19's reasoning, applied to a different field
+- **Why:** six locale keys across es/en/fr say the deadline in words — *"Please reply by 1 May"*,
+  *"Edit anything until 1 May"*, *"You can change your mind until 1 May"* and their `es`/`fr`
+  counterparts. **`rsvpDeadline` is a configurable field the couple edits in Settings → Basics**, and
+  the only things that read it are `shared/good-to-know`'s day-line and two spec fixtures. **No RSVP
+  screen reads it at all.**
+  So the copy is correct **today by coincidence** — the configured deadline happens to be
+  `2027-05-01` — and becomes a lie the moment the couple edits it, on the one screen where the date
+  is the whole point. Nothing would detect it: no test asserts these strings, and changing a config
+  value cannot fail a build.
+  This is the same defect as `configManager.goodToKnow.contact.hint` (T390), one field over, and it
+  was found by T391's sweep asking whether that was an accident or a habit. It is a habit.
+- **Acceptance:**
+  - The six strings take the deadline as an **interpolated parameter** from the wedding
+    configuration, formatted for the active locale — not typed into a locale file. The RSVP screens
+    read `rsvpDeadline` from the config they already load; do not add a fetch for it.
+  - **Locale-correct formatting, and nothing else locale-dependent.** A date is prose-adjacent and
+    *is* localized (`1 May` / `1 de mayo` / `1er mai`), unlike the identifiers hard rule 19a governs.
+    Say in the report which formatter you used and why it is safe in all three locales.
+  - **Assert it**, per T391's method: a test that the rendered string carries the configured deadline
+    and **not** a hardcoded month. Prove it bites by changing the fixture's deadline and watching it
+    fail.
+  - **Scope fence:** fix these six and nothing else. T391's report enumerates 40 unasserted strings
+    and 7 that look false; the rest are **T394**'s to triage, and doing them here would produce a
+    diff nobody can review.
+- **Refs:** T391's report (the full enumeration); T390 (the same defect one field over); hub ADR-0024
+
+### T394 — Triage T391's list: 40 unasserted behavioural claims, 7 of them apparently false
+- **Status:** todo — **triage, not a fix.** Its output is a decision about scope, not a diff
+- **Owner:** agent (implementer)
+- **Depends on:** T391 (done), T393 (which takes the worst item out of the list first)
+- **ADR:** none yet — the point of this task is to find out whether one is owed
+- **Why:** T391 answered the question it was given. **43 user-facing strings carry a claim about how
+  the system behaves; 3 are asserted; all 3 got there because a defect shipped first.** Seven look
+  false today. That is a habit, not an accident, and the response to a habit is not forty patches.
+- **Acceptance:**
+  - Work T391's enumeration and sort each entry into: **false now** (a defect — file it), **true but
+    unasserted** (debt — is it worth a test?), or **not actually a behavioural claim** (drop it, and
+    say why the sweep caught it).
+  - **Report the shape, not just the list.** If the false ones cluster — configurable values typed
+    into locale files, capabilities described that were later cut, promises about propagation — say
+    so. A cluster is an ADR or a lint rule; scattered one-offs are just tasks.
+  - **Propose the cheapest thing that would have caught the whole class**, and be honest if the
+    answer is "nothing general — they need reading". A convention nobody can check is worth less
+    than an accurate list.
+  - **Fix nothing.** File what needs filing.
+- **Refs:** T391's report; T390, T393 (two instances already fixed); T385/T381 (the assertion pattern
+  that works)
