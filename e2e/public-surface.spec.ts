@@ -386,6 +386,38 @@ test.describe('the public surface carries no Good to know content (T378/T385, hu
     expect(notice, 'the notice must not claim the site enforces the authorization').toMatch(
       /does not ask for that agreement, record it or check it/i,
     );
+
+    // Delegation (T380, hub ADR-0039 §4/§6/§8; `SPEC.md` Non-functional).
+    // A pre-existing gap: the notice had said nothing about delegation since
+    // the day the feature shipped, on the one category of data the SPEC
+    // itself calls health-adjacent. Asserted here for MEANING, not phrasing —
+    // the four facts a guest needs, each of which is a claim about how the
+    // system behaves and not a turn of phrase.
+    expect(notice, 'the notice must have a delegation section').toContain(
+      'When someone else answers for you',
+    );
+    expect(notice, 'who the couple may name — ADR-0039 §4-§5, parent or sibling only').toMatch(
+      /your mother, your father, your brother or your sister/i,
+    );
+    expect(notice, 'the delegate reads the WHOLE reply, not their own part of it').toMatch(
+      /sees the whole reply/i,
+    );
+    expect(notice, 'the health-adjacent data must be named, not summarised away').toMatch(
+      /children you have named with their ages, and the dietary preferences and allergies/i,
+    );
+    expect(notice, 'the subject can always see who holds it — ADR-0039 §6').toMatch(
+      /shown on your own profile, read-only/i,
+    );
+    // The two capabilities the system does NOT have. T378's rule, and the
+    // trap T381 fell into pointing the other way: a notice describing a
+    // notification that does not exist, or an in-app refusal that does not
+    // exist, is worse than no notice.
+    expect(notice, 'ADR-0039 §8 Q6 — a grant notifies nobody, and must not be said to').toMatch(
+      /Nobody is told they have been made a delegate/i,
+    );
+    expect(notice, 'ADR-0039 §8 Q9 — neither side can refuse or resign in-app').toMatch(
+      /Neither of you can refuse the arrangement or hand it back through this site/i,
+    );
   });
 
   test('the notice claims, per locale, what the system actually does (T385, ADR-0047 §3 + Amendment 3 §A)', async () => {
@@ -489,6 +521,117 @@ test.describe('the public surface carries no Good to know content (T378/T385, hu
         notice,
         `${locale}: the stored copy outlives the account (Amendment 3 §A)`,
       ).toMatch(claim.staleClaim);
+    }
+  });
+
+  test('the delegation disclosure states what ships, per locale (T380, hub ADR-0039)', async () => {
+    // A section beside the one above rather than inside it (T380's own
+    // wording allows either): the two disclosures cover different data, were
+    // written years apart in task time, and a failure in one should not read
+    // as a failure in the other.
+    //
+    // `SPEC.md`'s Non-functional clause has required this since ADR-0039
+    // shipped and the notice never carried it. What makes it worth pinning
+    // per locale rather than trusting to the copy is the shape of the risk:
+    // the true statements here are all NEGATIVE — nobody is notified, nobody
+    // can refuse — and negative facts are exactly what a later well-meaning
+    // edit "improves" into a reassurance the system cannot honour.
+    //
+    // Asserted for MEANING. Each regex matches the load-bearing clause only,
+    // never a whole sentence, so the copy stays free to be reworded and these
+    // fail only when a FACT changes.
+    const body = (locale: string): string =>
+      (
+        JSON.parse(
+          readFileSync(path.resolve(__dirname, `../public/i18n/${locale}.json`), 'utf8'),
+        ) as { privacyPolicy: { delegation: { body: string } } }
+      ).privacyPolicy.delegation.body;
+
+    const claims = {
+      es: {
+        // ADR-0039 §4/§5 — the closed four-value vocabulary, read from the
+        // subject's side, which is the only side it is renderable from (§6).
+        kindsClaim: /tu madre, tu padre, tu hermano o tu hermana/i,
+        wholeReplyClaim: /ve la respuesta entera/i,
+        healthDataClaim: /los niños que hayas indicado con su edad.*alergias/is,
+        visibleToSubjectClaim: /aparece en tu propio perfil, solo para consultarlo/i,
+        coupleOnlyClaim: /únicamente los novios pueden añadir o quitar/i,
+        immediateClaim: /surte efecto de inmediato/i,
+        keepsOwnReplyClaim: /nunca te quita tu propia respuesta/i,
+        // The two capabilities the product does not have.
+        noNotificationClaim: /a nadie se le avisa de que se le ha nombrado/i,
+        noRefusalClaim: /ni devolverlo desde este sitio/i,
+        // …and the promises a later edit must not make instead.
+        forbiddenNotification: /te avisaremos|se te avisará|recibirás un aviso|te notificaremos/i,
+        forbiddenRefusal: /puedes quitarlo|puedes quitarla|quítalo tú|desde tu perfil puedes/i,
+      },
+      en: {
+        kindsClaim: /your mother, your father, your brother or your sister/i,
+        wholeReplyClaim: /sees the whole reply/i,
+        healthDataClaim: /children you have named with their ages.*allergies/is,
+        visibleToSubjectClaim: /shown on your own profile, read-only/i,
+        coupleOnlyClaim: /only the couple can add or remove/i,
+        immediateClaim: /takes effect immediately/i,
+        keepsOwnReplyClaim: /never takes away your own/i,
+        noNotificationClaim: /nobody is told they have been made a delegate/i,
+        noRefusalClaim: /hand it back through this site/i,
+        forbiddenNotification: /you will be (told|notified)|we will let you know|you'll be notified/i,
+        forbiddenRefusal: /remove (it|them) yourself|you can remove|decline it here|turn it off/i,
+      },
+      fr: {
+        kindsClaim: /votre mère, votre père, votre frère ou votre sœur/i,
+        wholeReplyClaim: /voit la réponse entière/i,
+        healthDataClaim: /les enfants que vous avez indiqués avec leur âge.*allergies/is,
+        visibleToSubjectClaim: /figure sur votre propre profil, en lecture seule/i,
+        coupleOnlyClaim: /seuls les mariés peuvent y ajouter ou en retirer/i,
+        immediateClaim: /prend effet immédiatement/i,
+        keepsOwnReplyClaim: /ne vous retire jamais votre propre réponse/i,
+        noNotificationClaim: /personne n'est prévenu d'avoir été désigné/i,
+        noRefusalClaim: /le rendre depuis ce site/i,
+        forbiddenNotification: /vous serez prévenu|nous vous préviendrons|vous recevrez un avis/i,
+        forbiddenRefusal: /vous pouvez le retirer|retirez-le vous-même|depuis votre profil vous/i,
+      },
+    } as const;
+
+    for (const [locale, claim] of Object.entries(claims)) {
+      const notice = body(locale);
+
+      expect(notice, `${locale}: only a parent or a sibling (ADR-0039 §4/§5)`).toMatch(
+        claim.kindsClaim,
+      );
+      expect(notice, `${locale}: the delegate reads the WHOLE reply`).toMatch(claim.wholeReplyClaim);
+      expect(
+        notice,
+        `${locale}: children, ages, dietary preferences and allergies are named — SPEC.md calls this health-adjacent, and summarising it away is the disclosure failure`,
+      ).toMatch(claim.healthDataClaim);
+      expect(notice, `${locale}: the subject can always see who holds it`).toMatch(
+        claim.visibleToSubjectClaim,
+      );
+      expect(notice, `${locale}: only the couple grants or removes (ADR-0039 §8)`).toMatch(
+        claim.coupleOnlyClaim,
+      );
+      expect(notice, `${locale}: removal is immediate (ADR-0039 §8)`).toMatch(claim.immediateClaim);
+      expect(notice, `${locale}: delegation adds a writer, it never removes one (§8 Q8)`).toMatch(
+        claim.keepsOwnReplyClaim,
+      );
+
+      expect(
+        notice,
+        `${locale}: the notice must say nobody is notified of a grant (ADR-0039 §8 Q6)`,
+      ).toMatch(claim.noNotificationClaim);
+      expect(
+        notice,
+        `${locale}: the notice must say the arrangement cannot be refused or handed back in-app (ADR-0039 §8 Q9)`,
+      ).toMatch(claim.noRefusalClaim);
+
+      expect(
+        notice,
+        `${locale}: the notice must not promise a notification — none exists, and building one would be a new ADR-0019 type`,
+      ).not.toMatch(claim.forbiddenNotification);
+      expect(
+        notice,
+        `${locale}: the notice must not offer the guest an in-app way out — the couple's guest manager is the only write surface`,
+      ).not.toMatch(claim.forbiddenRefusal);
     }
   });
 });

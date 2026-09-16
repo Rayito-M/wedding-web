@@ -32,6 +32,38 @@
       <p>{{ 'privacyPolicy.goodToKnow.body' | translate }}</p>
     </section>
 
+    <!--
+      What another GUEST can see about you (hub ADR-0039; `SPEC.md`
+      Non-functional, the delegation bullet; ADR-0027 is the notice this
+      extends). Placed straight after Good to know because the two are the
+      same subject read from opposite ends: what you see about other people,
+      then what one other person can see about you.
+
+      A pre-existing gap, not a new disclosure — delegation has shipped since
+      ADR-0039 and the notice has never mentioned it, on the one category of
+      data `SPEC.md` itself calls health-adjacent: named children, their ages,
+      dietary preferences and allergies on someone else's reply. It was not in
+      effect only because no delegation exists in production yet; T380 closes
+      it before the couple grants the first one, not after.
+
+      Worded for what SHIPS — the T378 rule, and the same one T381 and T385
+      were written under. It therefore says plainly that NOBODY is notified
+      (ADR-0039 §8 Q6: a grant notifies nobody, and building one would be a
+      new ADR-0019 notification type), and that neither party can refuse or
+      resign through this site (§8 Q9: there is exactly one write surface and
+      it is the couple's). Both are capabilities the system lacks, and a
+      notice that implied either would be the defect T381 existed to fix.
+      The three bounds it does claim are ADR-0039's own and all three ship:
+      only the couple grants (§8), the subject sees who holds it read-only
+      (`profile-modal.html:75-80`, gated on `isOwnProfile()`), and the subject
+      keeps their own reply (§8 Q8). The per-locale wording is pinned by
+      `e2e/public-surface.spec.ts`.
+    -->
+    <section>
+      <h2>{{ 'privacyPolicy.delegation.title' | translate }}</h2>
+      <p>{{ 'privacyPolicy.delegation.body' | translate }}</p>
+    </section>
+
     <section>
       <h2>{{ 'privacyPolicy.analytics.title' | translate }}</h2>
       <p>{{ 'privacyPolicy.analytics.body' | translate }}</p>

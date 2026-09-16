@@ -34,12 +34,27 @@ import { Monogram } from '../../shared/monogram/monogram';
  * The Maps disclosure describes behaviour that only exists once T296 ships;
  * it must not reach production ahead of that screen.
  *
+ * **Delegation** per hub ADR-0039 and `SPEC.md`'s Non-functional clause
+ * (T380, and the gap T378 recorded rather than widened its own scope to
+ * cover): a delegate reads the *whole* of someone else's reply — named
+ * children with their ages, dietary preferences and **allergies** — which is
+ * the one permission a guest holds over another guest's data and the only
+ * health-adjacent one in the product. The notice had never mentioned it,
+ * from the day ADR-0039 shipped; it was not a disclosure failure already in
+ * effect only because no delegation exists in production yet, and that is
+ * precisely what expires the moment the couple grants the first one.
+ *
+ * Like the section above it, that copy is written for **what ships**. Two
+ * things it must therefore say and does: **nobody is notified** of being made
+ * a delegate (ADR-0039 §8 Q6 — a notification would be a new ADR-0019 type,
+ * and it is explicitly not an announcement), and **neither party can refuse
+ * or resign one through this site** (§8 Q9 — the couple's guest manager is
+ * the only write surface). The three bounds it does assert all exist: only
+ * the couple grants or removes, the subject sees who holds it read-only on
+ * their own profile, and the subject keeps their own reply either way.
+ *
  * Out of scope (T251 acceptance): a full legal privacy policy covering
- * guest data (phone/email/dietary/etc.) beyond the disclosures above. One
- * known gap inherited rather than introduced here — `SPEC.md`'s
- * Non-functional clause also requires this notice to say that a **delegate**
- * reads someone else's whole reply, including children's ages and allergies
- * (hub ADR-0039); no section says so yet, and T378's scope was Good to know.
+ * guest data (phone/email/dietary/etc.) beyond the disclosures above.
  */
 @Component({
   selector: 'app-privacy-policy',

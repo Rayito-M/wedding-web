@@ -1156,10 +1156,14 @@
   },
   "privacyPolicy": {
     "title": "Privacy policy",
-    "intro": "This page explains what you can see here about other people, and how the site uses Google services — Analytics, to understand overall visitor traffic, and Maps, to show you where the wedding takes place.",
+    "intro": "This page explains what you can see here about other people, what another guest can see about you, and how the site uses Google services — Analytics, to understand overall visitor traffic, and Maps, to show you where the wedding takes place.",
     "goodToKnow": {
       "title": "Contacts and bank details",
       "body": "When you sign in, the “Good to know” section may show contact details for people the couple has chosen. Everyone listed there holds an account on this site — the couple themselves, the wedding planner, or another guest — and for each of them that section shows their name, their email address and their phone number, plus what you can ask a listed guest about. Those details are shown in that section only: a phone number never appears on anyone's profile, where it stays visible to the couple alone. The couple asks each person first, away from this site, and lists them once they agree — this site does not ask for that agreement, record it or check it, and has no way to. The details are copied from that person's account at the moment the couple adds them and then stay as they were copied: a later edit to their account does not update the section, and closing an account does not remove them from it. The couple decides who appears there and is the only one who can change or remove an entry, at any time. This site never contacts those people and offers them no way to change what is shown or to object to it — that is settled with the couple directly. The same section may show the couple's own bank details — account holder, IBAN, BIC and Bizum number — in case you would like to send a gift: it is text you can copy, and no payment ever passes through this site. None of this is visible before you sign in."
+    },
+    "delegation": {
+      "title": "When someone else answers for you",
+      "body": "The couple can name another guest — your mother, your father, your brother or your sister — who may answer your RSVP for you. If they do, that person sees the whole reply, not only the part they are filling in: who is coming, any children you have named with their ages, and the dietary preferences and allergies recorded against each name. You can always see who it is — it is shown on your own profile, read-only. Only the couple can add or remove someone there, and a removal takes effect immediately. Nobody is told they have been made a delegate: the person finds your reply waiting the next time they open the RSVP screen. Neither of you can refuse the arrangement or hand it back through this site — if you would rather nobody answered for you, tell the couple and they remove it. You can still answer yourself at any time: this adds someone who can reply, it never takes away your own."
     },
     "analytics": {
       "title": "Google Analytics",
