@@ -12,11 +12,7 @@
      zero delegations, and its sibling `@else` is untouched (this task's own
      acceptance). -->
   @if (hubMode()) {
-    <app-rsvp-hub
-      [myReply]="rsvp()"
-      [delegations]="delegatedRsvps()"
-      (open)="onHubOpen($event)"
-    />
+    <app-rsvp-hub [myReply]="rsvp()" [delegations]="delegatedRsvps()" (open)="onHubOpen($event)" />
   } @else if (activeDelegateId()) {
     @if (activeDelegateRsvp(); as delegateRsvp) {
       <app-delegate-edit
