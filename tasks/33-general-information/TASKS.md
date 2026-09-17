@@ -645,3 +645,34 @@
   - Prove the guard bites: restore one of the false strings, watch it fail.
 - **Refs:** T394's report; T390 (the same defect, found the same way); T385 (`privacyPolicy.goodToKnow.body`,
   the reference for what is true); hub ADR-0047 §3
+
+### T398 — Basics writes only the couple digest (ADR-0048 Stage 1, deploys first)
+- **Status:** todo
+- **Owner:** agent (implementer)
+- **Depends on:** T392 (which made Basics write both halves)
+- **ADR:** hub **ADR-0048** — required reading, particularly the two-stage split and why this one
+  ships before the API change.
+- **Target release:** 1.5.0
+- **Why:** `setCoupleFirstName` (`config-manager.ts:788`) writes `couple.<role>.firstName` **and**
+  the deprecated `brideName`/`groomName`. ADR-0048 removes the pair from the stored document, so the
+  deprecated half of that write becomes a field the API no longer has. **This task must deploy
+  before the API change, not with it** — the SPA is static on CloudFront and is not redeployed with
+  the API, so it is the client that has to stop sending first.
+  Nothing breaks if the order slips (neither request DTO is `.strict()`, so Zod strips the unknown
+  key and the PATCH still returns 200) — but that is a silent forgiveness we should not be relying on
+  as the plan.
+- **Acceptance:**
+  - `setCoupleFirstName` writes **only** `couple.<role>.firstName`. The `brideName`/`groomName`
+    branch goes, including the no-`couple` fallback that wrote the deprecated field alone — after
+    ADR-0048 a config without `couple` is not a shape this app can edit, and silently writing a field
+    nothing reads is the exact defect T392 was filed to fix.
+  - The existing T392 specs are **updated, not deleted**: they assert the payload carries the whole
+    `couple` object (shallow merge — a partial `couple` replaces the stored one and drops `id`,
+    `lastName`, `email`, `phoneNumber`). That assertion is still the important one and must survive.
+  - A spec asserting the PATCH payload contains **no** `brideName`/`groomName`.
+  - Do **not** rename the i18n keys `configManager.field.brideName`/`.groomName`. They are labels
+    reading "Bride"/"Novia"/"Mariée"; renaming is locale churn with no user-visible effect, and
+    ADR-0048 records the decision to leave them.
+- **Out of scope:** the API-side removal (that is `wedding-api` T254), and anything touching the
+  response fields `brideName`/`groomName`, which the app still reads and which ADR-0048 explicitly
+  keeps.

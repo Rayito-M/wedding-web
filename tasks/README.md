@@ -279,3 +279,4 @@ never by its letter alone.
 | **T396** | Cluster A: server-owned values transcribed into locale files | done (`476c419`+`9f3c87f`) — TTLs from one constant, cross-repo guarded; the wedding date un-transcribed too; month sweep now global | `33-general-information` |
 | **T397** | Cluster B: absolutes invalidated by a later visibility widening | done (`3b70a20`+`39b64c0`) — modal agrees with the notice again; 36-entry absolutes inventory guards the class; six more overclaims found and fixed | `33-general-information` |
 | **T390** | Settings says contact cards self-update; the notice says they don't | done (`5b75068`) | `33-general-information` |
+| **T398** | Basics writes only the couple digest — ADR-0048 Stage 1, deploys before the API | todo | `33-general-information` |
