@@ -40,13 +40,15 @@ const base = (dir, name) => {
 };
 
 const mirrors = {};
+const missing = [];
 for (const [comp, dir] of Object.entries(MIRRORS)) {
   const leaf = dir.split('/').pop();
   const files = base(dir, leaf);
-  if (!files.length) continue;
+  if (!files.length) { missing.push(comp); continue; }
   mirrors[comp] = { dsHash: contract.components[comp]?.hash ?? null, files };
 }
 
 const out = { contractVersion: contract.version, updated: new Date().toISOString().slice(0, 10), mirrors };
 writeFileSync(join(WEB, 'design-mirror.json'), JSON.stringify(out, null, 2) + '\n');
 console.log(`design-mirror.json: ${Object.keys(mirrors).length} mirrors @ contract ${contract.version}`);
+if (missing.length) console.warn(`⚠ declared in MIRRORS but no files found (dropped from the mirror): ${missing.join(', ')}`);

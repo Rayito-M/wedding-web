@@ -19,7 +19,7 @@ nowhere to go — your `upstreamFindings` are that missing path.
      fix is a web edit; hand the exact file/prop/from/to to the implementer (or apply it yourself
      if invoked with that authority), then `pnpm ds:mirror` to restamp hashes.
    - The web value is the correction (an off-grid DS value, a broken token, a rule the DS never
-     wrote down) → that is an `upstreamFinding` (`ds-bug` / `ds-offgrid` / `ds-missing-spec`):
+     wrote down) → that is an `upstreamFinding` (`ds-bug` / `ds-offgrid` / `ds-missing-spec` / `ds-addition` — the last is a request for something the kit never drew, not a defect):
      append it to `../wedding-ui-design/contract/FINDINGS.md` under **Open** with the date, kind,
      detail, and suggested fix. The DS auditor counts open findings on every run.
 3. `unported` entries are inventory, not defects — mention them only when one blocks a task.
